@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/gateway-envelope-diagnostic.schema.json",
+  "title": "Gateway Envelope Diagnostic Projection v1",
+  "description": "Human-readable projection of ADR-0001's binary header; not the production wire encoding.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["magic", "protocol", "message_type", "flags", "payload_length", "sequence", "monotonic_us", "payload_crc32c", "header_crc32c"],
+  "properties": {
+    "magic": {"const": "VHOS"},
+    "protocol": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["major", "minor"],
+      "properties": {
+        "major": {"type": "integer", "const": 1},
+        "minor": {"type": "integer", "minimum": 0, "maximum": 255}
+      }
+    },
+    "message_type": {
+      "type": "string",
+      "enum": ["HANDSHAKE", "RAW_CAN_FRAME", "DIAGNOSTIC_RESPONSE", "GATEWAY_HEALTH", "CAPTURE_MARKER", "ALLOWLISTED_DIAGNOSTIC_REQUEST"]
+    },
+    "flags": {"type": "integer", "minimum": 0, "maximum": 255},
+    "payload_length": {"type": "integer", "minimum": 0, "maximum": 1048576},
+    "sequence": {"type": "integer", "minimum": 0},
+    "monotonic_us": {"type": "integer", "minimum": 0},
+    "payload_crc32c": {"type": "integer", "minimum": 0, "maximum": 4294967295},
+    "header_crc32c": {"type": "integer", "minimum": 0, "maximum": 4294967295}
+  }
+}

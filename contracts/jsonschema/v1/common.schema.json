@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/common.schema.json",
+  "title": "VHOS common contract definitions",
+  "$defs": {
+    "ulidBody": {
+      "type": "string",
+      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "domainId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*_[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "vehicleId": {
+      "type": "string",
+      "pattern": "^veh_[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "gatewayId": {
+      "type": "string",
+      "pattern": "^gateway_[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "captureId": {
+      "type": "string",
+      "pattern": "^capture_[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "observationId": {
+      "type": "string",
+      "pattern": "^obs_[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "sampleId": {
+      "type": "string",
+      "pattern": "^sample_[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "sessionId": {
+      "type": "string",
+      "pattern": "^session_[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "calculationId": {
+      "type": "string",
+      "pattern": "^calc_[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "claimId": {
+      "type": "string",
+      "pattern": "^claim_[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "semanticId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)+$",
+      "minLength": 3,
+      "maxLength": 160
+    },
+    "semanticVersion": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "quality": {
+      "type": "string",
+      "enum": [
+        "GOOD",
+        "STALE",
+        "MISSING",
+        "OUT_OF_RANGE",
+        "DECODER_UNCERTAIN",
+        "TRANSPORT_GAP",
+        "SENSOR_UNVERIFIED",
+        "MANUALLY_ENTERED"
+      ]
+    },
+    "validationStatus": {
+      "type": "string",
+      "enum": [
+        "EXPERIMENTAL",
+        "BENCH_VALIDATED",
+        "VEHICLE_VALIDATED",
+        "CALIBRATED"
+      ]
+    },
+    "unit": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9%/.*_^-]{1,32}$"
+    },
+    "wallTime": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "evidenceRef": {
+      "type": "string",
+      "pattern": "^(obs|sample|feature|calc|metric|finding|maintenance|inspection)_[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "contractHeader": {
+      "type": "object",
+      "required": ["contract", "contract_version"],
+      "properties": {
+        "contract": {
+          "$ref": "#/$defs/semanticId"
+        },
+        "contract_version": {
+          "$ref": "#/$defs/semanticVersion"
+        }
+      }
+    }
+  }
+}

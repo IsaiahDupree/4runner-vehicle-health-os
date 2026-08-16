@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/capture-bundle-manifest.schema.json",
+  "title": "Capture Bundle Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "contract_version",
+    "capture_id",
+    "vehicle_id",
+    "created_at",
+    "capture_window",
+    "profile",
+    "source",
+    "segments",
+    "statistics",
+    "versions",
+    "semantic_digest"
+  ],
+  "properties": {
+    "contract": {"const": "capture.bundle.manifest"},
+    "contract_version": {"const": "1.0.0"},
+    "capture_id": {"$ref": "common.schema.json#/$defs/captureId"},
+    "vehicle_id": {"$ref": "common.schema.json#/$defs/vehicleId"},
+    "created_at": {"$ref": "common.schema.json#/$defs/wallTime"},
+    "capture_window": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start_monotonic_us", "end_monotonic_us", "start_wall_time", "end_wall_time"],
+      "properties": {
+        "start_monotonic_us": {"type": "integer", "minimum": 0},
+        "end_monotonic_us": {"type": "integer", "minimum": 0},
+        "start_wall_time": {"$ref": "common.schema.json#/$defs/wallTime"},
+        "end_wall_time": {"$ref": "common.schema.json#/$defs/wallTime"}
+      }
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": {"type": "string", "enum": ["VEHICLE", "SIMULATOR"]},
+        "snapshot_ref": {"type": "string", "minLength": 1, "maxLength": 256},
+        "snapshot_sha256": {"$ref": "common.schema.json#/$defs/sha256"},
+        "scenario_id": {"$ref": "common.schema.json#/$defs/semanticId"},
+        "scenario_version": {"$ref": "common.schema.json#/$defs/semanticVersion"}
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "source_id", "source_version"],
+      "properties": {
+        "kind": {"type": "string", "enum": ["GATEWAY", "SIMULATOR"]},
+        "source_id": {"type": "string", "minLength": 1, "maxLength": 128},
+        "source_version": {"$ref": "common.schema.json#/$defs/semanticVersion"},
+        "hardware_revision": {"type": "string", "minLength": 1, "maxLength": 128},
+        "firmware_build_id": {"type": "string", "minLength": 1, "maxLength": 160},
+        "config_id": {"type": "string", "minLength": 1, "maxLength": 160},
+        "listen_only": {"type": "boolean"}
+      }
+    },
+    "segments": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "media_type", "sha256", "byte_count", "record_count"],
+        "properties": {
+          "path": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*$", "maxLength": 256},
+          "media_type": {"type": "string", "enum": ["application/x-ndjson"]},
+          "schema": {"type": "string", "minLength": 1, "maxLength": 128},
+          "sha256": {"$ref": "common.schema.json#/$defs/sha256"},
+          "byte_count": {"type": "integer", "minimum": 0},
+          "record_count": {"type": "integer", "minimum": 0}
+        }
+      }
+    },
+    "statistics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["received_records", "dropped_records", "sequence_gaps", "crc_failures", "transport_reconnects"],
+      "properties": {
+        "received_records": {"type": "integer", "minimum": 0},
+        "dropped_records": {"type": "integer", "minimum": 0},
+        "sequence_gaps": {"type": "integer", "minimum": 0},
+        "crc_failures": {"type": "integer", "minimum": 0},
+        "transport_reconnects": {"type": "integer", "minimum": 0}
+      }
+    },
+    "versions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw_observation_contract"],
+      "properties": {
+        "raw_observation_contract": {"$ref": "common.schema.json#/$defs/semanticVersion"},
+        "gateway_protocol": {"$ref": "common.schema.json#/$defs/semanticVersion"},
+        "vehicle_config_pack": {"$ref": "common.schema.json#/$defs/semanticVersion"},
+        "signal_pack": {"$ref": "common.schema.json#/$defs/semanticVersion"}
+      }
+    },
+    "labels": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["label", "at_monotonic_us"],
+        "properties": {
+          "label": {"type": "string", "minLength": 1, "maxLength": 160},
+          "at_monotonic_us": {"type": "integer", "minimum": 0},
+          "note": {"type": "string", "maxLength": 1000}
+        }
+      }
+    },
+    "semantic_digest": {"$ref": "common.schema.json#/$defs/sha256"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"profile": {"properties": {"kind": {"const": "SIMULATOR"}}}}},
+      "then": {"properties": {"profile": {"required": ["scenario_id", "scenario_version"]}}}
+    },
+    {
+      "if": {"properties": {"source": {"properties": {"kind": {"const": "GATEWAY"}}}}},
+      "then": {"properties": {"source": {"required": ["hardware_revision", "firmware_build_id", "config_id", "listen_only"]}}}
+    }
+  ]
+}
