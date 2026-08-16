@@ -34,6 +34,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   private var scanRequested = false
   private var scanFallbackTask: Task<Void, Never>?
   private var reconnectTask: Task<Void, Never>?
+  private var serviceDiscoveryTask: Task<Void, Never>?
   private var freshCentralRecoveryAttempted = false
   private var automaticReconnectEnabled = false
   private var userRequestedDisconnect = false
@@ -129,6 +130,20 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       transportMessage = "Bluetooth is not powered on."
       return
     }
+    let connected = (
+      central.retrieveConnectedPeripherals(withServices: [Self.vhosService])
+        + central.retrieveConnectedPeripherals(withServices: [Self.factoryService])
+    ).first
+    if let connected {
+      resetTransportSession()
+      scanRequested = false
+      scanActive = false
+      scanMode = "Restored connection"
+      discoveredName = connected.name ?? connected.identifier.uuidString
+      discoveredIdentifier = connected.identifier.uuidString
+      beginServiceDiscovery(connected, source: "retrieve-connected")
+      return
+    }
     resetTransportSession()
     scanRequested = true
     scanActive = true
@@ -195,6 +210,29 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     guard
       let restored = (dict[CBCentralManagerRestoredStatePeripheralsKey] as? [CBPeripheral])?.first
     else { return }
+    if restored.state == .connected {
+      scanRequested = false
+      scanActive = false
+      scanMode = "Restored connection"
+      discoveredName = restored.name ?? restored.identifier.uuidString
+      discoveredIdentifier = restored.identifier.uuidString
+      beginServiceDiscovery(restored, source: "state-restoration")
+      return
+    }
+    if restored.state == .connecting {
+      peripheral = restored
+      restored.delegate = self
+      automaticReconnectEnabled = true
+      userRequestedDisconnect = false
+      discoveredName = restored.name ?? restored.identifier.uuidString
+      discoveredIdentifier = restored.identifier.uuidString
+      state = .connecting
+      transportMessage = "Restoring the in-progress gateway connection…"
+      Self.commissioningTrace(
+        "RESTORE_WAITING id=\(restored.identifier.uuidString) state=\(restored.state.rawValue)"
+      )
+      return
+    }
     if scanRequested {
       Self.commissioningTrace(
         "RESTORE_SKIPPED_FOR_SCAN id=\(restored.identifier.uuidString) state=\(restored.state.rawValue)"
@@ -263,23 +301,17 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   }
 
   func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
-    reconnectTask?.cancel()
-    reconnectAttemptCount = 0
-    automaticReconnectActive = false
-    automaticReconnectEnabled = true
-    userRequestedDisconnect = false
-    peripheralConnected = true
-    connectedAt = Date()
-    currentSessionResultStartIndex = experimentResults.count
-    transportMessage = "Connected; negotiating gateway contract…"
-    Self.logger.info("ESP32 BLE connection established")
-    Self.commissioningTrace("LINK_CONNECTED id=\(peripheral.identifier.uuidString)")
-    peripheral.discoverServices([Self.vhosService, Self.factoryService])
+    beginServiceDiscovery(peripheral, source: "did-connect")
   }
 
   func centralManager(
     _ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?
   ) {
+    let failure = error.map {
+      let value = $0 as NSError
+      return "domain=\(value.domain) code=\(value.code) message=\(value.localizedDescription)"
+    } ?? "none"
+    Self.commissioningTrace("LINK_FAILED_DETAIL \(failure)")
     if scanAfterPendingCancellation {
       scanAfterPendingCancellation = false
       resetConnection()
@@ -318,12 +350,20 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   }
 
   func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
+    serviceDiscoveryTask?.cancel()
     if let error {
-      state = .failed
-      transportMessage = error.localizedDescription
+      let value = error as NSError
+      Self.commissioningTrace(
+        "SERVICE_DISCOVERY_FAILED domain=\(value.domain) code=\(value.code) message=\(value.localizedDescription)"
+      )
+      transportMessage = "Gateway services did not respond; refreshing the BLE link automatically…"
+      central.cancelPeripheralConnection(peripheral)
       return
     }
     let services = peripheral.services ?? []
+    Self.commissioningTrace(
+      "SERVICES_DISCOVERED uuids=\(services.map { $0.uuid.uuidString }.joined(separator: ","))"
+    )
     for service in services {
       if service.uuid == Self.vhosService {
         vhosServiceDiscovered = true
@@ -339,6 +379,9 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         peripheral.discoverCharacteristics([Self.factoryCharacteristic], for: service)
       }
     }
+    if vhosServiceDiscovered || factoryServiceDiscovered {
+      armGATTDiscoveryTimeout(peripheral, phase: "characteristics")
+    }
     if !vhosServiceDiscovered, !factoryServiceDiscovered {
       state = .failed
       transportMessage = "Connected device does not advertise a supported gateway service."
@@ -348,9 +391,14 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   func peripheral(
     _ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?
   ) {
+    serviceDiscoveryTask?.cancel()
     if let error {
-      state = .failed
-      transportMessage = error.localizedDescription
+      let value = error as NSError
+      Self.commissioningTrace(
+        "CHARACTERISTICS_FAILED service=\(service.uuid.uuidString) domain=\(value.domain) code=\(value.code)"
+      )
+      transportMessage = "Gateway characteristics did not respond; refreshing the BLE link automatically…"
+      central.cancelPeripheralConnection(peripheral)
       return
     }
     for characteristic in service.characteristics ?? [] {
@@ -379,6 +427,9 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         break
       }
     }
+    Self.commissioningTrace(
+      "CHARACTERISTICS_DISCOVERED service=\(service.uuid.uuidString) count=\(service.characteristics?.count ?? 0)"
+    )
     if service.uuid == Self.vhosService { requestHandshakeIfReady() }
   }
 
@@ -509,6 +560,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       handshake = value
       lastHandshakeReceivedAt = Date()
       state = .vhosConnected
+      reconnectAttemptCount = 0
       transportMessage = "VHOS gateway contract active."
       Self.logger.info("VHOS gateway handshake verified")
       Self.commissioningTrace("HANDSHAKE_VERIFIED firmware=\(value.firmwareVersion)")
@@ -585,10 +637,19 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   private func connect(_ peripheral: CBPeripheral) {
     self.peripheral = peripheral
     peripheral.delegate = self
+    if peripheral.state == .connected {
+      beginServiceDiscovery(peripheral, source: "already-connected")
+      return
+    }
+    if peripheral.state == .connecting {
+      state = .connecting
+      transportMessage = "Waiting for the existing gateway connection…"
+      Self.commissioningTrace("CONNECT_WAITING id=\(peripheral.identifier.uuidString)")
+      return
+    }
     central.connect(
       peripheral,
       options: [
-        CBConnectPeripheralOptionEnableAutoReconnect: true,
         CBConnectPeripheralOptionNotifyOnDisconnectionKey: true,
       ])
   }
@@ -596,6 +657,13 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   private func handleDisconnect(
     _ peripheral: CBPeripheral, isSystemReconnecting: Bool, error: Error?
   ) {
+    let failure = error.map {
+      let value = $0 as NSError
+      return "domain=\(value.domain) code=\(value.code) message=\(value.localizedDescription)"
+    } ?? "none"
+    Self.commissioningTrace(
+      "LINK_DISCONNECTED system_reconnecting=\(isSystemReconnecting) \(failure)"
+    )
     if scanAfterPendingCancellation {
       scanAfterPendingCancellation = false
       resetConnection()
@@ -616,6 +684,47 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       return
     }
     scheduleReconnect(to: peripheral, error: error)
+  }
+
+  private func beginServiceDiscovery(_ peripheral: CBPeripheral, source: String) {
+    reconnectTask?.cancel()
+    automaticReconnectActive = false
+    automaticReconnectEnabled = true
+    userRequestedDisconnect = false
+    self.peripheral = peripheral
+    peripheral.delegate = self
+    peripheralConnected = true
+    connectedAt = Date()
+    currentSessionResultStartIndex = experimentResults.count
+    state = .connecting
+    transportMessage = "Connected; negotiating gateway contract…"
+    Self.logger.info("ESP32 BLE connection established via \(source, privacy: .public)")
+    Self.commissioningTrace(
+      "LINK_CONNECTED id=\(peripheral.identifier.uuidString) source=\(source) state=\(peripheral.state.rawValue)"
+    )
+    peripheral.discoverServices([Self.vhosService, Self.factoryService])
+    armGATTDiscoveryTimeout(peripheral, phase: "services")
+  }
+
+  private func armGATTDiscoveryTimeout(_ peripheral: CBPeripheral, phase: String) {
+    serviceDiscoveryTask?.cancel()
+    serviceDiscoveryTask = Task { [weak self, weak peripheral] in
+      try? await Task.sleep(for: .seconds(6))
+      guard !Task.isCancelled, let self, let peripheral,
+        self.peripheral?.identifier == peripheral.identifier, self.peripheralConnected
+      else { return }
+      let complete = phase == "services"
+        ? (self.vhosServiceDiscovered || self.factoryServiceDiscovered)
+        : ((self.factoryServiceDiscovered && self.state == .factoryCompatible)
+          || (self.commandChannelReady && self.streamChannelDiscovered
+            && self.healthChannelDiscovered && self.otaStatusChannelDiscovered))
+      guard !complete else { return }
+      self.transportMessage = "Restored BLE link is not responding; refreshing it automatically…"
+      Self.commissioningTrace(
+        "GATT_DISCOVERY_TIMEOUT phase=\(phase) id=\(peripheral.identifier.uuidString) state=\(peripheral.state.rawValue)"
+      )
+      self.central.cancelPeripheralConnection(peripheral)
+    }
   }
 
   private func scheduleReconnect(to peripheral: CBPeripheral, error: Error?) {
@@ -706,6 +815,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     let selectedIdentifier = discoveredIdentifier
     let selectedRSSI = discoveredRSSI
     scanFallbackTask?.cancel()
+    serviceDiscoveryTask?.cancel()
     peripheral = nil
     command = nil
     streamDecoder = GatewayFrameStreamDecoder()
