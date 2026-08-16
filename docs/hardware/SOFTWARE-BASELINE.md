@@ -9,7 +9,7 @@
 | WiCAN Pro factory firmware | `v4.50p`, published 2026-06-03 | Known upstream recovery/baseline image |
 | WiCAN upstream source | `meatpiHQ/wican-fw` main SHA `5e28f494232b3a4532aa666b0bd060e030fe5aee` observed 2026-08-16 | Research reference; do not silently float production builds |
 | WiCAN schematic | `sch/wican_obd_pro_sch_v151.pdf` | Hardware-revision design reference |
-| VHOS firmware fork toolchain | ESP-IDF `v5.5.5` | Maintained 5.x baseline close to WiCAN's documented ESP-IDF >=5.1 requirement |
+| VHOS firmware fork toolchain | ESP-IDF `v5.5.3` | Exact upstream WiCAN Pro `v4.50p` build baseline; pinned in local and CI release builds |
 | E0 tooling | Python 3.12+ | Contract checks, deterministic simulator, capture replay |
 
 The upstream WiCAN firmware is GPL-3.0. A distributed derivative firmware must comply with that license. The VHOS iOS application and platform-neutral contracts can remain separately licensed because they communicate with the gateway over documented interfaces rather than incorporating GPL source.
@@ -38,7 +38,7 @@ These are integration facts pinned to the upstream revision above, not permanent
 
 - [WiCAN firmware and hardware sources](https://github.com/meatpiHQ/wican-fw)
 - [WiCAN Pro v4.50p release](https://github.com/meatpiHQ/wican-fw/releases/tag/v4.50p)
-- [ESP-IDF v5.5.5](https://github.com/espressif/esp-idf/releases/tag/v5.5.5)
+- [ESP-IDF v5.5.3](https://github.com/espressif/esp-idf/releases/tag/v5.5.3)
 - [ESP32-S3 TWAI listen-only mode](https://docs.espressif.com/projects/esp-idf/en/v5.3.5/esp32s3/api-reference/peripherals/twai.html)
 - [ESP-IDF OTA and rollback](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/system/ota.html)
 - [ESP32-S3 security overview](https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/security/security.html)

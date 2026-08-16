@@ -20,6 +20,8 @@ E0 plus the first native iOS control slice are implemented here:
 - CI checks for schema validity and deterministic replay;
 - a Swift 6 core with CRC32C framing, guarded discovery plans, signed firmware verification, OTA preflight, and AI evidence handoff;
 - a buildable native SwiftUI app with BLE state restoration, WiCAN factory detection, gateway health, signed semantic experiments, private-network OTA, and evidence export;
+- a public WiCAN Pro ESP32-S3 firmware fork with passive/listen-only enforcement, framed BLE health reporting, OTA A/B partitions, and rollback self-tests;
+- a backup-first public Web Serial provisioner with target detection, full-flash recovery download, release hashing, installation, and same-capacity restore;
 - explicit iOS, legacy Android, gateway firmware, and added-sensor hardware boundaries.
 
 No target-vehicle PID, threshold, service interval, or trim-specific constant is invented in this baseline. Those enter only through independently validated, versioned Vehicle Signal and Configuration Packs.
@@ -40,6 +42,19 @@ python3 -m venv .venv
 
 The simulator namespace is deliberately separate from live vehicle data. It creates deterministic engineering evidence for automated tests; it never represents itself as a Toyota measurement.
 
+## Gateway provisioning
+
+- Public installer: [VHOS Gateway Provisioner](https://vhos-gateway-provisioner.isaiahdupree.chatgpt.site)
+- Public firmware source: [IsaiahDupree/4runner-vhos-firmware](https://github.com/IsaiahDupree/4runner-vhos-firmware)
+- Development release and recovery evidence: [v0.1.0-dev.1](https://github.com/IsaiahDupree/4runner-vhos-firmware/releases/tag/v0.1.0-dev.1)
+- Hardware/software baseline: [recommended hardware](docs/hardware/RECOMMENDED-HARDWARE.md) and [software baseline](docs/hardware/SOFTWARE-BASELINE.md)
+
+The first installation and recovery path uses a desktop Chrome or Edge browser,
+USB-C data, and Web Serial. The browser requires a full-flash backup before it
+will install the merged image. Wi-Fi OTA activation remains locked until the
+signed-update trust path and a physical backup/flash/rollback/restore test have
+both passed.
+
 ## Repository map
 
 | Path | Responsibility |
@@ -51,14 +66,15 @@ The simulator namespace is deliberately separate from live vehicle data. It crea
 | `tooling/` | Contract validator, simulator, bundle writer, and replay engine |
 | `tests/` | Contract, determinism, corruption, ordering, and replay tests |
 | `ios/` | Native iOS app, portable Swift core, and deterministic XcodeGen project |
+| `web-flasher/` | Public backup-first ESP32-S3 installer and recovery UI |
 | `android/` | Preserved original Android module boundary; not the primary client after ADR-0003 |
-| `firmware/` | ESP32 component boundaries and read-only safety policy for E2 onward |
+| `firmware/` | Shared ESP32 component boundaries and read-only safety policy |
 | `vehicle-signal-packs/` | Validated vehicle-specific signal/configuration packs; no speculative constants |
 
 ## Development order
 
 1. E1: iOS append-only local truth store and lifecycle ledger; the gateway contract client is now scaffolded.
-2. E2: WiCAN Pro VHOS fork with passive capture, health counters, framed BLE, constrained discovery, and signed rollback-capable OTA on a bench harness.
+2. E2: physically verify the published WiCAN Pro VHOS foundation, then add passive capture and constrained discovery without widening the transmit boundary.
 3. E3: iOS ingest, reconnect/deduplication, raw persistence, and replay adapter.
 4. E4: verified generic OBD baseline plus target-vehicle signal discovery and validation.
 5. E5/E6: maintenance schedule and equation/lineage engines before owner-facing scoring.

@@ -22,6 +22,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   private var streamDecoder = GatewayFrameStreamDecoder()
   private var sequence: UInt64 = 1
   private var scanRequested = false
+  private var handshakeRequested = false
   private var pendingCommandChunks: [Data] = []
 
   var bluetoothStateDescription = "Initializing"
@@ -247,9 +248,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         break
       }
     }
-    if service.uuid == Self.vhosService, command != nil {
-      requestHandshake()
-    }
+    if service.uuid == Self.vhosService { requestHandshakeIfReady() }
   }
 
   func peripheral(
@@ -272,6 +271,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     default:
       break
     }
+    requestHandshakeIfReady()
   }
 
   func peripheral(
@@ -322,6 +322,17 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       state = .failed
       transportMessage = error.localizedDescription
     }
+  }
+
+  private func requestHandshakeIfReady() {
+    guard
+      !handshakeRequested,
+      command != nil,
+      streamNotificationsEnabled,
+      healthNotificationsEnabled
+    else { return }
+    handshakeRequested = true
+    requestHandshake()
   }
 
   private func consume(_ frame: GatewayFrame) throws {
@@ -402,6 +413,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     streamDecoder = GatewayFrameStreamDecoder()
     pendingCommandChunks.removeAll()
     commandChunksPending = 0
+    handshakeRequested = false
     peripheralConnected = false
     connectedAt = nil
     vhosServiceDiscovered = false
