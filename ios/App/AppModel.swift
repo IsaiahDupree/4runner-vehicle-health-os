@@ -22,6 +22,10 @@ final class AppModel {
   var verifiedFirmware: VerifiedFirmwarePackage?
   var selectedFirmwareName: String?
   var releasePublicKeyConfigured = false
+  var experimentSigningKeyConfigured = false
+  var lastSubmittedExperimentID: UUID?
+  var lastSubmittedExperimentKind: DiscoveryKind?
+  var lastSubmittedExperimentAt: Date?
   var updateInProgress = false
   var uploadProgressDescription: String?
 
@@ -31,6 +35,8 @@ final class AppModel {
     experimentSigner = ExperimentSigner(keyStore: store)
     gateway = GatewayBLEClient()
     releasePublicKeyConfigured = (try? store.data(for: .firmwareReleasePublicKey)) != nil
+    experimentSigningKeyConfigured =
+      (try? store.data(for: .experimentSigningPrivateKey)) != nil
   }
 
   func importReleasePublicKey(_ text: String) {
@@ -89,6 +95,10 @@ final class AppModel {
       let approval = ExperimentApproval(approvedAt: now, plan: plan)
       let envelope = try experimentSigner.sign(approval)
       try gateway.sendSignedExperimentPlan(envelope)
+      experimentSigningKeyConfigured = true
+      lastSubmittedExperimentID = plan.id
+      lastSubmittedExperimentKind = kind
+      lastSubmittedExperimentAt = Date()
       noticeMessage = "Signed semantic experiment plan sent."
       errorMessage = nil
     } catch {

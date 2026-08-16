@@ -6,8 +6,8 @@ struct RootView: View {
 
   var body: some View {
     TabView {
-      NavigationStack { DashboardView() }
-        .tabItem { Label("Garage", systemImage: "car.side") }
+      NavigationStack { SystemStatusView() }
+        .tabItem { Label("Status", systemImage: "gauge.with.dots.needle.50percent") }
       NavigationStack { DiscoveryView() }
         .tabItem { Label("Discovery", systemImage: "wave.3.right.circle") }
       NavigationStack { FirmwareView() }
@@ -36,70 +36,27 @@ struct RootView: View {
   }
 }
 
-private struct DashboardView: View {
-  @Environment(AppModel.self) private var model
-
-  var body: some View {
-    List {
-      Section("Gateway") {
-        LabeledContent("State", value: model.gateway.state.rawValue)
-        if let name = model.gateway.discoveredName { LabeledContent("Device", value: name) }
-        if let message = model.gateway.transportMessage { Text(message).font(.footnote) }
-        HStack {
-          Button("Scan") { model.gateway.startScan() }
-            .disabled(model.gateway.state == .scanning || model.gateway.state == .connecting)
-          Spacer()
-          Button("Disconnect", role: .destructive) { model.gateway.disconnect() }
-            .disabled(model.gateway.state == .disconnected)
-        }
-      }
-      if let handshake = model.gateway.handshake {
-        Section("Verified contract") {
-          LabeledContent("Gateway ID", value: handshake.gatewayID)
-          LabeledContent("Hardware", value: handshake.hardwareRevision)
-          LabeledContent("Firmware", value: handshake.firmwareVersion)
-          LabeledContent("Build", value: handshake.firmwareBuildID)
-          if let bootloader = handshake.bootloaderVersion {
-            LabeledContent("Bootloader", value: bootloader)
-          }
-          LabeledContent("Mode", value: handshake.listenOnly ? "Listen only" : "Active")
-        }
-      }
-      if let health = model.gateway.health {
-        Section("Live health") {
-          LabeledContent("Vehicle", value: health.vehicleMotion.rawValue)
-          LabeledContent("Capture", value: health.captureActive ? "Active" : "Idle")
-          LabeledContent("Received", value: health.receivedFrames.formatted())
-          LabeledContent("Dropped", value: health.droppedFrames.formatted())
-          if let millivolts = health.supplyMillivolts {
-            LabeledContent("Supply", value: String(format: "%.2f V", Double(millivolts) / 1000))
-          }
-        }
-      }
-      if let banner = model.gateway.factoryBanner {
-        Section("Factory firmware") {
-          Text(banner)
-          Text(
-            "Factory compatibility is read-only. The app does not expose ELM or raw CAN transmit commands."
-          )
-          .font(.footnote)
-          .foregroundStyle(.secondary)
-        }
-      }
-    }
-    .navigationTitle("Vehicle Health OS")
-  }
-}
-
 private struct DiscoveryView: View {
   @Environment(AppModel.self) private var model
   @State private var kind: DiscoveryKind = .passiveCAN
   @State private var approved = false
 
+  private var capabilityReady: Bool {
+    guard let handshake = model.gateway.handshake else { return false }
+    let required: GatewayCapability =
+      kind == .passiveCAN ? .passiveCapture : .allowlistedDiagnosticRead
+    return handshake.capabilities.contains(.signedExperimentPlan)
+      && handshake.capabilities.contains(required)
+  }
+
   private var canRun: Bool {
     model.gateway.state == .vhosConnected
+      && model.gateway.commandChannelReady
       && model.gateway.health?.vehicleMotion == .parked
       && model.gateway.health?.captureActive == false
+      && model.gateway.handshake?.listenOnly == true
+      && model.gateway.health?.listenOnly == true
+      && capabilityReady
       && approved
   }
 
@@ -119,10 +76,17 @@ private struct DiscoveryView: View {
       }
       Section("Safety gates") {
         SafetyRow(label: "VHOS contract", pass: model.gateway.state == .vhosConnected)
+        SafetyRow(label: "Reliable command channel", pass: model.gateway.commandChannelReady)
+        SafetyRow(label: "Current-session health", pass: model.gateway.health != nil)
         SafetyRow(
           label: "Motion deterministically PARKED",
           pass: model.gateway.health?.vehicleMotion == .parked)
         SafetyRow(label: "No active capture", pass: model.gateway.health?.captureActive == false)
+        SafetyRow(
+          label: "Listen-only mode",
+          pass: model.gateway.handshake?.listenOnly == true
+            && model.gateway.health?.listenOnly == true)
+        SafetyRow(label: "Required gateway capabilities", pass: capabilityReady)
         Toggle("I approve this bounded experiment", isOn: $approved)
         Button("Sign and run experiment") {
           model.runDiscovery(kind, explicitApproval: approved)

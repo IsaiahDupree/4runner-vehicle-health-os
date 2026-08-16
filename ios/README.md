@@ -8,12 +8,28 @@ Native SwiftUI control surface for the VHOS gateway contract. Minimum deployment
 - Read-only recognition of factory WiCAN BLE service `FEE0` / characteristic `FEE1`.
 - Versioned VHOS BLE service and framed message transport with CRC32C.
 - Gateway handshake, live health, bounded protocol-discovery results, and evidence export.
+- Live commissioning dashboard with distinct iPhone/BLE, ESP32 service/handshake, OBD-II,
+  safety, capability, OTA, and evidence indicators.
+- Per-candidate status for all four passive CAN candidates and five allowlisted legacy OBD
+  candidates. Passive network detection is shown separately from a confirmed OBD response.
 - Keychain-backed Ed25519 signing of semantic experiment approvals.
 - Safety validation requiring a current `PARKED` report, idle capture, listen-only mode, and gateway capabilities.
 - `.vhosota` parsing, Ed25519 signature/hash verification, compatibility/voltage/capability preflight, and local Wi-Fi upload.
 - Provider-neutral JSON evidence handoff whose authority contract excludes vehicle activation and raw frame emission.
 
 The app contains no arbitrary CAN/K-line/J1850 transmit console. Factory WiCAN compatibility mode is observation-only; experiments require the VHOS firmware fork and its capability handshake.
+
+## Status semantics
+
+- `PASS` is supported by app, gateway, or experiment evidence.
+- `ACTIVE` means a scan, signed experiment, command transfer, or update is in progress.
+- `CHECK` is an observed condition that requires review but is not silently promoted to failure.
+- `BLOCKED` means a required safety or trust gate is not satisfied.
+- `WAIT` means the app has not received enough evidence; it never means healthy.
+
+The OBD-II summary becomes `CONFIRMED` only after a `READ_CONFIRMED` experiment result. A
+`PASSIVE_LOCK` result is labeled `NETWORK ONLY`, because observed vehicle-bus traffic does not by
+itself prove that a standards-based diagnostic request succeeded.
 
 ## Build
 
