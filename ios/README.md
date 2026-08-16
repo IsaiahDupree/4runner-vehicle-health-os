@@ -31,6 +31,20 @@ The OBD-II summary becomes `CONFIRMED` only after a `READ_CONFIRMED` experiment 
 `PASSIVE_LOCK` result is labeled `NETWORK ONLY`, because observed vehicle-bus traffic does not by
 itself prove that a standards-based diagnostic request succeeded.
 
+Discovery RSSI at or below -80 dBm is shown as `CHECK`, not `PASS`; at or below -90 dBm the app
+directs the operator to place the iPhone beside the gateway before pairing. CoreBluetooth error 15
+(`encryptionTimedOut`) is translated into a visible stale-bond recovery instruction instead of an
+opaque transport failure.
+
+If CoreBluetooth reports `peerRemovedPairingInformation`, the app discards the restored central
+session once and immediately scans again with a clean, non-restored central. This prevents an old
+restoration object from repeatedly terminating an otherwise valid post-forget connection.
+
+Connections use CoreBluetooth's system auto-reconnect option and state-restoration support. If the
+system cannot keep a pending reconnect, the app retries the saved peripheral at 1, 2, 4, 8, 15,
+and then 30-second intervals until the user explicitly disconnects. Ordinary radio loss, app
+backgrounding, and gateway restarts therefore do not require removing the saved BLE bond.
+
 ## Build
 
 ```bash
@@ -46,6 +60,11 @@ xcodebuild \
 ```
 
 Bluetooth requires a physical iPhone for gateway testing; iOS Simulator reports Bluetooth as unsupported. Code signing, an Apple developer team, release keys, provisioned experiment trust, and real hardware validation are deployment inputs—not repository defaults.
+
+For an attached development iPhone, the commissioning harness can launch the app with
+`--vhos-auto-scan` or `VHOS_AUTO_SCAN=1`. Either input starts the same CoreBluetooth scan exposed
+by the on-screen control; neither bypasses Bluetooth permission, pairing approval, firmware trust,
+or vehicle-safety gates.
 
 ## Gateway contract UUIDs
 
