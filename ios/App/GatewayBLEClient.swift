@@ -1,6 +1,7 @@
 @preconcurrency import CoreBluetooth
 import Foundation
 import Observation
+import OSLog
 import VHOSCore
 
 @MainActor
@@ -8,6 +9,8 @@ import VHOSCore
 final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate,
   @preconcurrency CBPeripheralDelegate
 {
+  private static let logger = Logger(
+    subsystem: "com.isaiahdupree.VehicleHealthOS", category: "GatewayBLE")
   static let vhosService = CBUUID(string: "33613EB3-FFCA-42D1-83FA-A18F12B3F123")
   static let commandCharacteristic = CBUUID(string: "B3D3279B-0244-4D54-A2AB-A1AB47A5FC0A")
   static let streamCharacteristic = CBUUID(string: "265B90C0-A600-4659-BBBD-5CDA411C49CC")
@@ -15,19 +18,30 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   static let otaStatusCharacteristic = CBUUID(string: "18D21F8E-D190-4DB3-923C-27BBFC355874")
   static let factoryService = CBUUID(string: "FEE0")
   static let factoryCharacteristic = CBUUID(string: "FEE1")
+  private static let securityRetryLimit = 30
+  private static let autoScanArgument = "--vhos-auto-scan"
+  private static let autoScanEnvironmentKey = "VHOS_AUTO_SCAN"
+  private static let commissioningTraceEnvironmentKey = "VHOS_COMMISSIONING_TRACE"
 
   private var central: CBCentralManager!
   private var peripheral: CBPeripheral?
   private var command: CBCharacteristic?
+  private var scanAfterPendingCancellation = false
   private var streamDecoder = GatewayFrameStreamDecoder()
   private var sequence: UInt64 = 1
   private var scanRequested = false
+  private var scanFallbackTask: Task<Void, Never>?
   private var handshakeRequested = false
+  private var handshakeSecurityRetryCount = 0
+  private var notificationSecurityRetryCounts: [CBUUID: Int] = [:]
   private var pendingCommandChunks: [Data] = []
 
   var bluetoothStateDescription = "Initializing"
   var bluetoothReady = false
   var scanActive = false
+  var scanMode = "Idle"
+  var scanObservationCount: UInt64 = 0
+  var lastObservedAdvertisement: String?
   var state: GatewayConnectionState = .disconnected
   var discoveredName: String?
   var discoveredIdentifier: String?
@@ -67,6 +81,8 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
 
   override init() {
     super.init()
+    scanRequested = CommandLine.arguments.contains(Self.autoScanArgument)
+      || ProcessInfo.processInfo.environment[Self.autoScanEnvironmentKey] == "1"
     central = CBCentralManager(
       delegate: self,
       queue: .main,
@@ -74,11 +90,23 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         CBCentralManagerOptionRestoreIdentifierKey: "com.isaiahdupree.VehicleHealthOS.central"
       ]
     )
+    if scanRequested {
+      Self.logger.info("BLE auto-scan requested by commissioning launch")
+      Self.commissioningTrace("AUTO_SCAN_REQUESTED")
+    }
   }
 
   func startScan() {
-    guard !peripheralConnected, state != .connecting else {
-      transportMessage = "Disconnect the current gateway before starting another scan."
+    guard !peripheralConnected else {
+      transportMessage = "Disconnect the connected gateway before starting another scan."
+      return
+    }
+    if state == .connecting, let peripheral {
+      Self.commissioningTrace("STALE_CONNECTION_CANCEL id=\(peripheral.identifier.uuidString)")
+      scanAfterPendingCancellation = true
+      scanRequested = true
+      transportMessage = "Cancelling a stale gateway connection before scanning…"
+      central.cancelPeripheralConnection(peripheral)
       return
     }
     scanRequested = true
@@ -90,14 +118,35 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     resetTransportSession()
     scanRequested = true
     scanActive = true
+    scanMode = "VHOS service filter"
+    scanObservationCount = 0
+    lastObservedAdvertisement = nil
     state = .scanning
     transportMessage = "Scanning for a WiCAN or VHOS gateway…"
+    Self.logger.info("BLE scan started with VHOS service filter")
+    Self.commissioningTrace("SCAN_START mode=service-filter")
     central.scanForPeripherals(
-      withServices: nil, options: [CBCentralManagerScanOptionAllowDuplicatesKey: false])
+      withServices: [Self.vhosService],
+      options: [CBCentralManagerScanOptionAllowDuplicatesKey: true])
+    scanFallbackTask?.cancel()
+    scanFallbackTask = Task { [weak self] in
+      try? await Task.sleep(for: .seconds(5))
+      guard let self, !Task.isCancelled, self.scanActive, self.peripheral == nil else { return }
+      self.central.stopScan()
+      self.scanMode = "Service + name fallback"
+      self.transportMessage = "No service match yet; scanning all nearby BLE advertisements…"
+      Self.logger.info("BLE scan broadened to all advertisements")
+      Self.commissioningTrace("SCAN_FALLBACK observations=\(self.scanObservationCount)")
+      self.central.scanForPeripherals(
+        withServices: nil,
+        options: [CBCentralManagerScanOptionAllowDuplicatesKey: true])
+    }
   }
 
   func disconnect() {
+    scanAfterPendingCancellation = false
     scanRequested = false
+    scanFallbackTask?.cancel()
     central.stopScan()
     if let peripheral { central.cancelPeripheralConnection(peripheral) }
     resetConnection()
@@ -112,6 +161,9 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   func centralManagerDidUpdateState(_ central: CBCentralManager) {
     bluetoothStateDescription = central.state.description
     bluetoothReady = central.state == .poweredOn
+    Self.commissioningTrace(
+      "CENTRAL_STATE state=\(central.state.description) scan_requested=\(scanRequested)"
+    )
     if central.state == .poweredOn, scanRequested { startScan() }
     if central.state != .poweredOn {
       scanActive = false
@@ -125,6 +177,12 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     guard
       let restored = (dict[CBCentralManagerRestoredStatePeripheralsKey] as? [CBPeripheral])?.first
     else { return }
+    if scanRequested {
+      Self.commissioningTrace(
+        "RESTORE_SKIPPED_FOR_SCAN id=\(restored.identifier.uuidString) state=\(restored.state.rawValue)"
+      )
+      return
+    }
     peripheral = restored
     restored.delegate = self
     discoveredName = restored.name ?? restored.identifier.uuidString
@@ -141,18 +199,33 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     rssi: NSNumber
   ) {
     let advertised = advertisementData[CBAdvertisementDataServiceUUIDsKey] as? [CBUUID] ?? []
+    let overflow = advertisementData[CBAdvertisementDataOverflowServiceUUIDsKey] as? [CBUUID] ?? []
+    let solicited = advertisementData[CBAdvertisementDataSolicitedServiceUUIDsKey] as? [CBUUID] ?? []
+    let visibleServices = advertised + overflow + solicited
     let name =
       (advertisementData[CBAdvertisementDataLocalNameKey] as? String) ?? peripheral.name ?? ""
+    scanObservationCount &+= 1
+    let serviceDescription = visibleServices.map(\.uuidString).joined(separator: ",")
+    lastObservedAdvertisement = name.isEmpty
+      ? (serviceDescription.isEmpty ? peripheral.identifier.uuidString : serviceDescription)
+      : name
     let normalizedName = name.lowercased()
     let supported =
-      advertised.contains(Self.vhosService)
-      || advertised.contains(Self.factoryService)
+      visibleServices.contains(Self.vhosService)
+      || visibleServices.contains(Self.factoryService)
       || normalizedName.contains("wican")
       || normalizedName.contains("vhos")
+    if supported || scanObservationCount.isMultiple(of: 25) {
+      Self.logger.info(
+        "BLE observation count=\(self.scanObservationCount) name=\(name, privacy: .public) services=\(serviceDescription, privacy: .public) supported=\(supported)"
+      )
+    }
     guard supported else { return }
     central.stopScan()
+    scanFallbackTask?.cancel()
     scanRequested = false
     scanActive = false
+    scanMode = "Matched"
     self.peripheral = peripheral
     peripheral.delegate = self
     discoveredName = name.isEmpty ? peripheral.identifier.uuidString : name
@@ -160,6 +233,12 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     discoveredRSSI = rssi.intValue
     state = .connecting
     transportMessage = "Gateway found; opening BLE link…"
+    Self.logger.info(
+      "Supported gateway selected name=\(self.discoveredName ?? "unknown", privacy: .public) rssi=\(rssi.intValue)"
+    )
+    Self.commissioningTrace(
+      "GATEWAY_MATCH name=\(self.discoveredName ?? "unknown") rssi=\(rssi.intValue)"
+    )
     central.connect(peripheral)
   }
 
@@ -168,22 +247,39 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     connectedAt = Date()
     currentSessionResultStartIndex = experimentResults.count
     transportMessage = "Connected; negotiating gateway contract…"
+    Self.logger.info("ESP32 BLE connection established")
+    Self.commissioningTrace("LINK_CONNECTED id=\(peripheral.identifier.uuidString)")
     peripheral.discoverServices([Self.vhosService, Self.factoryService])
   }
 
   func centralManager(
     _ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?
   ) {
+    if scanAfterPendingCancellation {
+      scanAfterPendingCancellation = false
+      resetConnection()
+      startScan()
+      return
+    }
     scanActive = false
     state = .failed
-    transportMessage = error?.localizedDescription ?? "Gateway connection failed."
+    transportMessage = connectionFailureMessage(error, fallback: "Gateway connection failed.")
+    Self.logger.error("ESP32 BLE connection failed: \(self.transportMessage ?? "unknown", privacy: .public)")
+    Self.commissioningTrace("LINK_FAILED reason=\(transportMessage ?? "unknown")")
   }
 
   func centralManager(
     _ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?
   ) {
+    if scanAfterPendingCancellation {
+      scanAfterPendingCancellation = false
+      resetConnection()
+      startScan()
+      return
+    }
     resetConnection()
-    transportMessage = error?.localizedDescription ?? "Gateway disconnected."
+    transportMessage = connectionFailureMessage(error, fallback: "Gateway disconnected.")
+    Self.logger.warning("ESP32 BLE disconnected: \(self.transportMessage ?? "no error", privacy: .public)")
   }
 
   func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
@@ -257,10 +353,29 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     error: Error?
   ) {
     if let error {
+      let retryCount = notificationSecurityRetryCounts[characteristic.uuid, default: 0]
+      if isSecurityNegotiationError(error), retryCount < Self.securityRetryLimit {
+        let nextRetry = retryCount + 1
+        notificationSecurityRetryCounts[characteristic.uuid] = nextRetry
+        transportMessage =
+          "Pairing with ESP32; secure notification retry \(nextRetry)/\(Self.securityRetryLimit)…"
+        Self.logger.info(
+          "Waiting for BLE pairing before notification retry uuid=\(characteristic.uuid.uuidString, privacy: .public) attempt=\(nextRetry)"
+        )
+        Task { [weak self, weak peripheral] in
+          try? await Task.sleep(for: .seconds(1))
+          guard !Task.isCancelled, let self, let peripheral, self.peripheralConnected else {
+            return
+          }
+          peripheral.setNotifyValue(true, for: characteristic)
+        }
+        return
+      }
       state = .degraded
       transportMessage = error.localizedDescription
       return
     }
+    notificationSecurityRetryCounts[characteristic.uuid] = 0
     switch characteristic.uuid {
     case Self.streamCharacteristic:
       streamNotificationsEnabled = characteristic.isNotifying
@@ -305,6 +420,23 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     if let error {
       pendingCommandChunks.removeAll()
       commandChunksPending = 0
+      if isSecurityNegotiationError(error),
+        handshakeSecurityRetryCount < Self.securityRetryLimit
+      {
+        handshakeSecurityRetryCount += 1
+        handshakeRequested = false
+        transportMessage =
+          "Securing BLE link; handshake retry \(handshakeSecurityRetryCount)/\(Self.securityRetryLimit)…"
+        Self.logger.info(
+          "Waiting for BLE encryption before handshake retry \(self.handshakeSecurityRetryCount)"
+        )
+        Task { [weak self] in
+          try? await Task.sleep(for: .seconds(1))
+          guard !Task.isCancelled else { return }
+          self?.requestHandshakeIfReady()
+        }
+        return
+      }
       state = .degraded
       transportMessage = error.localizedDescription
       return
@@ -343,6 +475,8 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       lastHandshakeReceivedAt = Date()
       state = .vhosConnected
       transportMessage = "VHOS gateway contract active."
+      Self.logger.info("VHOS gateway handshake verified")
+      Self.commissioningTrace("HANDSHAKE_VERIFIED firmware=\(value.firmwareVersion)")
     case .gatewayHealth:
       health = try VHOSJSON.decoder().decode(GatewayHealth.self, from: frame.payload)
       lastHealthReceivedAt = Date()
@@ -399,8 +533,41 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     peripheral.writeValue(next, for: command, type: .withResponse)
   }
 
+  private func isSecurityNegotiationError(_ error: Error) -> Bool {
+    let value = error as NSError
+    return value.domain == CBATTErrorDomain
+      && (value.code == CBATTError.insufficientEncryption.rawValue
+        || value.code == CBATTError.insufficientAuthentication.rawValue)
+  }
+
+  private func connectionFailureMessage(_ error: Error?, fallback: String) -> String {
+    guard let error else { return fallback }
+    let value = error as NSError
+    if value.domain == CBErrorDomain,
+      value.code == CBError.encryptionTimedOut.rawValue
+    {
+      return
+        "BLE encryption timed out. In iPhone Settings → Bluetooth, forget VHOS, then scan again beside the gateway."
+    }
+    if value.domain == CBErrorDomain,
+      value.code == CBError.peerRemovedPairingInformation.rawValue
+    {
+      return "The saved BLE bond was removed; scan again to create a fresh pairing."
+    }
+    return error.localizedDescription
+  }
+
+  private static func commissioningTrace(_ message: String) {
+    guard ProcessInfo.processInfo.environment[commissioningTraceEnvironmentKey] == "1" else {
+      return
+    }
+    FileHandle.standardError.write(Data("VHOS_COMMISSIONING \(message)\n".utf8))
+  }
+
   private func resetConnection() {
+    scanAfterPendingCancellation = false
     central.stopScan()
+    scanFallbackTask?.cancel()
     scanActive = false
     scanRequested = false
     resetTransportSession()
@@ -408,12 +575,15 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   }
 
   private func resetTransportSession() {
+    scanFallbackTask?.cancel()
     peripheral = nil
     command = nil
     streamDecoder = GatewayFrameStreamDecoder()
     pendingCommandChunks.removeAll()
     commandChunksPending = 0
     handshakeRequested = false
+    handshakeSecurityRetryCount = 0
+    notificationSecurityRetryCounts.removeAll()
     peripheralConnected = false
     connectedAt = nil
     vhosServiceDiscovered = false

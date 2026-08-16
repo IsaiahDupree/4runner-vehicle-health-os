@@ -222,7 +222,11 @@ struct SystemStatusView: View {
       StatusIndicator(
         "transport.scan", title: "Gateway scan",
         value: gateway.scanActive ? "SCANNING" : (gateway.discoveredName == nil ? "IDLE" : "FOUND"),
-        detail: gateway.discoveredName ?? "No supported WiCAN/VHOS advertisement selected",
+        detail: gateway.discoveredName
+          ?? gateway.lastObservedAdvertisement.map {
+            "Observed \(gateway.scanObservationCount) advertisements; latest: \($0)"
+          }
+          ?? "No BLE advertisements observed yet (\(gateway.scanMode))",
         level: gateway.scanActive ? .active : (gateway.discoveredName == nil ? .pending : .pass)),
       StatusIndicator(
         "transport.peripheral", title: "ESP32 BLE link",
@@ -232,8 +236,8 @@ struct SystemStatusView: View {
       StatusIndicator(
         "transport.rssi", title: "Discovery signal",
         value: gateway.discoveredRSSI.map { "\($0) dBm" } ?? "UNAVAILABLE",
-        detail: "RSSI from the selected gateway advertisement; no health inference is applied",
-        level: gateway.discoveredRSSI == nil ? .pending : .pass),
+        detail: discoverySignalDetail,
+        level: discoverySignalLevel),
       StatusIndicator(
         "transport.vhos-service", title: "VHOS BLE service",
         value: gateway.vhosServiceDiscovered ? "DISCOVERED" : "NOT FOUND",
@@ -693,6 +697,24 @@ struct SystemStatusView: View {
     case "initializing", "unknown", "resetting": .pending
     default: .blocked
     }
+  }
+
+  private var discoverySignalLevel: IndicatorLevel {
+    guard let rssi = gateway.discoveredRSSI else { return .pending }
+    return rssi <= -80 ? .warning : .pass
+  }
+
+  private var discoverySignalDetail: String {
+    guard let rssi = gateway.discoveredRSSI else {
+      return "RSSI is available after a supported gateway advertisement is selected"
+    }
+    if rssi <= -90 {
+      return "Very weak commissioning signal; place the iPhone beside the ESP32 before pairing"
+    }
+    if rssi <= -80 {
+      return "Weak signal; move closer before pairing, evidence transfer, or OTA"
+    }
+    return "RSSI from the selected gateway advertisement; no vehicle-health inference is applied"
   }
 
   private var connectionFailureLevel: IndicatorLevel {
