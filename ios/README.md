@@ -40,10 +40,22 @@ If CoreBluetooth reports `peerRemovedPairingInformation`, the app discards the r
 session once and immediately scans again with a clean, non-restored central. This prevents an old
 restoration object from repeatedly terminating an otherwise valid post-forget connection.
 
-Connections use CoreBluetooth's system auto-reconnect option and state-restoration support. If the
-system cannot keep a pending reconnect, the app retries the saved peripheral at 1, 2, 4, 8, 15,
-and then 30-second intervals until the user explicitly disconnects. Ordinary radio loss, app
-backgrounding, and gateway restarts therefore do not require removing the saved BLE bond.
+Connections use CoreBluetooth state restoration plus one app-managed reconnect policy. The app
+retries the saved peripheral at 1, 2, 4, 8, 15, and then 30-second intervals until the user
+explicitly disconnects. The CoreBluetooth system auto-reconnect option is intentionally disabled:
+physical testing showed that it could reconnect immediately while the app's bounded retry was
+pending, creating overlapping connect attempts and a rapid timeout cycle. Ordinary radio loss,
+app backgrounding, and gateway restarts still do not require removing the saved BLE bond.
+
+State restoration treats `.connected` and `.connecting` peripherals as live transport state. The
+app resumes service discovery directly instead of issuing a duplicate connect request or scanning
+for a gateway that cannot advertise while connected. Before scanning, it also checks for a
+system-connected peripheral exposing either supported service. A six-second GATT discovery
+watchdog cancels an unresponsive restored link and reconnects with the existing bond. Reconnect
+backoff resets only after the versioned VHOS handshake succeeds, not after a transient radio link.
+
+The August 16, 2026 commissioning incident and physical validation record are documented in
+[`docs/development/BLE-RESTORATION-INCIDENT-2026-08-16.md`](../docs/development/BLE-RESTORATION-INCIDENT-2026-08-16.md).
 
 ## Build
 
