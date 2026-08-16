@@ -1,0 +1,85 @@
+schema_version = "1.0.0"
+
+[[module]]
+name = "app"
+responsibility = "Compose navigation, lifecycle, dependency wiring"
+depends_on = ["vehicle-domain", "ui-drive", "ui-garage"]
+starts_in = "E1"
+
+[[module]]
+name = "vehicle-domain"
+responsibility = "Vehicle, component, lifecycle, maintenance, finding, and typed identity models"
+depends_on = []
+starts_in = "E1"
+
+[[module]]
+name = "gateway-protocol"
+responsibility = "ADR-0001 framing, protobuf payloads, handshake, transport-neutral connection state"
+depends_on = ["vehicle-domain"]
+starts_in = "E3"
+
+[[module]]
+name = "signal-registry"
+responsibility = "Versioned Vehicle Signal Pack parsing, deterministic decoding, units, quality, freshness"
+depends_on = ["vehicle-domain", "gateway-protocol"]
+starts_in = "E4"
+
+[[module]]
+name = "capture"
+responsibility = "Raw bundle persistence, manifest integrity, replay source, capture sessions"
+depends_on = ["vehicle-domain", "gateway-protocol"]
+starts_in = "E3"
+
+[[module]]
+name = "timeseries"
+responsibility = "Signal persistence, downsampling, lifecycle/trip queries, data-gap markers"
+depends_on = ["vehicle-domain"]
+starts_in = "E3"
+
+[[module]]
+name = "maintenance"
+responsibility = "Versioned schedule evaluation, component lifecycle, service and inspection logic"
+depends_on = ["vehicle-domain"]
+starts_in = "E5"
+
+[[module]]
+name = "equations"
+responsibility = "Declarative runtime, immutable definitions, exact calculation runs, lineage and confidence"
+depends_on = ["vehicle-domain", "timeseries"]
+starts_in = "E6"
+
+[[module]]
+name = "diagnostics"
+responsibility = "DTCs, findings, experiment scoring, gateway-health evidence"
+depends_on = ["vehicle-domain", "capture", "signal-registry"]
+starts_in = "E8"
+
+[[module]]
+name = "ui-drive"
+responsibility = "Low-distraction moving-vehicle surfaces and concise deterministic alerts"
+depends_on = ["vehicle-domain"]
+starts_in = "E7"
+
+[[module]]
+name = "ui-garage"
+responsibility = "Maintenance, timeline, signal explorer, equation inspector, diagnostics, OTA"
+depends_on = ["vehicle-domain"]
+starts_in = "E7"
+
+[[module]]
+name = "ai"
+responsibility = "Optional read-only provider abstraction and evidence-bound claim contracts"
+depends_on = ["vehicle-domain", "equations", "diagnostics"]
+starts_in = "E11"
+
+[[module]]
+name = "export"
+responsibility = "Checksum-verifiable backup, import/conflict handling, mechanic handoff"
+depends_on = ["vehicle-domain", "capture"]
+starts_in = "E12"
+
+[[module]]
+name = "test-replay"
+responsibility = "Golden bundles, simulator source, deterministic end-to-end replay assertions"
+depends_on = ["capture", "signal-registry", "maintenance", "equations"]
+starts_in = "E3"

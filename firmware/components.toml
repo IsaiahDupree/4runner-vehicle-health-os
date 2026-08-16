@@ -1,0 +1,41 @@
+schema_version = "1.0.0"
+
+[[component]]
+name = "platform"
+responsibility = "Hardware revision, protected power state, reset reason, watchdog, monotonic clock"
+starts_in = "E2"
+
+[[component]]
+name = "bus-manager"
+responsibility = "TWAI listen-only initialization, conservative filters, receive queue, alerts, bus-off accounting and recovery"
+starts_in = "E2"
+
+[[component]]
+name = "safety-policy"
+responsibility = "Default-deny transmission gate, moving-state policy, rate limits, experiment context, allowlist lookup"
+starts_in = "E2"
+
+[[component]]
+name = "diagnostic-requester"
+responsibility = "Execute only configuration-signed, firmware-resident read requests authorized by safety-policy"
+starts_in = "E4"
+
+[[component]]
+name = "capture"
+responsibility = "Sequence, timestamps, raw records, markers, ring-buffer/storage accounting and capture manifests"
+starts_in = "E2"
+
+[[component]]
+name = "transport"
+responsibility = "ADR-0001 frames, BLE baseline, flow control, CRC32C, negotiation and reconnect accounting"
+starts_in = "E2"
+
+[[component]]
+name = "health"
+responsibility = "Uptime, reset, queue, drop, bus-error, storage, voltage/power and transport counters"
+starts_in = "E2"
+
+[[component]]
+name = "ota"
+responsibility = "Signed A/B application/config activation, post-boot self-test, validate or rollback"
+starts_in = "E10"

@@ -1,0 +1,30 @@
+name: E0 contracts and replay
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install tooling
+        run: python -m pip install -e './tooling[test]'
+      - name: Validate schemas
+        run: vhos contracts check
+      - name: Run tests
+        run: pytest
+      - name: Exercise capture and replay CLI
+        run: |
+          vhos simulate --scenario cold-start-idle --output build/ci-capture
+          vhos validate-bundle build/ci-capture
+          vhos replay build/ci-capture --output build/ci-replay.ndjson

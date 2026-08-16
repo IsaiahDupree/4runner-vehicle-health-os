@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/calculation-run.schema.json",
+  "title": "Calculation Run v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "contract_version",
+    "calculation_id",
+    "vehicle_id",
+    "metric_id",
+    "equation",
+    "versions",
+    "inputs",
+    "intermediates",
+    "output",
+    "confidence",
+    "confidence_factors",
+    "quality_notes",
+    "executed_at"
+  ],
+  "properties": {
+    "contract": {"const": "calculation.run"},
+    "contract_version": {"const": "1.0.0"},
+    "calculation_id": {"$ref": "common.schema.json#/$defs/calculationId"},
+    "vehicle_id": {"$ref": "common.schema.json#/$defs/vehicleId"},
+    "metric_id": {"$ref": "common.schema.json#/$defs/semanticId"},
+    "equation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["equation_id", "version"],
+      "properties": {
+        "equation_id": {"$ref": "common.schema.json#/$defs/semanticId"},
+        "version": {"$ref": "common.schema.json#/$defs/semanticVersion"}
+      }
+    },
+    "versions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["vehicle_config_pack", "equation_contract", "runtime"],
+      "properties": {
+        "vehicle_config_pack": {"$ref": "common.schema.json#/$defs/semanticVersion"},
+        "signal_pack": {"$ref": "common.schema.json#/$defs/semanticVersion"},
+        "equation_contract": {"$ref": "common.schema.json#/$defs/semanticVersion"},
+        "runtime": {"$ref": "common.schema.json#/$defs/semanticVersion"}
+      }
+    },
+    "inputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "value", "unit", "evidence_ref", "quality"],
+        "properties": {
+          "name": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+          "value": {"type": "number"},
+          "unit": {"$ref": "common.schema.json#/$defs/unit"},
+          "evidence_ref": {"$ref": "common.schema.json#/$defs/evidenceRef"},
+          "quality": {"$ref": "common.schema.json#/$defs/quality"}
+        }
+      }
+    },
+    "intermediates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "value", "unit"],
+        "properties": {
+          "name": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+          "value": {"type": "number"},
+          "unit": {"$ref": "common.schema.json#/$defs/unit"}
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "unit", "truth_boundary"],
+      "properties": {
+        "value": {"type": "number"},
+        "unit": {"$ref": "common.schema.json#/$defs/unit"},
+        "truth_boundary": {"type": "string", "enum": ["MEASURED", "ESTIMATED", "SCHEDULED", "INSPECTION", "HYPOTHESIS"]}
+      }
+    },
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "confidence_factors": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"type": "number", "minimum": 0, "maximum": 1}
+    },
+    "quality_notes": {"type": "array", "items": {"type": "string", "maxLength": 500}},
+    "recalculation_of": {"$ref": "common.schema.json#/$defs/calculationId"},
+    "executed_at": {"$ref": "common.schema.json#/$defs/wallTime"}
+  }
+}

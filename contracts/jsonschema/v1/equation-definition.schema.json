@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/equation-definition.schema.json",
+  "title": "Equation Definition v1",
+  "$defs": {
+    "expressionNode": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "value"],
+          "properties": {
+            "kind": {"const": "literal"},
+            "value": {"type": "number"}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "name"],
+          "properties": {
+            "kind": {"const": "input"},
+            "name": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "name"],
+          "properties": {
+            "kind": {"const": "constant"},
+            "name": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "operator", "arguments"],
+          "properties": {
+            "kind": {"const": "operation"},
+            "operator": {
+              "type": "string",
+              "enum": ["add", "subtract", "multiply", "divide", "max", "min", "abs", "mean", "geometric_mean", "clamp", "slope", "integral_positive_excess"]
+            },
+            "arguments": {
+              "type": "array",
+              "minItems": 1,
+              "items": {"$ref": "#/$defs/expressionNode"}
+            }
+          }
+        }
+      ]
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "contract_version",
+    "equation_id",
+    "version",
+    "human_explanation",
+    "expression",
+    "inputs",
+    "constants",
+    "output",
+    "confidence_model",
+    "applicability",
+    "validation_status",
+    "reset_dependencies",
+    "release_notes",
+    "released_at"
+  ],
+  "properties": {
+    "contract": {"const": "equation.definition"},
+    "contract_version": {"const": "1.0.0"},
+    "equation_id": {"$ref": "common.schema.json#/$defs/semanticId"},
+    "version": {"$ref": "common.schema.json#/$defs/semanticVersion"},
+    "human_explanation": {"type": "string", "minLength": 1, "maxLength": 2000},
+    "expression": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["language", "ast"],
+      "properties": {
+        "language": {"const": "vhos-expression-1"},
+        "ast": {"$ref": "#/$defs/expressionNode"}
+      }
+    },
+    "inputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "unit", "maximum_age_ms", "accepted_quality"],
+        "properties": {
+          "name": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+          "unit": {"$ref": "common.schema.json#/$defs/unit"},
+          "maximum_age_ms": {"type": "integer", "minimum": 0},
+          "accepted_quality": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"$ref": "common.schema.json#/$defs/quality"},
+            "uniqueItems": true
+          }
+        }
+      }
+    },
+    "constants": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "value", "unit", "provenance"],
+        "properties": {
+          "name": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+          "value": {"type": "number"},
+          "unit": {"$ref": "common.schema.json#/$defs/unit"},
+          "provenance": {"type": "string", "minLength": 1, "maxLength": 500}
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["unit", "truth_boundary"],
+      "properties": {
+        "unit": {"$ref": "common.schema.json#/$defs/unit"},
+        "minimum": {"type": "number"},
+        "maximum": {"type": "number"},
+        "truth_boundary": {"type": "string", "enum": ["MEASURED", "ESTIMATED", "SCHEDULED", "INSPECTION", "HYPOTHESIS"]}
+      }
+    },
+    "confidence_model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["equation_id", "version", "factors"],
+      "properties": {
+        "equation_id": {"$ref": "common.schema.json#/$defs/semanticId"},
+        "version": {"$ref": "common.schema.json#/$defs/semanticVersion"},
+        "factors": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "enum": ["SOURCE_QUALITY", "FRESHNESS", "COVERAGE", "MODEL_VALIDATION", "CALIBRATION_QUALITY"]},
+          "uniqueItems": true
+        }
+      }
+    },
+    "applicability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["vehicle_config_pack", "conditions"],
+      "properties": {
+        "vehicle_config_pack": {"type": "string", "minLength": 1, "maxLength": 160},
+        "conditions": {"type": "array", "items": {"type": "string", "minLength": 1, "maxLength": 300}}
+      }
+    },
+    "validation_status": {"$ref": "common.schema.json#/$defs/validationStatus"},
+    "reset_dependencies": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/semanticId"}, "uniqueItems": true},
+    "release_notes": {"type": "string", "minLength": 1, "maxLength": 2000},
+    "released_at": {"$ref": "common.schema.json#/$defs/wallTime"}
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/raw-observation.schema.json",
+  "title": "Raw Observation v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "contract_version",
+    "observation_id",
+    "vehicle_id",
+    "capture_id",
+    "sequence",
+    "observed_at_monotonic_us",
+    "wall_time",
+    "source",
+    "payload",
+    "quality",
+    "versions"
+  ],
+  "properties": {
+    "contract": {"const": "raw.observation"},
+    "contract_version": {"const": "1.0.0"},
+    "observation_id": {"$ref": "common.schema.json#/$defs/observationId"},
+    "vehicle_id": {"$ref": "common.schema.json#/$defs/vehicleId"},
+    "capture_id": {"$ref": "common.schema.json#/$defs/captureId"},
+    "sequence": {"type": "integer", "minimum": 0},
+    "observed_at_monotonic_us": {"type": "integer", "minimum": 0},
+    "wall_time": {"$ref": "common.schema.json#/$defs/wallTime"},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "source_id", "channel"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["CAN_FRAME", "DIAGNOSTIC_RESPONSE", "ADDED_SENSOR", "SIMULATOR"]
+        },
+        "source_id": {"type": "string", "minLength": 1, "maxLength": 128},
+        "channel": {"type": "string", "minLength": 1, "maxLength": 128},
+        "bus_index": {"type": "integer", "minimum": 0, "maximum": 255},
+        "arbitration_id": {"type": "integer", "minimum": 0, "maximum": 536870911},
+        "extended_id": {"type": "boolean"}
+      }
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["encoding", "data", "sha256"],
+      "properties": {
+        "encoding": {"type": "string", "enum": ["HEX"]},
+        "data": {"type": "string", "pattern": "^(?:[0-9a-f]{2})*$", "maxLength": 8192},
+        "sha256": {"$ref": "common.schema.json#/$defs/sha256"}
+      }
+    },
+    "quality": {"$ref": "common.schema.json#/$defs/quality"},
+    "versions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source"],
+      "properties": {
+        "source": {"$ref": "common.schema.json#/$defs/semanticVersion"},
+        "gateway_firmware": {"$ref": "common.schema.json#/$defs/semanticVersion"},
+        "gateway_config": {"$ref": "common.schema.json#/$defs/semanticVersion"},
+        "transport_protocol": {"$ref": "common.schema.json#/$defs/semanticVersion"}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"source": {"properties": {"kind": {"const": "CAN_FRAME"}}}}
+      },
+      "then": {
+        "properties": {
+          "source": {"required": ["bus_index", "arbitration_id", "extended_id"]}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"source": {"properties": {"kind": {"const": "SIMULATOR"}}}}
+      },
+      "then": {
+        "properties": {
+          "source": {
+            "properties": {
+              "source_id": {"pattern": "^sim\\."},
+              "channel": {"pattern": "^sim\\."}
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/signal-sample.schema.json",
+  "title": "Signal Sample v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "contract_version",
+    "sample_id",
+    "vehicle_id",
+    "observation_id",
+    "signal_id",
+    "value",
+    "unit",
+    "observed_at_monotonic_us",
+    "wall_time",
+    "quality",
+    "source",
+    "versions"
+  ],
+  "properties": {
+    "contract": {"const": "signal.sample"},
+    "contract_version": {"const": "1.0.0"},
+    "sample_id": {"$ref": "common.schema.json#/$defs/sampleId"},
+    "vehicle_id": {"$ref": "common.schema.json#/$defs/vehicleId"},
+    "session_id": {"$ref": "common.schema.json#/$defs/sessionId"},
+    "observation_id": {"$ref": "common.schema.json#/$defs/observationId"},
+    "signal_id": {"$ref": "common.schema.json#/$defs/semanticId"},
+    "value": {"type": "number"},
+    "unit": {"$ref": "common.schema.json#/$defs/unit"},
+    "observed_at_monotonic_us": {"type": "integer", "minimum": 0},
+    "wall_time": {"$ref": "common.schema.json#/$defs/wallTime"},
+    "quality": {"$ref": "common.schema.json#/$defs/quality"},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "decoder_id"],
+      "properties": {
+        "kind": {"type": "string", "enum": ["VEHICLE", "ADDED_SENSOR", "SIMULATOR", "MANUAL"]},
+        "decoder_id": {"$ref": "common.schema.json#/$defs/semanticId"}
+      }
+    },
+    "versions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decoder"],
+      "properties": {
+        "decoder": {"$ref": "common.schema.json#/$defs/semanticVersion"},
+        "signal_pack": {"$ref": "common.schema.json#/$defs/semanticVersion"}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"source": {"properties": {"kind": {"const": "SIMULATOR"}}}}},
+      "then": {"properties": {"signal_id": {"pattern": "^sim\\."}}}
+    }
+  ]
+}
