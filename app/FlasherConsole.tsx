@@ -8,8 +8,8 @@ type ReleaseManifest = {
   release: string;
   channel: "development" | "stable";
   publishedAt: string;
-  chipFamily: "ESP32-S3";
-  hardwareFamily: "WiCAN-OBD-PRO";
+  chipFamily: "ESP32-S3" | "ESP32";
+  hardwareFamily: "WiCAN-OBD-PRO" | "MRDIY-CAN-SHIELD";
   hardwareRevision: string;
   upstreamTag: string;
   sourceCommit: string;
@@ -23,10 +23,56 @@ type ReleaseManifest = {
   };
 };
 
+type TargetId = "mrdiy-esp32-v13" | "wican-pro-esp32s3";
+
+type ProvisioningTarget = {
+  id: TargetId;
+  label: string;
+  shortLabel: string;
+  chipFamily: ReleaseManifest["chipFamily"];
+  manifestUrl: string;
+  baudrate: number;
+  connection: string;
+  requiredBoard: string;
+  confirmation: string;
+  backupPrefix: string;
+};
+
 type Stage = "idle" | "connecting" | "connected" | "backing-up" | "ready" | "flashing" | "complete" | "error";
 
-const MANIFEST_URL = "/firmware/manifest.json";
-const SUPPORTED_CHIP = "ESP32-S3";
+const TARGETS: ProvisioningTarget[] = [
+  {
+    id: "mrdiy-esp32-v13",
+    label: "Classic ESP32 + MrDIY CAN Shield v1.3+",
+    shortLabel: "MRDIY ESP32",
+    chipFamily: "ESP32",
+    manifestUrl: "/firmware/manifest-mrdiy-esp32-v13.json",
+    baudrate: 230400,
+    connection: "Connect the ESP32 DevKit USB data port. The shield pinout must be v1.3+.",
+    requiredBoard: "ESP32-D0WDQ6 + MrDIY CAN Shield v1.3+; RX GPIO 4 / TX GPIO 5",
+    confirmation: "I confirm this is a classic ESP32 with MrDIY CAN Shield v1.3+ and the full-flash backup is stored safely.",
+    backupPrefix: "mrdiy-esp32-v13-factory-backup",
+  },
+  {
+    id: "wican-pro-esp32s3",
+    label: "ESP32-S3 + MeatPi WiCAN Pro",
+    shortLabel: "WICAN PRO",
+    chipFamily: "ESP32-S3",
+    manifestUrl: "/firmware/manifest-wican-pro-esp32s3.json",
+    baudrate: 460800,
+    connection: "Connect USB-C data while the WiCAN Pro is powered as specified by MeatPi.",
+    requiredBoard: "MeatPi MP-WICAN-PRO ESP32-S3; verify the board revision physically",
+    confirmation: "I confirm this is a WiCAN Pro ESP32-S3 and the full-flash backup is stored safely.",
+    backupPrefix: "wican-pro-factory-backup",
+  },
+];
+
+function matchesTarget(chip: string | null, target: ProvisioningTarget | null) {
+  if (!chip || !target) return false;
+  const normalized = chip.toUpperCase();
+  if (target.chipFamily === "ESP32-S3") return normalized.includes("ESP32-S3");
+  return normalized.includes("ESP32") && !normalized.includes("ESP32-S");
+}
 
 function formatBytes(value: number | null) {
   if (value === null) return "—";
@@ -57,6 +103,7 @@ function timestamp() {
 }
 
 export function FlasherConsole() {
+  const [selectedTargetId, setSelectedTargetId] = useState<TargetId | null>(null);
   const [manifest, setManifest] = useState<ReleaseManifest | null>(null);
   const [manifestError, setManifestError] = useState<string | null>(null);
   const [stage, setStage] = useState<Stage>("idle");
@@ -75,7 +122,8 @@ export function FlasherConsole() {
 
   const serialSupported = typeof navigator !== "undefined" && "serial" in navigator;
   const secureContext = typeof window !== "undefined" && window.isSecureContext;
-  const chipMatches = chip?.toUpperCase().includes(SUPPORTED_CHIP) ?? false;
+  const selectedTarget = TARGETS.find((target) => target.id === selectedTargetId) ?? null;
+  const chipMatches = matchesTarget(chip, selectedTarget);
   const releaseVerified = Boolean(manifest && !manifestError);
 
   const appendLog = useCallback((line: string) => {
@@ -84,14 +132,16 @@ export function FlasherConsole() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch(MANIFEST_URL, { cache: "no-store" })
+    const target = TARGETS.find((candidate) => candidate.id === selectedTargetId);
+    if (!target) return;
+    fetch(target.manifestUrl, { cache: "no-store" })
       .then(async (response) => {
         if (!response.ok) throw new Error(`release manifest unavailable (${response.status})`);
         return (await response.json()) as ReleaseManifest;
       })
       .then((value) => {
         if (cancelled) return;
-        if (value.schemaVersion !== "1.0.0" || value.chipFamily !== SUPPORTED_CHIP) {
+        if (value.schemaVersion !== "1.0.0" || value.chipFamily !== target.chipFamily) {
           throw new Error("release manifest target is not supported");
         }
         setManifest(value);
@@ -106,7 +156,7 @@ export function FlasherConsole() {
     return () => {
       cancelled = true;
     };
-  }, [appendLog]);
+  }, [appendLog, selectedTargetId]);
 
   const terminal = useMemo(
     () => ({
@@ -117,8 +167,20 @@ export function FlasherConsole() {
     [appendLog],
   );
 
+  function selectTarget(targetId: TargetId) {
+    setSelectedTargetId(targetId);
+    setManifest(null);
+    setManifestError(null);
+    setHardwareConfirmed(false);
+    setBackupComplete(false);
+    setBackupHash(null);
+    setRecoveryFile(null);
+    setProgress(0);
+    appendLog(`Selected ${TARGETS.find((target) => target.id === targetId)?.label}.`);
+  }
+
   async function connect() {
-    if (!serialSupported || !secureContext) return;
+    if (!serialSupported || !secureContext || !selectedTarget) return;
     setStage("connecting");
     setProgress(0);
     try {
@@ -127,7 +189,7 @@ export function FlasherConsole() {
       const transport = new Transport(port, false, true);
       const loader = new ESPLoader({
         transport,
-        baudrate: 460800,
+        baudrate: selectedTarget.baudrate,
         romBaudrate: 115200,
         terminal,
       });
@@ -137,11 +199,12 @@ export function FlasherConsole() {
       transportRef.current = transport;
       setChip(detected);
       setFlashBytes(capacity);
-      setStage(detected.toUpperCase().includes(SUPPORTED_CHIP) ? "connected" : "error");
+      const detectedMatches = matchesTarget(detected, selectedTarget);
+      setStage(detectedMatches ? "connected" : "error");
       appendLog(
-        detected.toUpperCase().includes(SUPPORTED_CHIP)
+        detectedMatches
           ? `Hardware gate passed: ${detected}, ${formatBytes(capacity)} flash.`
-          : `Hardware gate failed: detected ${detected}; required ${SUPPORTED_CHIP}.`,
+          : `Hardware gate failed: detected ${detected}; selected target requires ${selectedTarget.chipFamily}.`,
       );
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "unable to open the serial device";
@@ -160,6 +223,7 @@ export function FlasherConsole() {
       setFlashBytes(null);
       setBackupComplete(false);
       setBackupHash(null);
+      setHardwareConfirmed(false);
       setStage("idle");
       appendLog("Serial session closed.");
     }
@@ -180,7 +244,7 @@ export function FlasherConsole() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `wican-pro-factory-backup-${new Date().toISOString().replaceAll(":", "-")}-${digest.slice(0, 12)}.bin`;
+      link.download = `${selectedTarget?.backupPrefix ?? "esp32-factory-backup"}-${new Date().toISOString().replaceAll(":", "-")}-${digest.slice(0, 12)}.bin`;
       link.click();
       URL.revokeObjectURL(url);
       setBackupHash(digest);
@@ -278,15 +342,15 @@ export function FlasherConsole() {
       </header>
 
       <section className="hero" id="top">
-        <div className="eyebrow">ESP32-S3 · WICAN PRO · USB SERIAL</div>
+        <div className="eyebrow">ESP32 · ESP32-S3 · BACKUP-FIRST USB SERIAL</div>
         <h1>Flash with a way back.</h1>
         <p className="heroCopy">
-          A backup-first installer for the 4Runner Vehicle Health OS gateway. It identifies the chip,
-          preserves the full factory flash, verifies the release checksum, then writes the merged image.
+          A hardware-gated installer for the 4Runner Vehicle Health OS gateway. Choose the exact board,
+          preserve its full factory flash, verify the release checksum, then write the matching image.
         </p>
         <div className="heroActions">
-          <button className="primary" onClick={connect} disabled={!serialSupported || !secureContext || stage !== "idle"}>
-            CONNECT WICAN PRO
+          <button className="primary" onClick={connect} disabled={!serialSupported || !secureContext || !selectedTarget || stage !== "idle"}>
+            {selectedTarget ? `CONNECT ${selectedTarget.shortLabel}` : "SELECT HARDWARE BELOW"}
           </button>
           {chip && <button className="secondary" onClick={disconnect}>DISCONNECT</button>}
           <span className="supportNote">
@@ -295,9 +359,36 @@ export function FlasherConsole() {
         </div>
       </section>
 
+      <section className="targetPicker" aria-labelledby="target-heading">
+        <div>
+          <span className="targetIndex">HARDWARE GATE</span>
+          <h2 id="target-heading">Select the board in your hand</h2>
+          <p>The detected chip must match this selection before backup, install, or recovery unlocks.</p>
+        </div>
+        <div className="targetGrid">
+          {TARGETS.map((target) => {
+            const selected = selectedTargetId === target.id;
+            return (
+              <button
+                key={target.id}
+                type="button"
+                className={`targetCard ${selected ? "selected" : ""}`}
+                aria-pressed={selected}
+                disabled={stage !== "idle"}
+                onClick={() => selectTarget(target.id)}
+              >
+                <span>{target.chipFamily}</span>
+                <strong>{target.label}</strong>
+                <small>{target.requiredBoard}</small>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
       <section className="statusRail" aria-label="Provisioning gates">
         <Status index="01" label="Browser" value={serialSupported && secureContext ? "READY" : "BLOCKED"} good={serialSupported && secureContext} />
-        <Status index="02" label="ESP target" value={chip ?? "NOT CONNECTED"} good={chipMatches} />
+        <Status index="02" label="ESP target" value={chip ?? selectedTarget?.chipFamily ?? "SELECT TARGET"} good={chipMatches} />
         <Status index="03" label="Factory backup" value={backupComplete ? "SAVED" : "REQUIRED"} good={backupComplete} />
         <Status index="04" label="Release" value={manifest?.release ?? "UNAVAILABLE"} good={releaseVerified} />
       </section>
@@ -313,11 +404,11 @@ export function FlasherConsole() {
             <div className="stepNumber">01</div>
             <div>
               <h2>Identify the gateway</h2>
-              <p>Connect USB-C data while the WiCAN Pro is powered as specified by MeatPi. The tool enters the ROM loader and rejects non-ESP32-S3 targets.</p>
+              <p>{selectedTarget?.connection ?? "Select the exact hardware target above before connecting a serial device."} The ROM loader rejects a chip that does not match the selection.</p>
               <dl>
                 <div><dt>Detected chip</dt><dd>{chip ?? "—"}</dd></div>
                 <div><dt>Flash capacity</dt><dd>{formatBytes(flashBytes)}</dd></div>
-                <div><dt>Required board</dt><dd>MeatPi MP-WICAN-PRO; verify board revision physically</dd></div>
+                <div><dt>Required board</dt><dd>{selectedTarget?.requiredBoard ?? "Select hardware above"}</dd></div>
               </dl>
             </div>
           </article>
@@ -340,8 +431,8 @@ export function FlasherConsole() {
               <h2>Verify and install VHOS</h2>
               <p>The browser checks byte count and SHA-256 from the published manifest before the ESP loader writes address 0. Existing flash parameters are preserved.</p>
               <label className="confirm">
-                <input type="checkbox" checked={hardwareConfirmed} onChange={(event) => setHardwareConfirmed(event.target.checked)} />
-                <span>I confirm this is a WiCAN Pro ESP32-S3 and the factory backup is stored safely.</span>
+                <input type="checkbox" checked={hardwareConfirmed} disabled={!selectedTarget} onChange={(event) => setHardwareConfirmed(event.target.checked)} />
+                <span>{selectedTarget?.confirmation ?? "Select and verify the exact target first."}</span>
               </label>
               <button className="install" onClick={installRelease} disabled={!installReady}>
                 {stage === "flashing" ? `WRITING ${progress}%` : "INSTALL VERIFIED VHOS IMAGE"}
@@ -356,9 +447,9 @@ export function FlasherConsole() {
           <dl className="releaseRecord">
             <div><dt>Version</dt><dd>{manifest?.release ?? "—"}</dd></div>
             <div><dt>Channel</dt><dd>{manifest?.channel ?? "—"}</dd></div>
-            <div><dt>Hardware</dt><dd>{manifest?.hardwareFamily ?? "WiCAN-OBD-PRO"}</dd></div>
+            <div><dt>Hardware</dt><dd>{manifest?.hardwareFamily ?? selectedTarget?.shortLabel ?? "—"}</dd></div>
             <div><dt>ESP-IDF</dt><dd>{manifest?.espIdfVersion ?? "—"}</dd></div>
-            <div><dt>Upstream</dt><dd>{manifest?.upstreamTag ?? "v4.50p"}</dd></div>
+            <div><dt>Upstream</dt><dd>{manifest?.upstreamTag ?? "—"}</dd></div>
             <div><dt>Image</dt><dd>{formatBytes(manifest?.artifact.byteCount ?? null)}</dd></div>
           </dl>
           <div className="checksum">
@@ -384,7 +475,7 @@ export function FlasherConsole() {
 
       <footer>
         <span>NO VEHICLE-BUS TRANSMIT CONTROLS</span>
-        <span>USB FIRST-FLASH · SIGNED WI-FI OTA ACTIVATION PENDING</span>
+        <span>TARGET-GATED USB FIRST-FLASH · WI-FI OTA ACTIVATION PENDING</span>
         <span>GPL-3.0 FIRMWARE SOURCE PUBLISHED</span>
       </footer>
     </main>

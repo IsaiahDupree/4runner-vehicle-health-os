@@ -3,7 +3,7 @@ import { FlasherConsole } from "./FlasherConsole";
 
 export const metadata: Metadata = {
   title: "VHOS Gateway Provisioner",
-  description: "Backup, verify, flash, and recover WiCAN Pro VHOS gateway firmware.",
+  description: "Select, back up, verify, flash, and recover supported VHOS ESP32 gateways.",
 };
 
 export default function Home() {
