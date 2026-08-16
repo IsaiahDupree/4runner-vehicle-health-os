@@ -36,6 +36,10 @@ directs the operator to place the iPhone beside the gateway before pairing. Core
 (`encryptionTimedOut`) is translated into a visible stale-bond recovery instruction instead of an
 opaque transport failure.
 
+If CoreBluetooth reports `peerRemovedPairingInformation`, the app discards the restored central
+session once and immediately scans again with a clean, non-restored central. This prevents an old
+restoration object from repeatedly terminating an otherwise valid post-forget connection.
+
 ## Build
 
 ```bash

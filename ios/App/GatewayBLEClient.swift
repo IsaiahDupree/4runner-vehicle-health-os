@@ -22,6 +22,8 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   private static let autoScanArgument = "--vhos-auto-scan"
   private static let autoScanEnvironmentKey = "VHOS_AUTO_SCAN"
   private static let commissioningTraceEnvironmentKey = "VHOS_COMMISSIONING_TRACE"
+  private static let centralRestoreIdentifier =
+    "com.isaiahdupree.VehicleHealthOS.central.v2"
 
   private var central: CBCentralManager!
   private var peripheral: CBPeripheral?
@@ -31,6 +33,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   private var sequence: UInt64 = 1
   private var scanRequested = false
   private var scanFallbackTask: Task<Void, Never>?
+  private var freshCentralRecoveryAttempted = false
   private var handshakeRequested = false
   private var handshakeSecurityRetryCount = 0
   private var notificationSecurityRetryCounts: [CBUUID: Int] = [:]
@@ -87,7 +90,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       delegate: self,
       queue: .main,
       options: [
-        CBCentralManagerOptionRestoreIdentifierKey: "com.isaiahdupree.VehicleHealthOS.central"
+        CBCentralManagerOptionRestoreIdentifierKey: Self.centralRestoreIdentifier
       ]
     )
     if scanRequested {
@@ -259,6 +262,10 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       scanAfterPendingCancellation = false
       resetConnection()
       startScan()
+      return
+    }
+    if isPeerPairingInformationRemoved(error), !freshCentralRecoveryAttempted {
+      rebuildCentralForFreshPairing()
       return
     }
     scanActive = false
@@ -540,6 +547,26 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         || value.code == CBATTError.insufficientAuthentication.rawValue)
   }
 
+  private func isPeerPairingInformationRemoved(_ error: Error?) -> Bool {
+    guard let error else { return false }
+    let value = error as NSError
+    return value.domain == CBErrorDomain
+      && value.code == CBError.peerRemovedPairingInformation.rawValue
+  }
+
+  private func rebuildCentralForFreshPairing() {
+    freshCentralRecoveryAttempted = true
+    Self.logger.info("Discarding restored CoreBluetooth state after peer removed pairing data")
+    Self.commissioningTrace("CENTRAL_REBUILD reason=peer-removed-pairing-information")
+    central.stopScan()
+    central.delegate = nil
+    resetTransportSession()
+    scanRequested = true
+    state = .scanning
+    transportMessage = "Resetting the Bluetooth session for fresh pairing…"
+    central = CBCentralManager(delegate: self, queue: .main, options: nil)
+  }
+
   private func connectionFailureMessage(_ error: Error?, fallback: String) -> String {
     guard let error else { return fallback }
     let value = error as NSError
@@ -552,7 +579,8 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     if value.domain == CBErrorDomain,
       value.code == CBError.peerRemovedPairingInformation.rawValue
     {
-      return "The saved BLE bond was removed; scan again to create a fresh pairing."
+      return
+        "iPhone still has stale gateway pairing state. Toggle Bluetooth off and on, then scan again."
     }
     return error.localizedDescription
   }
