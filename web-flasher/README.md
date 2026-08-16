@@ -17,9 +17,10 @@ backup.
 - Requires a completed full-flash backup and explicit hardware confirmation
   before enabling installation.
 - Does not expose CAN, K-line, J1850, or OBD transmit controls.
-- The published development firmware is passive/listen-only. Signed Wi-Fi OTA
-  activation and active protocol discovery remain locked pending implementation
-  and physical recovery validation.
+- The published development firmware is passive/listen-only. Physical backup,
+  merged-image, A/B topology, and rollback recovery validation are published with
+  each MrDIY release. Signed Wi-Fi OTA activation and active protocol discovery
+  remain locked pending implementation.
 
 Follow the target-specific connection copy in the provisioner and the hardware
 and bench-power guidance in `../docs/hardware/RECOMMENDED-HARDWARE.md` before
