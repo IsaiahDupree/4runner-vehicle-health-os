@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1.0.0",
+  "release": "v0.1.0-dev.2",
+  "channel": "development",
+  "publishedAt": "2026-08-16T19:24:57Z",
+  "chipFamily": "ESP32",
+  "hardwareFamily": "MRDIY-CAN-SHIELD",
+  "hardwareRevision": "v1.3+ (RX GPIO 4, TX GPIO 5)",
+  "upstreamTag": "main",
+  "sourceCommit": "4187dc6decf731381e3c11c6c7440af98479c99c",
+  "firmwareCommit": "62e48374922f4f6a85dbde6dbf80673a7f35f6d9",
+  "espIdfVersion": "5.5.3",
+  "artifact": {
+    "url": "/firmware/vhos-mrdiy-esp32-v13-v0.1.0-dev.2-merged.bin",
+    "address": 0,
+    "byteCount": 565856,
+    "sha256": "d362a6972240c3da9606237e017e66b384a1985a4551338506cf031e571665a9"
+  }
+}

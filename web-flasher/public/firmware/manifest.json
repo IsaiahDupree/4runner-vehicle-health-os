@@ -1,19 +1,13 @@
 {
   "schemaVersion": "1.0.0",
-  "release": "v0.1.0-dev.1",
-  "channel": "development",
-  "publishedAt": "2026-08-16T18:29:45Z",
-  "chipFamily": "ESP32-S3",
-  "hardwareFamily": "WiCAN-OBD-PRO",
-  "hardwareRevision": "verify physically; upstream firmware reports 1_53",
-  "upstreamTag": "v4.50p",
-  "sourceCommit": "7d312ad76bb9bf1e6cefa887f8d91709c165a86d",
-  "firmwareCommit": "a9687da7b31bd6473f77b8bb684a015d9ed49da7",
-  "espIdfVersion": "5.5.3",
-  "artifact": {
-    "url": "/firmware/vhos-wican-pro-esp32s3-v0.1.0-dev.1-merged.bin",
-    "address": 0,
-    "byteCount": 3545840,
-    "sha256": "e2a9b2c6535f445b5a901f5d642248fd689a253c27b155f98a060d9024a1fcea"
-  }
+  "targets": [
+    {
+      "id": "mrdiy-esp32-v13",
+      "manifestUrl": "/firmware/manifest-mrdiy-esp32-v13.json"
+    },
+    {
+      "id": "wican-pro-esp32s3",
+      "manifestUrl": "/firmware/manifest-wican-pro-esp32s3.json"
+    }
+  ]
 }
