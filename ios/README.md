@@ -40,6 +40,11 @@ If CoreBluetooth reports `peerRemovedPairingInformation`, the app discards the r
 session once and immediately scans again with a clean, non-restored central. This prevents an old
 restoration object from repeatedly terminating an otherwise valid post-forget connection.
 
+Connections use CoreBluetooth's system auto-reconnect option and state-restoration support. If the
+system cannot keep a pending reconnect, the app retries the saved peripheral at 1, 2, 4, 8, 15,
+and then 30-second intervals until the user explicitly disconnects. Ordinary radio loss, app
+backgrounding, and gateway restarts therefore do not require removing the saved BLE bond.
+
 ## Build
 
 ```bash

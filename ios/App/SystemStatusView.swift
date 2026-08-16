@@ -230,9 +230,11 @@ struct SystemStatusView: View {
         level: gateway.scanActive ? .active : (gateway.discoveredName == nil ? .pending : .pass)),
       StatusIndicator(
         "transport.peripheral", title: "ESP32 BLE link",
-        value: gateway.peripheralConnected ? "CONNECTED" : "DISCONNECTED",
+        value: gateway.peripheralConnected
+          ? "CONNECTED" : (gateway.automaticReconnectActive ? "RECONNECTING" : "DISCONNECTED"),
         detail: peripheralDetail,
-        level: gateway.peripheralConnected ? .pass : connectionFailureLevel),
+        level: gateway.peripheralConnected
+          ? .pass : (gateway.automaticReconnectActive ? .active : connectionFailureLevel)),
       StatusIndicator(
         "transport.rssi", title: "Discovery signal",
         value: gateway.discoveredRSSI.map { "\($0) dBm" } ?? "UNAVAILABLE",
@@ -726,6 +728,9 @@ struct SystemStatusView: View {
   }
 
   private var peripheralDetail: String {
+    if gateway.automaticReconnectActive {
+      return "Automatic reconnect attempt \(gateway.reconnectAttemptCount) • \(gateway.discoveredName ?? "saved gateway")"
+    }
     if let name = gateway.discoveredName, let identifier = gateway.discoveredIdentifier {
       return "\(name) • \(identifier)"
     }

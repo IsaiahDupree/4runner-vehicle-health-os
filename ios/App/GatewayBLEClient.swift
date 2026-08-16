@@ -33,7 +33,10 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   private var sequence: UInt64 = 1
   private var scanRequested = false
   private var scanFallbackTask: Task<Void, Never>?
+  private var reconnectTask: Task<Void, Never>?
   private var freshCentralRecoveryAttempted = false
+  private var automaticReconnectEnabled = false
+  private var userRequestedDisconnect = false
   private var handshakeRequested = false
   private var handshakeSecurityRetryCount = 0
   private var notificationSecurityRetryCounts: [CBUUID: Int] = [:]
@@ -77,6 +80,8 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   var health: GatewayHealth?
   var experimentResults: [ProtocolExperimentResult] = []
   var transportMessage: String?
+  var automaticReconnectActive = false
+  var reconnectAttemptCount = 0
 
   var currentSessionExperimentResults: [ProtocolExperimentResult] {
     Array(experimentResults.dropFirst(currentSessionResultStartIndex))
@@ -100,6 +105,12 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   }
 
   func startScan() {
+    reconnectTask?.cancel()
+    automaticReconnectActive = false
+    automaticReconnectEnabled = true
+    userRequestedDisconnect = false
+    reconnectAttemptCount = 0
+    freshCentralRecoveryAttempted = false
     guard !peripheralConnected else {
       transportMessage = "Disconnect the connected gateway before starting another scan."
       return
@@ -147,6 +158,10 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   }
 
   func disconnect() {
+    userRequestedDisconnect = true
+    automaticReconnectEnabled = false
+    automaticReconnectActive = false
+    reconnectTask?.cancel()
     scanAfterPendingCancellation = false
     scanRequested = false
     scanFallbackTask?.cancel()
@@ -188,11 +203,13 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     }
     peripheral = restored
     restored.delegate = self
+    automaticReconnectEnabled = true
+    userRequestedDisconnect = false
     discoveredName = restored.name ?? restored.identifier.uuidString
     discoveredIdentifier = restored.identifier.uuidString
     state = .connecting
     transportMessage = "Restoring the paired gateway connection…"
-    central.connect(restored)
+    connect(restored)
   }
 
   func centralManager(
@@ -242,10 +259,15 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     Self.commissioningTrace(
       "GATEWAY_MATCH name=\(self.discoveredName ?? "unknown") rssi=\(rssi.intValue)"
     )
-    central.connect(peripheral)
+    connect(peripheral)
   }
 
   func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
+    reconnectTask?.cancel()
+    reconnectAttemptCount = 0
+    automaticReconnectActive = false
+    automaticReconnectEnabled = true
+    userRequestedDisconnect = false
     peripheralConnected = true
     connectedAt = Date()
     currentSessionResultStartIndex = experimentResults.count
@@ -268,6 +290,10 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       rebuildCentralForFreshPairing()
       return
     }
+    if automaticReconnectEnabled, !userRequestedDisconnect {
+      scheduleReconnect(to: peripheral, error: error)
+      return
+    }
     scanActive = false
     state = .failed
     transportMessage = connectionFailureMessage(error, fallback: "Gateway connection failed.")
@@ -278,15 +304,17 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   func centralManager(
     _ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?
   ) {
-    if scanAfterPendingCancellation {
-      scanAfterPendingCancellation = false
-      resetConnection()
-      startScan()
-      return
-    }
-    resetConnection()
-    transportMessage = connectionFailureMessage(error, fallback: "Gateway disconnected.")
-    Self.logger.warning("ESP32 BLE disconnected: \(self.transportMessage ?? "no error", privacy: .public)")
+    handleDisconnect(peripheral, isSystemReconnecting: false, error: error)
+  }
+
+  func centralManager(
+    _ central: CBCentralManager,
+    didDisconnectPeripheral peripheral: CBPeripheral,
+    timestamp: CFAbsoluteTime,
+    isReconnecting: Bool,
+    error: Error?
+  ) {
+    handleDisconnect(peripheral, isSystemReconnecting: isReconnecting, error: error)
   }
 
   func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
@@ -554,6 +582,70 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       && value.code == CBError.peerRemovedPairingInformation.rawValue
   }
 
+  private func connect(_ peripheral: CBPeripheral) {
+    self.peripheral = peripheral
+    peripheral.delegate = self
+    central.connect(
+      peripheral,
+      options: [
+        CBConnectPeripheralOptionEnableAutoReconnect: true,
+        CBConnectPeripheralOptionNotifyOnDisconnectionKey: true,
+      ])
+  }
+
+  private func handleDisconnect(
+    _ peripheral: CBPeripheral, isSystemReconnecting: Bool, error: Error?
+  ) {
+    if scanAfterPendingCancellation {
+      scanAfterPendingCancellation = false
+      resetConnection()
+      startScan()
+      return
+    }
+    if userRequestedDisconnect || !automaticReconnectEnabled {
+      resetConnection()
+      transportMessage = "Gateway disconnected by user."
+      return
+    }
+    resetTransportSession(preservingSelection: true)
+    if isSystemReconnecting {
+      automaticReconnectActive = true
+      state = .connecting
+      transportMessage = "Connection interrupted; iPhone is automatically reconnecting…"
+      Self.commissioningTrace("SYSTEM_RECONNECT_ACTIVE")
+      return
+    }
+    scheduleReconnect(to: peripheral, error: error)
+  }
+
+  private func scheduleReconnect(to peripheral: CBPeripheral, error: Error?) {
+    reconnectTask?.cancel()
+    resetTransportSession(preservingSelection: true)
+    self.peripheral = peripheral
+    peripheral.delegate = self
+    reconnectAttemptCount += 1
+    automaticReconnectActive = true
+    state = .connecting
+    let delays = [1, 2, 4, 8, 15, 30]
+    let delay = delays[min(reconnectAttemptCount - 1, delays.count - 1)]
+    let reason = connectionFailureMessage(error, fallback: "BLE link interrupted.")
+    transportMessage =
+      "\(reason) Reconnecting automatically in \(delay) second\(delay == 1 ? "" : "s")…"
+    Self.commissioningTrace(
+      "RECONNECT_SCHEDULED attempt=\(reconnectAttemptCount) delay=\(delay)"
+    )
+    reconnectTask = Task { [weak self, weak peripheral] in
+      try? await Task.sleep(for: .seconds(delay))
+      guard !Task.isCancelled, let self, let peripheral,
+        self.automaticReconnectEnabled, !self.userRequestedDisconnect,
+        self.central.state == .poweredOn
+      else { return }
+      self.transportMessage =
+        "Reconnecting to \(self.discoveredName ?? "the saved gateway")…"
+      self.connect(peripheral)
+    }
+  }
+
   private func rebuildCentralForFreshPairing() {
     freshCentralRecoveryAttempted = true
     Self.logger.info("Discarding restored CoreBluetooth state after peer removed pairing data")
@@ -562,6 +654,8 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     central.delegate = nil
     resetTransportSession()
     scanRequested = true
+    automaticReconnectEnabled = true
+    userRequestedDisconnect = false
     state = .scanning
     transportMessage = "Resetting the Bluetooth session for fresh pairing…"
     central = CBCentralManager(delegate: self, queue: .main, options: nil)
@@ -573,8 +667,10 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     if value.domain == CBErrorDomain,
       value.code == CBError.encryptionTimedOut.rawValue
     {
-      return
-        "BLE encryption timed out. In iPhone Settings → Bluetooth, forget VHOS, then scan again beside the gateway."
+      if let discoveredRSSI, discoveredRSSI <= -80 {
+        return "BLE timed out at \(discoveredRSSI) dBm; move the iPhone closer."
+      }
+      return "BLE encryption timed out."
     }
     if value.domain == CBErrorDomain,
       value.code == CBError.peerRemovedPairingInformation.rawValue
@@ -593,6 +689,8 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   }
 
   private func resetConnection() {
+    reconnectTask?.cancel()
+    automaticReconnectActive = false
     scanAfterPendingCancellation = false
     central.stopScan()
     scanFallbackTask?.cancel()
@@ -602,7 +700,11 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     state = .disconnected
   }
 
-  private func resetTransportSession() {
+  private func resetTransportSession(preservingSelection: Bool = false) {
+    let selectedPeripheral = peripheral
+    let selectedName = discoveredName
+    let selectedIdentifier = discoveredIdentifier
+    let selectedRSSI = discoveredRSSI
     scanFallbackTask?.cancel()
     peripheral = nil
     command = nil
@@ -639,6 +741,12 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     handshake = nil
     health = nil
     currentSessionResultStartIndex = experimentResults.count
+    if preservingSelection {
+      peripheral = selectedPeripheral
+      discoveredName = selectedName
+      discoveredIdentifier = selectedIdentifier
+      discoveredRSSI = selectedRSSI
+    }
   }
 }
 
