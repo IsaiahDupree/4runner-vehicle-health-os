@@ -11,3 +11,7 @@ dist/
 local.properties
 sdkconfig
 sdkconfig.old
+.build/
+.swiftpm/
+DerivedData/
+xcuserdata/

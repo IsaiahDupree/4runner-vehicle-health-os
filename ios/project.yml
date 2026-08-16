@@ -1,0 +1,47 @@
+name: VehicleHealthOS
+options:
+  bundleIdPrefix: com.isaiahdupree
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+packages:
+  VHOSCore:
+    path: Core
+targets:
+  VehicleHealthOS:
+    type: application
+    platform: iOS
+    sources:
+      - App
+    dependencies:
+      - package: VHOSCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.isaiahdupree.VehicleHealthOS
+        PRODUCT_NAME: Vehicle Health OS
+        SWIFT_VERSION: 6.0
+        TARGETED_DEVICE_FAMILY: "1,2"
+        CODE_SIGN_STYLE: Automatic
+        SUPPORTS_MACCATALYST: NO
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: Vehicle Health OS
+        CFBundleShortVersionString: "0.1.0"
+        CFBundleVersion: "1"
+        UILaunchScreen: {}
+        NSBluetoothAlwaysUsageDescription: Vehicle Health OS uses Bluetooth to receive vehicle telemetry and manage the local gateway.
+        NSLocalNetworkUsageDescription: Vehicle Health OS uses the gateway's private Wi-Fi network for verified firmware updates and evidence transfer.
+        UIBackgroundModes:
+          - bluetooth-central
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+schemes:
+  VehicleHealthOS:
+    build:
+      targets:
+        VehicleHealthOS: all
+    run:
+      config: Debug
+    archive:
+      config: Release

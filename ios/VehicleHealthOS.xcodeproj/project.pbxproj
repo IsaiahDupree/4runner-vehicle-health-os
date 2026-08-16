@@ -1,0 +1,354 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		3F0163358C8856B35F097E02 /* VehicleHealthOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54BDEF8D2B05D75290A9451 /* VehicleHealthOSApp.swift */; };
+		433AA4BFB3B8C40F2468E476 /* GatewayBLEClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E12062579AEB4902B49940D /* GatewayBLEClient.swift */; };
+		4BB0541FC93F4D149039411A /* WiFiOTAUploader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 435E1D682EF6B8A4DE0B86F7 /* WiFiOTAUploader.swift */; };
+		50658F6BD96177F3C72D98A4 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ADD085CC4E0D7223092E39A /* AppModel.swift */; };
+		59F8B3E961C8C753425ACF9F /* VHOSCore in Frameworks */ = {isa = PBXBuildFile; productRef = 6616D2E0F2CEB55BF90E491B /* VHOSCore */; };
+		9AF33FDA552C5A8253A86B99 /* KeyStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6A9AAE2238B7F973C0CEA46 /* KeyStore.swift */; };
+		E925A8B64D5731C2E092673A /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDE321369856AF54C6B7946E /* RootView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		2E12062579AEB4902B49940D /* GatewayBLEClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayBLEClient.swift; sourceTree = "<group>"; };
+		435E1D682EF6B8A4DE0B86F7 /* WiFiOTAUploader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiOTAUploader.swift; sourceTree = "<group>"; };
+		5ADD085CC4E0D7223092E39A /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		6B2F2160F66500ABD58B9A93 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		7A2574A71F2C1668EC16FF99 /* VehicleHealthOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = VehicleHealthOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C54BDEF8D2B05D75290A9451 /* VehicleHealthOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleHealthOSApp.swift; sourceTree = "<group>"; };
+		D6A9AAE2238B7F973C0CEA46 /* KeyStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyStore.swift; sourceTree = "<group>"; };
+		EDE321369856AF54C6B7946E /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		F058478C0C2988386954DDC9 /* Core */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Core; path = Core; sourceTree = SOURCE_ROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		0E76943D73DEADCE831ACAF6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				59F8B3E961C8C753425ACF9F /* VHOSCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		655BA768D74F8441FAD5BE7F = {
+			isa = PBXGroup;
+			children = (
+				95010B41D132916B88921B84 /* App */,
+				84107A1742ED7056C65222D4 /* Packages */,
+				73955CB501E1CDAFFAFAC668 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		73955CB501E1CDAFFAFAC668 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				7A2574A71F2C1668EC16FF99 /* VehicleHealthOS.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		84107A1742ED7056C65222D4 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				F058478C0C2988386954DDC9 /* Core */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		95010B41D132916B88921B84 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				5ADD085CC4E0D7223092E39A /* AppModel.swift */,
+				2E12062579AEB4902B49940D /* GatewayBLEClient.swift */,
+				6B2F2160F66500ABD58B9A93 /* Info.plist */,
+				D6A9AAE2238B7F973C0CEA46 /* KeyStore.swift */,
+				EDE321369856AF54C6B7946E /* RootView.swift */,
+				C54BDEF8D2B05D75290A9451 /* VehicleHealthOSApp.swift */,
+				435E1D682EF6B8A4DE0B86F7 /* WiFiOTAUploader.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		5C5ECB40116D553F668D211E /* VehicleHealthOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 478546126133D3E966073A85 /* Build configuration list for PBXNativeTarget "VehicleHealthOS" */;
+			buildPhases = (
+				8D827AD2F162128EEECE29EA /* Sources */,
+				0E76943D73DEADCE831ACAF6 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = VehicleHealthOS;
+			packageProductDependencies = (
+				6616D2E0F2CEB55BF90E491B /* VHOSCore */,
+			);
+			productName = VehicleHealthOS;
+			productReference = 7A2574A71F2C1668EC16FF99 /* VehicleHealthOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		D7FBF38CC1A066A7A1E14C48 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					5C5ECB40116D553F668D211E = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 99713B34A4B4FA98FD0CD4CA /* Build configuration list for PBXProject "VehicleHealthOS" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 655BA768D74F8441FAD5BE7F;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				50E4FA702F8495CD70E78621 /* XCLocalSwiftPackageReference "Core" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 73955CB501E1CDAFFAFAC668 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				5C5ECB40116D553F668D211E /* VehicleHealthOS */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		8D827AD2F162128EEECE29EA /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				50658F6BD96177F3C72D98A4 /* AppModel.swift in Sources */,
+				433AA4BFB3B8C40F2468E476 /* GatewayBLEClient.swift in Sources */,
+				9AF33FDA552C5A8253A86B99 /* KeyStore.swift in Sources */,
+				E925A8B64D5731C2E092673A /* RootView.swift in Sources */,
+				3F0163358C8856B35F097E02 /* VehicleHealthOSApp.swift in Sources */,
+				4BB0541FC93F4D149039411A /* WiFiOTAUploader.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		408951D1BB6E4C6C12CBC9E7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		51BF96D97F1EC6787BF88259 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				INFOPLIST_FILE = App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.isaiahdupree.VehicleHealthOS;
+				PRODUCT_NAME = "Vehicle Health OS";
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		6C0CB611D7FF1A8F6732F962 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		92241D66F66F310C80C956B5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				INFOPLIST_FILE = App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.isaiahdupree.VehicleHealthOS;
+				PRODUCT_NAME = "Vehicle Health OS";
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		478546126133D3E966073A85 /* Build configuration list for PBXNativeTarget "VehicleHealthOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				92241D66F66F310C80C956B5 /* Debug */,
+				51BF96D97F1EC6787BF88259 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		99713B34A4B4FA98FD0CD4CA /* Build configuration list for PBXProject "VehicleHealthOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				408951D1BB6E4C6C12CBC9E7 /* Debug */,
+				6C0CB611D7FF1A8F6732F962 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		50E4FA702F8495CD70E78621 /* XCLocalSwiftPackageReference "Core" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Core;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		6616D2E0F2CEB55BF90E491B /* VHOSCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = VHOSCore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = D7FBF38CC1A066A7A1E14C48 /* Project object */;
+}

@@ -2,11 +2,11 @@
 
 These tickets are ordered to preserve the PRD's truth and safety boundaries.
 
-## E1 — Android local truth store
+## E1 — iOS local truth store
 
-1. Record Android application ID, minimum API, installed head-unit OS/API, encryption posture, and signing environments in an ADR.
-2. Create the Gradle project and `vehicle-domain` module with typed IDs/enums matching E0 contracts.
-3. Implement Room entities and migrations for Vehicle, Component, InstalledPart lifecycle, MaintenanceEvent, Inspection, Attachment metadata, and AuditEvent.
+1. Record the iOS bundle ID, minimum iOS version, supported iPhone hardware, encryption posture, release keys, and signing environments in an ADR.
+2. Extend `ios/Core` domain types to cover the E0 identifiers and lifecycle contracts without coupling them to SwiftUI or CoreBluetooth.
+3. Implement SwiftData/Core Data entities and migrations for Vehicle, Component, InstalledPart lifecycle, MaintenanceEvent, Inspection, Attachment metadata, and AuditEvent.
 4. Enforce append-only correction by amendment links; add transaction and migration tests.
 5. Implement profile applicability state so engine/drivetrain-specific rules remain inactive while unresolved.
 6. Add repository interfaces shared by live, replay, and simulator sources; do not couple UI to BLE.
@@ -20,7 +20,7 @@ These tickets are ordered to preserve the PRD's truth and safety boundaries.
 5. Prove there is no transmit path in passive firmware configuration.
 6. Capture bench traffic and validate drop/error accounting before touching the vehicle.
 
-## E3 — Android ingest and replay
+## E3 — iOS ingest and replay
 
 1. Implement transport-neutral gateway connection state and version handshake.
 2. Validate frame header/length/CRC before protobuf allocation/parse.

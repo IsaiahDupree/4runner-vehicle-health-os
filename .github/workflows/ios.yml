@@ -1,0 +1,31 @@
+name: iOS core and app
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Test portable Swift core
+        run: swift test --package-path ios/Core
+      - name: Generate Xcode project
+        working-directory: ios
+        run: xcodegen generate --spec project.yml
+      - name: Build iOS Simulator app
+        working-directory: ios
+        run: >-
+          xcodebuild
+          -project VehicleHealthOS.xcodeproj
+          -scheme VehicleHealthOS
+          -destination 'generic/platform=iOS Simulator'
+          CODE_SIGNING_ALLOWED=NO
+          build
