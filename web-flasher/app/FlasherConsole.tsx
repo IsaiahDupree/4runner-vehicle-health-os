@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ESPLoader as ESPLoaderType, Transport as TransportType } from "esptool-js";
 
 type ReleaseManifest = {
-  schemaVersion: "1.0.0";
+  schemaVersion: "1.0.0" | "1.1.0";
   release: string;
   channel: "development" | "stable";
   publishedAt: string;
@@ -21,6 +21,25 @@ type ReleaseManifest = {
     byteCount: number;
     sha256: string;
   };
+  segments?: Array<{
+    label: string;
+    url: string;
+    address: number;
+    byteCount: number;
+    sha256: string;
+  }>;
+  protectedRanges?: Array<{
+    label: string;
+    address: number;
+    byteCount: number;
+  }>;
+};
+
+type FlashFile = {
+  data: Uint8Array;
+  address: number;
+  label: string;
+  sha256?: string;
 };
 
 type TargetId = "mrdiy-esp32-v13" | "wican-pro-esp32s3";
@@ -72,6 +91,21 @@ function matchesTarget(chip: string | null, target: ProvisioningTarget | null) {
   const normalized = chip.toUpperCase();
   if (target.chipFamily === "ESP32-S3") return normalized.includes("ESP32-S3");
   return normalized.includes("ESP32") && !normalized.includes("ESP32-S");
+}
+
+function validateInstallPlan(manifest: ReleaseManifest) {
+  for (const segment of manifest.segments ?? []) {
+    if (!Number.isInteger(segment.address) || segment.address < 0 || !Number.isInteger(segment.byteCount) || segment.byteCount <= 0) {
+      throw new Error(`invalid flash range for ${segment.label}`);
+    }
+    const segmentEnd = segment.address + segment.byteCount;
+    for (const protectedRange of manifest.protectedRanges ?? []) {
+      const protectedEnd = protectedRange.address + protectedRange.byteCount;
+      if (segment.address < protectedEnd && segmentEnd > protectedRange.address) {
+        throw new Error(`${segment.label} overlaps protected ${protectedRange.label}`);
+      }
+    }
+  }
 }
 
 function formatBytes(value: number | null) {
@@ -141,9 +175,10 @@ export function FlasherConsole() {
       })
       .then((value) => {
         if (cancelled) return;
-        if (value.schemaVersion !== "1.0.0" || value.chipFamily !== target.chipFamily) {
+        if (!["1.0.0", "1.1.0"].includes(value.schemaVersion) || value.chipFamily !== target.chipFamily) {
           throw new Error("release manifest target is not supported");
         }
+        validateInstallPlan(value);
         setManifest(value);
         appendLog(`Loaded ${value.release} manifest for ${value.hardwareFamily}.`);
       })
@@ -259,26 +294,38 @@ export function FlasherConsole() {
     }
   }
 
-  async function writeImage(bytes: Uint8Array, label: string, expectedHash?: string) {
+  async function writeFlashPlan(files: FlashFile[], label: string) {
     const loader = loaderRef.current;
     if (!loader || !chipMatches) return;
     setStage("flashing");
     setProgress(0);
     try {
-      const digest = await sha256(bytes);
-      if (expectedHash && digest !== expectedHash.toLowerCase()) {
-        throw new Error(`SHA-256 mismatch; expected ${expectedHash}, received ${digest}`);
+      for (const file of files) {
+        const digest = await sha256(file.data);
+        if (file.sha256 && digest !== file.sha256.toLowerCase()) {
+          throw new Error(`SHA-256 mismatch for ${file.label}; expected ${file.sha256}, received ${digest}`);
+        }
+        appendLog(
+          `${file.label} verified at 0x${file.address.toString(16).padStart(8, "0")} ` +
+          `(${formatBytes(file.data.byteLength)}, SHA-256 ${digest}).`,
+        );
       }
-      appendLog(`${label} verified (${formatBytes(bytes.byteLength)}, SHA-256 ${digest}).`);
+      const totalBytes = files.reduce((total, file) => total + file.data.byteLength, 0);
+      const completedBefore = files.map((_, index) =>
+        files.slice(0, index).reduce((total, file) => total + file.data.byteLength, 0),
+      );
       await loader.writeFlash({
-        fileArray: [{ data: bytesToBinaryString(bytes), address: 0 }],
+        fileArray: files.map((file) => ({
+          data: bytesToBinaryString(file.data),
+          address: file.address,
+        })),
         flashSize: "keep",
         flashMode: "keep",
         flashFreq: "keep",
         eraseAll: false,
         compress: true,
-        reportProgress: (_index, written, total) => {
-          setProgress(Math.round((written / total) * 100));
+        reportProgress: (index, written) => {
+          setProgress(Math.round(((completedBefore[index] + written) / totalBytes) * 100));
         },
       });
       setProgress(100);
@@ -292,19 +339,45 @@ export function FlasherConsole() {
     }
   }
 
+  async function writeImage(bytes: Uint8Array, label: string, expectedHash?: string) {
+    await writeFlashPlan([{ data: bytes, address: 0, label, sha256: expectedHash }], label);
+  }
+
   async function installRelease() {
     if (!manifest) return;
     try {
-      appendLog(`Downloading ${manifest.release} from the published release manifest.`);
-      const response = await fetch(manifest.artifact.url, { cache: "no-store" });
-      if (!response.ok) throw new Error(`firmware download failed (${response.status})`);
-      const bytes = new Uint8Array(await response.arrayBuffer());
-      if (bytes.byteLength !== manifest.artifact.byteCount) {
-        throw new Error(
-          `firmware length mismatch; expected ${manifest.artifact.byteCount}, received ${bytes.byteLength}`,
+      const publishedFiles = manifest.segments?.length
+        ? manifest.segments
+        : [{ ...manifest.artifact, label: "Full flash image" }];
+      appendLog(
+        manifest.segments?.length
+          ? `Downloading ${manifest.release} protected-NVS install plan (${publishedFiles.length} segments).`
+          : `Downloading ${manifest.release} full-flash image from the published release manifest.`,
+      );
+      const files: FlashFile[] = [];
+      for (const publishedFile of publishedFiles) {
+        const response = await fetch(publishedFile.url, { cache: "no-store" });
+        if (!response.ok) throw new Error(`${publishedFile.label} download failed (${response.status})`);
+        const bytes = new Uint8Array(await response.arrayBuffer());
+        if (bytes.byteLength !== publishedFile.byteCount) {
+          throw new Error(
+            `${publishedFile.label} length mismatch; expected ${publishedFile.byteCount}, received ${bytes.byteLength}`,
+          );
+        }
+        files.push({
+          data: bytes,
+          address: publishedFile.address,
+          label: publishedFile.label,
+          sha256: publishedFile.sha256,
+        });
+      }
+      if (manifest.protectedRanges?.length) {
+        appendLog(
+          `Preserving ${manifest.protectedRanges.map((range) => range.label).join(", ")}; ` +
+          "saved BLE/Wi-Fi identity remains intact.",
         );
       }
-      await writeImage(bytes, `VHOS ${manifest.release}`, manifest.artifact.sha256);
+      await writeFlashPlan(files, `VHOS ${manifest.release}`);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "firmware download failed";
       setStage("error");
@@ -429,7 +502,7 @@ export function FlasherConsole() {
             <div className="stepNumber">03</div>
             <div>
               <h2>Verify and install VHOS</h2>
-              <p>The browser checks byte count and SHA-256 from the published manifest before the ESP loader writes address 0. Existing flash parameters are preserved.</p>
+              <p>The browser checks every published segment by byte count and SHA-256 before writing. On supported releases, the NVS identity and saved BLE bond are preserved across installs.</p>
               <label className="confirm">
                 <input type="checkbox" checked={hardwareConfirmed} disabled={!selectedTarget} onChange={(event) => setHardwareConfirmed(event.target.checked)} />
                 <span>{selectedTarget?.confirmation ?? "Select and verify the exact target first."}</span>
@@ -451,6 +524,7 @@ export function FlasherConsole() {
             <div><dt>ESP-IDF</dt><dd>{manifest?.espIdfVersion ?? "—"}</dd></div>
             <div><dt>Upstream</dt><dd>{manifest?.upstreamTag ?? "—"}</dd></div>
             <div><dt>Image</dt><dd>{formatBytes(manifest?.artifact.byteCount ?? null)}</dd></div>
+            <div><dt>Install plan</dt><dd>{manifest?.segments?.length ? `${manifest.segments.length} segments · NVS preserved` : "Full flash image"}</dd></div>
           </dl>
           <div className="checksum">
             <span>RELEASE SHA-256</span>
