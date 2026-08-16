@@ -32,7 +32,7 @@ test("server-renders the VHOS provisioner", async () => {
   assert.doesNotMatch(html, /Your site is taking shape|Building your site/);
 });
 
-test("target manifests resolve to byte-exact local artifacts", async () => {
+test("target manifests resolve to byte-exact local artifacts and safe install plans", async () => {
   const manifestNames = [
     "manifest-mrdiy-esp32-v13.json",
     "manifest-wican-pro-esp32s3.json",
@@ -48,8 +48,35 @@ test("target manifests resolve to byte-exact local artifacts", async () => {
 
     assert.equal(bytes.byteLength, manifest.artifact.byteCount);
     assert.equal(digest, manifest.artifact.sha256);
+
+    for (const segment of manifest.segments ?? []) {
+      const segmentName = segment.url.split("/").at(-1);
+      const segmentBytes = await readFile(new URL(`../public/firmware/${segmentName}`, import.meta.url));
+      const segmentDigest = createHash("sha256").update(segmentBytes).digest("hex");
+      assert.equal(segmentBytes.byteLength, segment.byteCount, `${segment.label} byte count`);
+      assert.equal(segmentDigest, segment.sha256, `${segment.label} checksum`);
+
+      for (const protectedRange of manifest.protectedRanges ?? []) {
+        const segmentEnd = segment.address + segment.byteCount;
+        const protectedEnd = protectedRange.address + protectedRange.byteCount;
+        assert.ok(
+          segmentEnd <= protectedRange.address || segment.address >= protectedEnd,
+          `${segment.label} must not overlap ${protectedRange.label}`,
+        );
+      }
+    }
     chipFamilies.add(manifest.chipFamily);
   }
 
   assert.deepEqual(chipFamilies, new Set(["ESP32", "ESP32-S3"]));
+});
+
+test("MrDIY install plan preserves the BLE bond NVS partition", async () => {
+  const manifestUrl = new URL("../public/firmware/manifest-mrdiy-esp32-v13.json", import.meta.url);
+  const manifest = JSON.parse(await readFile(manifestUrl, "utf8"));
+  assert.equal(manifest.schemaVersion, "1.1.0");
+  assert.equal(manifest.segments.length, 4);
+  assert.deepEqual(manifest.protectedRanges, [
+    { label: "BLE bond and Wi-Fi NVS", address: 0x9000, byteCount: 0x4000 },
+  ]);
 });
