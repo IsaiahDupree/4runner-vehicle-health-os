@@ -31,7 +31,7 @@ it.
 
 | Device | Present role | Current connectivity | Android readiness |
 | --- | --- | --- | --- |
-| `VHOS-MRDIY-B08D14` | Development OBD/CAN gateway; classic ESP32 with MrDIY CAN Shield v1.3+ | VHOS BLE service is implemented and physically enumerated; CAN is forced listen-only; normal Wi-Fi SoftAP is disabled | Ready for the first Android BLE/GATT client |
+| `VHOS-4R-OBD-B08D14` | Development OBD/CAN gateway; classic ESP32 with MrDIY CAN Shield v1.3+ | VHOS BLE service is implemented and physically enumerated; CAN is forced listen-only; normal Wi-Fi SoftAP is disabled | Ready for the first Android BLE/GATT client |
 | A/C ESP32-S3, base MAC `20:6e:f1:98:bd:20` | Future ADC, pressure, temperature, power, POST/BIT, and storage node | Current `EMPTY_RECOVERY` image reports identity/health only over USB serial; BLE, Wi-Fi, ADC, and sensors are deliberately disabled | Not connectable from Android until the sensor-node BLE milestone is implemented |
 
 This distinction must remain visible in tickets and UI. The Android app can be proven against the
@@ -140,7 +140,7 @@ Android accepts a device only after all of the following are true:
 7. the hardware, firmware, configuration, and gateway/device identities are present; and
 8. the supported message-type set proves exactly one expected device role.
 
-Names such as `VHOS-MRDIY-*` are discovery aids, not identity proof. A generic device with a similar
+Names such as legacy `VHOS-MRDIY-*` and canonical `VHOS-4R-OBD-*` are discovery aids, not identity proof. A generic device with a similar
 name is rejected. A previously associated device whose current service or handshake no longer
 matches is shown as a stale or incompatible association and is not silently trusted.
 

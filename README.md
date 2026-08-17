@@ -65,6 +65,8 @@ Serial. The browser requires a full-flash backup before it installs the merged i
 software path is implemented, but vehicle installation remains locked until deterministic PARKED
 and gateway-supply evidence plus the physical backup/upload/power-loss/rollback/restore matrix pass.
 See [iPhone to ESP32 Wi-Fi OTA](docs/development/IPHONE-TO-ESP32-WIFI-OTA.md).
+The stable device labels and separation from transport identifiers are defined in
+[the device naming contract](docs/development/DEVICE-NAMING-CONTRACT.md).
 
 ## Repository map
 

@@ -141,7 +141,7 @@ struct SystemStatusView: View {
     if gateway.handshake != nil {
       return StatusIndicator(
         "summary.esp32", title: "ESP32", value: "VHOS ONLINE",
-        detail: gateway.discoveredName ?? "Gateway connected", level: .pass)
+        detail: gateway.canonicalDisplayName, level: .pass)
     }
     if gateway.peripheralConnected, gateway.factoryServiceDiscovered {
       return StatusIndicator(
@@ -225,7 +225,7 @@ struct SystemStatusView: View {
           ? "SCANNING"
           : (gateway.gatewayIdentityValidated
             ? "VERIFIED" : (gateway.discoveredName == nil ? "IDLE" : "CANDIDATE")),
-        detail: gateway.discoveredName
+        detail: gateway.discoveredName.map { _ in gateway.canonicalDisplayName }
           ?? gateway.lastObservedAdvertisement.map {
             "Observed \(gateway.scanObservationCount) advertisements; latest: \($0)"
           }
@@ -828,10 +828,10 @@ struct SystemStatusView: View {
 
   private var peripheralDetail: String {
     if gateway.automaticReconnectActive {
-      return "Automatic reconnect attempt \(gateway.reconnectAttemptCount) • \(gateway.discoveredName ?? "saved gateway")"
+      return "Automatic reconnect attempt \(gateway.reconnectAttemptCount) • \(gateway.canonicalDisplayName)"
     }
-    if let name = gateway.discoveredName, let identifier = gateway.discoveredIdentifier {
-      return "\(name) • \(identifier)"
+    if gateway.discoveredName != nil || gateway.discoveredIdentifier != nil {
+      return gateway.canonicalDisplayName
     }
     return "No ESP32 gateway BLE connection"
   }

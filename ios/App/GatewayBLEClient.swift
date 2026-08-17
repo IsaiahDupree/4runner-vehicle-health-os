@@ -106,6 +106,12 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   var automaticReconnectActive = false
   var reconnectAttemptCount = 0
 
+  var canonicalDisplayName: String {
+    GatewayDisplayIdentity.obdName(
+      advertisedName: discoveredName,
+      gatewayID: handshake?.gatewayID)
+  }
+
   var currentSessionExperimentResults: [ProtocolExperimentResult] {
     Array(experimentResults.dropFirst(currentSessionResultStartIndex))
   }
@@ -163,7 +169,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       scanRequested = false
       scanActive = false
       scanMode = "Restored connection"
-      discoveredName = connected.name ?? connected.identifier.uuidString
+      discoveredName = connected.name
       discoveredIdentifier = connected.identifier.uuidString
       candidateNameSuggestsGateway = GatewayBLEIdentityPolicy.nameSuggestsGateway(connected.name)
       candidateAdvertisedVHOSService = true
@@ -310,7 +316,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       scanRequested = false
       scanActive = false
       scanMode = "Restored connection"
-      discoveredName = restored.name ?? restored.identifier.uuidString
+      discoveredName = restored.name
       discoveredIdentifier = restored.identifier.uuidString
       beginServiceDiscovery(restored, source: "state-restoration")
       return
@@ -320,7 +326,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       restored.delegate = self
       automaticReconnectEnabled = true
       userRequestedDisconnect = false
-      discoveredName = restored.name ?? restored.identifier.uuidString
+      discoveredName = restored.name
       discoveredIdentifier = restored.identifier.uuidString
       state = .connecting
       transportMessage = "Restoring the in-progress gateway connection…"
@@ -340,7 +346,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     restored.delegate = self
     automaticReconnectEnabled = true
     userRequestedDisconnect = false
-    discoveredName = restored.name ?? restored.identifier.uuidString
+    discoveredName = restored.name
     discoveredIdentifier = restored.identifier.uuidString
     state = .connecting
     transportMessage = "Restoring the paired gateway connection…"
@@ -379,7 +385,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     scanMode = "Matched"
     self.peripheral = peripheral
     peripheral.delegate = self
-    discoveredName = name.isEmpty ? peripheral.identifier.uuidString : name
+    discoveredName = name.isEmpty ? nil : name
     discoveredIdentifier = peripheral.identifier.uuidString
     discoveredRSSI = rssi.intValue == 127 ? nil : rssi.intValue
     candidateNameSuggestsGateway = GatewayBLEIdentityPolicy.nameSuggestsGateway(name)
@@ -1080,7 +1086,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         self.central.state == .poweredOn
       else { return }
       self.transportMessage =
-        "Reconnecting to \(self.discoveredName ?? "the saved gateway")…"
+        "Reconnecting to \(self.canonicalDisplayName)…"
       self.connect(peripheral)
     }
   }
