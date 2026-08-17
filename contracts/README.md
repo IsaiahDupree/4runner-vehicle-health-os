@@ -1,6 +1,6 @@
 # Shared contracts
 
-`jsonschema/v1/` defines durable JSON/NDJSON objects used in capture bundles, exports, replay, and cross-layer tests. `proto/v1/` defines compact mobile/ESP32 payload contracts carried inside ADR-0001's binary frame, including the separate added-sensor A/C node.
+`jsonschema/v1/` defines durable JSON/NDJSON objects used in capture bundles, exports, replay, and cross-layer tests. `proto/v1/` preserves the original compact-payload design, including added-sensor A/C messages. `wire/v1/` records the payload encodings actually deployed by the OBD/CAN firmware and mobile clients; deployed JSON/binary messages must not be decoded as protobuf merely because the older design file exists.
 
 ## Contract rules
 
@@ -9,7 +9,7 @@
 - Protobuf field numbers are never reused.
 - Unknown additive protobuf fields are preserved/ignored according to generated runtime behavior.
 - Raw observations retain exact payload bytes and hashes; decoding never replaces them.
-- JSON is the durable/debug representation. Protobuf is the transport representation.
+- JSON is the durable/debug representation. A transport payload uses the encoding fixed by the deployed wire registry for its protocol version.
 - No contract may introduce arbitrary CAN transmission or hidden actuation.
 - A pressure engineering value is unavailable unless the telemetry names its configured calibration identity and revision; raw ADC/voltage evidence remains available independently.
 

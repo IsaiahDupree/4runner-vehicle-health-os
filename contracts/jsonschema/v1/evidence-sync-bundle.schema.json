@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/evidence-sync-bundle.schema.json",
+  "title": "VHOS Evidence Sync Bundle Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract", "contract_version", "bundle_id", "created_at", "creator", "segments"],
+  "properties": {
+    "contract": {"const": "vhos.evidence-sync-bundle"},
+    "contract_version": {"const": "1.0.0"},
+    "bundle_id": {"type": "string", "format": "uuid"},
+    "created_at": {"$ref": "common.schema.json#/$defs/wallTime"},
+    "creator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["platform", "application_id", "application_version", "device_model"],
+      "properties": {
+        "platform": {"type": "string", "enum": ["ANDROID", "IOS"]},
+        "application_id": {"type": "string", "minLength": 1, "maxLength": 160},
+        "application_version": {"type": "string", "minLength": 1, "maxLength": 80},
+        "device_model": {"type": "string", "minLength": 1, "maxLength": 160}
+      }
+    },
+    "segments": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "media_type", "sha256", "byte_count", "record_count"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*$",
+            "maxLength": 256
+          },
+          "media_type": {"const": "application/x-ndjson"},
+          "sha256": {"$ref": "common.schema.json#/$defs/sha256"},
+          "byte_count": {"type": "integer", "minimum": 0, "maximum": 134217728},
+          "record_count": {"type": "integer", "minimum": 0, "maximum": 1000000}
+        }
+      }
+    }
+  }
+}

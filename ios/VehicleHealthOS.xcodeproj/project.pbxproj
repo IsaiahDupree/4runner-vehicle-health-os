@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2C20803C92A290014B149A91 /* PortableFrameStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A437465A0DC4C5D9113216 /* PortableFrameStore.swift */; };
 		34F29EA8693AF238BC815DDD /* SystemStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76F08CC4DD741600B7E20C23 /* SystemStatusView.swift */; };
 		3C6B7A855B68467F9973731A /* mrdiy-v13-development-release-ed25519.base64 in Resources */ = {isa = PBXBuildFile; fileRef = 40D58B872E56EED4853D20F3 /* mrdiy-v13-development-release-ed25519.base64 */; };
 		3F0163358C8856B35F097E02 /* VehicleHealthOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54BDEF8D2B05D75290A9451 /* VehicleHealthOSApp.swift */; };
@@ -22,13 +23,14 @@
 /* Begin PBXFileReference section */
 		2E12062579AEB4902B49940D /* GatewayBLEClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayBLEClient.swift; sourceTree = "<group>"; };
 		34806DF7108E5758613B6692 /* VehicleHealthOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = VehicleHealthOS.entitlements; sourceTree = "<group>"; };
-		3B48C24A24451753B02C596D /* VehicleHealthOSCommissioning.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = VehicleHealthOSCommissioning.entitlements; sourceTree = "<group>"; };
 		40D58B872E56EED4853D20F3 /* mrdiy-v13-development-release-ed25519.base64 */ = {isa = PBXFileReference; path = "mrdiy-v13-development-release-ed25519.base64"; sourceTree = "<group>"; };
 		435E1D682EF6B8A4DE0B86F7 /* WiFiOTAUploader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiOTAUploader.swift; sourceTree = "<group>"; };
+		46A437465A0DC4C5D9113216 /* PortableFrameStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortableFrameStore.swift; sourceTree = "<group>"; };
 		5ADD085CC4E0D7223092E39A /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		6B2F2160F66500ABD58B9A93 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		76F08CC4DD741600B7E20C23 /* SystemStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemStatusView.swift; sourceTree = "<group>"; };
 		7A2574A71F2C1668EC16FF99 /* VehicleHealthOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = VehicleHealthOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8B675922141EC2E868CE86B9 /* VehicleHealthOSCommissioning.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = VehicleHealthOSCommissioning.entitlements; sourceTree = "<group>"; };
 		C54BDEF8D2B05D75290A9451 /* VehicleHealthOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleHealthOSApp.swift; sourceTree = "<group>"; };
 		C904E627AC50298F57802AB7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D6A9AAE2238B7F973C0CEA46 /* KeyStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyStore.swift; sourceTree = "<group>"; };
@@ -89,11 +91,12 @@
 				2E12062579AEB4902B49940D /* GatewayBLEClient.swift */,
 				6B2F2160F66500ABD58B9A93 /* Info.plist */,
 				D6A9AAE2238B7F973C0CEA46 /* KeyStore.swift */,
+				46A437465A0DC4C5D9113216 /* PortableFrameStore.swift */,
 				EDE321369856AF54C6B7946E /* RootView.swift */,
 				76F08CC4DD741600B7E20C23 /* SystemStatusView.swift */,
-				3B48C24A24451753B02C596D /* VehicleHealthOSCommissioning.entitlements */,
 				34806DF7108E5758613B6692 /* VehicleHealthOS.entitlements */,
 				C54BDEF8D2B05D75290A9451 /* VehicleHealthOSApp.swift */,
+				8B675922141EC2E868CE86B9 /* VehicleHealthOSCommissioning.entitlements */,
 				435E1D682EF6B8A4DE0B86F7 /* WiFiOTAUploader.swift */,
 				024C0899EA5CEE56708A1390 /* Resources */,
 			);
@@ -180,6 +183,7 @@
 				50658F6BD96177F3C72D98A4 /* AppModel.swift in Sources */,
 				433AA4BFB3B8C40F2468E476 /* GatewayBLEClient.swift in Sources */,
 				9AF33FDA552C5A8253A86B99 /* KeyStore.swift in Sources */,
+				2C20803C92A290014B149A91 /* PortableFrameStore.swift in Sources */,
 				E925A8B64D5731C2E092673A /* RootView.swift in Sources */,
 				34F29EA8693AF238BC815DDD /* SystemStatusView.swift in Sources */,
 				3F0163358C8856B35F097E02 /* VehicleHealthOSApp.swift in Sources */,

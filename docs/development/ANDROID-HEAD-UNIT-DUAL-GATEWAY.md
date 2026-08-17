@@ -1,6 +1,7 @@
 # Android head-unit dual-ESP32 architecture and connection requirements
 
-Status: development architecture; head-unit hardware audit and A/C node BLE implementation pending
+Status: Android repository, first OBD/CAN vertical slice, and Android/iPhone golden-bundle sync
+implemented; physical head-unit acceptance and A/C node BLE implementation pending
 
 ## Outcome
 
@@ -90,9 +91,12 @@ Both devices carry the ADR-0001 logical frame:
 - payload CRC32C; and
 - header CRC32C.
 
-The payload contract is `contracts/proto/v1/gateway.proto`. BLE, Wi-Fi, USB, simulator, and replay
-must yield the same complete logical frames after transport-specific chunk reassembly. Unknown
-protocol majors and oversized frames are rejected before payload allocation.
+The deployed payload encoding is fixed by `contracts/wire/v1/README.md`: handshake, health, capture
+index, and OTA are versioned JSON; live CAN, capture request, and capture chunks use bounded binary
+records. `contracts/proto/v1/gateway.proto` remains immutable historical design input and is not the
+deployed OBD payload codec. BLE, Wi-Fi, USB, simulator, and replay must yield the same complete
+logical frames after transport-specific chunk reassembly. Unknown protocol majors and oversized
+frames are rejected before payload allocation.
 
 ### BLE GATT transport
 
@@ -129,7 +133,7 @@ Android accepts a device only after all of the following are true:
 1. the user has approved or previously associated the physical device;
 2. the advertised or discovered GATT service matches the VHOS contract;
 3. the encrypted link and required notifications are active;
-4. a complete handshake passes both CRC checks and protobuf decoding;
+4. a complete handshake passes both CRC checks and deployed JSON contract decoding;
 5. the protocol major is supported;
 6. the declared maximum frame size is within the app's configured ceiling;
 7. the hardware, firmware, configuration, and gateway/device identities are present; and
@@ -287,7 +291,7 @@ BLE callback
   -> header CRC32C
   -> payload CRC32C
   -> sequence and reboot accounting
-  -> protobuf decode
+  -> registry-selected JSON or binary decode
   -> capability/identity validation
   -> append raw observation
   -> update rebuildable projections
@@ -424,7 +428,7 @@ or refine the following internal boundaries when the hardware audit is complete:
 | --- | --- |
 | `transport-ble` | Android BLE permissions, association, scan, GATT, bonding, MTU, subscription, chunk transport |
 | `gateway-session` | Two role-specific state machines over one transport-neutral protocol client |
-| `gateway-protocol` | ADR-0001 frames, CRC32C, protobuf, capability negotiation, version rejection |
+| `core:protocol` | ADR-0001 frames, CRC32C, deployed JSON/binary registry, capability negotiation, version rejection |
 | `capture` | Source-scoped raw persistence, manifests, resumable gateway log sync, replay |
 | `sensor-node` | A/C telemetry/health/POST validation without diagnostic interpretation |
 | `timeseries` | Source time mappings, freshness, downsampling, gaps, synchronized queries |
@@ -433,7 +437,7 @@ or refine the following internal boundaries when the hardware audit is complete:
 | `ui-garage` | Maintenance, history, evidence, controlled export and updates |
 | `export` | Checksummed bundles for desktop, iPhone, mechanic, or evidence-bound AI handoff |
 
-UI modules depend on repositories/use cases, not `BluetoothGatt`, protobuf-generated types, or SQL
+UI modules depend on repositories/use cases, not `BluetoothGatt`, wire-payload types, or SQL
 entities directly.
 
 ## Safety, security, and authority boundaries
@@ -464,8 +468,8 @@ entities directly.
 
 ### AH1 — Android foundation
 
-- Create the Gradle/Kotlin/Compose workspace from the accepted audit.
-- Generate protobuf Java/Kotlin Lite bindings from the existing contract.
+- Maintain the Gradle/Kotlin workspace in the public `4runner-vhos-android` repository.
+- Generate golden vectors from the deployed JSON/binary registry shared by firmware and iOS.
 - Implement CRC32C and golden frame vectors shared with firmware/iOS.
 - Implement Room identities, raw observations, audit events, and file manifests.
 

@@ -51,6 +51,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   private var candidateAdvertisedVHOSService = false
   private var candidateWasPreviouslyValidated = false
   private let captureStore = CaptureLogStore()
+  private let portableFrameStore = PortableFrameStore()
   private var captureSyncTargets: [CaptureSyncTarget] = []
   private var captureSyncSuspendedForOTA = false
 
@@ -99,6 +100,8 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   var captureSessions: [CaptureSessionSummary] = []
   var captureSyncMessage = "Waiting for a gateway capture index."
   var captureDownloadedRecords: UInt64 = 0
+  var portableFrameCount = 0
+  var lastEvidenceSyncMessage = "No Android/iPhone evidence sync has run."
   var transportMessage: String?
   var automaticReconnectActive = false
   var reconnectAttemptCount = 0
@@ -118,6 +121,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         CBCentralManagerOptionRestoreIdentifierKey: Self.centralRestoreIdentifier
       ]
     )
+    portableFrameCount = portableFrameStore.count()
     if scanRequested {
       Self.logger.info("BLE auto-scan requested by commissioning launch")
       trace("AUTO_SCAN_REQUESTED")
@@ -671,9 +675,25 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   }
 
   private func consume(_ frame: GatewayFrame) throws {
+    if frame.messageType != .handshake, let handshake {
+      _ = try portableFrameStore.append(
+        frame: frame,
+        sourceRole: .obdCAN,
+        sourceID: handshake.gatewayID,
+        ingestedAt: Self.timestamp()
+      )
+      portableFrameCount = portableFrameStore.count()
+    }
     switch frame.messageType {
     case .handshake:
       let value = try VHOSJSON.decoder().decode(GatewayHandshake.self, from: frame.payload)
+      _ = try portableFrameStore.append(
+        frame: frame,
+        sourceRole: .obdCAN,
+        sourceID: value.gatewayID,
+        ingestedAt: Self.timestamp()
+      )
+      portableFrameCount = portableFrameStore.count()
       handshake = value
       lastHandshakeReceivedAt = Date()
       state = .vhosConnected
@@ -761,6 +781,29 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     if pendingCommandChunks.count == Int(ceil(Double(bytes.count) / Double(maximum))) {
       sendNextCommandChunk()
     }
+  }
+
+  func evidenceSyncExportURL(
+    applicationID: String,
+    applicationVersion: String,
+    deviceModel: String
+  ) throws -> URL {
+    let url = try portableFrameStore.export(
+      applicationID: applicationID,
+      applicationVersion: applicationVersion,
+      deviceModel: deviceModel
+    )
+    lastEvidenceSyncMessage = "Prepared \(portableFrameCount) validated logical frames for Android/iPhone sync."
+    return url
+  }
+
+  func importEvidenceSync(from url: URL) throws -> EvidenceSyncImportSummary {
+    let bytes = try Data(contentsOf: url, options: [.mappedIfSafe])
+    let summary = try portableFrameStore.importBundle(bytes)
+    portableFrameCount = portableFrameStore.count()
+    lastEvidenceSyncMessage =
+      "Verified \(summary.verifiedRecords) records; appended \(summary.appendedRecords) new logical frames."
+    return summary
   }
 
   private func beginCaptureSync(_ index: CaptureLogIndex) {

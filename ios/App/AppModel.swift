@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import UIKit
 import VHOSCore
 
 enum DiscoveryKind: String, CaseIterable, Identifiable {
@@ -225,6 +226,28 @@ final class AppModel {
 
   func passiveCANExportURL() throws -> URL {
     try gateway.captureLogExportURL()
+  }
+
+  func evidenceSyncExportURL() throws -> URL {
+    let info = Bundle.main.infoDictionary
+    return try gateway.evidenceSyncExportURL(
+      applicationID: Bundle.main.bundleIdentifier ?? "com.isaiahdupree.VehicleHealthOS",
+      applicationVersion: info?["CFBundleShortVersionString"] as? String ?? "unknown",
+      deviceModel: UIDevice.current.model
+    )
+  }
+
+  func importEvidenceSync(from url: URL) {
+    let hasAccess = url.startAccessingSecurityScopedResource()
+    defer { if hasAccess { url.stopAccessingSecurityScopedResource() } }
+    do {
+      let summary = try gateway.importEvidenceSync(from: url)
+      noticeMessage =
+        "Bundle \(summary.bundleID.uuidString) verified; appended \(summary.appendedRecords) of \(summary.verifiedRecords) frames."
+      errorMessage = nil
+    } catch {
+      errorMessage = error.localizedDescription
+    }
   }
 
   static func timestamp() -> String {

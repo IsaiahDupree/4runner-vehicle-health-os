@@ -192,6 +192,8 @@ private struct EvidenceView: View {
   @Environment(AppModel.self) private var model
   @State private var exportURL: URL?
   @State private var canExportURL: URL?
+  @State private var syncExportURL: URL?
+  @State private var importingSync = false
 
   var body: some View {
     List {
@@ -299,7 +301,41 @@ private struct EvidenceView: View {
           }
         }
       }
+      Section("Android / iPhone evidence sync") {
+        LabeledContent("Validated logical frames", value: model.gateway.portableFrameCount.formatted())
+        Text(model.gateway.lastEvidenceSyncMessage)
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+        Button("Prepare checksummed .vhossync bundle") {
+          do { syncExportURL = try model.evidenceSyncExportURL() } catch {
+            model.errorMessage = error.localizedDescription
+          }
+        }
+        if let syncExportURL {
+          ShareLink(item: syncExportURL) {
+            Label("Share vhos-evidence-sync.vhossync", systemImage: "arrow.left.arrow.right.circle")
+          }
+        }
+        Button("Import Android/iPhone sync bundle") { importingSync = true }
+        Text(
+          "Import is append-only. The manifest, ZIP CRC, segment SHA-256, envelope SHA-256, VHOS CRC32C, and envelope metadata must all agree before any record is retained."
+        )
+        .font(.footnote)
+        .foregroundStyle(.secondary)
+      }
     }
     .navigationTitle("Evidence")
+    .fileImporter(
+      isPresented: $importingSync,
+      allowedContentTypes: [.data],
+      allowsMultipleSelection: false
+    ) { result in
+      switch result {
+      case .success(let urls):
+        if let url = urls.first { model.importEvidenceSync(from: url) }
+      case .failure(let error):
+        model.errorMessage = error.localizedDescription
+      }
+    }
   }
 }
