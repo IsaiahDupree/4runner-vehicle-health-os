@@ -20,8 +20,9 @@ backup.
 - Does not expose CAN, K-line, J1850, or OBD transmit controls.
 - The published development firmware is passive/listen-only. Physical backup,
   merged-image, A/B topology, and rollback recovery validation are published with
-  each MrDIY release. Signed Wi-Fi OTA activation and active protocol discovery
-  remain locked pending implementation.
+  each MrDIY release. The MrDIY dev13 release adds automatic recovery from stale
+  iOS GATT caches and includes authenticated temporary Wi-Fi OTA; active vehicle-bus
+  transmission remains unavailable.
 - The A/C `EMPTY_RECOVERY` release does not link or initialize Wi-Fi, the
   network stack, Wi-Fi provisioning, or Bluetooth. It retains USB identity,
   health evidence, A/B rollback, and an NVS-preserving install plan while every
