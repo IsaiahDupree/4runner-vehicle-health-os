@@ -619,7 +619,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       health = value
       lastHealthReceivedAt = Date()
       Self.commissioningTrace(
-        "HEALTH_DECODED scan=\(value.canScanState?.rawValue ?? "unavailable") bitrate=\(value.canBitrateBps.map(String.init) ?? "unavailable") frames=\(value.receivedFrames) candidate=\(value.passiveCanCandidate ?? "none")"
+        "HEALTH_DECODED scan=\(value.canScanState?.rawValue ?? "unavailable") bitrate=\(value.canBitrateBps.map(String.init) ?? "unavailable") cycles=\(value.canScanCycles.map(String.init) ?? "unavailable") controller=\(value.canControllerRunning.map(String.init) ?? "unavailable") lock=\(value.canPassiveLock.map(String.init) ?? "unavailable") frames=\(value.receivedFrames) standard=\(value.canStandardFrames.map(String.init) ?? "unavailable") extended=\(value.canExtendedFrames.map(String.init) ?? "unavailable") dropped=\(value.droppedFrames) errors=\(value.busErrorCount) bus_off=\(value.busOffCount) candidate=\(value.passiveCanCandidate ?? "none")"
       )
     case .experimentResult:
       let result = try VHOSJSON.decoder().decode(ProtocolExperimentResult.self, from: frame.payload)
