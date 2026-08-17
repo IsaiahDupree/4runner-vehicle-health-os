@@ -1,7 +1,8 @@
 # Android head-unit dual-ESP32 architecture and connection requirements
 
-Status: Android repository, first OBD/CAN vertical slice, and Android/iPhone golden-bundle sync
-implemented; physical head-unit acceptance and A/C node BLE implementation pending
+Status: Android repository, first OBD/CAN vertical slice, Android/iPhone golden-bundle sync, and
+signed cross-target Release Hub implemented; physical head-unit acceptance and A/C node BLE/OTA
+implementation pending
 
 ## Outcome
 

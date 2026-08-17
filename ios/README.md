@@ -19,6 +19,8 @@ Native SwiftUI control surface for the VHOS gateway contract. Minimum deployment
 - `.vhosota` parsing, Ed25519 signature/hash verification, compatibility/voltage/capability
   preflight, encrypted-BLE temporary-network activation, one-shot iOS hotspot join, authenticated
   local upload, cleanup, and rollback-status decoding.
+- A signed public Release Hub that stages Android, OBD ESP32, and A/C recovery artifacts from one
+  target-aware catalog; iOS shares Android builds but does not claim authority to install an APK.
 - Provider-neutral JSON evidence handoff whose authority contract excludes vehicle activation and raw frame emission.
 
 The app contains no arbitrary CAN/K-line/J1850 transmit console. Factory WiCAN compatibility mode is observation-only; experiments require the VHOS firmware fork and its capability handshake.

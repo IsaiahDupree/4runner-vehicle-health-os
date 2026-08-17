@@ -21,6 +21,8 @@ E0 plus the first native iOS control slice are implemented here:
 - CI checks for schema validity and deterministic replay;
 - a Swift 6 core with CRC32C framing, guarded discovery plans, signed firmware verification, OTA preflight, and AI evidence handoff;
 - a buildable native SwiftUI app with BLE state restoration, WiCAN factory detection, gateway health, signed semantic experiments, private-network OTA, and evidence export;
+- a signed public Release Hub consumed by iPhone and Android for target-aware Android, OBD ESP32,
+  and A/C recovery artifact discovery and verified staging;
 - a public WiCAN Pro ESP32-S3 firmware fork with passive/listen-only enforcement, framed BLE health reporting, OTA A/B partitions, and rollback self-tests;
 - a physically targeted classic-ESP32/MrDIY firmware with bonded BLE health, passive CAN, persistent
   evidence, A/B rollback, a release-default-off status SoftAP, and explicitly activated signed Wi-Fi
@@ -51,6 +53,7 @@ The simulator namespace is deliberately separate from live vehicle data. It crea
 
 ## Gateway provisioning
 
+- Signed release catalog: [VHOS Release Hub](https://github.com/IsaiahDupree/4runner-vhos-release-hub/releases/latest)
 - Public installer: [VHOS Gateway Provisioner](https://vhos-gateway-provisioner.isaiahdupree.chatgpt.site)
 - Public firmware source: [IsaiahDupree/4runner-vhos-firmware](https://github.com/IsaiahDupree/4runner-vhos-firmware)
 - Development release and recovery evidence: [v0.1.0-dev.1](https://github.com/IsaiahDupree/4runner-vhos-firmware/releases/tag/v0.1.0-dev.1)
@@ -79,6 +82,12 @@ See [iPhone to ESP32 Wi-Fi OTA](docs/development/IPHONE-TO-ESP32-WIFI-OTA.md).
 | `android/` | Preserved original Android module boundary; not the primary client after ADR-0003 |
 | `firmware/` | Shared ESP32 component boundaries and read-only safety policy |
 | `vehicle-signal-packs/` | Validated vehicle-specific signal/configuration packs; no speculative constants |
+
+Related public repositories keep runtime ownership separate: Android head unit
+[`4runner-vhos-android`](https://github.com/IsaiahDupree/4runner-vhos-android), OBD firmware
+[`4runner-vhos-firmware`](https://github.com/IsaiahDupree/4runner-vhos-firmware), A/C firmware
+[`4runner-ac-telemetry-node`](https://github.com/IsaiahDupree/4runner-ac-telemetry-node), and the
+signed catalog/portal [`4runner-vhos-release-hub`](https://github.com/IsaiahDupree/4runner-vhos-release-hub).
 
 ## Development order
 

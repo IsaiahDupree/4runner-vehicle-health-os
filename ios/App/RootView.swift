@@ -14,6 +14,8 @@ struct RootView: View {
         .tabItem { Label("Firmware", systemImage: "arrow.triangle.2.circlepath") }
       NavigationStack { EvidenceView() }
         .tabItem { Label("Evidence", systemImage: "doc.text.magnifyingglass") }
+      NavigationStack { ReleaseHubView() }
+        .tabItem { Label("Releases", systemImage: "shippingbox.and.arrow.backward") }
     }
     .safeAreaInset(edge: .bottom) {
       if let error = model.errorMessage {
@@ -32,6 +34,70 @@ struct RootView: View {
           .background(.thinMaterial)
           .onTapGesture { model.noticeMessage = nil }
       }
+    }
+  }
+}
+
+private struct ReleaseHubView: View {
+  @Environment(AppModel.self) private var model
+
+  var body: some View {
+    List {
+      Section("Signed catalog") {
+        Text(model.releaseHub.status)
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+        Button(model.releaseHub.catalog == nil ? "Verify release catalog" : "Refresh release catalog") {
+          Task {
+            do { try await model.releaseHub.refresh(); model.errorMessage = nil }
+            catch { model.errorMessage = error.localizedDescription }
+          }
+        }
+        .disabled(model.releaseHub.isLoading)
+      }
+      if let catalog = model.releaseHub.catalog {
+        ForEach(catalog.artifacts) { artifact in
+          Section(releaseTitle(artifact.target)) {
+            LabeledContent("Version", value: artifact.version)
+            LabeledContent("Readiness", value: artifact.readiness.rawValue)
+            LabeledContent("Install", value: artifact.installMethod.rawValue)
+            Text(artifact.releaseNotes).font(.footnote).foregroundStyle(.secondary)
+            Button(model.releaseHub.stagedURLs[artifact.artifactID] == nil ? "Download and verify" : "Verified locally") {
+              Task { await model.stageRelease(artifact) }
+            }
+            .disabled(model.releaseHub.isLoading || model.releaseHub.stagedURLs[artifact.artifactID] != nil)
+            if let staged = model.releaseHub.stagedURLs[artifact.artifactID] {
+              ShareLink(item: staged) {
+                Label("Share verified artifact", systemImage: "square.and.arrow.up")
+              }
+            }
+            if artifact.kind == .esp32VHOSOTA,
+              model.releaseHub.stagedURLs[artifact.artifactID] != nil
+            {
+              Text("Continue in Firmware. PARKED, supply, hardware, capture-flush, signature, and rollback gates still apply.")
+                .font(.footnote).foregroundStyle(.orange)
+            }
+            if artifact.installMethod == .usbSerialInitialFlash {
+              Text("USB recovery only. The iPhone cannot flash this build to the A/C ESP32-S3.")
+                .font(.footnote).foregroundStyle(.orange)
+            }
+          }
+        }
+      }
+    }
+    .navigationTitle("Release Hub")
+    .task {
+      guard model.releaseHub.catalog == nil else { return }
+      do { try await model.releaseHub.refresh() }
+      catch { model.errorMessage = error.localizedDescription }
+    }
+  }
+
+  private func releaseTitle(_ target: ReleaseTarget) -> String {
+    switch target {
+    case .androidHeadUnit: "Android head unit"
+    case .esp32OBDGateway: "OBD/CAN ESP32"
+    case .esp32ACSensorNode: "A/C ESP32-S3"
     }
   }
 }

@@ -16,6 +16,7 @@ final class AppModel {
   static let shared = AppModel()
 
   let gateway: GatewayBLEClient
+  let releaseHub = ReleaseHubClient()
   private let keyStore: KeyStore
   private let experimentSigner: ExperimentSigner
   private let otaUploader = WiFiOTAUploader()
@@ -245,6 +246,23 @@ final class AppModel {
       noticeMessage =
         "Bundle \(summary.bundleID.uuidString) verified; appended \(summary.appendedRecords) of \(summary.verifiedRecords) frames."
       errorMessage = nil
+    } catch {
+      errorMessage = error.localizedDescription
+    }
+  }
+
+  func stageRelease(_ artifact: ReleaseArtifact) async {
+    do {
+      let url = try await releaseHub.stage(artifact)
+      if artifact.kind == .esp32VHOSOTA {
+        importFirmware(from: url)
+        if errorMessage == nil {
+          noticeMessage = "Verified OBD firmware staged. Complete safety preflight in Firmware."
+        }
+      } else {
+        noticeMessage = "Verified \(artifact.artifactID) and prepared it for owner-approved handoff."
+        errorMessage = nil
+      }
     } catch {
       errorMessage = error.localizedDescription
     }

@@ -17,10 +17,13 @@
 		50658F6BD96177F3C72D98A4 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ADD085CC4E0D7223092E39A /* AppModel.swift */; };
 		59F8B3E961C8C753425ACF9F /* VHOSCore in Frameworks */ = {isa = PBXBuildFile; productRef = 6616D2E0F2CEB55BF90E491B /* VHOSCore */; };
 		9AF33FDA552C5A8253A86B99 /* KeyStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6A9AAE2238B7F973C0CEA46 /* KeyStore.swift */; };
+		E1E366592FD90918002B9210 /* catalog-development-p256-public.der.base64 in Resources */ = {isa = PBXBuildFile; fileRef = BC2698DA0773B98569959E80 /* catalog-development-p256-public.der.base64 */; };
 		E925A8B64D5731C2E092673A /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDE321369856AF54C6B7946E /* RootView.swift */; };
+		FEC9A6E487FA351CECDA2552 /* ReleaseHubClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21CE522109AE74B24C43B096 /* ReleaseHubClient.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		21CE522109AE74B24C43B096 /* ReleaseHubClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReleaseHubClient.swift; sourceTree = "<group>"; };
 		2E12062579AEB4902B49940D /* GatewayBLEClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayBLEClient.swift; sourceTree = "<group>"; };
 		34806DF7108E5758613B6692 /* VehicleHealthOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = VehicleHealthOS.entitlements; sourceTree = "<group>"; };
 		40D58B872E56EED4853D20F3 /* mrdiy-v13-development-release-ed25519.base64 */ = {isa = PBXFileReference; path = "mrdiy-v13-development-release-ed25519.base64"; sourceTree = "<group>"; };
@@ -31,6 +34,7 @@
 		76F08CC4DD741600B7E20C23 /* SystemStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemStatusView.swift; sourceTree = "<group>"; };
 		7A2574A71F2C1668EC16FF99 /* VehicleHealthOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = VehicleHealthOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8B675922141EC2E868CE86B9 /* VehicleHealthOSCommissioning.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = VehicleHealthOSCommissioning.entitlements; sourceTree = "<group>"; };
+		BC2698DA0773B98569959E80 /* catalog-development-p256-public.der.base64 */ = {isa = PBXFileReference; path = "catalog-development-p256-public.der.base64"; sourceTree = "<group>"; };
 		C54BDEF8D2B05D75290A9451 /* VehicleHealthOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleHealthOSApp.swift; sourceTree = "<group>"; };
 		C904E627AC50298F57802AB7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D6A9AAE2238B7F973C0CEA46 /* KeyStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyStore.swift; sourceTree = "<group>"; };
@@ -53,6 +57,7 @@
 		024C0899EA5CEE56708A1390 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				BC2698DA0773B98569959E80 /* catalog-development-p256-public.der.base64 */,
 				40D58B872E56EED4853D20F3 /* mrdiy-v13-development-release-ed25519.base64 */,
 			);
 			path = Resources;
@@ -92,6 +97,7 @@
 				6B2F2160F66500ABD58B9A93 /* Info.plist */,
 				D6A9AAE2238B7F973C0CEA46 /* KeyStore.swift */,
 				46A437465A0DC4C5D9113216 /* PortableFrameStore.swift */,
+				21CE522109AE74B24C43B096 /* ReleaseHubClient.swift */,
 				EDE321369856AF54C6B7946E /* RootView.swift */,
 				76F08CC4DD741600B7E20C23 /* SystemStatusView.swift */,
 				34806DF7108E5758613B6692 /* VehicleHealthOS.entitlements */,
@@ -169,6 +175,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4DC09285503568BD059B6630 /* Assets.xcassets in Resources */,
+				E1E366592FD90918002B9210 /* catalog-development-p256-public.der.base64 in Resources */,
 				3C6B7A855B68467F9973731A /* mrdiy-v13-development-release-ed25519.base64 in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -184,6 +191,7 @@
 				433AA4BFB3B8C40F2468E476 /* GatewayBLEClient.swift in Sources */,
 				9AF33FDA552C5A8253A86B99 /* KeyStore.swift in Sources */,
 				2C20803C92A290014B149A91 /* PortableFrameStore.swift in Sources */,
+				FEC9A6E487FA351CECDA2552 /* ReleaseHubClient.swift in Sources */,
 				E925A8B64D5731C2E092673A /* RootView.swift in Sources */,
 				34F29EA8693AF238BC815DDD /* SystemStatusView.swift in Sources */,
 				3F0163358C8856B35F097E02 /* VehicleHealthOSApp.swift in Sources */,
