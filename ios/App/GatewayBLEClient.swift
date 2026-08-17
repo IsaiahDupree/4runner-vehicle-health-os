@@ -930,11 +930,17 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       try? await Task.sleep(for: .seconds(12))
       guard !Task.isCancelled, let self, let peripheral,
         self.peripheral?.identifier == peripheral.identifier,
-        !self.peripheralConnected,
-        peripheral.state == .connecting
+        !self.peripheralConnected
       else { return }
+      if peripheral.state == .connected {
+        Self.commissioningTrace(
+          "RESTORED_CONNECT_ADOPT id=\(peripheral.identifier.uuidString) recovery=service-discovery"
+        )
+        self.beginServiceDiscovery(peripheral, source: "restored-timeout-adopted")
+        return
+      }
       Self.commissioningTrace(
-        "RESTORED_CONNECT_TIMEOUT id=\(peripheral.identifier.uuidString) recovery=cancel-and-scan"
+        "RESTORED_CONNECT_TIMEOUT id=\(peripheral.identifier.uuidString) state=\(peripheral.state.rawValue) recovery=cancel-and-scan"
       )
       self.transportMessage =
         "The restored BLE connection stopped responding; scanning again automatically…"
