@@ -27,3 +27,29 @@ import Testing
     try GatewayFrame.decode(corrupted)
   }
 }
+
+@Test func gatewayHealthPreservesUnavailableStorageAsNull() throws {
+  let payload = Data(
+    """
+    {
+      "bus_error_count": 0,
+      "bus_off_count": 0,
+      "capture_active": false,
+      "contract": "gateway.health",
+      "contract_version": "1.0.0",
+      "dropped_frames": 0,
+      "listen_only": true,
+      "observed_at": "monotonic_us:42",
+      "received_frames": 0,
+      "storage_free_bytes": null,
+      "supply_millivolts": null,
+      "vehicle_motion": "UNKNOWN"
+    }
+    """.utf8)
+
+  let health = try VHOSJSON.decoder().decode(GatewayHealth.self, from: payload)
+
+  #expect(health.storageFreeBytes == nil)
+  #expect(health.supplyMillivolts == nil)
+  #expect(health.listenOnly)
+}

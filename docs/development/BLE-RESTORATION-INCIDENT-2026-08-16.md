@@ -87,3 +87,13 @@ show firmware/build identity, uptime/reset reason, listen-only enforcement, rece
 frame counters, storage, supply, and OTA/rollback state. It must not expose arbitrary CAN transmit
 or diagnostic commands. The SoftAP must be authenticated, time-bounded or explicitly enabled, and
 must not publish secrets, bond identities, raw keys, or fabricated unavailable values.
+
+Update: that surface was implemented in the unreleased `v0.1.0-dev.6` bench image. Physical Mac
+association testing showed that automatic boot activation was disruptive, so `v0.1.0-dev.7`
+keeps Wi-Fi completely off by default and reserves activation for an explicit encrypted owner
+action. See the [SoftAP activation incident and decision](ESP32-SOFTAP-ACTIVATION-INCIDENT-2026-08-16.md).
+
+Update: a later vehicle session exposed a separate identity-selection failure in which a generic
+`FEE0` peripheral named `Battery Monitor` was shown as the ESP32 link. The correction and its
+evidence ladder are recorded in
+[BLE gateway identity incident](BLE-GATEWAY-IDENTITY-INCIDENT-2026-08-16.md).

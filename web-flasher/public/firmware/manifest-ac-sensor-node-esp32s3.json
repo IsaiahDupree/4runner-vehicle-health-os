@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.1.0",
+  "release": "v0.1.0-dev.1",
+  "channel": "development",
+  "publishedAt": "2026-08-17T02:21:05Z",
+  "chipFamily": "ESP32-S3",
+  "hardwareFamily": "AC-SENSOR-NODE-ESP32S3",
+  "hardwareRevision": "bench-verified 16 MB flash / 8 MB octal PSRAM; final assembly not frozen",
+  "upstreamTag": "empty-recovery-bootstrap",
+  "sourceCommit": "08ba6cc53b8a369cf69058d28ff0ebddfd0841f7",
+  "firmwareCommit": "08ba6cc53b8a369cf69058d28ff0ebddfd0841f7",
+  "espIdfVersion": "5.5.3",
+  "softwareProfile": "EMPTY_RECOVERY",
+  "runtimeRadios": {
+    "wifi": "not-initialized",
+    "ble": "not-initialized"
+  },
+  "artifact": {
+    "url": "/firmware/vhos-ac-sensor-node-esp32s3-v0.1.0-dev.1-merged.bin",
+    "address": 0,
+    "byteCount": 264880,
+    "sha256": "5d451fa38dd5b03c45a0a15f5208539ab43720bdc282662f8b673706e07b7c17"
+  },
+  "segments": [
+    {
+      "label": "Bootloader",
+      "url": "/firmware/vhos-ac-sensor-node-esp32s3-v0.1.0-dev.1-bootloader.bin",
+      "byteCount": 20912,
+      "sha256": "fe4ac839f38e0d8c7218f3930094c55374e2e3e3981990ecd4d5b49b5788e524",
+      "address": 0
+    },
+    {
+      "label": "Partition Table",
+      "url": "/firmware/vhos-ac-sensor-node-esp32s3-v0.1.0-dev.1-partition-table.bin",
+      "byteCount": 3072,
+      "sha256": "fcdec9d764cda6ae1b1cd9ebb6fde60f502db00cec47e639f9c50f3f73049be5",
+      "address": 32768
+    },
+    {
+      "label": "Otadata",
+      "url": "/firmware/vhos-ac-sensor-node-esp32s3-v0.1.0-dev.1-ota-data-initial.bin",
+      "byteCount": 8192,
+      "sha256": "7d2c7ac4888bfd75cd5f56e8d61f69595121183afc81556c876732fd3782c62f",
+      "address": 53248
+    },
+    {
+      "label": "App",
+      "url": "/firmware/vhos-ac-sensor-node-esp32s3-v0.1.0-dev.1-app.bin",
+      "byteCount": 199344,
+      "sha256": "2b37503ed5ca822e04f1bfb7cd5d8509fdf5e153d358bed0a61a6ce09e716e73",
+      "address": 65536
+    }
+  ],
+  "protectedRanges": [
+    {
+      "label": "Device identity and future BLE bond NVS",
+      "address": 36864,
+      "byteCount": 16384
+    }
+  ]
+}

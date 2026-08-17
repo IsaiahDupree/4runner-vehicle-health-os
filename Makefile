@@ -1,4 +1,4 @@
-.PHONY: install verify simulate clean-build
+.PHONY: install verify simulate simulate-ac clean-build
 
 VENV := .venv
 PYTHON := $(VENV)/bin/python
@@ -16,6 +16,12 @@ simulate:
 	$(VHOS) simulate --scenario cold-start-idle --output build/captures/cold-start-idle --replace
 	$(VHOS) validate-bundle build/captures/cold-start-idle
 	$(VHOS) replay build/captures/cold-start-idle --output build/captures/cold-start-idle/replay/signals.ndjson
+
+simulate-ac:
+	$(VHOS) simulate --scenario ac-bench-sweep --output build/captures/ac-bench-sweep --replace
+	$(VHOS) validate-bundle build/captures/ac-bench-sweep
+	$(VHOS) replay build/captures/ac-bench-sweep --output build/captures/ac-bench-sweep/replay/signals.ndjson
+	$(VHOS) calculate-ac build/captures/ac-bench-sweep --output build/captures/ac-bench-sweep/calculations.json
 
 clean-build:
 	python3 -c 'from pathlib import Path; import shutil; target=Path("build").resolve(); assert target.name == "build"; shutil.rmtree(target, ignore_errors=True)'

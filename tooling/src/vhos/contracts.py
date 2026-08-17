@@ -17,7 +17,10 @@ SCHEMA_BY_CONTRACT = {
     "ai.claim": "ai-claim.schema.json",
     "calculation.run": "calculation-run.schema.json",
     "capture.bundle.manifest": "capture-bundle-manifest.schema.json",
+    "equation.definition": "equation-definition.schema.json",
     "raw.observation": "raw-observation.schema.json",
+    "sensor.node.post": "sensor-node-post.schema.json",
+    "sensor.node.telemetry": "sensor-node-telemetry.schema.json",
     "signal.definition": "signal-definition.schema.json",
     "signal.sample": "signal-sample.schema.json",
 }
