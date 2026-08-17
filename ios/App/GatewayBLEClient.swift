@@ -543,6 +543,9 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       frameDecodeErrorCount &+= 1
       state = .degraded
       transportMessage = error.localizedDescription
+      Self.commissioningTrace(
+        "FRAME_OR_CONTRACT_DECODE_FAILED characteristic=\(characteristic.uuid.uuidString) error=\(error.localizedDescription)"
+      )
     }
   }
 

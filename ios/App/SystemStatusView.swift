@@ -368,12 +368,12 @@ struct SystemStatusView: View {
           ? .pending : (listenOnlySatisfied ? .pass : .blocked)),
       StatusIndicator(
         "gateway.storage", title: "Capture storage",
-        value: health.map {
-          ByteCountFormatter.string(fromByteCount: Int64($0.storageFreeBytes), countStyle: .file)
+        value: health.flatMap(\.storageFreeBytes).map {
+          ByteCountFormatter.string(fromByteCount: Int64($0), countStyle: .file)
         }
           ?? "UNAVAILABLE",
         detail: "Gateway-reported free storage",
-        level: health.map { $0.storageFreeBytes > 0 ? .pass : .warning } ?? .pending),
+        level: health.flatMap(\.storageFreeBytes).map { $0 > 0 ? .pass : .warning } ?? .pending),
       counterIndicator(
         id: "gateway.received", title: "Vehicle-bus frames", count: health?.receivedFrames,
         zeroLevel: .pending, nonzeroLevel: .pass),

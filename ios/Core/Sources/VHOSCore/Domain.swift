@@ -103,7 +103,7 @@ public struct GatewayHealth: Codable, Equatable, Sendable {
   public let droppedFrames: UInt64
   public let busErrorCount: UInt64
   public let busOffCount: UInt64
-  public let storageFreeBytes: UInt64
+  public let storageFreeBytes: UInt64?
   public let captureActive: Bool
   public let listenOnly: Bool
 
@@ -117,7 +117,7 @@ public struct GatewayHealth: Codable, Equatable, Sendable {
     droppedFrames: UInt64,
     busErrorCount: UInt64,
     busOffCount: UInt64,
-    storageFreeBytes: UInt64,
+    storageFreeBytes: UInt64?,
     captureActive: Bool,
     listenOnly: Bool
   ) {
