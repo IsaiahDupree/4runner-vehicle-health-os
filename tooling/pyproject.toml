@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "Contract validation, deterministic capture simulation, and replay tooling for 4Runner Vehicle Health OS"
 requires-python = ">=3.12"
 dependencies = [
+  "cryptography>=46,<47",
   "jsonschema>=4.23,<5"
 ]
 

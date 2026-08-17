@@ -544,8 +544,17 @@ struct SystemStatusView: View {
       StatusIndicator(
         "firmware.endpoint", title: "Private Wi-Fi OTA endpoint",
         value: handshake?.otaUploadURL == nil ? "NOT ADVERTISED" : "ADVERTISED",
-        detail: handshake?.otaUploadURL ?? "Awaiting gateway handshake",
+        detail: handshake?.otaUploadURL.map {
+          "\($0) • network remains off until encrypted BLE approval"
+        } ?? "Awaiting gateway handshake",
         level: handshake?.otaUploadURL == nil ? .pending : .pass),
+      StatusIndicator(
+        "firmware.session", title: "Temporary OTA network",
+        value: gateway.otaStatus?.state ?? "OFF",
+        detail: gateway.otaStatus?.detail
+          ?? "Hidden, one-client Wi-Fi starts only for an approved signed update",
+        level: gateway.otaStatus?.networkReady == true
+          ? .active : (gateway.otaStatus?.state == "POST_PASSED" ? .pass : .pending)),
       StatusIndicator(
         "firmware.preflight", title: "OTA preflight",
         value: firmwarePreflight.value,

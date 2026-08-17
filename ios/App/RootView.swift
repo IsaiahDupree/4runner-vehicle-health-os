@@ -154,7 +154,7 @@ private struct FirmwareView: View {
       }
       Section("Install") {
         Text(
-          "Update requires a current PARKED health report, idle capture, stable voltage, compatible hardware, A/B rollback capabilities, and the gateway-advertised private Wi-Fi endpoint."
+          "Update requires a current PARKED health report, stable voltage, compatible hardware, and signed A/B rollback support. The app pauses and flushes the recorder, opens a hidden one-client gateway network over encrypted BLE, uploads, then removes that network from the iPhone."
         )
         .font(.footnote)
         Button("Run preflight and install") { confirmingUpdate = true }

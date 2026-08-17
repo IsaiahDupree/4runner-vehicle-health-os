@@ -16,7 +16,9 @@ Native SwiftUI control surface for the VHOS gateway contract. Minimum deployment
   candidates. Passive network detection is shown separately from a confirmed OBD response.
 - Keychain-backed Ed25519 signing of semantic experiment approvals.
 - Safety validation requiring a current `PARKED` report, idle capture, listen-only mode, and gateway capabilities.
-- `.vhosota` parsing, Ed25519 signature/hash verification, compatibility/voltage/capability preflight, and local Wi-Fi upload.
+- `.vhosota` parsing, Ed25519 signature/hash verification, compatibility/voltage/capability
+  preflight, encrypted-BLE temporary-network activation, one-shot iOS hotspot join, authenticated
+  local upload, cleanup, and rollback-status decoding.
 - Provider-neutral JSON evidence handoff whose authority contract excludes vehicle activation and raw frame emission.
 
 The app contains no arbitrary CAN/K-line/J1850 transmit console. Factory WiCAN compatibility mode is observation-only; experiments require the VHOS firmware fork and its capability handshake.
@@ -79,7 +81,11 @@ xcodebuild \
   build
 ```
 
-Bluetooth requires a physical iPhone for gateway testing; iOS Simulator reports Bluetooth as unsupported. Code signing, an Apple developer team, release keys, provisioned experiment trust, and real hardware validation are deployment inputs—not repository defaults.
+Bluetooth and temporary-network joining require a physical iPhone. The app target declares Hotspot
+Configuration and local-network access, but Apple code signing must include that entitlement on the
+installed development profile. Release private keys remain external inputs. The complete workflow
+and remaining physical gates are in
+[`docs/development/IPHONE-TO-ESP32-WIFI-OTA.md`](../docs/development/IPHONE-TO-ESP32-WIFI-OTA.md).
 
 For an attached development iPhone, the commissioning harness can launch the app with
 `--vhos-auto-scan` or `VHOS_AUTO_SCAN=1`. Either input starts the same CoreBluetooth scan exposed

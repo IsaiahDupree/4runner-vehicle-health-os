@@ -2,7 +2,11 @@
 
 ## Transport
 
-Routine streaming/control uses BLE. Firmware images use local Wi-Fi because iOS background BLE throughput is bounded and WiCAN already exposes a Wi-Fi OTA upload path. The app uploads to a capability-advertised endpoint; `/upload/ota.bin` is the pinned upstream compatibility endpoint, not a forever-hardcoded assumption.
+Routine streaming/control uses BLE. Firmware images use local Wi-Fi because iOS background BLE
+throughput is bounded. The MrDIY VHOS target uses an explicitly activated, fixed
+`/api/v1/ota/image` endpoint on a five-minute hidden SoftAP; compatible upstream WiCAN firmware may
+advertise its own local endpoint. See
+[the complete iPhone flow](IPHONE-TO-ESP32-WIFI-OTA.md).
 
 ## `.vhosota` package
 
@@ -26,7 +30,9 @@ The Ed25519 signature covers `SHA256(manifestBytes || firmwareBytes)`. The iOS a
 ## Two independent verification layers
 
 1. **Distribution layer:** iOS verifies the `.vhosota` Ed25519 signature, image hash, hardware compatibility, versions, and preconditions.
-2. **Device boot layer:** ESP-IDF verifies a signed application image using Secure Boot v2/signed-app policy before activation.
+2. **Device boot layer:** ESP-IDF verifies a signed application image using its target-specific
+   signed-app policy before activation. The physically verified classic ESP32 development target
+   uses ECDSA V1 signed-app verification without burning Secure Boot eFuses.
 
 The iOS signature does not replace ESP-IDF signed-image verification.
 
@@ -42,12 +48,16 @@ The iOS signature does not replace ESP-IDF signed-image verification.
 
 ## Activation and rollback
 
-Write only the inactive OTA slot. Boot the new image into pending-verification state. Self-test configuration parse, storage, BLE/Wi-Fi, watchdog, OBD interpreter, TWAI listen-only initialization, and passive capture. Mark valid only after all required checks pass; otherwise mark invalid and roll back.
+Write only the inactive OTA slot. Boot the new image into pending-verification state. Self-test
+configuration parse, storage, BLE/Wi-Fi, watchdog, OBD interpreter, TWAI listen-only initialization,
+and passive capture. Mark valid only after all required checks pass; otherwise mark invalid and roll
+back. The temporary AP is default-off, encrypted-BLE activated, random-credentialed, one-client,
+bearer-authenticated, and automatically removed after success, failure, cancel, or expiry.
 
 Stock WiCAN recovery remains OBD power plus USB-C flashing. Do not enable irreversible production secure-boot eFuses until development recovery, key custody, signed builds, and rollback have been bench-tested on sacrificial/development hardware.
 
 ## References
 
-- [ESP-IDF OTA and rollback](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/system/ota.html)
-- [ESP32-S3 Secure Boot v2](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/security/secure-boot-v2.html)
+- [ESP-IDF OTA and rollback](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/ota.html)
+- [ESP32 signed app verification without hardware Secure Boot](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/security/secure-boot-v1.html)
 - [Apple CryptoKit Ed25519 signing](https://developer.apple.com/documentation/cryptokit/curve25519/signing)

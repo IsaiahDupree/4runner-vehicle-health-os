@@ -16,6 +16,92 @@ public enum GatewayMessageType: UInt8, Codable, Sendable {
   case captureLogChunk = 13
 }
 
+public enum OTAControlOperation: String, Codable, Sendable {
+  case activate = "ACTIVATE"
+  case cancel = "CANCEL"
+}
+
+public struct OTAControlRequest: Codable, Equatable, Sendable {
+  public let contract: String
+  public let contractVersion: String
+  public let operation: OTAControlOperation
+  public let packageID: UUID
+  public let firmwareVersion: String
+  public let firmwareSHA256: String
+  public let firmwareSizeBytes: Int
+  public let approvedAt: String
+
+  private enum CodingKeys: String, CodingKey {
+    case contract
+    case contractVersion
+    case operation
+    case packageID = "package_id"
+    case firmwareVersion
+    case firmwareSHA256 = "firmware_sha256"
+    case firmwareSizeBytes
+    case approvedAt
+  }
+
+  public init(
+    operation: OTAControlOperation = .activate,
+    packageID: UUID,
+    firmwareVersion: String,
+    firmwareSHA256: String,
+    firmwareSizeBytes: Int,
+    approvedAt: String
+  ) {
+    contract = "gateway.ota-control-request"
+    contractVersion = "1.0.0"
+    self.operation = operation
+    self.packageID = packageID
+    self.firmwareVersion = firmwareVersion
+    self.firmwareSHA256 = firmwareSHA256
+    self.firmwareSizeBytes = firmwareSizeBytes
+    self.approvedAt = approvedAt
+  }
+
+  public func encoded() throws -> Data { try VHOSJSON.encoder().encode(self) }
+}
+
+public struct GatewayOTAStatus: Codable, Equatable, Sendable {
+  public let contract: String
+  public let contractVersion: String
+  public let gatewayID: String?
+  public let state: String
+  public let detail: String
+  public let packageID: UUID?
+  public let firmwareVersion: String?
+  public let sessionActive: Bool
+  public let expiresInSeconds: UInt32
+  public let maximumImageBytes: Int
+  public let ssid: String?
+  public let passphrase: String?
+  public let uploadURL: String?
+  public let bearerToken: String?
+
+  private enum CodingKeys: String, CodingKey {
+    case contract
+    case contractVersion
+    case state
+    case detail
+    case gatewayID = "gatewayId"
+    case packageID = "packageId"
+    case firmwareVersion
+    case sessionActive
+    case expiresInSeconds
+    case maximumImageBytes
+    case ssid
+    case passphrase
+    case uploadURL = "uploadUrl"
+    case bearerToken
+  }
+
+  public var networkReady: Bool {
+    state == "NETWORK_READY" && sessionActive && ssid != nil && passphrase != nil
+      && uploadURL != nil && bearerToken != nil
+  }
+}
+
 public struct CaptureLogRequest: Sendable {
   public enum Operation: UInt8, Sendable {
     case index = 0

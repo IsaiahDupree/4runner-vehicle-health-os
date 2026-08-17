@@ -18,6 +18,7 @@ final class AppModel {
   private let keyStore: KeyStore
   private let experimentSigner: ExperimentSigner
   private let otaUploader = WiFiOTAUploader()
+  private let temporaryGatewayNetwork = TemporaryGatewayNetwork()
 
   var errorMessage: String?
   var noticeMessage: String?
@@ -36,6 +37,14 @@ final class AppModel {
     keyStore = store
     experimentSigner = ExperimentSigner(keyStore: store)
     gateway = GatewayBLEClient.shared
+    if (try? store.data(for: .firmwareReleasePublicKey)) == nil,
+      let url = Bundle.main.url(
+        forResource: "mrdiy-v13-development-release-ed25519", withExtension: "base64"),
+      let text = try? String(contentsOf: url, encoding: .utf8),
+      let key = try? ReleasePublicKeyParser.parse(text)
+    {
+      try? store.set(key, for: .firmwareReleasePublicKey)
+    }
     releasePublicKeyConfigured = (try? store.data(for: .firmwareReleasePublicKey)) != nil
     experimentSigningKeyConfigured =
       (try? store.data(for: .experimentSigningPrivateKey)) != nil
@@ -109,33 +118,91 @@ final class AppModel {
   }
 
   func installVerifiedFirmware() async {
+    var packageForRecovery: VerifiedFirmwarePackage?
+    var joinedSSID: String?
+    var uploadAccepted = false
     do {
       guard let package = verifiedFirmware else { throw AppModelError.verifiedFirmwareRequired }
-      guard let handshake = gateway.handshake, let health = gateway.health else {
+      packageForRecovery = package
+      guard let handshake = gateway.handshake, gateway.health != nil else {
         throw AppModelError.gatewayHealthRequired
       }
+      guard handshake.capabilities.contains(.otaSignedImage),
+        handshake.capabilities.contains(.otaAB),
+        handshake.capabilities.contains(.otaRollbackSelfTest)
+      else {
+        throw AppModelError.signedOTACapabilityRequired
+      }
+      updateInProgress = true
+      uploadProgressDescription = "Pausing and flushing the passive recorder…"
+      try gateway.setCaptureLogging(false)
+      try await waitForCapturePause()
+      guard let pausedHealth = gateway.health else { throw AppModelError.gatewayHealthRequired }
       try package.validatePreflight(
         .init(
           handshake: handshake,
-          health: health,
+          health: pausedHealth,
           bootloaderVersion: handshake.bootloaderVersion
         ))
-      guard let uploadValue = handshake.otaUploadURL, let uploadURL = URL(string: uploadValue)
-      else {
-        throw AppModelError.otaURLRequired
+      uploadProgressDescription = "Requesting an authenticated temporary OTA network over BLE…"
+      try gateway.activateTemporaryOTANetwork(for: package)
+      let session = try await waitForOTANetwork(packageID: package.manifest.packageID)
+      guard session.gatewayID == nil || session.gatewayID == handshake.gatewayID else {
+        throw AppModelError.otaGatewayIdentityMismatch
       }
-      updateInProgress = true
-      uploadProgressDescription = "Uploading verified image over the gateway's private network…"
-      defer { updateInProgress = false }
-      let response = try await otaUploader.upload(firmware: package.firmware, to: uploadURL)
+      guard let ssid = session.ssid, let passphrase = session.passphrase,
+        let uploadValue = session.uploadURL, let uploadURL = URL(string: uploadValue),
+        let token = session.bearerToken
+      else { throw AppModelError.otaSessionIncomplete }
+      joinedSSID = ssid
+      uploadProgressDescription = "Joining \(ssid) for this update only…"
+      try await temporaryGatewayNetwork.join(ssid: ssid, passphrase: passphrase)
+      uploadProgressDescription = "Uploading the verified signed image to the inactive slot…"
+      let response = try await otaUploader.upload(
+        firmware: package.firmware,
+        to: uploadURL,
+        bearerToken: token
+      )
+      uploadAccepted = true
       uploadProgressDescription = response
       noticeMessage = response
       errorMessage = nil
     } catch {
-      updateInProgress = false
-      uploadProgressDescription = nil
       errorMessage = error.localizedDescription
     }
+    if let joinedSSID { temporaryGatewayNetwork.remove(ssid: joinedSSID) }
+    if !uploadAccepted, let packageForRecovery {
+      gateway.cancelTemporaryOTANetwork(for: packageForRecovery)
+      try? gateway.setCaptureLogging(true)
+      uploadProgressDescription = nil
+    }
+    updateInProgress = false
+  }
+
+  private func waitForCapturePause() async throws {
+    for _ in 0..<40 {
+      if gateway.captureLogIndex?.logging == false, gateway.health?.captureActive == false {
+        return
+      }
+      try await Task.sleep(for: .milliseconds(250))
+    }
+    throw AppModelError.capturePauseTimedOut
+  }
+
+  private func waitForOTANetwork(packageID: UUID) async throws -> GatewayOTAStatus {
+    for _ in 0..<60 {
+      if let status = gateway.otaStatus, status.packageID == packageID {
+        if status.networkReady { return status }
+        if [
+          "FAILED", "EXPIRED", "CANCELLED", "ROLLED_BACK", "NOT_ACTIVATED",
+          "BOOT_SELECTION_FAILED",
+        ].contains(status.state) {
+          throw AppModelError.otaSessionRejected(status.detail)
+        }
+      }
+      try await Task.sleep(for: .milliseconds(250))
+    }
+    throw AppModelError.otaSessionTimedOut
   }
 
   func evidenceExportURL() throws -> URL {
@@ -170,6 +237,12 @@ enum AppModelError: Error, LocalizedError {
   case gatewayHealthRequired
   case verifiedFirmwareRequired
   case otaURLRequired
+  case signedOTACapabilityRequired
+  case capturePauseTimedOut
+  case otaSessionIncomplete
+  case otaSessionTimedOut
+  case otaSessionRejected(String)
+  case otaGatewayIdentityMismatch
 
   var errorDescription: String? {
     switch self {
@@ -178,6 +251,17 @@ enum AppModelError: Error, LocalizedError {
     case .gatewayHealthRequired: "A VHOS gateway handshake and current health report are required."
     case .verifiedFirmwareRequired: "Select and verify a .vhosota firmware package first."
     case .otaURLRequired: "The gateway handshake did not advertise a valid local OTA upload URL."
+    case .signedOTACapabilityRequired:
+      "This gateway firmware does not advertise signed A/B Wi-Fi OTA with rollback."
+    case .capturePauseTimedOut:
+      "The passive recorder did not confirm a flushed, paused state before OTA."
+    case .otaSessionIncomplete:
+      "The encrypted BLE OTA response did not include complete temporary-network credentials."
+    case .otaSessionTimedOut:
+      "The gateway did not open its temporary OTA network before the commissioning timeout."
+    case .otaSessionRejected(let detail): "The gateway rejected the OTA session: \(detail)"
+    case .otaGatewayIdentityMismatch:
+      "The temporary OTA session came from a different gateway identity than the BLE handshake."
     }
   }
 }

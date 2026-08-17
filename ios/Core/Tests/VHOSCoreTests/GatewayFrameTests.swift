@@ -3,6 +3,35 @@ import Testing
 
 @testable import VHOSCore
 
+@Test func otaActivationContractUsesExplicitIdentifiersAndDecodesCredentials() throws {
+  let packageID = UUID(uuidString: "8D963E52-9FC9-4B3B-9C60-4A72C5E0148D")!
+  let request = OTAControlRequest(
+    packageID: packageID,
+    firmwareVersion: "0.1.0-dev.12",
+    firmwareSHA256: String(repeating: "a", count: 64),
+    firmwareSizeBytes: 600_000,
+    approvedAt: "2026-08-17T12:00:00Z"
+  )
+  let object = try #require(
+    JSONSerialization.jsonObject(with: request.encoded()) as? [String: Any]
+  )
+  #expect(object["contract"] as? String == "gateway.ota-control-request")
+  #expect(object["package_id"] as? String == packageID.uuidString)
+  #expect(object["firmware_sha256"] as? String == String(repeating: "a", count: 64))
+  #expect(object["firmware_size_bytes"] as? Int == 600_000)
+
+  let status = try VHOSJSON.decoder().decode(
+    GatewayOTAStatus.self,
+    from: Data(
+      """
+      {"bearer_token":"token","contract":"gateway.ota-status","contract_version":"1.0.0","detail":"ready","expires_in_seconds":300,"firmware_version":"0.1.0-dev.12","gateway_id":"esp32-b08d14","maximum_image_bytes":1572864,"package_id":"\(packageID.uuidString)","passphrase":"password","session_active":true,"ssid":"VHOS-OTA-B08D14","state":"NETWORK_READY","upload_url":"http://192.168.4.1/api/v1/ota/image"}
+      """.utf8))
+  #expect(status.networkReady)
+  #expect(status.gatewayID == "esp32-b08d14")
+  #expect(status.packageID == packageID)
+  #expect(status.uploadURL == "http://192.168.4.1/api/v1/ota/image")
+}
+
 @Test func gatewayFrameRoundTripsAndStreamsAcrossChunks() throws {
   let first = GatewayFrame(
     messageType: .gatewayHealth, sequence: 7, monotonicMicroseconds: 42,

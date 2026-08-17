@@ -130,3 +130,10 @@ carry an owner label, iPhone wall time, gateway monotonic correlation, and exact
 source-sequence range. A desktop replay tool can then rank identifiers/bytes against those actions
 and emit evidence-linked signal hypotheses. Hypotheses must remain proposals until independently
 validated and versioned into a Vehicle Signal Pack.
+
+The first vehicle export has now been preserved as a separate evidence-bounded engineering record:
+[Passive CAN capture analysis — 2026-08-17](PASSIVE-CAN-CAPTURE-ANALYSIS-2026-08-17.md). It records
+the reported frame-rate/coverage/checksum metrics, signal candidates, why the sampled dev.11 export
+is not lossless, and the agreed Lossless Capture V2 -> Experiment Mode -> automatic discovery ->
+allowlisted diagnostics sequence. Candidate Toyota identifiers and scales in that note are not
+production decoders.

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <radialGradient id="bg" cx="28%" cy="18%" r="100%"><stop offset="0" stop-color="#174a2c"/><stop offset=".58" stop-color="#07150e"/><stop offset="1" stop-color="#03070d"/></radialGradient>
+    <linearGradient id="fg" x1="20%" y1="15%" x2="80%" y2="90%"><stop offset="0" stop-color="#79ef91"/><stop offset="1" stop-color="#25c987"/></linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="28" stdDeviation="24" flood-color="#000" flood-opacity=".48"/></filter>
+    <filter id="blur"><feGaussianBlur stdDeviation="38"/></filter>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <circle cx="164" cy="112" r="290" fill="#79ef91" opacity=".10" filter="url(#blur)"/>
+  <circle cx="880" cy="908" r="250" fill="#25c987" opacity=".09" filter="url(#blur)"/>
+  <path d="M0 0 H1024 V176 C742 108 306 92 0 236 Z" fill="#fff" opacity=".025"/>
+  <g filter="url(#shadow)"><path d="M210 618 V514 C210 470 246 434 290 434 H734 C778 434 814 470 814 514 V618" fill="none" stroke="url(#fg)" stroke-width="62" stroke-linecap="round" stroke-linejoin="round" /><path d="M306 434 L370 326 H654 L718 434" fill="none" stroke="url(#fg)" stroke-width="62" stroke-linecap="round" stroke-linejoin="round" /><circle cx="328" cy="628" r="58" fill="url(#fg)" /><circle cx="696" cy="628" r="58" fill="url(#fg)" /><path d="M294 520 H416 L466 458 L530 602 L584 520 H728" fill="none" stroke="url(#fg)" stroke-width="34" stroke-linecap="round" stroke-linejoin="round" /></g>
+</svg>

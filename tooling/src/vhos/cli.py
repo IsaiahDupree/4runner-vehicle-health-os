@@ -8,6 +8,7 @@ from pathlib import Path
 from .ac_metrics import SIMULATOR_AC_SIGNALS, calculate_ac_metrics
 from .bundles import BundleError, load_validated_bundle, write_simulator_bundle
 from .contracts import ContractCatalog, ContractError
+from .firmware_package import build_firmware_package, verify_firmware_package
 from .replay import replay_bundle
 from .simulator import generate_ac_bench_sweep, generate_cold_start_idle
 
@@ -42,6 +43,25 @@ def build_parser() -> argparse.ArgumentParser:
     )
     calculate_ac.add_argument("bundle", type=Path)
     calculate_ac.add_argument("--output", type=Path)
+
+    package_firmware = subcommands.add_parser(
+        "package-firmware", help="Create a signed .vhosota distribution package"
+    )
+    package_firmware.add_argument("--firmware", type=Path, required=True)
+    package_firmware.add_argument("--output", type=Path, required=True)
+    package_firmware.add_argument("--private-key", type=Path, required=True)
+    package_firmware.add_argument("--firmware-version", required=True)
+    package_firmware.add_argument("--firmware-build-id", required=True)
+    package_firmware.add_argument("--hardware-revision", action="append", required=True)
+    package_firmware.add_argument("--minimum-supply-millivolts", type=int, required=True)
+    package_firmware.add_argument("--minimum-bootloader-version")
+    package_firmware.add_argument("--release-channel", default="development")
+
+    verify_firmware = subcommands.add_parser(
+        "verify-firmware-package", help="Verify a .vhosota package and print its manifest"
+    )
+    verify_firmware.add_argument("package", type=Path)
+    verify_firmware.add_argument("--public-key", type=Path, required=True)
     return parser
 
 
@@ -51,6 +71,30 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "contracts":
             return _contracts(args)
+        if args.command == "package-firmware":
+            package = build_firmware_package(
+                firmware_path=args.firmware,
+                output_path=args.output,
+                private_key_path=args.private_key,
+                firmware_version=args.firmware_version,
+                firmware_build_id=args.firmware_build_id,
+                supported_hardware_revisions=args.hardware_revision,
+                minimum_supply_millivolts=args.minimum_supply_millivolts,
+                minimum_bootloader_version=args.minimum_bootloader_version,
+                release_channel=args.release_channel,
+            )
+            _print_json(
+                {
+                    "output": str(args.output.resolve()),
+                    "manifest": package.manifest,
+                    "signature_bytes": len(package.signature),
+                }
+            )
+            return 0
+        if args.command == "verify-firmware-package":
+            package = verify_firmware_package(args.package, args.public_key)
+            _print_json({"valid": True, "manifest": package.manifest})
+            return 0
         if args.command == "simulate":
             generators = {
                 "cold-start-idle": generate_cold_start_idle,

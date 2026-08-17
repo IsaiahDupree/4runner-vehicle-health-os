@@ -52,6 +52,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   private var candidateWasPreviouslyValidated = false
   private let captureStore = CaptureLogStore()
   private var captureSyncTargets: [CaptureSyncTarget] = []
+  private var captureSyncSuspendedForOTA = false
 
   var bluetoothStateDescription = "Initializing"
   var bluetoothReady = false
@@ -85,6 +86,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   var lastHealthReceivedAt: Date?
   var lastExperimentResultAt: Date?
   var lastOTAStatusAt: Date?
+  var otaStatus: GatewayOTAStatus?
   var commandChunksPending = 0
   var currentSessionResultStartIndex = 0
   var factoryBanner: String?
@@ -222,6 +224,45 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     } catch {
       captureSyncMessage = error.localizedDescription
     }
+  }
+
+  func setCaptureLogging(_ enabled: Bool) throws {
+    captureSyncSuspendedForOTA = !enabled
+    if !enabled {
+      captureSyncTargets.removeAll()
+    }
+    try writeFrame(
+      type: .captureLogRequest,
+      payload: CaptureLogRequest(operation: enabled ? .resume : .pause).encoded()
+    )
+    captureSyncMessage = enabled
+      ? "Resuming the passive flight recorder…"
+      : "Pausing and flushing the passive flight recorder for OTA…"
+  }
+
+  func activateTemporaryOTANetwork(for package: VerifiedFirmwarePackage) throws {
+    otaStatus = nil
+    let request = OTAControlRequest(
+      packageID: package.manifest.packageID,
+      firmwareVersion: package.manifest.firmwareVersion,
+      firmwareSHA256: package.manifest.firmwareSHA256,
+      firmwareSizeBytes: package.firmware.count,
+      approvedAt: Self.timestamp()
+    )
+    try writeFrame(type: .otaControl, payload: request.encoded())
+    transportMessage = "Opening the temporary authenticated OTA network…"
+  }
+
+  func cancelTemporaryOTANetwork(for package: VerifiedFirmwarePackage) {
+    let request = OTAControlRequest(
+      operation: .cancel,
+      packageID: package.manifest.packageID,
+      firmwareVersion: package.manifest.firmwareVersion,
+      firmwareSHA256: package.manifest.firmwareSHA256,
+      firmwareSizeBytes: package.firmware.count,
+      approvedAt: Self.timestamp()
+    )
+    try? writeFrame(type: .otaControl, payload: request.encoded())
   }
 
   func centralManagerDidUpdateState(_ central: CBCentralManager) {
@@ -620,7 +661,8 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       !handshakeRequested,
       command != nil,
       streamNotificationsEnabled,
-      healthNotificationsEnabled
+      healthNotificationsEnabled,
+      otaStatusNotificationsEnabled
     else { return }
     handshakeRequested = true
     requestHandshake()
@@ -670,7 +712,11 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       Self.commissioningTrace(
         "CAPTURE_INDEX current_session=\(index.currentSessionID) current_records=\(index.currentRecords) previous_session=\(index.previousSessionID) previous_records=\(index.previousRecords) retained=\(index.retainedRecords) queue_drops=\(index.queueDroppedRecords) write_failures=\(index.storageWriteFailures)"
       )
-      beginCaptureSync(index)
+      if captureSyncSuspendedForOTA, !index.logging {
+        captureSyncMessage = "Passive flight recorder is flushed and paused for OTA."
+      } else {
+        beginCaptureSync(index)
+      }
     case .captureLogChunk:
       guard let gatewayID = handshake?.gatewayID else { return }
       let chunk = try CaptureLogChunk.decode(
@@ -680,8 +726,13 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       )
       try consumeCaptureChunk(chunk)
     case .otaControl:
+      let status = try VHOSJSON.decoder().decode(GatewayOTAStatus.self, from: frame.payload)
+      otaStatus = status
       lastOTAStatusAt = Date()
-      transportMessage = String(data: frame.payload, encoding: .utf8) ?? "OTA status received."
+      transportMessage = status.detail
+      Self.commissioningTrace(
+        "OTA_STATUS state=\(status.state) active=\(status.sessionActive) expires=\(status.expiresInSeconds)"
+      )
     default:
       break
     }
@@ -1124,6 +1175,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     lastHandshakeReceivedAt = nil
     lastHealthReceivedAt = nil
     lastOTAStatusAt = nil
+    otaStatus = nil
     discoveredName = nil
     discoveredIdentifier = nil
     discoveredRSSI = nil
