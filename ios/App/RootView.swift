@@ -191,9 +191,83 @@ private struct FirmwareView: View {
 private struct EvidenceView: View {
   @Environment(AppModel.self) private var model
   @State private var exportURL: URL?
+  @State private var canExportURL: URL?
 
   var body: some View {
     List {
+      Section("Passive CAN flight recorder") {
+        LabeledContent("Gateway capture") {
+          Text(model.gateway.health?.captureActive == true ? "RECORDING" : "WAITING")
+            .foregroundStyle(model.gateway.health?.captureActive == true ? .green : .secondary)
+        }
+        if let index = model.gateway.captureLogIndex {
+          LabeledContent("Observed frames", value: index.observedFrames.formatted())
+          LabeledContent("Retained records", value: index.retainedRecords.formatted())
+          LabeledContent(
+            "On-device logs",
+            value: "\(index.previousRecords + index.currentRecords) records")
+          LabeledContent(
+            "Storage free",
+            value: ByteCountFormatter.string(
+              fromByteCount: Int64(index.freeBytes), countStyle: .file))
+          if index.queueDroppedRecords > 0 || index.storageWriteFailures > 0 {
+            Label(
+              "\(index.queueDroppedRecords) queue drops; \(index.storageWriteFailures) write failures",
+              systemImage: "exclamationmark.triangle.fill"
+            )
+            .foregroundStyle(.orange)
+          }
+        }
+        Text(model.gateway.captureSyncMessage)
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+        Button("Refresh and sync gateway logs") {
+          model.gateway.refreshCaptureLogIndex()
+        }
+        .disabled(model.gateway.state != .vhosConnected)
+      }
+      Section("Recent logs on iPhone") {
+        if model.gateway.captureSessions.isEmpty {
+          ContentUnavailableView(
+            "No synchronized logs",
+            systemImage: "externaldrive.badge.wifi",
+            description: Text(
+              "The app automatically downloads the gateway's current and previous capture segments after reconnecting."))
+        } else {
+          ForEach(model.gateway.captureSessions.prefix(12)) { session in
+            VStack(alignment: .leading, spacing: 4) {
+              Text("Session \(session.sessionID)").font(.headline)
+              Text(session.gatewayID).font(.caption).foregroundStyle(.secondary)
+              Text(
+                "\(session.recordCount.formatted()) records • \(ByteCountFormatter.string(fromByteCount: session.byteCount, countStyle: .file))"
+              )
+              .font(.caption)
+              .foregroundStyle(.secondary)
+            }
+          }
+          Button("Prepare passive CAN export") {
+            do { canExportURL = try model.passiveCANExportURL() } catch {
+              model.errorMessage = error.localizedDescription
+            }
+          }
+          if let canExportURL {
+            ShareLink(item: canExportURL) {
+              Label("Share passive-can-recent-logs.ndjson", systemImage: "square.and.arrow.up")
+            }
+          }
+        }
+      }
+      if let observation = model.gateway.latestCANObservation {
+        Section("Latest live CAN observation") {
+          LabeledContent("Identifier", value: "0x\(observation.identifierHex)")
+          LabeledContent("Data", value: observation.dataHex)
+          LabeledContent("Bitrate", value: "\(observation.bitrateBps / 1_000) kbit/s")
+          LabeledContent("Sequence", value: observation.sourceSequence.formatted())
+          Text("Live display is sampled; the gateway flight recorder is the durable evidence source.")
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+        }
+      }
       Section("Experiment results") {
         if model.gateway.experimentResults.isEmpty {
           ContentUnavailableView(

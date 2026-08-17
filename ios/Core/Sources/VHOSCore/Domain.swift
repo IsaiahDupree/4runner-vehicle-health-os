@@ -33,6 +33,7 @@ public enum GatewayCapability: String, Codable, CaseIterable, Hashable, Sendable
   case otaSignedImage = "ota.signed-image"
   case otaRollbackSelfTest = "ota.rollback-self-test"
   case evidenceExport = "evidence.export"
+  case persistentEvidenceLog = "evidence.persistent-log"
 }
 
 public struct GatewayHandshake: Codable, Equatable, Sendable {
@@ -124,6 +125,15 @@ public struct GatewayHealth: Codable, Equatable, Sendable {
   public let canScanState: PassiveCANScanState?
   public let canStandardFrames: UInt64?
   public let passiveCanCandidate: String?
+  public let captureCurrentRecords: UInt32?
+  public let captureObservedFrames: UInt64?
+  public let capturePreviousRecords: UInt32?
+  public let captureQueueDroppedRecords: UInt64?
+  public let captureRetainedRecords: UInt64?
+  public let captureSampleSuppressedFrames: UInt64?
+  public let captureSampledFrames: UInt64?
+  public let captureSessionID: UInt32?
+  public let captureStorageWriteFailures: UInt64?
 
   public init(
     contract: String = "gateway.health",
@@ -147,7 +157,16 @@ public struct GatewayHealth: Codable, Equatable, Sendable {
     canScanCycles: UInt32? = nil,
     canScanState: PassiveCANScanState? = nil,
     canStandardFrames: UInt64? = nil,
-    passiveCanCandidate: String? = nil
+    passiveCanCandidate: String? = nil,
+    captureCurrentRecords: UInt32? = nil,
+    captureObservedFrames: UInt64? = nil,
+    capturePreviousRecords: UInt32? = nil,
+    captureQueueDroppedRecords: UInt64? = nil,
+    captureRetainedRecords: UInt64? = nil,
+    captureSampleSuppressedFrames: UInt64? = nil,
+    captureSampledFrames: UInt64? = nil,
+    captureSessionID: UInt32? = nil,
+    captureStorageWriteFailures: UInt64? = nil
   ) {
     self.contract = contract
     self.contractVersion = contractVersion
@@ -171,6 +190,15 @@ public struct GatewayHealth: Codable, Equatable, Sendable {
     self.canScanState = canScanState
     self.canStandardFrames = canStandardFrames
     self.passiveCanCandidate = passiveCanCandidate
+    self.captureCurrentRecords = captureCurrentRecords
+    self.captureObservedFrames = captureObservedFrames
+    self.capturePreviousRecords = capturePreviousRecords
+    self.captureQueueDroppedRecords = captureQueueDroppedRecords
+    self.captureRetainedRecords = captureRetainedRecords
+    self.captureSampleSuppressedFrames = captureSampleSuppressedFrames
+    self.captureSampledFrames = captureSampledFrames
+    self.captureSessionID = captureSessionID
+    self.captureStorageWriteFailures = captureStorageWriteFailures
   }
 }
 

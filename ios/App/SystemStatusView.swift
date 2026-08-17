@@ -1005,6 +1005,7 @@ extension GatewayCapability {
     case .otaSignedImage: "Signed OTA images"
     case .otaRollbackSelfTest: "Rollback self-test"
     case .evidenceExport: "Evidence export"
+    case .persistentEvidenceLog: "Persistent CAN log"
     }
   }
 }

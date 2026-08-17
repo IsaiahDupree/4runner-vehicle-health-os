@@ -156,6 +156,10 @@ final class AppModel {
     return url
   }
 
+  func passiveCANExportURL() throws -> URL {
+    try gateway.captureLogExportURL()
+  }
+
   static func timestamp() -> String {
     ISO8601DateFormatter().string(from: Date())
   }

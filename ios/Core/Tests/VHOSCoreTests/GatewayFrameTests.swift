@@ -69,3 +69,53 @@ import Testing
   #expect(health.passiveCanCandidate == "CAN_11_250")
   #expect(health.receivedFrames == health.canStandardFrames! + health.canExtendedFrames!)
 }
+
+@Test func captureLogChunkValidatesRecordsAndPreservesEvidenceLineage() throws {
+  var record = Data(repeating: 0, count: 36)
+  record[0] = 1
+  record[1] = 0x04
+  record[2] = 8
+  record[3] = 1
+  func write<T: FixedWidthInteger>(_ value: T, at offset: Int) {
+    var little = value.littleEndian
+    withUnsafeBytes(of: &little) { bytes in
+      record.replaceSubrange(offset..<(offset + bytes.count), with: bytes)
+    }
+  }
+  write(UInt32(0x7E8), at: 4)
+  write(UInt64(91), at: 8)
+  write(UInt64(1_500_000), at: 16)
+  record.replaceSubrange(24..<32, with: [0x06, 0x41, 0x00, 0xBE, 0x3E, 0xB8, 0x13, 0x10])
+  write(CRC32C.checksum(record.prefix(32)), at: 32)
+
+  var payload = Data(repeating: 0, count: 16)
+  payload[0] = 1
+  payload[1] = 0
+  payload[2] = 1
+  func writeHeader<T: FixedWidthInteger>(_ value: T, at offset: Int) {
+    var little = value.littleEndian
+    withUnsafeBytes(of: &little) { bytes in
+      payload.replaceSubrange(offset..<(offset + bytes.count), with: bytes)
+    }
+  }
+  writeHeader(UInt32(12), at: 4)
+  writeHeader(UInt16(1), at: 8)
+  writeHeader(UInt16(36), at: 10)
+  writeHeader(UInt32(44), at: 12)
+  payload.append(record)
+
+  let chunk = try CaptureLogChunk.decode(
+    payload,
+    gatewayID: "esp32-test",
+    ingestedAt: "2026-08-16T23:00:00Z"
+  )
+
+  #expect(chunk.recordOffset == 12)
+  #expect(chunk.endOfFile)
+  #expect(chunk.records.first?.sessionID == 44)
+  #expect(chunk.records.first?.sourceSequence == 91)
+  #expect(chunk.records.first?.identifierHex == "7E8")
+  #expect(chunk.records.first?.dataHex == "06 41 00 BE 3E B8 13 10")
+  #expect(chunk.records.first?.listenOnly == true)
+  #expect(chunk.records.first?.evidenceSource == "gateway-flash")
+}

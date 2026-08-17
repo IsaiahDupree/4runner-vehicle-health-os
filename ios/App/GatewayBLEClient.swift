@@ -49,6 +49,8 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   private var candidateNameSuggestsGateway = false
   private var candidateAdvertisedVHOSService = false
   private var candidateWasPreviouslyValidated = false
+  private let captureStore = CaptureLogStore()
+  private var captureSyncTargets: [CaptureSyncTarget] = []
 
   var bluetoothStateDescription = "Initializing"
   var bluetoothReady = false
@@ -88,6 +90,12 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   var handshake: GatewayHandshake?
   var health: GatewayHealth?
   var experimentResults: [ProtocolExperimentResult] = []
+  var captureLogIndex: CaptureLogIndex?
+  var latestCANObservation: PassiveCANObservation?
+  var recentCANObservations: [PassiveCANObservation] = []
+  var captureSessions: [CaptureSessionSummary] = []
+  var captureSyncMessage = "Waiting for a gateway capture index."
+  var captureDownloadedRecords: UInt64 = 0
   var transportMessage: String?
   var automaticReconnectActive = false
   var reconnectAttemptCount = 0
@@ -200,6 +208,19 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   func sendSignedExperimentPlan(_ envelope: SignedExperimentPlanEnvelope) throws {
     guard state == .vhosConnected else { throw GatewayBLEError.vhosFirmwareRequired }
     try writeFrame(type: .experimentPlan, payload: envelope.encoded())
+  }
+
+  func captureLogExportURL() throws -> URL {
+    try captureStore.exportURL()
+  }
+
+  func refreshCaptureLogIndex() {
+    do {
+      try writeFrame(type: .captureLogRequest, payload: CaptureLogRequest(operation: .index).encoded())
+      captureSyncMessage = "Requesting the gateway capture index…"
+    } catch {
+      captureSyncMessage = error.localizedDescription
+    }
   }
 
   func centralManagerDidUpdateState(_ central: CBCentralManager) {
@@ -614,6 +635,10 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       transportMessage = "VHOS gateway contract active."
       Self.logger.info("VHOS gateway handshake verified")
       Self.commissioningTrace("HANDSHAKE_VERIFIED firmware=\(value.firmwareVersion)")
+      captureSessions = captureStore.summaries()
+      if value.capabilities.contains(.persistentEvidenceLog) {
+        refreshCaptureLogIndex()
+      }
     case .gatewayHealth:
       let value = try VHOSJSON.decoder().decode(GatewayHealth.self, from: frame.payload)
       health = value
@@ -625,6 +650,30 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       let result = try VHOSJSON.decoder().decode(ProtocolExperimentResult.self, from: frame.payload)
       experimentResults.append(result)
       lastExperimentResultAt = Date()
+    case .rawCANFrame:
+      guard let gatewayID = handshake?.gatewayID else { return }
+      let observation = try PassiveCANObservation.decodeLive(
+        frame.payload,
+        gatewayID: gatewayID,
+        ingestedAt: Self.timestamp()
+      )
+      latestCANObservation = observation
+      recentCANObservations.append(observation)
+      if recentCANObservations.count > 100 {
+        recentCANObservations.removeFirst(recentCANObservations.count - 100)
+      }
+    case .captureLogIndex:
+      let index = try VHOSJSON.decoder().decode(CaptureLogIndex.self, from: frame.payload)
+      captureLogIndex = index
+      beginCaptureSync(index)
+    case .captureLogChunk:
+      guard let gatewayID = handshake?.gatewayID else { return }
+      let chunk = try CaptureLogChunk.decode(
+        frame.payload,
+        gatewayID: gatewayID,
+        ingestedAt: Self.timestamp()
+      )
+      try consumeCaptureChunk(chunk)
     case .otaControl:
       lastOTAStatusAt = Date()
       transportMessage = String(data: frame.payload, encoding: .utf8) ?? "OTA status received."
@@ -654,6 +703,81 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     if pendingCommandChunks.count == Int(ceil(Double(bytes.count) / Double(maximum))) {
       sendNextCommandChunk()
     }
+  }
+
+  private func beginCaptureSync(_ index: CaptureLogIndex) {
+    guard let gatewayID = handshake?.gatewayID else { return }
+    captureSyncTargets.removeAll()
+    let candidates: [(UInt8, UInt32, UInt32)] = [
+      (1, index.previousSessionID, index.previousRecords),
+      (0, index.currentSessionID, index.currentRecords),
+    ]
+    for (slot, sessionID, totalRecords) in candidates where sessionID != 0 && totalRecords > 0 {
+      let localCount = captureStore.recordCount(gatewayID: gatewayID, sessionID: sessionID)
+      let offset = localCount <= totalRecords ? localCount : 0
+      captureSyncTargets.append(
+        CaptureSyncTarget(
+          slot: slot,
+          sessionID: sessionID,
+          totalRecords: totalRecords,
+          recordOffset: offset
+        ))
+    }
+    captureSessions = captureStore.summaries()
+    requestNextCaptureChunk()
+  }
+
+  private func requestNextCaptureChunk() {
+    while let target = captureSyncTargets.first,
+      target.recordOffset >= target.totalRecords
+    {
+      captureSyncTargets.removeFirst()
+    }
+    guard let target = captureSyncTargets.first else {
+      captureSessions = captureStore.summaries()
+      captureSyncMessage = "Recent gateway logs are synchronized on this iPhone."
+      return
+    }
+    do {
+      try writeFrame(
+        type: .captureLogRequest,
+        payload: CaptureLogRequest(
+          operation: .read,
+          slot: target.slot,
+          recordOffset: target.recordOffset
+        ).encoded()
+      )
+      captureSyncMessage =
+        "Syncing session \(target.sessionID): \(target.recordOffset)/\(target.totalRecords) records…"
+    } catch {
+      captureSyncMessage = error.localizedDescription
+    }
+  }
+
+  private func consumeCaptureChunk(_ chunk: CaptureLogChunk) throws {
+    guard var target = captureSyncTargets.first,
+      chunk.slot == target.slot,
+      chunk.sessionID == target.sessionID,
+      chunk.recordOffset == target.recordOffset
+    else {
+      throw CaptureSyncError.unexpectedChunk
+    }
+    guard let gatewayID = handshake?.gatewayID else { return }
+    let appended = try captureStore.append(
+      chunk.records,
+      gatewayID: gatewayID,
+      sessionID: chunk.sessionID
+    )
+    captureDownloadedRecords &+= UInt64(appended)
+    target.recordOffset &+= UInt32(chunk.records.count)
+    captureSyncTargets[0] = target
+    captureSessions = captureStore.summaries()
+    if chunk.endOfFile || target.recordOffset >= target.totalRecords {
+      captureSyncTargets.removeFirst()
+    } else if chunk.records.isEmpty {
+      throw CaptureSyncError.emptyNonterminalChunk
+    }
+    requestNextCaptureChunk()
   }
 
   private func record(_ frame: GatewayFrame) {
@@ -969,6 +1093,9 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     factoryBanner = nil
     handshake = nil
     health = nil
+    captureLogIndex = nil
+    captureSyncTargets.removeAll()
+    captureSyncMessage = "Waiting for a gateway capture index."
     currentSessionResultStartIndex = experimentResults.count
     if preservingSelection {
       peripheral = selectedPeripheral
@@ -982,9 +1109,176 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   }
 }
 
+private struct CaptureSyncTarget {
+  let slot: UInt8
+  let sessionID: UInt32
+  let totalRecords: UInt32
+  var recordOffset: UInt32
+}
+
+struct CaptureSessionSummary: Identifiable {
+  let gatewayID: String
+  let sessionID: UInt32
+  let recordCount: UInt32
+  let byteCount: Int64
+  let updatedAt: Date
+  let url: URL
+
+  var id: String { "\(gatewayID):\(sessionID)" }
+}
+
+private final class CaptureLogStore {
+  private let fileManager = FileManager.default
+  private let root: URL
+  private var sequenceCache: [String: Set<UInt64>] = [:]
+
+  init() {
+    let applicationSupport = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)
+      .first ?? fileManager.temporaryDirectory
+    root = applicationSupport.appendingPathComponent("VHOS/PassiveCAN", isDirectory: true)
+    try? fileManager.createDirectory(at: root, withIntermediateDirectories: true)
+  }
+
+  func recordCount(gatewayID: String, sessionID: UInt32) -> UInt32 {
+    UInt32(sequences(gatewayID: gatewayID, sessionID: sessionID).count)
+  }
+
+  func append(
+    _ observations: [PassiveCANObservation],
+    gatewayID: String,
+    sessionID: UInt32
+  ) throws -> Int {
+    guard !observations.isEmpty else { return 0 }
+    let url = fileURL(gatewayID: gatewayID, sessionID: sessionID)
+    try fileManager.createDirectory(
+      at: url.deletingLastPathComponent(),
+      withIntermediateDirectories: true
+    )
+    var known = sequences(gatewayID: gatewayID, sessionID: sessionID)
+    let fresh = observations.filter { known.insert($0.sourceSequence).inserted }
+    guard !fresh.isEmpty else { return 0 }
+    var bytes = Data()
+    for observation in fresh {
+      bytes.append(try VHOSJSON.encoder().encode(observation))
+      bytes.append(0x0A)
+    }
+    if !fileManager.fileExists(atPath: url.path) {
+      try Data().write(to: url, options: .atomic)
+    }
+    let handle = try FileHandle(forWritingTo: url)
+    defer { try? handle.close() }
+    try handle.seekToEnd()
+    try handle.write(contentsOf: bytes)
+    sequenceCache[cacheKey(gatewayID: gatewayID, sessionID: sessionID)] = known
+    return fresh.count
+  }
+
+  func summaries() -> [CaptureSessionSummary] {
+    guard let gatewayDirectories = try? fileManager.contentsOfDirectory(
+      at: root,
+      includingPropertiesForKeys: [.isDirectoryKey],
+      options: [.skipsHiddenFiles]
+    ) else { return [] }
+    var summaries: [CaptureSessionSummary] = []
+    for directory in gatewayDirectories {
+      guard let files = try? fileManager.contentsOfDirectory(
+        at: directory,
+        includingPropertiesForKeys: [.fileSizeKey, .contentModificationDateKey],
+        options: [.skipsHiddenFiles]
+      ) else { continue }
+      for file in files where file.pathExtension == "ndjson" {
+        guard let sessionID = UInt32(file.deletingPathExtension().lastPathComponent) else { continue }
+        let gatewayID = directory.lastPathComponent
+        let resources = try? file.resourceValues(
+          forKeys: [.fileSizeKey, .contentModificationDateKey])
+        let count = recordCount(gatewayID: gatewayID, sessionID: sessionID)
+        summaries.append(
+          CaptureSessionSummary(
+            gatewayID: gatewayID,
+            sessionID: sessionID,
+            recordCount: count,
+            byteCount: Int64(resources?.fileSize ?? 0),
+            updatedAt: resources?.contentModificationDate ?? .distantPast,
+            url: file
+          ))
+      }
+    }
+    return summaries.sorted { $0.updatedAt > $1.updatedAt }
+  }
+
+  func exportURL() throws -> URL {
+    let sessions = summaries()
+    guard !sessions.isEmpty else { throw CaptureSyncError.noStoredLogs }
+    let directory = fileManager.temporaryDirectory.appendingPathComponent(
+      "VehicleHealthOS-Evidence", isDirectory: true)
+    try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
+    let output = directory.appendingPathComponent("passive-can-recent-logs.ndjson")
+    var combined = Data()
+    for session in sessions {
+      combined.append(try Data(contentsOf: session.url))
+    }
+    try combined.write(to: output, options: .atomic)
+    return output
+  }
+
+  private func sequences(gatewayID: String, sessionID: UInt32) -> Set<UInt64> {
+    let key = cacheKey(gatewayID: gatewayID, sessionID: sessionID)
+    if let cached = sequenceCache[key] { return cached }
+    let url = fileURL(gatewayID: gatewayID, sessionID: sessionID)
+    guard let bytes = try? Data(contentsOf: url), !bytes.isEmpty else {
+      sequenceCache[key] = []
+      return []
+    }
+    var found: Set<UInt64> = []
+    for line in bytes.split(separator: 0x0A) {
+      if let observation = try? VHOSJSON.decoder().decode(
+        PassiveCANObservation.self,
+        from: Data(line)
+      ) {
+        found.insert(observation.sourceSequence)
+      }
+    }
+    sequenceCache[key] = found
+    return found
+  }
+
+  private func fileURL(gatewayID: String, sessionID: UInt32) -> URL {
+    root.appendingPathComponent(sanitized(gatewayID), isDirectory: true)
+      .appendingPathComponent("\(sessionID).ndjson")
+  }
+
+  private func cacheKey(gatewayID: String, sessionID: UInt32) -> String {
+    "\(sanitized(gatewayID)):\(sessionID)"
+  }
+
+  private func sanitized(_ value: String) -> String {
+    String(value.map { $0.isLetter || $0.isNumber || $0 == "-" ? $0 : "_" })
+  }
+}
+
+private enum CaptureSyncError: Error, LocalizedError {
+  case unexpectedChunk
+  case emptyNonterminalChunk
+  case noStoredLogs
+
+  var errorDescription: String? {
+    switch self {
+    case .unexpectedChunk: "The gateway returned a capture chunk outside the requested session or offset."
+    case .emptyNonterminalChunk: "The gateway returned an empty nonterminal capture chunk."
+    case .noStoredLogs: "No synchronized passive CAN logs are stored on this iPhone yet."
+    }
+  }
+}
+
 private struct HandshakeRequest: Encodable {
   let contract = "gateway.handshake.request"
   let contractVersion = "1.0.0"
+}
+
+private extension GatewayBLEClient {
+  static func timestamp() -> String {
+    ISO8601DateFormatter().string(from: Date())
+  }
 }
 
 enum GatewayBLEError: Error, LocalizedError {

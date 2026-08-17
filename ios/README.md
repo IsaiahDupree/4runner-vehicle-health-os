@@ -8,6 +8,8 @@ Native SwiftUI control surface for the VHOS gateway contract. Minimum deployment
 - Read-only recognition of factory WiCAN BLE service `FEE0` / characteristic `FEE1`.
 - Versioned VHOS BLE service and framed message transport with CRC32C.
 - Gateway handshake, live health, bounded protocol-discovery results, and evidence export.
+- Automatic resumable download of the ESP32 current/previous passive CAN flight-recorder
+  segments, CRC validation, durable iPhone NDJSON storage, Recent Logs, and share-sheet export.
 - Live commissioning dashboard with distinct iPhone/BLE, ESP32 service/handshake, OBD-II,
   safety, capability, OTA, and evidence indicators.
 - Per-candidate status for all four passive CAN candidates and five allowlisted legacy OBD
@@ -18,6 +20,12 @@ Native SwiftUI control surface for the VHOS gateway contract. Minimum deployment
 - Provider-neutral JSON evidence handoff whose authority contract excludes vehicle activation and raw frame emission.
 
 The app contains no arbitrary CAN/K-line/J1850 transmit console. Factory WiCAN compatibility mode is observation-only; experiments require the VHOS firmware fork and its capability handshake.
+
+The passive flight recorder is independent from signed active experiments. It runs listen-only
+on the gateway even when the phone is absent. After a handshake advertising
+`evidence.persistent-log`, the app downloads previous before current, resumes from the local
+record offset, and deduplicates by gateway/session/source sequence. See
+[`docs/development/PASSIVE-CAN-LOGGING-AND-REPLAY.md`](../docs/development/PASSIVE-CAN-LOGGING-AND-REPLAY.md).
 
 ## Status semantics
 
