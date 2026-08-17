@@ -1,0 +1,96 @@
+# BLE GATT schema migration and automatic iPhone recovery
+
+Status: app recovery implemented after the `v0.1.0-dev.13` gateway incident
+
+## Observed failure
+
+The iPhone could discover `VHOS-MRDIY-B08D14`, establish the Core Bluetooth link, and report a
+healthy RSSI, but it remained at `VALIDATING`. The versioned VHOS BLE service stayed `NOT FOUND`, so
+the command channel, notification streams, handshake, OBD evidence, and tests never became ready.
+
+This combination is important:
+
+- advertisement received;
+- physical BLE link connected;
+- service discovery did not complete;
+- signal strength was healthy.
+
+It is evidence of a GATT identity/cache problem, not evidence of poor range or an OBD-II problem.
+
+## Root cause
+
+The dev12 firmware added an OTA status characteristic while retaining the gateway's bonded,
+random-static BLE identity. iOS is permitted to cache the GATT database for a bonded peripheral.
+The radio link could therefore reconnect using the previous identity while Core Bluetooth still
+held obsolete service metadata.
+
+The app's prior timeout path canceled that link and scheduled another connection to the same
+`CBPeripheral`. That made recovery circular: reconnect, validate, time out, reconnect.
+
+## Two-sided recovery contract
+
+Gateway firmware and the iPhone app now have separate responsibilities.
+
+### Gateway
+
+The gateway persists an integer GATT schema version. When that version changes, firmware clears
+obsolete NimBLE bond/CCCD records and rotates the random-static identity once before advertising.
+Ordinary reboots with the same schema retain the identity and bond.
+
+### iPhone
+
+If service or characteristic discovery fails or times out, the app:
+
+1. disables reconnect to that stale in-memory candidate;
+2. cancels the current Core Bluetooth link;
+3. resets only the transient transport session;
+4. resumes the service-filtered scan;
+5. selects the newly advertised gateway identity;
+6. performs fresh service discovery and pairing.
+
+This does not call private APIs, erase iPhone Bluetooth settings, or ask the owner to forget a
+device. Permanent capture logs and vehicle evidence are unaffected.
+
+## What the owner should experience
+
+During the first connection after a GATT-changing firmware update, the status message may briefly
+say that the saved gateway database is stale and that the app is scanning for the current identity.
+The normal sequence then resumes automatically:
+
+```text
+gateway candidate
+  -> BLE link
+  -> VHOS service
+  -> four characteristics
+  -> encrypted notifications
+  -> handshake
+  -> health stream
+```
+
+The Settings instruction “Forget This Device” is not part of the normal or recovery workflow.
+
+## Field evidence for dev13
+
+The connected MrDIY device was flashed over USB without erasing NVS or the capture partition. Its
+post-migration boot reported:
+
+- firmware `0.1.0-dev.13`;
+- GATT schema `2`;
+- a new random-static BLE address;
+- zero stale local and peer security records;
+- SoftAP disabled;
+- listen-only CAN enabled;
+- self-test pass.
+
+An independent macOS Core Bluetooth scan then observed the complete advertised VHOS service UUID.
+A GATT connection enumerated the required command, evidence-stream, health, and OTA-status
+characteristics with their expected properties. This proves the gateway database is available; the
+remaining acceptance gate is the iPhone completing pairing, subscriptions, handshake, and live
+health after selecting the new identity.
+
+## Future schema rule
+
+Firmware must increment its GATT schema constant whenever it changes a registered service,
+characteristic, descriptor, UUID, property, or attribute order. Payload-only changes do not require
+a schema increment. App recovery remains enabled as a second line of defense for interrupted
+migrations and stale restored Core Bluetooth state.

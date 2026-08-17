@@ -461,8 +461,9 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       Self.commissioningTrace(
         "SERVICE_DISCOVERY_FAILED domain=\(value.domain) code=\(value.code) message=\(value.localizedDescription)"
       )
-      transportMessage = "Gateway services did not respond; refreshing the BLE link automatically…"
-      central.cancelPeripheralConnection(peripheral)
+      refreshStaleGATTCandidate(
+        peripheral,
+        reason: "Gateway services did not respond; scanning for its current BLE identity…")
       return
     }
     let services = peripheral.services ?? []
@@ -508,8 +509,9 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       Self.commissioningTrace(
         "CHARACTERISTICS_FAILED service=\(service.uuid.uuidString) domain=\(value.domain) code=\(value.code)"
       )
-      transportMessage = "Gateway characteristics did not respond; refreshing the BLE link automatically…"
-      central.cancelPeripheralConnection(peripheral)
+      refreshStaleGATTCandidate(
+        peripheral,
+        reason: "Gateway characteristics did not respond; scanning for its current BLE identity…")
       return
     }
     for characteristic in service.characteristics ?? [] {
@@ -964,12 +966,12 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       guard !complete else { return }
       if phase == "services", !self.gatewayIdentityValidated {
         if self.candidateAdvertisedVHOSService || self.candidateWasPreviouslyValidated {
-          self.transportMessage =
-            "VHOS gateway service discovery timed out; refreshing the trusted link…"
           Self.commissioningTrace(
             "TRUSTED_GATT_TIMEOUT id=\(peripheral.identifier.uuidString)"
           )
-          self.central.cancelPeripheralConnection(peripheral)
+          self.refreshStaleGATTCandidate(
+            peripheral,
+            reason: "The saved gateway database is stale; scanning for the current gateway identity…")
         } else {
           self.rejectCandidateAndResumeScanning(
             peripheral, reason: "BLE candidate did not prove a VHOS/WiCAN service identity.")
@@ -980,7 +982,9 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       Self.commissioningTrace(
         "GATT_DISCOVERY_TIMEOUT phase=\(phase) id=\(peripheral.identifier.uuidString) state=\(peripheral.state.rawValue)"
       )
-      self.central.cancelPeripheralConnection(peripheral)
+      self.refreshStaleGATTCandidate(
+        peripheral,
+        reason: "Gateway contract discovery timed out; scanning for the current gateway identity…")
     }
   }
 
@@ -1092,6 +1096,21 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     central.cancelPeripheralConnection(peripheral)
     resetConnection()
     startScan(source: "candidate-rejection")
+  }
+
+  private func refreshStaleGATTCandidate(_ peripheral: CBPeripheral, reason: String) {
+    guard self.peripheral?.identifier == peripheral.identifier else { return }
+    Self.commissioningTrace(
+      "STALE_GATT_CANDIDATE_RETIRED id=\(peripheral.identifier.uuidString)"
+    )
+    automaticReconnectEnabled = false
+    automaticReconnectActive = false
+    reconnectTask?.cancel()
+    serviceDiscoveryTask?.cancel()
+    central.cancelPeripheralConnection(peripheral)
+    resetTransportSession()
+    startScan(source: "stale-gatt-recovery")
+    transportMessage = "\(reason) No Settings cleanup is required."
   }
 
   private func connectionFailureMessage(_ error: Error?, fallback: String) -> String {
