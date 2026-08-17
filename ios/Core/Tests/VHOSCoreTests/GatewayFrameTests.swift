@@ -34,13 +34,23 @@ import Testing
     {
       "bus_error_count": 0,
       "bus_off_count": 0,
+      "can_bitrate_bps": 250000,
+      "can_controller_running": true,
+      "can_extended_frames": 0,
+      "can_frames_250k": 12,
+      "can_frames_500k": 0,
+      "can_passive_lock": true,
+      "can_scan_cycles": 1,
+      "can_scan_state": "LOCKED_250K",
+      "can_standard_frames": 12,
       "capture_active": false,
       "contract": "gateway.health",
       "contract_version": "1.0.0",
       "dropped_frames": 0,
       "listen_only": true,
       "observed_at": "monotonic_us:42",
-      "received_frames": 0,
+      "passive_can_candidate": "CAN_11_250",
+      "received_frames": 12,
       "storage_free_bytes": null,
       "supply_millivolts": null,
       "vehicle_motion": "UNKNOWN"
@@ -52,4 +62,10 @@ import Testing
   #expect(health.storageFreeBytes == nil)
   #expect(health.supplyMillivolts == nil)
   #expect(health.listenOnly)
+  #expect(health.canScanState == .locked250K)
+  #expect(health.canBitrateBps == 250_000)
+  #expect(health.canPassiveLock == true)
+  #expect(health.canStandardFrames == 12)
+  #expect(health.passiveCanCandidate == "CAN_11_250")
+  #expect(health.receivedFrames == health.canStandardFrames! + health.canExtendedFrames!)
 }

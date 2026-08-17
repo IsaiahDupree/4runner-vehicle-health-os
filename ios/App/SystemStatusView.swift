@@ -374,6 +374,44 @@ struct SystemStatusView: View {
           ?? "UNAVAILABLE",
         detail: "Gateway-reported free storage",
         level: health.flatMap(\.storageFreeBytes).map { $0 > 0 ? .pass : .warning } ?? .pending),
+      StatusIndicator(
+        "gateway.can-controller", title: "CAN observer",
+        value: health?.canControllerRunning == true
+          ? "RUNNING" : (health?.canControllerRunning == false ? "STOPPED" : "UNAVAILABLE"),
+        detail: "ESP32 TWAI controller; listen-only policy is evaluated separately",
+        level: health?.canControllerRunning == true
+          ? .pass : (health?.canControllerRunning == false ? .blocked : .pending)),
+      StatusIndicator(
+        "gateway.can-probe", title: "Passive CAN probe",
+        value: health?.canScanState?.rawValue.replacingOccurrences(of: "_", with: " ")
+          ?? "UNAVAILABLE",
+        detail: passiveCANProbeDetail,
+        level: passiveCANProbeLevel),
+      StatusIndicator(
+        "gateway.can-bitrate", title: "Observed CAN bitrate",
+        value: health?.canBitrateBps.map { "\($0 / 1_000) kbit/s" } ?? "UNAVAILABLE",
+        detail: health?.canPassiveLock == true
+          ? "Locked after repeatable valid frames"
+          : "Current bounded listen-only observation window",
+        level: health?.canPassiveLock == true
+          ? .pass : (health?.canBitrateBps == nil ? .pending : .active)),
+      StatusIndicator(
+        "gateway.can-candidate", title: "Passive CAN candidate",
+        value: health?.passiveCanCandidate ?? "UNVERIFIED",
+        detail: health?.passiveCanCandidate == nil
+          ? "No multi-frame passive lock yet"
+          : "Valid CAN traffic observed; this does not confirm OBD-II",
+        level: health?.passiveCanCandidate == nil ? .pending : .pass),
+      StatusIndicator(
+        "gateway.can-formats", title: "CAN identifier formats",
+        value: canIdentifierFormatValue,
+        detail: "Valid standard (11-bit) / extended (29-bit) frames since boot",
+        level: canObservedFrameCount > 0 ? .pass : .pending),
+      StatusIndicator(
+        "gateway.can-rate-counts", title: "Frames by bitrate",
+        value: canBitrateFrameValue,
+        detail: "Valid 500 kbit/s / 250 kbit/s frames since boot",
+        level: canObservedFrameCount > 0 ? .pass : .pending),
       counterIndicator(
         id: "gateway.received", title: "Vehicle-bus frames", count: health?.receivedFrames,
         zeroLevel: .pending, nonzeroLevel: .pass),
@@ -701,6 +739,49 @@ struct SystemStatusView: View {
     case .moving: "Vehicle tests and OTA are blocked while moving"
     case .unknown, nil: "Motion must be deterministically PARKED before tests or OTA"
     }
+  }
+
+  private var passiveCANProbeLevel: IndicatorLevel {
+    switch gateway.health?.canScanState {
+    case .locked500K, .locked250K: .pass
+    case .probing500K, .probing250K: .active
+    case .error: .blocked
+    case nil: .pending
+    }
+  }
+
+  private var passiveCANProbeDetail: String {
+    guard let health = gateway.health else { return "Awaiting gateway health" }
+    switch health.canScanState {
+    case .locked500K, .locked250K:
+      return "Multi-frame passive lock; OBD-II remains independently unverified"
+    case .probing500K, .probing250K:
+      return "Cycle \(health.canScanCycles ?? 0); alternates after a bounded silent window"
+    case .error:
+      return "TWAI bitrate reconfiguration failed; inspect gateway evidence"
+    case nil:
+      return "Installed firmware does not report passive probe state"
+    }
+  }
+
+  private var canObservedFrameCount: UInt64 {
+    (gateway.health?.canStandardFrames ?? 0) + (gateway.health?.canExtendedFrames ?? 0)
+  }
+
+  private var canIdentifierFormatValue: String {
+    guard let health = gateway.health,
+      let standard = health.canStandardFrames,
+      let extended = health.canExtendedFrames
+    else { return "UNAVAILABLE" }
+    return "\(standard) / \(extended)"
+  }
+
+  private var canBitrateFrameValue: String {
+    guard let health = gateway.health,
+      let frames500k = health.canFrames500k,
+      let frames250k = health.canFrames250k
+    else { return "UNAVAILABLE" }
+    return "\(frames500k) / \(frames250k)"
   }
 
   private var bluetoothUnavailableLevel: IndicatorLevel {

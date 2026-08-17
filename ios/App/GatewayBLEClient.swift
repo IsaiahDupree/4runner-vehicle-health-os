@@ -615,8 +615,12 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       Self.logger.info("VHOS gateway handshake verified")
       Self.commissioningTrace("HANDSHAKE_VERIFIED firmware=\(value.firmwareVersion)")
     case .gatewayHealth:
-      health = try VHOSJSON.decoder().decode(GatewayHealth.self, from: frame.payload)
+      let value = try VHOSJSON.decoder().decode(GatewayHealth.self, from: frame.payload)
+      health = value
       lastHealthReceivedAt = Date()
+      Self.commissioningTrace(
+        "HEALTH_DECODED scan=\(value.canScanState?.rawValue ?? "unavailable") bitrate=\(value.canBitrateBps.map(String.init) ?? "unavailable") frames=\(value.receivedFrames) candidate=\(value.passiveCanCandidate ?? "none")"
+      )
     case .experimentResult:
       let result = try VHOSJSON.decoder().decode(ProtocolExperimentResult.self, from: frame.payload)
       experimentResults.append(result)

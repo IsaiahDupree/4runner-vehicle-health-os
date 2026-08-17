@@ -6,6 +6,14 @@ public enum VehicleMotion: String, Codable, CaseIterable, Sendable {
   case moving = "MOVING"
 }
 
+public enum PassiveCANScanState: String, Codable, CaseIterable, Sendable {
+  case probing500K = "PROBING_500K"
+  case probing250K = "PROBING_250K"
+  case locked500K = "LOCKED_500K"
+  case locked250K = "LOCKED_250K"
+  case error = "ERROR"
+}
+
 public enum GatewayConnectionState: String, Codable, Sendable {
   case disconnected = "DISCONNECTED"
   case scanning = "SCANNING"
@@ -106,6 +114,16 @@ public struct GatewayHealth: Codable, Equatable, Sendable {
   public let storageFreeBytes: UInt64?
   public let captureActive: Bool
   public let listenOnly: Bool
+  public let canBitrateBps: UInt32?
+  public let canControllerRunning: Bool?
+  public let canExtendedFrames: UInt64?
+  public let canFrames250k: UInt64?
+  public let canFrames500k: UInt64?
+  public let canPassiveLock: Bool?
+  public let canScanCycles: UInt32?
+  public let canScanState: PassiveCANScanState?
+  public let canStandardFrames: UInt64?
+  public let passiveCanCandidate: String?
 
   public init(
     contract: String = "gateway.health",
@@ -119,7 +137,17 @@ public struct GatewayHealth: Codable, Equatable, Sendable {
     busOffCount: UInt64,
     storageFreeBytes: UInt64?,
     captureActive: Bool,
-    listenOnly: Bool
+    listenOnly: Bool,
+    canBitrateBps: UInt32? = nil,
+    canControllerRunning: Bool? = nil,
+    canExtendedFrames: UInt64? = nil,
+    canFrames250k: UInt64? = nil,
+    canFrames500k: UInt64? = nil,
+    canPassiveLock: Bool? = nil,
+    canScanCycles: UInt32? = nil,
+    canScanState: PassiveCANScanState? = nil,
+    canStandardFrames: UInt64? = nil,
+    passiveCanCandidate: String? = nil
   ) {
     self.contract = contract
     self.contractVersion = contractVersion
@@ -133,6 +161,16 @@ public struct GatewayHealth: Codable, Equatable, Sendable {
     self.storageFreeBytes = storageFreeBytes
     self.captureActive = captureActive
     self.listenOnly = listenOnly
+    self.canBitrateBps = canBitrateBps
+    self.canControllerRunning = canControllerRunning
+    self.canExtendedFrames = canExtendedFrames
+    self.canFrames250k = canFrames250k
+    self.canFrames500k = canFrames500k
+    self.canPassiveLock = canPassiveLock
+    self.canScanCycles = canScanCycles
+    self.canScanState = canScanState
+    self.canStandardFrames = canStandardFrames
+    self.passiveCanCandidate = passiveCanCandidate
   }
 }
 
