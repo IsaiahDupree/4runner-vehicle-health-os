@@ -221,20 +221,29 @@ struct SystemStatusView: View {
         level: gateway.bluetoothReady ? .pass : bluetoothUnavailableLevel),
       StatusIndicator(
         "transport.scan", title: "Gateway scan",
-        value: gateway.scanActive ? "SCANNING" : (gateway.discoveredName == nil ? "IDLE" : "FOUND"),
+        value: gateway.scanActive
+          ? "SCANNING"
+          : (gateway.gatewayIdentityValidated
+            ? "VERIFIED" : (gateway.discoveredName == nil ? "IDLE" : "CANDIDATE")),
         detail: gateway.discoveredName
           ?? gateway.lastObservedAdvertisement.map {
             "Observed \(gateway.scanObservationCount) advertisements; latest: \($0)"
           }
           ?? "No BLE advertisements observed yet (\(gateway.scanMode))",
-        level: gateway.scanActive ? .active : (gateway.discoveredName == nil ? .pending : .pass)),
+        level: gateway.scanActive
+          ? .active
+          : (gateway.gatewayIdentityValidated
+            ? .pass : (gateway.discoveredName == nil ? .pending : .active))),
       StatusIndicator(
-        "transport.peripheral", title: "ESP32 BLE link",
+        "transport.peripheral", title: "Gateway BLE link",
         value: gateway.peripheralConnected
-          ? "CONNECTED" : (gateway.automaticReconnectActive ? "RECONNECTING" : "DISCONNECTED"),
+          ? (gateway.gatewayIdentityValidated ? "VERIFIED" : "VALIDATING")
+          : (gateway.automaticReconnectActive ? "RECONNECTING" : "DISCONNECTED"),
         detail: peripheralDetail,
-        level: gateway.peripheralConnected
-          ? .pass : (gateway.automaticReconnectActive ? .active : connectionFailureLevel)),
+        level: gateway.gatewayIdentityValidated
+          ? .pass
+          : (gateway.peripheralConnected || gateway.automaticReconnectActive
+            ? .active : connectionFailureLevel)),
       StatusIndicator(
         "transport.rssi", title: "Discovery signal",
         value: gateway.discoveredRSSI.map { "\($0) dBm" } ?? "UNAVAILABLE",

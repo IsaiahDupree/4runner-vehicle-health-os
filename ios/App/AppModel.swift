@@ -12,6 +12,8 @@ enum DiscoveryKind: String, CaseIterable, Identifiable {
 @MainActor
 @Observable
 final class AppModel {
+  static let shared = AppModel()
+
   let gateway: GatewayBLEClient
   private let keyStore: KeyStore
   private let experimentSigner: ExperimentSigner
@@ -29,11 +31,11 @@ final class AppModel {
   var updateInProgress = false
   var uploadProgressDescription: String?
 
-  init() {
+  private init() {
     let store = KeyStore(service: "com.isaiahdupree.VehicleHealthOS")
     keyStore = store
     experimentSigner = ExperimentSigner(keyStore: store)
-    gateway = GatewayBLEClient()
+    gateway = GatewayBLEClient.shared
     releasePublicKeyConfigured = (try? store.data(for: .firmwareReleasePublicKey)) != nil
     experimentSigningKeyConfigured =
       (try? store.data(for: .experimentSigningPrivateKey)) != nil
