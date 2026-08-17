@@ -2,7 +2,7 @@
 
 Local-first, explainable vehicle-health and maintenance software for a 2005 Toyota 4Runner.
 
-The project has two immutable source baselines: [Vehicle Health OS PRD v0.1](docs/prd/2005_Toyota_4Runner_Vehicle_Health_OS_PRD_v0.1.docx) and [Telemetry Build Master Spec v1](docs/prd/4Runner_Telemetry_Build_Master_Spec.docx). Their joined authority and unique requirement namespaces are defined in the [master project specification](docs/prd/MASTER-PROJECT-SPEC.md). The governing invariant is:
+The project has two immutable source baselines: [Vehicle Health OS PRD v0.1](docs/prd/2005_Toyota_4Runner_Vehicle_Health_OS_PRD_v0.1.docx) and [Telemetry Build Master Spec v1](docs/prd/4Runner_Telemetry_Build_Master_Spec.docx). Their joined authority and unique requirement namespaces are defined in the [master project specification](docs/prd/MASTER-PROJECT-SPEC.md). The later [focused A/C telemetry source record](docs/prd/AC-TELEMETRY-SOURCE.md) controls the A/C node where it is more specific. The governing invariant is:
 
 > raw observation -> decoded signal -> feature -> versioned equation -> calculation run -> finding -> recommendation -> service/inspection -> new lifecycle baseline
 
@@ -16,6 +16,7 @@ E0 plus the first native iOS control slice are implemented here:
 - versioned JSON Schemas for evidence, signals, captures, equations, calculations, and AI claims;
 - a protobuf source contract and fixed transport-frame decision for mobile/ESP32 interoperability;
 - deterministic simulator capture bundles with hashes and manifests;
+- an A/C bench-sweep capture/replay path, A/C node telemetry and POST contracts, and evidence-bound pressure-lift, pressure-ratio, and vent-delta calculations;
 - offline replay with integrity, sequence, timestamp, and schema validation;
 - CI checks for schema validity and deterministic replay;
 - a Swift 6 core with CRC32C framing, guarded discovery plans, signed firmware verification, OTA preflight, and AI evidence handoff;
@@ -38,6 +39,9 @@ python3 -m venv .venv
 .venv/bin/vhos simulate --scenario cold-start-idle --output build/captures/cold-start-idle
 .venv/bin/vhos validate-bundle build/captures/cold-start-idle
 .venv/bin/vhos replay build/captures/cold-start-idle
+.venv/bin/vhos simulate --scenario ac-bench-sweep --output build/captures/ac-bench-sweep
+.venv/bin/vhos validate-bundle build/captures/ac-bench-sweep
+.venv/bin/vhos calculate-ac build/captures/ac-bench-sweep
 .venv/bin/python -m pytest
 ```
 
@@ -65,6 +69,7 @@ both passed.
 | `docs/architecture/decisions/` | Accepted technical decisions and invariants |
 | `contracts/jsonschema/v1/` | Authoritative serialized domain contracts |
 | `contracts/proto/v1/` | Mobile/ESP32 payload source contract |
+| `equations/v1/` | Immutable A/C equation definitions with applicability and truth boundaries |
 | `tooling/` | Contract validator, simulator, bundle writer, and replay engine |
 | `tests/` | Contract, determinism, corruption, ordering, and replay tests |
 | `ios/` | Native iOS app, portable Swift core, and deterministic XcodeGen project |

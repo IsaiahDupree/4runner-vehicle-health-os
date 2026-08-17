@@ -13,6 +13,9 @@ enum MessageType {
   GATEWAY_HEALTH = 4;
   CAPTURE_MARKER = 5;
   ALLOWLISTED_DIAGNOSTIC_REQUEST = 6;
+  SENSOR_NODE_TELEMETRY = 7;
+  SENSOR_NODE_HEALTH = 8;
+  SENSOR_NODE_POST = 9;
 }
 
 message Version {
@@ -78,4 +81,124 @@ message AllowlistedDiagnosticRequest {
   string request_id = 1;
   string allowlist_entry_id = 2;
   string experiment_id = 3;
+}
+
+enum SensorQuality {
+  SENSOR_QUALITY_UNSPECIFIED = 0;
+  SENSOR_QUALITY_GOOD = 1;
+  SENSOR_QUALITY_STALE = 2;
+  SENSOR_QUALITY_MISSING = 3;
+  SENSOR_QUALITY_OUT_OF_RANGE = 4;
+  SENSOR_QUALITY_TRANSPORT_GAP = 5;
+  SENSOR_QUALITY_SENSOR_UNVERIFIED = 6;
+}
+
+enum SensorNodeState {
+  SENSOR_NODE_STATE_UNSPECIFIED = 0;
+  SENSOR_NODE_PASS = 1;
+  SENSOR_NODE_DEGRADED = 2;
+  SENSOR_NODE_SENSOR_FAULT = 3;
+  SENSOR_NODE_POWER_FAULT = 4;
+  SENSOR_NODE_STORAGE_FAULT = 5;
+  SENSOR_NODE_SAFE_MODE = 6;
+}
+
+message CalibrationIdentity {
+  bool configured = 1;
+  string calibration_id = 2;
+  string revision = 3;
+  string validation_status = 4;
+}
+
+message PressureChannel {
+  optional sint32 raw_adc_count = 1;
+  optional double signal_voltage_mv = 2;
+  optional double absolute_kpa = 3;
+  SensorQuality quality = 4;
+  bool sensor_powered = 5;
+  CalibrationIdentity calibration = 6;
+}
+
+message TemperatureChannel {
+  optional double value_c = 1;
+  SensorQuality quality = 2;
+  CalibrationIdentity calibration = 3;
+}
+
+message SensorNodeIdentity {
+  string device_id = 1;
+  string hardware_revision = 2;
+  string firmware_version = 3;
+  string firmware_build_id = 4;
+  string device_config_revision = 5;
+  string vehicle_profile_revision = 6;
+}
+
+message SensorNodeTelemetry {
+  string telemetry_id = 1;
+  string vehicle_id = 2;
+  string capture_id = 3;
+  uint64 sample_counter = 4;
+  uint64 observed_at_monotonic_us = 5;
+  SensorNodeIdentity identity = 6;
+  PressureChannel high_pressure = 7;
+  PressureChannel low_pressure = 8;
+  TemperatureChannel high_line_temperature = 9;
+  TemperatureChannel low_line_temperature = 10;
+  TemperatureChannel ambient_temperature = 11;
+  TemperatureChannel cabin_return_temperature = 12;
+  TemperatureChannel center_vent_temperature = 13;
+  TemperatureChannel board_temperature = 14;
+  optional double atmospheric_pressure_kpa = 15;
+  string atmospheric_pressure_source = 16;
+  optional double vehicle_input_v = 17;
+  optional double nano_vin_v = 18;
+  optional double sensor_5v_v = 19;
+  optional double logic_3v3_v = 20;
+  SensorNodeState state = 21;
+  bool high_sensor_ok = 22;
+  bool low_sensor_ok = 23;
+  bool adc_reference_ok = 24;
+  bool storage_ok = 25;
+  uint32 ble_clients = 26;
+  uint32 wifi_clients = 27;
+  uint32 fault_mask = 28;
+}
+
+message SensorNodeHealth {
+  string device_id = 1;
+  uint64 uptime_ms = 2;
+  string reset_reason = 3;
+  SensorNodeState state = 4;
+  optional double vehicle_input_v = 5;
+  optional double nano_vin_v = 6;
+  optional double sensor_5v_v = 7;
+  optional double logic_3v3_v = 8;
+  optional double board_temperature_c = 9;
+  uint64 storage_free_bytes = 10;
+  uint64 dropped_samples = 11;
+  uint64 storage_errors = 12;
+  uint64 reconnect_count = 13;
+  uint32 queue_depth = 14;
+  uint32 fault_mask = 15;
+}
+
+message SensorNodePostCheck {
+  string check_id = 1;
+  string status = 2;
+  bool critical = 3;
+  optional double value = 4;
+  string unit = 5;
+  SensorQuality quality = 6;
+  string detail = 7;
+}
+
+message SensorNodePost {
+  string post_id = 1;
+  SensorNodeIdentity identity = 2;
+  string executed_at = 3;
+  string reset_reason = 4;
+  uint32 configuration_crc32c = 5;
+  SensorNodeState state = 6;
+  repeated SensorNodePostCheck checks = 7;
 }

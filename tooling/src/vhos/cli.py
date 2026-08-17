@@ -5,10 +5,11 @@ import json
 import sys
 from pathlib import Path
 
+from .ac_metrics import SIMULATOR_AC_SIGNALS, calculate_ac_metrics
 from .bundles import BundleError, load_validated_bundle, write_simulator_bundle
 from .contracts import ContractCatalog, ContractError
 from .replay import replay_bundle
-from .simulator import generate_cold_start_idle
+from .simulator import generate_ac_bench_sweep, generate_cold_start_idle
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -20,7 +21,9 @@ def build_parser() -> argparse.ArgumentParser:
     contracts_subcommands.add_parser("check", help="Validate every JSON Schema")
 
     simulate = subcommands.add_parser("simulate", help="Generate a deterministic capture bundle")
-    simulate.add_argument("--scenario", choices=["cold-start-idle"], required=True)
+    simulate.add_argument(
+        "--scenario", choices=["cold-start-idle", "ac-bench-sweep"], required=True
+    )
     simulate.add_argument("--output", type=Path, required=True)
     simulate.add_argument("--replace", action="store_true")
 
@@ -32,6 +35,13 @@ def build_parser() -> argparse.ArgumentParser:
     replay = subcommands.add_parser("replay", help="Replay a validated capture bundle")
     replay.add_argument("bundle", type=Path)
     replay.add_argument("--output", type=Path)
+
+    calculate_ac = subcommands.add_parser(
+        "calculate-ac",
+        help="Calculate only evidence-complete A/C metrics; never infer charge or component faults",
+    )
+    calculate_ac.add_argument("bundle", type=Path)
+    calculate_ac.add_argument("--output", type=Path)
     return parser
 
 
@@ -42,7 +52,11 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "contracts":
             return _contracts(args)
         if args.command == "simulate":
-            capture = generate_cold_start_idle()
+            generators = {
+                "cold-start-idle": generate_cold_start_idle,
+                "ac-bench-sweep": generate_ac_bench_sweep,
+            }
+            capture = generators[args.scenario]()
             manifest = write_simulator_bundle(
                 capture, args.output, replace=args.replace
             )
@@ -54,6 +68,32 @@ def main(argv: list[str] | None = None) -> int:
                     "semantic_digest": manifest["semantic_digest"],
                 }
             )
+            return 0
+        if args.command == "calculate-ac":
+            replay = replay_bundle(args.bundle)
+            result = calculate_ac_metrics(
+                replay.samples,
+                signals=SIMULATOR_AC_SIGNALS,
+                confidence=0.0,
+                confidence_factors={"source_quality": 0.0},
+                quality_notes=[
+                    "SIMULATOR source: integration evidence only; not vehicle evidence or diagnosis."
+                ],
+            )
+            report = {
+                "capture_id": replay.capture_id,
+                "calculations": list(result.runs),
+                "unavailable": result.unavailable,
+            }
+            if args.output:
+                if args.output.exists():
+                    raise BundleError(f"A/C calculation output already exists: {args.output}")
+                args.output.parent.mkdir(parents=True, exist_ok=True)
+                args.output.write_text(
+                    json.dumps(report, indent=2, sort_keys=True) + "\n",
+                    encoding="utf-8",
+                )
+            _print_json(report)
             return 0
         if args.command == "validate-bundle":
             manifest, observations = load_validated_bundle(args.bundle)
