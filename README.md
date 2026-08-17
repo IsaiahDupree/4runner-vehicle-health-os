@@ -21,6 +21,7 @@ E0 plus the first native iOS control slice are implemented here:
 - a Swift 6 core with CRC32C framing, guarded discovery plans, signed firmware verification, OTA preflight, and AI evidence handoff;
 - a buildable native SwiftUI app with BLE state restoration, WiCAN factory detection, gateway health, signed semantic experiments, private-network OTA, and evidence export;
 - a public WiCAN Pro ESP32-S3 firmware fork with passive/listen-only enforcement, framed BLE health reporting, OTA A/B partitions, and rollback self-tests;
+- a physically targeted classic-ESP32/MrDIY firmware with bonded BLE health, passive CAN, A/B rollback, and a compiled but release-default-off authenticated status SoftAP;
 - a backup-first public Web Serial provisioner with target detection, full-flash recovery download, release hashing, installation, and same-capacity restore;
 - explicit iOS, legacy Android, gateway firmware, and added-sensor hardware boundaries.
 
@@ -48,6 +49,7 @@ The simulator namespace is deliberately separate from live vehicle data. It crea
 - Public firmware source: [IsaiahDupree/4runner-vhos-firmware](https://github.com/IsaiahDupree/4runner-vhos-firmware)
 - Development release and recovery evidence: [v0.1.0-dev.1](https://github.com/IsaiahDupree/4runner-vhos-firmware/releases/tag/v0.1.0-dev.1)
 - Hardware/software baseline: [recommended hardware](docs/hardware/RECOMMENDED-HARDWARE.md) and [software baseline](docs/hardware/SOFTWARE-BASELINE.md)
+- SoftAP incident and default-off activation decision: [2026-08-16 record](docs/development/ESP32-SOFTAP-ACTIVATION-INCIDENT-2026-08-16.md)
 
 The first installation and recovery path uses a desktop Chrome or Edge browser,
 USB-C data, and Web Serial. The browser requires a full-flash backup before it
