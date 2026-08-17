@@ -2,10 +2,10 @@
 
 ## Outcome
 
-The VHOS gateway status SoftAP is now **off by default** in firmware source and release
-configuration. The safe-default fix is committed and pushed as firmware commit
-`5077da0221d1` (`v0.1.0-dev.7`). The exact clean image has been built and is ready to flash when
-the classic ESP32 returns on `/dev/cu.usbserial-0001`.
+The VHOS gateway status SoftAP is now **off by default** in firmware source, release
+configuration, and the physical gateway. The safe-default fix is committed and pushed as
+firmware commit `5077da0221d1` (`v0.1.0-dev.7`). The exact clean image was flashed to the classic
+ESP32 at `/dev/cu.usbserial-0001` and its written hash was verified.
 
 The development Mac has also been repaired:
 
@@ -102,15 +102,11 @@ The BLE request may activate a read-only observer. It may not:
 A physical-presence input may be considered later if a verified, accessible hardware control is
 identified. No GPIO or board button will be assumed without physical verification.
 
-## Current physical state and recovery step
+## Physical correction and verification
 
-The ESP32 was last physically flashed with the `v0.1.0-dev.6` autostart bench image. Its AP still
-shuts down automatically after 900 seconds, and the Mac no longer has credentials saved to join
-it. The gateway was not enumerated after the computer restart, so `v0.1.0-dev.7` could not yet be
-installed.
-
-When the gateway is reconnected, flash only its application partition to preserve the BLE bond and
-NVS:
+After the gateway re-enumerated, the updater verified both its classic `ESP32-D0WDQ6` identity and
+hardware MAC `94:54:c5:b0:8d:14` before writing. Only the application partition was flashed, which
+preserved NVS and both sides of the BLE bond:
 
 ```bash
 uvx esptool --chip esp32 --port /dev/cu.usbserial-0001 --baud 460800 \
@@ -118,13 +114,38 @@ uvx esptool --chip esp32 --port /dev/cu.usbserial-0001 --baud 460800 \
   targets/mrdiy-esp32-v13/build/vhos_mrdiy_esp32_v13.bin
 ```
 
-Acceptance evidence after the reflash must prove:
+The physical boot produced:
+
+```text
+App version: 0.1.0-dev.7
+BLE_BOND_STORE our_security_records=1 peer_security_records=1
+PASSIVE_CAN_READY mode=listen-only bitrate=500000 rx_gpio=4 tx_gpio=5
+VHOS_SOFTAP_DISABLED reason=default-safe-policy activation=encrypted-ble-pending
+VHOS_SELF_TEST_PASS firmware=0.1.0-dev.7 build=v4.50p-13-g5077da0221d1
+```
+
+The installed image then passed the iPhone recovery check without forgetting the device or erasing
+NVS:
+
+```text
+IPHONE_LINK_CONNECTED handle=0
+BLE_ENCRYPTION status=0
+BLE_SUBSCRIBE health/stream/OTA notify=1
+BLE_CONN_PARAMS_ACTIVE interval_units=40 latency=0 supervision_units=600
+BLE_MTU value=247
+```
+
+Recurring health notifications continued throughout the observation. Meanwhile the Mac retained
+its normal `192.168.1.118` address and `192.168.1.254` default gateway, and its preferred-network
+list contained only the normal home network.
+
+Physical acceptance therefore proves:
 
 - firmware `0.1.0-dev.7` and exact build `v4.50p-13-g5077da0221d1`;
 - persisted BLE bond counts;
 - `PASSIVE_CAN_READY mode=listen-only`;
 - `VHOS_SOFTAP_DISABLED`;
-- no `VHOS-STATUS-*` SSID after boot;
+- no Wi-Fi, DHCP, HTTP, or SoftAP initialization in the release boot path;
 - iPhone reconnection and a versioned handshake without forgetting the device; and
 - continued normal Mac Wi-Fi routing.
 
@@ -138,4 +159,3 @@ repository at commit `5077da0221d1`:
 - `targets/mrdiy-esp32-v13/docs/SOFTAP-STATUS-API.md`
 - `targets/mrdiy-esp32-v13/docs/SOFTAP-STATUS-SECURITY.md`
 - `targets/mrdiy-esp32-v13/docs/SOFTAP-STATUS-OPERATIONS.md`
-
