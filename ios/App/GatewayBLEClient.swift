@@ -667,6 +667,9 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     case .captureLogIndex:
       let index = try VHOSJSON.decoder().decode(CaptureLogIndex.self, from: frame.payload)
       captureLogIndex = index
+      Self.commissioningTrace(
+        "CAPTURE_INDEX current_session=\(index.currentSessionID) current_records=\(index.currentRecords) previous_session=\(index.previousSessionID) previous_records=\(index.previousRecords) retained=\(index.retainedRecords) queue_drops=\(index.queueDroppedRecords) write_failures=\(index.storageWriteFailures)"
+      )
       beginCaptureSync(index)
     case .captureLogChunk:
       guard let gatewayID = handshake?.gatewayID else { return }
@@ -738,6 +741,9 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     guard let target = captureSyncTargets.first else {
       captureSessions = captureStore.summaries()
       captureSyncMessage = "Recent gateway logs are synchronized on this iPhone."
+      Self.commissioningTrace(
+        "CAPTURE_SYNC_COMPLETE downloaded=\(captureDownloadedRecords) local_sessions=\(captureSessions.count)"
+      )
       return
     }
     do {
@@ -771,6 +777,9 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       sessionID: chunk.sessionID
     )
     captureDownloadedRecords &+= UInt64(appended)
+    Self.commissioningTrace(
+      "CAPTURE_CHUNK session=\(chunk.sessionID) slot=\(chunk.slot) offset=\(chunk.recordOffset) received=\(chunk.records.count) appended=\(appended) end=\(chunk.endOfFile)"
+    )
     target.recordOffset &+= UInt32(chunk.records.count)
     captureSyncTargets[0] = target
     captureSessions = captureStore.summaries()
