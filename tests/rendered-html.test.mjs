@@ -77,6 +77,7 @@ test("MrDIY install plan preserves the BLE bond NVS partition", async () => {
   const manifestUrl = new URL("../public/firmware/manifest-mrdiy-esp32-v13.json", import.meta.url);
   const manifest = JSON.parse(await readFile(manifestUrl, "utf8"));
   assert.equal(manifest.schemaVersion, "1.1.0");
+  assert.equal(manifest.release, "v0.1.0-dev.13");
   assert.equal(manifest.segments.length, 4);
   assert.deepEqual(manifest.protectedRanges, [
     { label: "BLE bond and Wi-Fi NVS", address: 0x9000, byteCount: 0x4000 },
