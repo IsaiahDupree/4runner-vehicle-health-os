@@ -1,49 +1,49 @@
 {
   "schemaVersion": "1.1.0",
-  "release": "v0.1.0-dev.5",
+  "release": "v0.1.0-dev.12",
   "channel": "development",
-  "publishedAt": "2026-08-16T23:08:46Z",
+  "publishedAt": "2026-08-17T04:47:08Z",
   "chipFamily": "ESP32",
   "hardwareFamily": "MRDIY-CAN-SHIELD",
   "hardwareRevision": "v1.3+ (RX GPIO 4, TX GPIO 5)",
   "upstreamTag": "main",
-  "sourceCommit": "4187dc6decf731381e3c11c6c7440af98479c99c",
-  "firmwareCommit": "09937958e7f97f8b312dc4a84fd6b85b60b2a9ac",
+  "sourceCommit": "8ea5629305ca0be46f885095fbbfbdcb7916508e",
+  "firmwareCommit": "8ea5629305ca0be46f885095fbbfbdcb7916508e",
   "espIdfVersion": "5.5.3",
   "artifact": {
-    "url": "/firmware/vhos-mrdiy-esp32-v13-v0.1.0-dev.5-merged.bin",
+    "url": "/firmware/vhos-mrdiy-esp32-v13-v0.1.0-dev.12-merged.bin",
     "address": 0,
-    "byteCount": 567888,
-    "sha256": "82764e3064ede5c951db4d6ca8f39015aa82851e7a72e7bec29f909800af1e17"
+    "byteCount": 1114100,
+    "sha256": "50ed716a308d93ace5a4b17d885211d5ce201e9b452dc88f7f9eef23a2567651"
   },
   "segments": [
     {
       "label": "Bootloader",
-      "url": "/firmware/vhos-mrdiy-esp32-v13-v0.1.0-dev.5-bootloader.bin",
+      "url": "/firmware/vhos-mrdiy-esp32-v13-v0.1.0-dev.12-bootloader.bin",
       "address": 4096,
-      "byteCount": 26240,
-      "sha256": "89f331e14ca2ae1871e857e6275fa1ce97a64bc379d1e8b87185b06797e4f434"
+      "byteCount": 26256,
+      "sha256": "f4d34730edb5d2ba5519860fe8c314f40defb7783328107b904ceafd26c97279"
     },
     {
       "label": "Partition table",
-      "url": "/firmware/vhos-mrdiy-esp32-v13-v0.1.0-dev.5-partition-table.bin",
+      "url": "/firmware/vhos-mrdiy-esp32-v13-v0.1.0-dev.12-partition-table.bin",
       "address": 32768,
       "byteCount": 3072,
       "sha256": "b1765a4417dac811ba35276d7b52e1c9defb38dc129617e3d88d8237037353e5"
     },
     {
       "label": "OTA selection data",
-      "url": "/firmware/vhos-mrdiy-esp32-v13-v0.1.0-dev.5-ota-data-initial.bin",
+      "url": "/firmware/vhos-mrdiy-esp32-v13-v0.1.0-dev.12-ota-data-initial.bin",
       "address": 53248,
       "byteCount": 8192,
       "sha256": "7d2c7ac4888bfd75cd5f56e8d61f69595121183afc81556c876732fd3782c62f"
     },
     {
       "label": "VHOS application",
-      "url": "/firmware/vhos-mrdiy-esp32-v13-v0.1.0-dev.5-app.bin",
+      "url": "/firmware/vhos-mrdiy-esp32-v13-v0.1.0-dev.12-app.bin",
       "address": 65536,
-      "byteCount": 502352,
-      "sha256": "4ff9fbb6fee33ea9c87fdfcf2538bef86979cc1868b63559a4c401a08da9ff9d"
+      "byteCount": 1048564,
+      "sha256": "3dc84e03a5f18afe1f4447a08ac76dfa752aab7b2806c35535b2ac9fc10e73eb"
     }
   ],
   "protectedRanges": [
