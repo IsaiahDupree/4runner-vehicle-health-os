@@ -39,6 +39,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   private var scanFallbackTask: Task<Void, Never>?
   private var reconnectTask: Task<Void, Never>?
   private var serviceDiscoveryTask: Task<Void, Never>?
+  private var restoredConnectionTask: Task<Void, Never>?
   private var freshCentralRecoveryAttempted = false
   private var automaticReconnectEnabled = false
   private var userRequestedDisconnect = false
@@ -281,6 +282,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       Self.commissioningTrace(
         "RESTORE_WAITING id=\(restored.identifier.uuidString) state=\(restored.state.rawValue)"
       )
+      armRestoredConnectionTimeout(restored)
       return
     }
     if scanRequested {
@@ -823,6 +825,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       state = .connecting
       transportMessage = "Waiting for the existing gateway connection…"
       Self.commissioningTrace("CONNECT_WAITING id=\(peripheral.identifier.uuidString)")
+      armRestoredConnectionTimeout(peripheral)
       return
     }
     central.connect(
@@ -865,6 +868,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   }
 
   private func beginServiceDiscovery(_ peripheral: CBPeripheral, source: String) {
+    restoredConnectionTask?.cancel()
     reconnectTask?.cancel()
     automaticReconnectActive = false
     automaticReconnectEnabled = true
@@ -917,6 +921,26 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         "GATT_DISCOVERY_TIMEOUT phase=\(phase) id=\(peripheral.identifier.uuidString) state=\(peripheral.state.rawValue)"
       )
       self.central.cancelPeripheralConnection(peripheral)
+    }
+  }
+
+  private func armRestoredConnectionTimeout(_ peripheral: CBPeripheral) {
+    restoredConnectionTask?.cancel()
+    restoredConnectionTask = Task { [weak self, weak peripheral] in
+      try? await Task.sleep(for: .seconds(12))
+      guard !Task.isCancelled, let self, let peripheral,
+        self.peripheral?.identifier == peripheral.identifier,
+        !self.peripheralConnected,
+        peripheral.state == .connecting
+      else { return }
+      Self.commissioningTrace(
+        "RESTORED_CONNECT_TIMEOUT id=\(peripheral.identifier.uuidString) recovery=cancel-and-scan"
+      )
+      self.transportMessage =
+        "The restored BLE connection stopped responding; scanning again automatically…"
+      self.central.cancelPeripheralConnection(peripheral)
+      self.resetTransportSession()
+      self.startScan(source: "restored-connection-timeout")
     }
   }
 
@@ -1055,6 +1079,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     let selectedVHOSAdvertisementEvidence = candidateAdvertisedVHOSService
     scanFallbackTask?.cancel()
     serviceDiscoveryTask?.cancel()
+    restoredConnectionTask?.cancel()
     peripheral = nil
     command = nil
     streamDecoder = GatewayFrameStreamDecoder()
