@@ -22,6 +22,7 @@
 /* Begin PBXFileReference section */
 		2E12062579AEB4902B49940D /* GatewayBLEClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayBLEClient.swift; sourceTree = "<group>"; };
 		34806DF7108E5758613B6692 /* VehicleHealthOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = VehicleHealthOS.entitlements; sourceTree = "<group>"; };
+		3B48C24A24451753B02C596D /* VehicleHealthOSCommissioning.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = VehicleHealthOSCommissioning.entitlements; sourceTree = "<group>"; };
 		40D58B872E56EED4853D20F3 /* mrdiy-v13-development-release-ed25519.base64 */ = {isa = PBXFileReference; path = "mrdiy-v13-development-release-ed25519.base64"; sourceTree = "<group>"; };
 		435E1D682EF6B8A4DE0B86F7 /* WiFiOTAUploader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiOTAUploader.swift; sourceTree = "<group>"; };
 		5ADD085CC4E0D7223092E39A /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
@@ -90,6 +91,7 @@
 				D6A9AAE2238B7F973C0CEA46 /* KeyStore.swift */,
 				EDE321369856AF54C6B7946E /* RootView.swift */,
 				76F08CC4DD741600B7E20C23 /* SystemStatusView.swift */,
+				3B48C24A24451753B02C596D /* VehicleHealthOSCommissioning.entitlements */,
 				34806DF7108E5758613B6692 /* VehicleHealthOS.entitlements */,
 				C54BDEF8D2B05D75290A9451 /* VehicleHealthOSApp.swift */,
 				435E1D682EF6B8A4DE0B86F7 /* WiFiOTAUploader.swift */,
@@ -333,7 +335,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = App/VehicleHealthOS.entitlements;
+				CODE_SIGN_ENTITLEMENTS = App/VehicleHealthOSCommissioning.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = Y4HDXFWXUV;

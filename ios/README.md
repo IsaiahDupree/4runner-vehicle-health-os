@@ -81,10 +81,13 @@ xcodebuild \
   build
 ```
 
-Bluetooth and temporary-network joining require a physical iPhone. The app target declares Hotspot
-Configuration and local-network access, but Apple code signing must include that entitlement on the
-installed development profile. Release private keys remain external inputs. The complete workflow
-and remaining physical gates are in
+Bluetooth and temporary-network joining require a physical iPhone. The Debug configuration uses
+`VehicleHealthOSCommissioning.entitlements`, an empty entitlement set that permits BLE commissioning,
+capture, export, and GATT recovery to be installed with the local wildcard development profile. It
+does not authorize automatic temporary-network joining. Release builds use
+`VehicleHealthOS.entitlements` and must be signed by a profile that includes Apple's Hotspot
+Configuration entitlement before iPhone-managed Wi-Fi OTA can pass. Release private keys remain
+external inputs. The complete workflow and remaining physical gates are in
 [`docs/development/IPHONE-TO-ESP32-WIFI-OTA.md`](../docs/development/IPHONE-TO-ESP32-WIFI-OTA.md).
 
 For an attached development iPhone, the commissioning harness can launch the app with

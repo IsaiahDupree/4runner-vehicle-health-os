@@ -88,6 +88,25 @@ characteristics with their expected properties. This proves the gateway database
 remaining acceptance gate is the iPhone completing pairing, subscriptions, handshake, and live
 health after selecting the new identity.
 
+### Follow-up validation on 2026-08-17
+
+After the iPhone again displayed `CANDIDATE`, `VALIDATING`, and `VHOS BLE service: NOT FOUND`, the
+same powered gateway was tested independently from macOS. The Mac found
+`VHOS-MRDIY-B08D14`, connected, and enumerated the exact service plus all four required
+characteristics. The ESP32 UART simultaneously recorded a valid connection, ATT MTU 247, accepted
+connection-parameter update, clean client disconnect, and resumed advertising. This isolates the
+remaining loop to the installed iPhone app/Core Bluetooth session rather than the firmware GATT
+database or RF range.
+
+App `0.3.1` build `7` therefore includes both the stale-candidate rescan behavior and a dedicated
+Debug commissioning entitlement set. The Debug build can be signed by the existing wildcard local
+development profile and installed for BLE commissioning; it intentionally does not claim automatic
+Wi-Fi network joining. Release still requires an Apple provisioning profile that explicitly grants
+Hotspot Configuration before iPhone-managed Wi-Fi OTA is accepted.
+
+The signed commissioning build passed the physical-device SDK build. Installation and the final
+iPhone handshake remain pending whenever the paired iPhone is offline or unavailable to CoreDevice.
+
 ## Future schema rule
 
 Firmware must increment its GATT schema constant whenever it changes a registered service,
