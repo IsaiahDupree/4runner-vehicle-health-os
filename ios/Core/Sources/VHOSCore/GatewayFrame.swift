@@ -62,6 +62,28 @@ public struct CaptureLogIndex: Codable, Equatable, Sendable {
   public let sampledFrames: UInt64
   public let storageWriteFailures: UInt64
   public let totalBytes: UInt32
+
+  private enum CodingKeys: String, CodingKey {
+    case contract
+    case contractVersion
+    case currentBytes
+    case currentRecords
+    case currentSessionID = "currentSessionId"
+    case freeBytes
+    case logging
+    case mounted
+    case observedFrames
+    case previousBytes
+    case previousRecords
+    case previousSessionID = "previousSessionId"
+    case queueDroppedRecords
+    case recordBytes
+    case retainedRecords
+    case sampleSuppressedFrames
+    case sampledFrames
+    case storageWriteFailures
+    case totalBytes
+  }
 }
 
 public struct PassiveCANObservation: Codable, Equatable, Sendable, Identifiable {
@@ -80,6 +102,24 @@ public struct PassiveCANObservation: Codable, Equatable, Sendable, Identifiable 
   public let data: [UInt8]
   public let evidenceSource: String
   public let ingestedAt: String
+
+  private enum CodingKeys: String, CodingKey {
+    case contract
+    case contractVersion
+    case gatewayID = "gatewayId"
+    case sessionID = "sessionId"
+    case sourceSequence
+    case monotonicMicroseconds
+    case bitrateBps
+    case identifier
+    case extended
+    case remoteRequest
+    case listenOnly
+    case dataLength
+    case data
+    case evidenceSource
+    case ingestedAt
+  }
 
   public var id: String { "\(gatewayID):\(sessionID):\(sourceSequence)" }
   public var identifierHex: String {

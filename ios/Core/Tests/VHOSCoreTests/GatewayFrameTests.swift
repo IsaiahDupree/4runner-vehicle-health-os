@@ -119,3 +119,25 @@ import Testing
   #expect(chunk.records.first?.listenOnly == true)
   #expect(chunk.records.first?.evidenceSource == "gateway-flash")
 }
+
+@Test func captureLogIndexDecodesSnakeCaseSessionIdentifiers() throws {
+  let payload = Data(
+    """
+    {
+      "contract":"gateway.capture-log-index","contract_version":"1.0.0",
+      "current_bytes":68,"current_records":1,"current_session_id":3088939464,
+      "free_bytes":900000,"logging":true,"mounted":true,"observed_frames":10,
+      "previous_bytes":32,"previous_records":0,"previous_session_id":7,
+      "queue_dropped_records":0,"record_bytes":36,"retained_records":1,
+      "sample_suppressed_frames":9,"sampled_frames":1,"storage_write_failures":0,
+      "total_bytes":983040
+    }
+    """.utf8)
+
+  let index = try VHOSJSON.decoder().decode(CaptureLogIndex.self, from: payload)
+
+  #expect(index.currentSessionID == 3_088_939_464)
+  #expect(index.previousSessionID == 7)
+  #expect(index.recordBytes == 36)
+  #expect(index.logging)
+}
