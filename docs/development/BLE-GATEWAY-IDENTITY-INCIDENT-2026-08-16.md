@@ -20,10 +20,16 @@ SoftAP: disabled by default-safe policy
 ```
 
 The iPhone then selected the correct versioned VHOS advertisement and discovered the expected
-service and four characteristics in a live run. Later runs continued to select only
-`VHOS-MRDIY-B08D14`, but their approximately `-83` to `-95 dBm` RSSI was too weak for a repeatable
-contract handshake. That weak-link condition remains an open physical acceptance gate; this
-record does not claim OBD-II confirmation or a durable vehicle session.
+service and four characteristics. The subsequent bond-loss incident was repaired in firmware
+`v0.1.0-dev.9`: the ESP32 now persists a random-static identity with its bond epoch and advertises
+that identity directly. A full NVS erase therefore presents a new peripheral to Core Bluetooth
+instead of trapping both peers in a stale encryption loop.
+
+Physical acceptance completed with encrypted evidence, health, and OTA subscriptions; a verified
+versioned handshake; recurring health frames; and a successful reconnect after reboot with the
+same identity and `1/1` bond records. The transport gate is closed. OBD-II remains unverified
+because the latest health evidence contains zero vehicle-bus frames and no bounded protocol
+experiment result.
 
 ## User-visible symptom
 
@@ -112,8 +118,8 @@ Automated policy tests cover:
 - name evidence required for factory compatibility; and
 - exact-identifier allowlisting for restoration.
 
-The complete `VHOSCore` suite passes with 18 tests. The full iPhoneOS target builds both unsigned
-and with the paired development profile. The signed app was installed through CoreDevice.
+The complete `VHOSCore` suite passes with 19 tests. The full iPhoneOS target builds with the paired
+development profile. The signed app was installed through CoreDevice.
 
 Live commissioning trace established:
 
@@ -124,14 +130,60 @@ SERVICES_DISCOVERED uuids=33613EB3-FFCA-42D1-83FA-A18F12B3F123
 CHARACTERISTICS_DISCOVERED ... count=4
 ```
 
-The trace also showed later RSSI values down to `-95 dBm`. Final vehicle acceptance requires the
-iPhone beside the gateway or an antenna/enclosure placement that yields a stable BLE link, then:
+That original identifier later became stale when the gateway NVS bond store was erased. The final
+accepted run established:
 
-1. versioned handshake received;
-2. recurring current-session health frames;
-3. listen-only state reported by both handshake and health;
-4. nonzero vehicle-bus frames while the vehicle is producing traffic; and
-5. a bounded protocol experiment result before any OBD-II status is promoted.
+```text
+firmware=v0.1.0-dev.9 build=v4.50p-15-g40151a3f897e
+BLE_IDENTITY_READY type=random-static source=persisted address=e3:2d:bd:5e:5d:ed
+own_addr_type=1
+CoreBluetooth identifier=C4CD1D2B-FA38-FA6E-87D1-BFB46191FF95
+BLE_ENCRYPTION status=0
+evidence notifications=enabled
+health notifications=enabled
+OTA status notifications=enabled
+HANDSHAKE_VERIFIED firmware=0.1.0-dev.9
+reboot bond store=our:1 peer:1
+```
+
+The gateway firmware source and recovery design are public in
+[`4runner-vhos-firmware`](https://github.com/IsaiahDupree/4runner-vhos-firmware), commits
+`4e5da75` and `40151a3`. The iOS nullable-health correction is commit `258ba9a` in this repository.
+
+### Apparent CRC/decode error
+
+The first successful screen showed one item under “Frame CRC and decode.” The frame CRC and
+sequence were valid. The firmware correctly encoded unavailable capture storage as
+`"storage_free_bytes": null`, while the Swift `GatewayHealth` model incorrectly required a
+non-null `UInt64`. The app therefore counted a contract-model decoding failure in the combined
+frame/decode indicator.
+
+The model now declares storage as optional, the UI renders it as `UNAVAILABLE / WAIT`, and a
+regression test decodes the exact nullable payload. After installing the corrected build, the app
+received recurring health frames without another frame/contract decode failure. This preserves the
+product invariant that an unknown measurement must not be replaced with zero.
+
+### Current downstream evidence
+
+At 10:16:58 PM on the accepted iPhone run, the app reported:
+
+- health stream arrival: pass;
+- capture state: idle;
+- listen-only guard: enforced;
+- capture storage: unavailable, not zero;
+- vehicle motion: unknown;
+- gateway supply: unavailable;
+- vehicle-bus frames: `0`;
+- dropped frames, bus errors, and bus-off events: `0`.
+
+Final vehicle-protocol acceptance still requires:
+
+1. vehicle ignition state and physical DLC connection recorded as test context;
+2. passive observation of 500 kbit/s and 250 kbit/s CAN windows;
+3. nonzero, CRC-valid frames with stable identifiers for a passive CAN lock; or
+4. if passive CAN remains silent, a dedicated all-protocol OBD interpreter test for ISO 9141-2,
+   ISO 14230-4, and SAE J1850 families; and
+5. independent read-only corroboration before OBD-II status is promoted.
 
 ## Why the UI remains conservative
 
