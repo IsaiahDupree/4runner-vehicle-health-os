@@ -27,7 +27,7 @@ h1 { font-size: clamp(54px, 9vw, 132px); letter-spacing: -.07em; line-height: .8
 .targetPicker h2 { font-size: 27px; letter-spacing: -.035em; margin: 8px 0 8px; }
 .targetPicker p { color: #484a45; font-size: 14px; line-height: 1.5; margin: 0; max-width: 430px; }
 .targetIndex { color: var(--signal); font: 700 10px/1 var(--font-geist-mono); letter-spacing: .12em; }
-.targetGrid { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; }
+.targetGrid { display: grid; gap: 12px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .targetCard { background: var(--panel); border: 1px solid var(--ink); color: var(--ink); display: grid; gap: 8px; min-height: 148px; padding: 18px; text-align: left; }
 .targetCard:hover:not(:disabled), .targetCard.selected { background: var(--ink); color: white; }
 .targetCard span { color: var(--signal); font: 700 10px/1 var(--font-geist-mono); letter-spacing: .1em; }
