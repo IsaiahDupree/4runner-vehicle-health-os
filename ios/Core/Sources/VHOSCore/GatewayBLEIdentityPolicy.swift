@@ -8,6 +8,7 @@ public enum GatewayBLEIdentityKind: Equatable, Sendable {
 public enum GatewayBLEIdentityPolicy {
   public static let vhosServiceUUID = "33613EB3-FFCA-42D1-83FA-A18F12B3F123"
   public static let factoryServiceUUID = "FEE0"
+  public static let minimumReliableConnectionRSSI = -84
 
   public static func nameSuggestsGateway(_ localName: String?) -> Bool {
     guard let localName else { return false }
@@ -38,6 +39,11 @@ public enum GatewayBLEIdentityPolicy {
     identifier: String, validatedIdentifiers: Set<String>
   ) -> Bool {
     validatedIdentifiers.contains(identifier.uppercased())
+  }
+
+  public static func connectionAttemptIsReliable(observedRSSI: Int?) -> Bool {
+    guard let observedRSSI else { return true }
+    return observedRSSI >= minimumReliableConnectionRSSI
   }
 
   private static func normalized(_ serviceUUIDs: [String]) -> Set<String> {

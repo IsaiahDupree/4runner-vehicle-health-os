@@ -3,6 +3,13 @@ import Testing
 
 @Suite("BLE gateway identity policy")
 struct GatewayBLEIdentityPolicyTests {
+  @Test func connectionAttemptWaitsAtFringeRange() {
+    #expect(GatewayBLEIdentityPolicy.connectionAttemptIsReliable(observedRSSI: nil))
+    #expect(GatewayBLEIdentityPolicy.connectionAttemptIsReliable(observedRSSI: -84))
+    #expect(!GatewayBLEIdentityPolicy.connectionAttemptIsReliable(observedRSSI: -85))
+    #expect(!GatewayBLEIdentityPolicy.connectionAttemptIsReliable(observedRSSI: -96))
+  }
+
   @Test("A generic FEE0 peripheral is not a gateway candidate")
   func genericFEE0AdvertisementIsRejected() {
     #expect(

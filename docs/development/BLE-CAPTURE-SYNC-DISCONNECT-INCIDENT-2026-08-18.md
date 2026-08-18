@@ -3,8 +3,9 @@
 Date: 2026-08-18
 Status: nonempty in-vehicle transfer failure reproduced on firmware dev29 and iOS 0.3.4 (10);
 iOS 0.3.5 (11) contains the failure by using inventory-only refresh while recording is active;
-firmware dev31 adds a matching server-side exclusion boundary; iOS 0.3.6 (12) records the reset
-reason reported by dev31+ handshakes; physical regression acceptance remains open
+firmware dev31 adds a matching server-side exclusion boundary; iOS 0.3.8 (14) records the reset
+reason reported by dev31+ handshakes and defers fringe-range encrypted links; physical regression
+acceptance remains open
 
 ## Symptom
 
@@ -118,8 +119,11 @@ finished. The read path repeats that proof while holding the capture-file lock. 
 uses an in-memory status snapshot, export chunks are reduced to 12 records, and the handshake
 reports `reset_reason` from ESP-IDF.
 
-iOS 0.3.6 (12) preserves that optional reset reason in the persistent
+iOS 0.3.8 (14) preserves that optional reset reason in the persistent
 `HANDSHAKE_VERIFIED` flight-recorder event. Older firmware remains compatible and records
-`reset_reason=unavailable`. The exact dev31 binary is source/build verified, but vehicle capture,
+`reset_reason=unavailable`. After one saved-identifier attempt, an encryption timeout moves to a
+service-filtered scan. A matching advertisement weaker than -84 dBm remains visible but does not
+start another encrypted link; the recorder emits
+`WEAK_GATEWAY_DEFERRED` with the observed RSSI. The exact dev31 binary is source/build verified, but vehicle capture,
 paused export, forced mid-transfer disconnect, and electrical power-loss acceptance remain open
 until that binary is installed on the gateway and exercised in the car.

@@ -750,6 +750,25 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       )
       return
     }
+    let measuredRSSI = rssi.intValue == 127 ? nil : rssi.intValue
+    if !GatewayBLEIdentityPolicy.connectionAttemptIsReliable(observedRSSI: measuredRSSI) {
+      let priorRSSI = discoveredRSSI
+      discoveredName = name.isEmpty ? nil : name
+      discoveredIdentifier = peripheral.identifier.uuidString
+      discoveredRSSI = measuredRSSI
+      candidateNameSuggestsGateway = GatewayBLEIdentityPolicy.nameSuggestsGateway(name)
+      candidateAdvertisedVHOSService = visibleServices.contains(Self.vhosService)
+      candidateWasPreviouslyValidated = isPreviouslyValidated(peripheral)
+      scanMode = "Gateway nearby"
+      transportMessage =
+        "Gateway seen at \(measuredRSSI ?? 0) dBm; waiting for a stronger signal before opening the encrypted link…"
+      if priorRSSI == nil || abs((priorRSSI ?? 0) - (measuredRSSI ?? 0)) >= 5 {
+        Self.commissioningTrace(
+          "WEAK_GATEWAY_DEFERRED name=\(discoveredName ?? "unknown") rssi=\(measuredRSSI.map(String.init) ?? "unavailable") threshold=\(GatewayBLEIdentityPolicy.minimumReliableConnectionRSSI) action=continue-scan"
+        )
+      }
+      return
+    }
     central.stopScan()
     scanFallbackTask?.cancel()
     scanRequested = false
@@ -758,7 +777,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     self.peripheral = peripheral
     discoveredName = name.isEmpty ? nil : name
     discoveredIdentifier = peripheral.identifier.uuidString
-    discoveredRSSI = rssi.intValue == 127 ? nil : rssi.intValue
+    discoveredRSSI = measuredRSSI
     candidateNameSuggestsGateway = GatewayBLEIdentityPolicy.nameSuggestsGateway(name)
     candidateAdvertisedVHOSService = visibleServices.contains(Self.vhosService)
     candidateWasPreviouslyValidated = isPreviouslyValidated(peripheral)
@@ -829,6 +848,10 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     Self.commissioningTrace("LINK_FAILED_DETAIL error={\(failure)}")
     if isPeerPairingInformationRemoved(error), !freshCentralRecoveryAttempted {
       rebuildCentralForFreshPairing()
+      return
+    }
+    if isEncryptionTimeout(error), automaticReconnectEnabled, !userRequestedDisconnect {
+      resumeSignalAwareScan(after: peripheral, error: error)
       return
     }
     if automaticReconnectEnabled, !userRequestedDisconnect {
@@ -1889,6 +1912,24 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       && value.code == CBError.peerRemovedPairingInformation.rawValue
   }
 
+  private func isEncryptionTimeout(_ error: Error?) -> Bool {
+    guard let error else { return false }
+    let value = error as NSError
+    return value.domain == CBErrorDomain
+      && value.code == CBError.encryptionTimedOut.rawValue
+  }
+
+  private func resumeSignalAwareScan(after peripheral: CBPeripheral, error: Error?) {
+    Self.commissioningTrace(
+      "ENCRYPTION_TIMEOUT_SCAN_FALLBACK peripheral=\(peripheralEvidence(peripheral)) error={\(Self.errorEvidence(error))} action=service-scan-with-rssi-gate"
+    )
+    resetTransportSession()
+    state = .disconnected
+    startScan(source: "encryption-timeout-fallback", skipConnectedRetrieval: true)
+    transportMessage =
+      "Encryption timed out; scanning for the saved gateway and waiting for a reliable signal…"
+  }
+
   private func connect(_ peripheral: CBPeripheral) {
     if let active = self.peripheral, active !== peripheral {
       Self.commissioningTrace(
@@ -1967,6 +2008,10 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       state = .connecting
       transportMessage = "Connection interrupted; iPhone is automatically reconnecting…"
       Self.commissioningTrace("SYSTEM_RECONNECT_ACTIVE")
+      return
+    }
+    if isEncryptionTimeout(error) {
+      resumeSignalAwareScan(after: peripheral, error: error)
       return
     }
     scheduleReconnect(to: peripheral, error: error)
