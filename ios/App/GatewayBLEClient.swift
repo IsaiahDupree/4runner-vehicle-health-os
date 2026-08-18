@@ -8,6 +8,11 @@ import VHOSCore
 @Observable
 final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
 {
+  private enum CaptureHistoryTransferPhase: String {
+    case downloading
+    case resuming
+  }
+
   @MainActor
   private final class LinkScopedPeripheralDelegate: NSObject,
     @preconcurrency CBPeripheralDelegate
@@ -92,10 +97,13 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   private static let handshakeWriteAckTimeout: Duration = .seconds(2)
   private static let handshakeResponseTimeout: Duration = .seconds(2)
   private static let notificationEnableTimeout: Duration = .seconds(15)
+  private static let linkRSSIValidationTimeout: Duration = .seconds(3)
   private static let restoredCleanupTimeout: Duration = .seconds(4)
   private static let captureInitialSyncDelay: Duration = .seconds(3)
-  private static let captureChunkInterval: Duration = .milliseconds(500)
-  private static let captureChunkResponseTimeout: Duration = .seconds(8)
+  private static let captureChunkResponseTimeout: Duration = .seconds(20)
+  private static let gattDiscoveryTimeoutStrong: Duration = .seconds(12)
+  private static let gattDiscoveryTimeoutWeak: Duration = .seconds(22)
+  private static let gattDiscoveryTimeoutFringe: Duration = .seconds(30)
   private static let autoScanArgument = "--vhos-auto-scan"
   private static let autoScanEnvironmentKey = "VHOS_AUTO_SCAN"
   private static let commissioningTraceEnvironmentKey = "VHOS_COMMISSIONING_TRACE"
@@ -107,6 +115,8 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     "vhos.validatedGatewayPeripheralIdentifiers.v1"
   private static let handshakeVerifiedPeripheralIdentifierKey =
     "vhos.handshakeVerifiedGatewayPeripheralIdentifier.v1"
+  private static let captureHistoryTransferPhaseKey =
+    "vhos.captureHistoryTransferPhase.v1"
 
   private var central: CBCentralManager!
   private var currentCentralRestoreIdentifier = ""
@@ -118,6 +128,8 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   private var sequence: UInt64 = 1
   private var scanRequested = false
   private var scanFallbackTask: Task<Void, Never>?
+  private var reliableAdvertisementStreak = 0
+  private var lastReliableAdvertisementAt: Date?
   private var reconnectTask: Task<Void, Never>?
   private var serviceDiscoveryTask: Task<Void, Never>?
   private var restoredConnectionTask: Task<Void, Never>?
@@ -128,6 +140,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   private var handshakeWriteAckTask: Task<Void, Never>?
   private var handshakeResponseTask: Task<Void, Never>?
   private var notificationEnableTask: Task<Void, Never>?
+  private var linkRSSIValidationTask: Task<Void, Never>?
   private var freshCentralRecoveryAttempted = false
   private var reconnectIntentRequested = false
   private var automaticReconnectEnabled = false
@@ -141,6 +154,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   private var notificationRequestSession: UInt64?
   private var notificationPairingPending = false
   private var linkSession: UInt64 = 0
+  private var linkRSSIQualifiedSession: UInt64?
   private var activePeripheralDelegate: LinkScopedPeripheralDelegate?
   private var retiredPeripheralDelegates: [UInt64: LinkScopedPeripheralDelegate] = [:]
   private var retiredRestoredPeripherals: [ObjectIdentifier: CBPeripheral] = [:]
@@ -149,6 +163,10 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   private var pendingCommandChunks: [Data] = []
   private var pendingStaleGATTRescan = false
   private var pendingStaleGATTReason: String?
+  private var pendingWeakLinkRescan = false
+  private var pendingWeakLinkReason: String?
+  private var skipKnownGatewayRetrievalOnNextScan = false
+  private var consecutiveStaleGATTRecoveryCount = 0
   private var candidateNameSuggestsGateway = false
   private var candidateAdvertisedVHOSService = false
   private var candidateWasPreviouslyValidated = false
@@ -159,6 +177,8 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   private var captureSyncSuspendedForOTA = false
   private var captureAutoResumeAfterHistoryTransfer = false
   private var captureResumeConfirmationPending = false
+  private var captureTransferRearmPending = false
+  private var captureHistoryTransferPhase: CaptureHistoryTransferPhase?
   private var captureSyncTask: Task<Void, Never>?
   private var captureChunkResponseTask: Task<Void, Never>?
   private var lastCaptureSyncFingerprint: String?
@@ -248,15 +268,35 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
 
   private override init() {
     super.init()
+    captureHistoryTransferPhase = UserDefaults.standard.string(
+      forKey: Self.captureHistoryTransferPhaseKey
+    ).flatMap(CaptureHistoryTransferPhase.init(rawValue:))
+    switch captureHistoryTransferPhase {
+    case .downloading:
+      captureAutoResumeAfterHistoryTransfer = true
+      captureTransferRearmPending = true
+      captureHistoryTransferActive = true
+      captureSyncMessage =
+        "Recovering an interrupted history transfer from its saved iPhone checkpoint…"
+    case .resuming:
+      captureResumeConfirmationPending = true
+      captureHistoryTransferActive = true
+      captureSyncMessage = "Confirming that passive recording resumed…"
+    case nil:
+      break
+    }
     currentCentralRestoreIdentifier =
       UserDefaults.standard.string(forKey: Self.centralRestoreIdentifierKey)
       ?? Self.centralRestoreIdentifier
     verifiedSavedGatewayIdentifier = UserDefaults.standard.string(
       forKey: Self.handshakeVerifiedPeripheralIdentifierKey
     ).flatMap { UUID(uuidString: $0)?.uuidString.uppercased() }
+    let captureTransferReconnectRequested = captureHistoryTransferPhase != nil
     scanRequested = CommandLine.arguments.contains(Self.autoScanArgument)
       || ProcessInfo.processInfo.environment[Self.autoScanEnvironmentKey] == "1"
+      || captureTransferReconnectRequested
     reconnectIntentRequested = scanRequested
+    automaticReconnectEnabled = captureTransferReconnectRequested
     // State restoration is required for a bonded gateway, but a physical link inherited from a
     // previous app process is retired before reuse. The saved peripheral identifier and iOS bond
     // survive; a fresh link establishes one current-process delegate, CCCD, and VHOS contract.
@@ -266,7 +306,12 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       options: [CBCentralManagerOptionRestoreIdentifierKey: currentCentralRestoreIdentifier]
     )
     portableFrameCount = portableFrameStore.count()
-    if scanRequested {
+    if captureTransferReconnectRequested {
+      Self.logger.info("BLE reconnect requested by interrupted capture transfer")
+      trace(
+        "CAPTURE_TRANSFER_LAUNCH_RECOVERY phase=\(captureHistoryTransferPhase?.rawValue ?? "unknown") saved_id=\(verifiedSavedGatewayIdentifier ?? "none")"
+      )
+    } else if scanRequested {
       Self.logger.info("BLE auto-scan requested by commissioning launch")
       trace("AUTO_SCAN_REQUESTED")
     }
@@ -291,6 +336,12 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       transportMessage =
         "Waiting for the stale BLE link to close before scanning for the gateway again…"
       Self.commissioningTrace("SCAN_IGNORED reason=stale-gatt-disconnect-pending")
+      return
+    }
+    if pendingWeakLinkRescan {
+      transportMessage =
+        "Waiting for the weak BLE link to close before scanning for the gateway again…"
+      Self.commissioningTrace("SCAN_IGNORED reason=weak-link-disconnect-pending")
       return
     }
     if !retiredRestoredPeripherals.isEmpty {
@@ -395,6 +446,8 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     scanActive = true
     scanMode = "VHOS service filter"
     scanObservationCount = 0
+    reliableAdvertisementStreak = 0
+    lastReliableAdvertisementAt = nil
     lastObservedAdvertisement = nil
     state = .scanning
     transportMessage = "Scanning for a WiCAN or VHOS gateway…"
@@ -424,6 +477,8 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     )
     pendingStaleGATTRescan = false
     pendingStaleGATTReason = nil
+    pendingWeakLinkRescan = false
+    pendingWeakLinkReason = nil
     pendingRestoredPeripheral = nil
     scanAfterRestorationCleanup = false
     userRequestedDisconnect = true
@@ -470,11 +525,17 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     }
   }
 
+  private func persistCaptureHistoryTransferPhase(_ phase: CaptureHistoryTransferPhase?) {
+    captureHistoryTransferPhase = phase
+    if let phase {
+      UserDefaults.standard.set(phase.rawValue, forKey: Self.captureHistoryTransferPhaseKey)
+    } else {
+      UserDefaults.standard.removeObject(forKey: Self.captureHistoryTransferPhaseKey)
+    }
+  }
+
   func setCaptureLogging(_ enabled: Bool) throws {
     captureSyncSuspendedForOTA = !enabled
-    captureAutoResumeAfterHistoryTransfer = false
-    captureResumeConfirmationPending = false
-    captureHistoryTransferActive = false
     if !enabled {
       captureSyncTask?.cancel()
       captureSyncTask = nil
@@ -489,6 +550,11 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         slot: enabled ? 0 : 1
       ).encoded()
     )
+    captureAutoResumeAfterHistoryTransfer = false
+    captureResumeConfirmationPending = false
+    captureTransferRearmPending = false
+    captureHistoryTransferActive = false
+    persistCaptureHistoryTransferPhase(nil)
     captureSyncMessage = enabled
       ? "Resuming the passive flight recorder…"
       : "Pausing and flushing the passive flight recorder for OTA…"
@@ -501,13 +567,32 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     captureChunkResponseTask?.cancel()
     captureChunkResponseTask = nil
     captureSyncTargets.removeAll()
-    try writeFrame(
-      type: .captureLogRequest,
-      payload: CaptureLogRequest(operation: .pause, slot: 2).encoded()
-    )
+    captureDownloadedRecords = 0
     captureAutoResumeAfterHistoryTransfer = true
     captureResumeConfirmationPending = false
+    captureTransferRearmPending = false
     captureHistoryTransferActive = true
+    persistCaptureHistoryTransferPhase(.downloading)
+    if let index = captureLogIndex, !index.logging {
+      captureSyncMessage =
+        "Continuing the paused history transfer from the saved iPhone checkpoint…"
+      Self.commissioningTrace(
+        "CAPTURE_TRANSFER_REQUESTED mode=continue-paused-download-auto-resume link_session=\(linkSession)"
+      )
+      beginCaptureSync(index)
+      return
+    }
+    do {
+      try writeFrame(
+        type: .captureLogRequest,
+        payload: CaptureLogRequest(operation: .pause, slot: 2).encoded()
+      )
+    } catch {
+      captureAutoResumeAfterHistoryTransfer = false
+      captureHistoryTransferActive = false
+      persistCaptureHistoryTransferPhase(nil)
+      throw error
+    }
     captureSyncMessage =
       "Pausing and flushing the recorder; history will download and recording will resume automatically."
     Self.commissioningTrace(
@@ -517,14 +602,21 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
 
   func resumeCaptureLogging() throws {
     captureSyncSuspendedForOTA = false
-    captureAutoResumeAfterHistoryTransfer = false
-    captureResumeConfirmationPending = false
-    captureHistoryTransferActive = false
     try writeFrame(
       type: .captureLogRequest,
       payload: CaptureLogRequest(operation: .resume).encoded()
     )
-    captureSyncMessage = "Resuming the passive flight recorder…"
+    captureSyncTask?.cancel()
+    captureSyncTask = nil
+    captureChunkResponseTask?.cancel()
+    captureChunkResponseTask = nil
+    captureSyncTargets.removeAll()
+    captureAutoResumeAfterHistoryTransfer = false
+    captureResumeConfirmationPending = true
+    captureTransferRearmPending = false
+    captureHistoryTransferActive = true
+    persistCaptureHistoryTransferPhase(.resuming)
+    captureSyncMessage = "Confirming that passive recording resumed…"
   }
 
   func activateTemporaryOTANetwork(for package: VerifiedFirmwarePackage) throws {
@@ -573,7 +665,12 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         )
       }
       if scanRequested, !userRequestedDisconnect, retiredRestoredPeripherals.isEmpty {
-        startScan(source: "bluetooth-powered-on")
+        let skipKnownGatewayRetrieval = skipKnownGatewayRetrievalOnNextScan
+        skipKnownGatewayRetrievalOnNextScan = false
+        startScan(
+          source: "bluetooth-powered-on",
+          skipConnectedRetrieval: skipKnownGatewayRetrieval
+        )
       }
       return
     }
@@ -794,6 +891,8 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     }
     let measuredRSSI = rssi.intValue == 127 ? nil : rssi.intValue
     if !GatewayBLEIdentityPolicy.connectionAttemptIsReliable(observedRSSI: measuredRSSI) {
+      reliableAdvertisementStreak = 0
+      lastReliableAdvertisementAt = nil
       let priorRSSI = discoveredRSSI
       discoveredName = name.isEmpty ? nil : name
       discoveredIdentifier = peripheral.identifier.uuidString
@@ -809,6 +908,32 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
           "WEAK_GATEWAY_DEFERRED name=\(discoveredName ?? "unknown") rssi=\(measuredRSSI.map(String.init) ?? "unavailable") threshold=\(GatewayBLEIdentityPolicy.minimumReliableConnectionRSSI) action=continue-scan"
         )
       }
+      return
+    }
+    let observedAt = Date()
+    if let lastReliableAdvertisementAt,
+      observedAt.timeIntervalSince(lastReliableAdvertisementAt) <= 2
+    {
+      reliableAdvertisementStreak += 1
+    } else {
+      reliableAdvertisementStreak = 1
+    }
+    lastReliableAdvertisementAt = observedAt
+    guard reliableAdvertisementStreak >= 3 else {
+      discoveredName = name.isEmpty ? nil : name
+      discoveredIdentifier = peripheral.identifier.uuidString
+      discoveredRSSI = measuredRSSI
+      candidateNameSuggestsGateway = GatewayBLEIdentityPolicy.nameSuggestsGateway(name)
+      candidateAdvertisedVHOSService = visibleServices.contains(Self.vhosService)
+      candidateWasPreviouslyValidated = isPreviouslyValidated(peripheral)
+      scanMode = "Confirming signal"
+      transportMessage =
+        "Gateway signal is improving; confirming a stable link before connecting (\(reliableAdvertisementStreak)/3)…"
+      let confirmationName = discoveredName ?? "unknown"
+      let confirmationRSSI = measuredRSSI.map(String.init) ?? "unavailable"
+      Self.commissioningTrace(
+        "GATEWAY_SIGNAL_CONFIRMATION name=\(confirmationName) rssi=\(confirmationRSSI) sample=\(reliableAdvertisementStreak)/3 threshold=\(GatewayBLEIdentityPolicy.minimumReliableConnectionRSSI)"
+      )
       return
     }
     central.stopScan()
@@ -883,6 +1008,10 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     }
     if pendingStaleGATTRescan {
       completeStaleGATTRecovery(after: peripheral, event: "connect-failure")
+      return
+    }
+    if pendingWeakLinkRescan {
+      completeWeakLinkRecovery(after: peripheral, event: "connect-failure")
       return
     }
     let failure = Self.errorEvidence(error)
@@ -991,6 +1120,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         peripheral, reason: "Connected BLE device is not a verified VHOS/WiCAN gateway.")
       return
     }
+    consecutiveStaleGATTRecoveryCount = 0
     gatewayIdentityValidated = true
     rememberValidated(peripheral)
     for service in services {
@@ -1297,6 +1427,12 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     guard acceptsPeripheralCallback(
       peripheral, callbackSession: callbackSession, event: "value-update")
     else { return }
+    guard linkRSSIQualifiedSession == callbackSession else {
+      Self.commissioningTrace(
+        "PREQUALIFICATION_VALUE_IGNORED uuid=\(characteristic.uuid.uuidString) link_session=\(callbackSession)"
+      )
+      return
+    }
     let isCurrentStream = characteristic.uuid == Self.streamCharacteristic
       && notificationCharacteristics[Self.streamCharacteristic] === characteristic
       && notificationRequestSession == callbackSession
@@ -1332,7 +1468,22 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       return
     }
     do {
-      for frame in try streamDecoder.append(value) {
+      let recoveryCountBefore = streamDecoder.recoveryCount
+      let discardedBytesBefore = streamDecoder.discardedByteCount
+      let corruptCandidatesBefore = streamDecoder.corruptCandidateCount
+      let frames = try streamDecoder.append(value)
+      if streamDecoder.recoveryCount > recoveryCountBefore {
+        let recoveries = streamDecoder.recoveryCount - recoveryCountBefore
+        let discarded = streamDecoder.discardedByteCount - discardedBytesBefore
+        let corrupt = streamDecoder.corruptCandidateCount - corruptCandidatesBefore
+        frameDecodeErrorCount &+= UInt64(max(1, corrupt))
+        transportMessage =
+          "Recovered the VHOS stream after missing or corrupt transport bytes; evidence continuity is degraded."
+        Self.commissioningTrace(
+          "FRAME_STREAM_RESYNCHRONIZED link_session=\(linkSession) recoveries=\(recoveries) discarded_bytes=\(discarded) corrupt_candidates=\(corrupt) buffered_bytes=\(streamDecoder.bufferedByteCount)"
+        )
+      }
+      for frame in frames {
         record(frame)
         try consume(frame)
       }
@@ -1658,7 +1809,38 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       )
       captureSessions = captureStore.summaries()
       if value.capabilities.contains(.persistentEvidenceLog) {
-        refreshCaptureLogIndex()
+        do {
+          if captureResumeConfirmationPending {
+            try writeFrame(
+              type: .captureLogRequest,
+              payload: CaptureLogRequest(operation: .resume).encoded()
+            )
+            captureSyncMessage = "Reconnected; confirming that passive recording resumed…"
+            Self.commissioningTrace(
+              "CAPTURE_TRANSFER_RECOVERY action=retry-resume link_session=\(linkSession)"
+            )
+          } else if captureAutoResumeAfterHistoryTransfer && captureTransferRearmPending {
+            try writeFrame(
+              type: .captureLogRequest,
+              payload: CaptureLogRequest(operation: .pause, slot: 2).encoded()
+            )
+            captureTransferRearmPending = false
+            captureSyncMessage =
+              "Reconnected; continuing history from the saved iPhone checkpoint…"
+            Self.commissioningTrace(
+              "CAPTURE_TRANSFER_RECOVERY action=rearm-pause-and-continue link_session=\(linkSession)"
+            )
+          } else {
+            refreshCaptureLogIndex()
+          }
+        } catch {
+          captureSyncMessage =
+            "Gateway reconnected, but transfer recovery could not be queued: \(error.localizedDescription)"
+          Self.commissioningTrace(
+            "CAPTURE_TRANSFER_RECOVERY_FAILED link_session=\(linkSession) error={\(Self.errorEvidence(error))}"
+          )
+          refreshCaptureLogIndex()
+        }
       }
     case .gatewayHealth:
       let value = try VHOSJSON.decoder().decode(GatewayHealth.self, from: frame.payload)
@@ -1704,6 +1886,34 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       Self.commissioningTrace(
         "CAPTURE_INDEX current_session=\(index.currentSessionID) current_records=\(index.currentRecords) previous_session=\(index.previousSessionID) previous_records=\(index.previousRecords) retained=\(index.retainedRecords) queue_drops=\(index.queueDroppedRecords) write_failures=\(index.storageWriteFailures)"
       )
+      if index.logging, !captureSyncSuspendedForOTA, !captureHistoryTransferActive,
+        hasIncompleteLocalCapture(for: index)
+      {
+        captureAutoResumeAfterHistoryTransfer = true
+        captureResumeConfirmationPending = false
+        captureTransferRearmPending = false
+        captureHistoryTransferActive = true
+        persistCaptureHistoryTransferPhase(.downloading)
+        captureSyncMessage =
+          "Found an interrupted history transfer; pausing briefly to continue from the saved iPhone checkpoint…"
+        Self.commissioningTrace(
+          "CAPTURE_TRANSFER_RECOVERED source=partial-local-evidence recorder=active action=pause-continue-and-auto-resume"
+        )
+        do {
+          try writeFrame(
+            type: .captureLogRequest,
+            payload: CaptureLogRequest(operation: .pause, slot: 2).encoded()
+          )
+        } catch {
+          captureTransferRearmPending = true
+          captureSyncMessage =
+            "Interrupted history is safe; the pause request will retry after reconnection: \(error.localizedDescription)"
+          Self.commissioningTrace(
+            "CAPTURE_TRANSFER_RECOVERY_DEFERRED action=pause-after-reconnect error={\(Self.errorEvidence(error))}"
+          )
+        }
+        return
+      }
       switch CaptureSyncPolicy.mode(
         recorderIsLogging: index.logging,
         suspendedForOTA: captureSyncSuspendedForOTA
@@ -1718,7 +1928,9 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         captureSyncTargets.removeAll()
         if captureResumeConfirmationPending {
           captureResumeConfirmationPending = false
+          captureTransferRearmPending = false
           captureHistoryTransferActive = false
+          persistCaptureHistoryTransferPhase(nil)
           captureSyncMessage =
             "Gateway history is synchronized on this iPhone and passive recording has resumed."
           Self.commissioningTrace(
@@ -1732,7 +1944,27 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
           "CAPTURE_SYNC_DEFERRED reason=recorder-active policy=inventory-only current_session=\(index.currentSessionID) current_records=\(index.currentRecords) previous_session=\(index.previousSessionID) previous_records=\(index.previousRecords)"
         )
       case .transferHistory:
-        beginCaptureSync(index)
+        if !captureHistoryTransferActive, hasIncompleteLocalCapture(for: index) {
+          captureAutoResumeAfterHistoryTransfer = true
+          captureResumeConfirmationPending = false
+          captureTransferRearmPending = false
+          captureHistoryTransferActive = true
+          persistCaptureHistoryTransferPhase(.downloading)
+          captureSyncMessage =
+            "Recovering an interrupted history transfer from its saved iPhone checkpoint…"
+          Self.commissioningTrace(
+            "CAPTURE_TRANSFER_RECOVERED source=partial-local-evidence action=continue-and-auto-resume"
+          )
+        }
+        if captureHistoryTransferActive {
+          beginCaptureSync(index)
+        } else {
+          captureSyncMessage =
+            "The gateway recorder is paused. Choose Download paused history and resume, or resume recording now."
+          Self.commissioningTrace(
+            "CAPTURE_SYNC_AWAITING_OWNER_ACTION reason=paused-without-durable-transfer-intent current_session=\(index.currentSessionID) current_records=\(index.currentRecords) previous_session=\(index.previousSessionID) previous_records=\(index.previousRecords)"
+          )
+        }
       }
     case .captureLogChunk:
       guard let gatewayID = handshake?.gatewayID else { return }
@@ -1752,6 +1984,19 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       )
     default:
       break
+    }
+  }
+
+  private func hasIncompleteLocalCapture(for index: CaptureLogIndex) -> Bool {
+    guard let gatewayID = handshake?.gatewayID else { return false }
+    let candidates: [(UInt32, UInt32)] = [
+      (index.previousSessionID, index.previousRecords),
+      (index.currentSessionID, index.currentRecords),
+    ]
+    return candidates.contains { sessionID, totalRecords in
+      guard sessionID != 0, totalRecords > 0 else { return false }
+      let localCount = captureStore.recordCount(gatewayID: gatewayID, sessionID: sessionID)
+      return localCount > 0 && localCount < totalRecords
     }
   }
 
@@ -1824,6 +2069,9 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         ))
     }
     captureSessions = captureStore.summaries()
+    Self.commissioningTrace(
+      "CAPTURE_FLOW_CONTROL policy=response-validated-window window=1 pacing=firmware-backpressure"
+    )
     scheduleNextCaptureChunk(after: Self.captureInitialSyncDelay)
   }
 
@@ -1916,6 +2164,8 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     guard captureAutoResumeAfterHistoryTransfer else { return }
     captureAutoResumeAfterHistoryTransfer = false
     captureResumeConfirmationPending = true
+    captureTransferRearmPending = false
+    persistCaptureHistoryTransferPhase(.resuming)
     do {
       try writeFrame(
         type: .captureLogRequest,
@@ -1926,12 +2176,10 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         "CAPTURE_AUTO_RESUME_REQUESTED link_session=\(linkSession)"
       )
     } catch {
-      captureResumeConfirmationPending = false
-      captureHistoryTransferActive = false
       captureSyncMessage =
-        "History transfer stopped and recorder resume was not confirmed: \(error.localizedDescription)"
+        "History is saved on this iPhone; recorder resume will retry after reconnection: \(error.localizedDescription)"
       Self.commissioningTrace(
-        "CAPTURE_AUTO_RESUME_FAILED link_session=\(linkSession) error={\(Self.errorEvidence(error))}"
+        "CAPTURE_AUTO_RESUME_DEFERRED link_session=\(linkSession) retry=after-reconnect error={\(Self.errorEvidence(error))}"
       )
     }
   }
@@ -1964,7 +2212,11 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     } else if chunk.records.isEmpty {
       throw CaptureSyncError.emptyNonterminalChunk
     }
-    scheduleNextCaptureChunk(after: Self.captureChunkInterval)
+    // A decoded response is the only credit that releases another request. This
+    // one-frame window is safe under iOS suspension because it does not depend on
+    // an app timer to keep the transfer alive; ESP-side notify retry/backpressure
+    // remains the transport-rate authority.
+    requestNextCaptureChunk()
   }
 
   private func record(_ frame: GatewayFrame) {
@@ -1975,6 +2227,9 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       if frame.sequence != expected {
         sequenceDiscontinuityCount &+= 1
         if frame.sequence > expected { missingSequenceCount &+= frame.sequence - expected }
+        Self.commissioningTrace(
+          "FRAME_SEQUENCE_DISCONTINUITY link_session=\(linkSession) expected=\(expected) observed=\(frame.sequence) discontinuities=\(sequenceDiscontinuityCount) missing=\(missingSequenceCount)"
+        )
       }
     }
     lastReceivedSequence = frame.sequence
@@ -2079,11 +2334,24 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       completeStaleGATTRecovery(after: peripheral, event: "disconnect")
       return
     }
+    if pendingWeakLinkRescan {
+      completeWeakLinkRecovery(after: peripheral, event: "disconnect")
+      return
+    }
     let failure = Self.errorEvidence(error)
     recordTransportFailure(error, event: "link-disconnected")
     Self.commissioningTrace(
       "LINK_DISCONNECTED link_session=\(linkSession) pairing_pending=\(notificationPairingPending) system_reconnecting=\(isSystemReconnecting) error={\(failure)}"
     )
+    if captureHistoryTransferActive {
+      captureTransferRearmPending = captureAutoResumeAfterHistoryTransfer
+      captureSyncMessage = captureResumeConfirmationPending
+        ? "Link interrupted after download; recorder resume will retry after reconnection…"
+        : "Link interrupted; history will continue from the saved iPhone checkpoint after reconnection…"
+      Self.commissioningTrace(
+        "CAPTURE_TRANSFER_INTERRUPTED link_session=\(linkSession) phase=\(captureHistoryTransferPhase?.rawValue ?? "unknown") downloaded=\(captureDownloadedRecords) recovery=automatic"
+      )
+    }
     if userRequestedDisconnect || !automaticReconnectEnabled {
       resetConnection()
       transportMessage = "Gateway disconnected by user."
@@ -2136,20 +2404,62 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     installPeripheralDelegate(on: peripheral, for: linkSession)
     notificationRequestSession = nil
     notificationPairingPending = false
+    linkRSSIQualifiedSession = nil
+    discoveredRSSI = nil
     state = .connecting
-    transportMessage = "Connected; negotiating gateway contract…"
+    transportMessage = "Connected; validating the current BLE signal…"
     Self.logger.info("ESP32 BLE connection established via \(source, privacy: .public)")
     Self.commissioningTrace(
       "LINK_CONNECTED link_session=\(linkSession) peripheral=\(peripheralEvidence(peripheral)) source=\(source) state=\(peripheral.state.rawValue)"
     )
     Self.commissioningTrace("LINK_RSSI_REQUEST link_session=\(linkSession) reason=connected")
     peripheral.readRSSI()
+    armLinkRSSIValidationTimeout(peripheral, callbackSession: linkSession)
+  }
+
+  private func armLinkRSSIValidationTimeout(
+    _ peripheral: CBPeripheral, callbackSession: UInt64
+  ) {
+    linkRSSIValidationTask?.cancel()
+    linkRSSIValidationTask = Task { [weak self, weak peripheral] in
+      try? await Task.sleep(for: Self.linkRSSIValidationTimeout)
+      guard !Task.isCancelled, let self, let peripheral,
+        self.acceptsPeripheralCallback(
+          peripheral, callbackSession: callbackSession, event: "linked-rssi-watchdog")
+      else { return }
+      self.linkRSSIValidationTask = nil
+      Self.commissioningTrace(
+        "LINK_RSSI_VALIDATION_TIMEOUT link_session=\(callbackSession) timeout_seconds=3 action=close-and-rescan"
+      )
+      self.refreshWeakLinkCandidate(
+        peripheral,
+        reason: "The current BLE signal could not be verified in time."
+      )
+    }
+  }
+
+  private func beginGATTDiscoveryAfterRSSI(
+    _ peripheral: CBPeripheral, callbackSession: UInt64
+  ) {
+    guard acceptsPeripheralCallback(
+      peripheral, callbackSession: callbackSession, event: "linked-rssi-qualified")
+    else { return }
+    guard let discoveredRSSI,
+      GatewayBLEIdentityPolicy.connectionAttemptIsReliable(observedRSSI: discoveredRSSI)
+    else { return }
+    linkRSSIValidationTask?.cancel()
+    linkRSSIValidationTask = nil
+    linkRSSIQualifiedSession = callbackSession
+    transportMessage = "Connected; negotiating gateway contract…"
+    Self.commissioningTrace(
+      "LINK_RSSI_QUALIFIED link_session=\(callbackSession) rssi=\(discoveredRSSI) threshold=\(GatewayBLEIdentityPolicy.minimumReliableConnectionRSSI) action=begin-gatt"
+    )
     if let services = peripheral.services, !services.isEmpty {
       Self.commissioningTrace(
         "GATT_CACHE_ADOPTED id=\(peripheral.identifier.uuidString) service_count=\(services.count)"
       )
       processDiscoveredServices(
-        peripheral, services: services, source: "cache", callbackSession: linkSession)
+        peripheral, services: services, source: "cache", callbackSession: callbackSession)
     } else {
       peripheral.discoverServices([Self.vhosService, Self.factoryService])
       armGATTDiscoveryTimeout(peripheral, phase: "services")
@@ -2159,8 +2469,13 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   private func armGATTDiscoveryTimeout(_ peripheral: CBPeripheral, phase: String) {
     serviceDiscoveryTask?.cancel()
     let discoverySession = linkSession
+    let watchdog = gattDiscoveryWatchdog()
+    let watchdogRSSI = discoveredRSSI.map(String.init) ?? "unavailable"
+    Self.commissioningTrace(
+      "GATT_DISCOVERY_WATCHDOG_ARMED phase=\(phase) link_session=\(discoverySession) profile=\(watchdog.profile) rssi=\(watchdogRSSI) timeout_seconds=\(watchdog.seconds)"
+    )
     serviceDiscoveryTask = Task { [weak self, weak peripheral] in
-      try? await Task.sleep(for: .seconds(12))
+      try? await Task.sleep(for: watchdog.delay)
       guard !Task.isCancelled, let self, let peripheral,
         self.acceptsPeripheralCallback(
           peripheral, callbackSession: discoverySession, event: "gatt-watchdog-\(phase)")
@@ -2196,6 +2511,19 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         peripheral,
         reason: "Gateway contract discovery timed out; scanning for the current gateway identity…")
     }
+  }
+
+  private func gattDiscoveryWatchdog() -> (profile: String, delay: Duration, seconds: Int) {
+    guard let discoveredRSSI else {
+      return ("unknown-signal", Self.gattDiscoveryTimeoutWeak, 22)
+    }
+    if discoveredRSSI <= -80 {
+      return ("fringe", Self.gattDiscoveryTimeoutFringe, 30)
+    }
+    if discoveredRSSI <= -72 {
+      return ("weak", Self.gattDiscoveryTimeoutWeak, 22)
+    }
+    return ("normal", Self.gattDiscoveryTimeoutStrong, 12)
   }
 
   private func armConnectionTimeout(_ peripheral: CBPeripheral, source: String) {
@@ -2365,6 +2693,20 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     }
     discoveredRSSI = value
     Self.commissioningTrace("LINK_RSSI link_session=\(callbackSession) rssi=\(value)")
+    guard GatewayBLEIdentityPolicy.connectionAttemptIsReliable(observedRSSI: value) else {
+      linkRSSIValidationTask?.cancel()
+      linkRSSIValidationTask = nil
+      Self.commissioningTrace(
+        "LINK_RSSI_REJECTED link_session=\(callbackSession) rssi=\(value) threshold=\(GatewayBLEIdentityPolicy.minimumReliableConnectionRSSI) action=close-and-rescan"
+      )
+      refreshWeakLinkCandidate(
+        peripheral,
+        reason:
+          "The current BLE link is \(value) dBm, below the \(GatewayBLEIdentityPolicy.minimumReliableConnectionRSSI) dBm transfer threshold."
+      )
+      return
+    }
+    beginGATTDiscoveryAfterRSSI(peripheral, callbackSession: callbackSession)
   }
 
   private var activePeripheralEvidence: String {
@@ -2589,8 +2931,9 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
 
   private func refreshStaleGATTCandidate(_ peripheral: CBPeripheral, reason: String) {
     guard isActivePeripheral(peripheral) else { return }
+    consecutiveStaleGATTRecoveryCount += 1
     Self.commissioningTrace(
-      "STALE_GATT_CANDIDATE_RETIRED id=\(peripheral.identifier.uuidString)"
+      "STALE_GATT_CANDIDATE_RETIRED id=\(peripheral.identifier.uuidString) consecutive=\(consecutiveStaleGATTRecoveryCount)"
     )
     automaticReconnectEnabled = false
     automaticReconnectActive = false
@@ -2619,9 +2962,63 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       "STALE_GATT_DISCONNECT_CONFIRMED id=\(peripheral.identifier.uuidString) event=\(event)"
     )
     resetTransportSession()
+    if consecutiveStaleGATTRecoveryCount >= 2 {
+      consecutiveStaleGATTRecoveryCount = 0
+      scanRequested = true
+      reconnectIntentRequested = true
+      automaticReconnectEnabled = true
+      userRequestedDisconnect = false
+      state = .connecting
+      transportMessage =
+        "Repeated stale GATT sessions detected; rebuilding Core Bluetooth before resuming the saved transfer…"
+      Self.commissioningTrace(
+        "STALE_GATT_CENTRAL_REBUILD threshold=2 action=replace-central-and-service-scan"
+      )
+      skipKnownGatewayRetrievalOnNextScan = true
+      replaceCentralManager(reason: "repeated-stale-gatt-timeout")
+      return
+    }
     state = .disconnected
     transportMessage = "\(reason) Starting a fresh service-filtered scan…"
     startScan(source: "stale-gatt-disconnect-confirmed", skipConnectedRetrieval: true)
+  }
+
+  private func refreshWeakLinkCandidate(_ peripheral: CBPeripheral, reason: String) {
+    guard isActivePeripheral(peripheral) else { return }
+    linkRSSIValidationTask?.cancel()
+    linkRSSIValidationTask = nil
+    automaticReconnectActive = false
+    reconnectTask?.cancel()
+    serviceDiscoveryTask?.cancel()
+    central.stopScan()
+    scanActive = false
+    scanRequested = false
+    pendingWeakLinkRescan = true
+    pendingWeakLinkReason = reason
+    state = .connecting
+    transportMessage = "\(reason) Closing this link and waiting for a stronger signal…"
+    Self.commissioningTrace(
+      "WEAK_LINK_CANDIDATE_RETIRED id=\(peripheral.identifier.uuidString) rssi=\(discoveredRSSI.map(String.init) ?? "unavailable") action=preserve-bond-and-rescan"
+    )
+    central.cancelPeripheralConnection(peripheral)
+  }
+
+  private func completeWeakLinkRecovery(after peripheral: CBPeripheral, event: String) {
+    guard pendingWeakLinkRescan, isActivePeripheral(peripheral) else { return }
+    let reason = pendingWeakLinkReason
+      ?? "The current BLE link is below the reliable transfer threshold."
+    pendingWeakLinkRescan = false
+    pendingWeakLinkReason = nil
+    Self.commissioningTrace(
+      "WEAK_LINK_DISCONNECT_CONFIRMED id=\(peripheral.identifier.uuidString) event=\(event) action=service-scan"
+    )
+    resetTransportSession()
+    reconnectIntentRequested = true
+    automaticReconnectEnabled = true
+    userRequestedDisconnect = false
+    state = .connecting
+    transportMessage = "\(reason) Scanning for three stable advertisements…"
+    startScan(source: "weak-link-disconnect-confirmed", skipConnectedRetrieval: true)
   }
 
   private func recordTransportFailure(_ error: Error?, event: String) {
@@ -2760,6 +3157,8 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     let selectedVHOSAdvertisementEvidence = candidateAdvertisedVHOSService
     scanFallbackTask?.cancel()
     serviceDiscoveryTask?.cancel()
+    linkRSSIValidationTask?.cancel()
+    linkRSSIValidationTask = nil
     restoredConnectionTask?.cancel()
     handshakeRetryTask?.cancel()
     handshakeRetryTask = nil
@@ -2789,6 +3188,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     notificationSetupInFlight = nil
     notificationRequestSession = nil
     notificationPairingPending = false
+    linkRSSIQualifiedSession = nil
     peripheralConnected = false
     gatewayIdentityValidated = false
     connectedAt = nil
@@ -2825,7 +3225,13 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     standardOBDSamples = []
     captureLogIndex = nil
     captureSyncTargets.removeAll()
-    captureSyncMessage = "Waiting for a gateway capture index."
+    if captureHistoryTransferActive {
+      captureSyncMessage = captureResumeConfirmationPending
+        ? "Waiting to reconnect and confirm passive recording resumed…"
+        : "Waiting to reconnect and continue retained history from the saved checkpoint…"
+    } else {
+      captureSyncMessage = "Waiting for a gateway capture index."
+    }
     currentSessionResultStartIndex = experimentResults.count
     if preservingSelection {
       peripheral = selectedPeripheral

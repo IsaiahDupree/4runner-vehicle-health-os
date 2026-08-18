@@ -11,10 +11,42 @@ loss, and true power loss into explicit tests with bounded recovery evidence.
 The test oracle is the application contract, not the Bluetooth settings screen. A cycle passes
 only after the iPhone observes, in order, a new physical `LINK_CONNECTED`, a current-link RSSI at
 or above the configured floor, a CRC-valid `HANDSHAKE_VERIFIED`, and the configured number of real
-`HEALTH_DECODED` frames. Seeing the peripheral listed as Connected in Settings is insufficient.
+post-contract activity frames. Ordinarily those are `HEALTH_DECODED` frames. While retained-history
+transfer deliberately reserves the stream and suppresses periodic health, strictly contiguous
+`CAPTURE_CHUNK` frames are the liveness and integrity oracle instead. Seeing the peripheral listed
+as Connected in Settings is insufficient.
 
 The harness never fabricates CAN frames or vehicle observations. A USB-bench run can prove BLE,
 bond, boot, and application-session recovery while vehicle-network acceptance remains pending.
+
+## Device-free transport and data-load gate
+
+The first gate no longer needs an ESP32, iPhone, Android head unit, or vehicle. The checked-in
+`can.replay.corpus@1.0.0` corpus preserves eight real listen-only sessions and 5,176 observations.
+Python, Swift, and Kotlin rebuild the original VHOS frames and feed them through the production
+stream and CAN decoders under sustained load.
+
+```bash
+.venv/bin/vhos validate-can-replay-corpus test-replay/real-can-2026-08-18
+.venv/bin/vhos replay-can-corpus test-replay/real-can-2026-08-18 \
+  --mode live --repeat 20 --fault clean
+.venv/bin/vhos replay-can-corpus test-replay/real-can-2026-08-18 \
+  --mode history --fault drop-fragment --fault-interval 257
+.venv/bin/vhos replay-can-corpus test-replay/real-can-2026-08-18 \
+  --mode live --fault corrupt-payload --fault-interval 101
+.venv/bin/vhos replay-can-corpus test-replay/real-can-2026-08-18 \
+  --mode history --fault disconnect-mid-frame --fault-interval 113
+```
+
+Clean replay requires exact record identity, order, count, and payload. A faulted replay must lose
+only the deliberately damaged frame(s), count the recovery/discard evidence, and decode every
+subsequent valid frame exactly once. A hang, crash, duplicate, reorder, unexplained loss, unbounded
+buffer, or vehicle-health promotion is a release failure.
+
+The Android app exposes the same production replay path as **HISTORICAL REPLAY • NOT LIVE**, with
+source-time and full-speed ×20 modes plus explicit cancellation. The complete evidence boundary,
+hashes, and cross-language matrix are in
+[Real CAN replay and offline load testing](REAL-CAN-REPLAY-AND-LOAD-TESTING-2026-08-18.md).
 
 ## Harness
 
@@ -46,8 +78,10 @@ ESP boot and self-test where applicable. An old handshake cannot satisfy a new c
 harness starts after the fault marker and requires a new physical-link event first.
 
 The harness also has negative oracles. A cycle fails immediately if the iPhone reports a frame
-decode failure, exhausted handshake response, or handshake-write timeout, or if UART reports a
-panic, stack overflow, heap corruption, assertion, or task watchdog. `--expected-firmware` requires
+decode failure, exhausted handshake response, handshake-write timeout, or failed capture recovery,
+or if UART reports a panic, stack overflow, heap corruption, assertion, task watchdog, or exhausted
+BLE notification backpressure. Capture chunks must retain one session identity and exact contiguous
+offsets; malformed counts or a gap fail the cycle. `--expected-firmware` requires
 the exact version from the CRC-valid handshake; a physically connected device running the wrong
 image cannot quietly pass. `--cycles 0` is a health-stream soak with no injected reset after the
 baseline contract. `--minimum-rssi` requires a CoreBluetooth measurement from the exact current
@@ -73,6 +107,7 @@ Before physical fault injection, the default run verifies:
 - every JSON/Protobuf domain contract;
 - the complete Python suite, including evidence corruption and sequence-gap rejection;
 - a fresh deterministic capture, bundle validation, and offline replay;
+- the immutable real-CAN corpus manifest plus clean and faulted production-decoder replay;
 - the Swift core suite, including fragmented VHOS frames, CRC corruption, capture chunks, signed
   releases, OTA preflight, and evidence bundles;
 - syntax of both physical harnesses;
@@ -89,9 +124,9 @@ that summary so a partial run cannot be mistaken for full acceptance.
 
 | Profile | Stream gate | Reset gate | App-death gate | Mixed gate | Intended use |
 | --- | ---: | ---: | ---: | ---: | --- |
-| `quick` | 10 health frames | included in 2 mixed cycles | included in 2 mixed cycles | 2 cycles | edit-time attached-device smoke |
-| `standard` | 30 health frames | 3 cycles | 3 cycles | 6 cycles | default before driving to the vehicle |
-| `endurance` | 300 health frames | 10 cycles | 10 cycles | 20 cycles | release candidate and overnight lab preparation |
+| `quick` | 10 post-contract activity frames | included in 2 mixed cycles | included in 2 mixed cycles | 2 cycles | edit-time attached-device smoke |
+| `standard` | 30 post-contract activity frames | 3 cycles | 3 cycles | 6 cycles | default before driving to the vehicle |
+| `endurance` | 300 post-contract activity frames | 10 cycles | 10 cycles | 20 cycles | release candidate and overnight lab preparation |
 
 All profiles run the deterministic software gates unless explicitly skipped. Signed app and
 firmware builds also run unless `--skip-builds` is recorded. `--include-power` appends 1, 3, or 10

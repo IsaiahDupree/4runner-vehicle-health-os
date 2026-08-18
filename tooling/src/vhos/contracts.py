@@ -16,6 +16,7 @@ class ContractError(ValueError):
 SCHEMA_BY_CONTRACT = {
     "ai.claim": "ai-claim.schema.json",
     "can.discovery.report": "can-discovery-report.schema.json",
+    "can.replay.corpus": "can-replay-corpus.schema.json",
     "calculation.run": "calculation-run.schema.json",
     "can.reference-correlation-report": "can-reference-correlation-report.schema.json",
     "capture.bundle.manifest": "capture-bundle-manifest.schema.json",

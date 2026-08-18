@@ -247,6 +247,29 @@ public struct PassiveCANObservation: Codable, Equatable, Sendable, Identifiable 
     self.ingestedAt = ingestedAt
   }
 
+  /// Rebuild the deployed 36-byte live record for offline historical replay.
+  /// Callers must continue to label the resulting stream as replay, never live telemetry.
+  public func encodedLivePayload() throws -> Data {
+    guard dataLength <= 8, data.count == 8 else {
+      throw CaptureLogError.invalidObservationDataShape(length: Int(dataLength), bytes: data.count)
+    }
+    guard bitrateBps == 250_000 || bitrateBps == 500_000 else {
+      throw CaptureLogError.unsupportedBitrate(bitrateBps)
+    }
+    var payload = Data([
+      1,
+      (extended ? 0x01 : 0) | (remoteRequest ? 0x02 : 0) | (listenOnly ? 0x04 : 0),
+      dataLength,
+      bitrateBps == 250_000 ? 2 : 1,
+    ])
+    payload.appendLittleEndian(identifier)
+    payload.appendLittleEndian(sourceSequence)
+    payload.appendLittleEndian(monotonicMicroseconds)
+    payload.appendLittleEndian(sessionID)
+    payload.append(contentsOf: data)
+    return payload
+  }
+
   public static func decodeLive(
     _ payload: Data,
     gatewayID: String,
@@ -364,6 +387,8 @@ public enum CaptureLogError: Error, Equatable, LocalizedError {
   case unsupportedRecordSize(Int)
   case invalidChunkLength(expected: Int, actual: Int)
   case recordCRC(expected: UInt32, actual: UInt32)
+  case invalidObservationDataShape(length: Int, bytes: Int)
+  case unsupportedBitrate(UInt32)
 
   public var errorDescription: String? {
     switch self {
@@ -375,6 +400,9 @@ public enum CaptureLogError: Error, Equatable, LocalizedError {
       "Capture-log chunk length mismatch: expected \(expected), received \(actual)."
     case .recordCRC(let expected, let actual):
       "Capture record CRC32C mismatch: expected \(expected), received \(actual)."
+    case .invalidObservationDataShape(let length, let bytes):
+      "CAN observation data shape is invalid: DLC \(length), payload storage \(bytes) bytes."
+    case .unsupportedBitrate(let bitrate): "Unsupported CAN bitrate: \(bitrate)."
     }
   }
 }
@@ -507,6 +535,18 @@ public struct GatewayFrameStreamDecoder: Sendable {
   private var buffer = Data()
   private let maximumPayloadBytes: Int
 
+  /// Bytes discarded while finding the next CRC-valid VHOS frame boundary.
+  /// A non-zero value is transport-quality evidence, not a vehicle fault.
+  public private(set) var discardedByteCount = 0
+
+  /// Number of times the decoder recovered from corrupt or missing transport bytes.
+  public private(set) var recoveryCount = 0
+
+  /// Number of complete-looking frame candidates rejected by a contract or CRC check.
+  public private(set) var corruptCandidateCount = 0
+
+  public var bufferedByteCount: Int { buffer.count }
+
   public init(maximumPayloadBytes: Int = GatewayFrame.defaultMaximumPayloadBytes) {
     self.maximumPayloadBytes = maximumPayloadBytes
   }
@@ -515,21 +555,141 @@ public struct GatewayFrameStreamDecoder: Sendable {
     buffer.append(data)
     var frames: [GatewayFrame] = []
 
-    while buffer.count >= GatewayFrame.headerLength {
-      guard buffer.prefix(4) == GatewayFrame.magic else {
-        throw GatewayFrameError.invalidMagic
-      }
+    while true {
+      guard alignToMagic() else { break }
+      guard buffer.count >= GatewayFrame.headerLength else { break }
+
       let payloadLength = Int(buffer.readUInt32LittleEndian(at: 8))
-      guard payloadLength <= maximumPayloadBytes else {
-        throw GatewayFrameError.payloadTooLarge(payloadLength)
+      guard headerAtBufferStartIsValid(payloadLength: payloadLength) else {
+        corruptCandidateCount += 1
+        discardPrefix(1)
+        continue
       }
       let frameLength = GatewayFrame.headerLength + payloadLength
-      guard buffer.count >= frameLength else { break }
+      guard buffer.count >= frameLength else {
+        // A later CRC-valid header before the claimed end proves that at least one
+        // notification fragment from the current frame was lost. Recover immediately
+        // instead of waiting forever for bytes that can no longer arrive.
+        if let nextHeader = nextValidHeaderOffset(startingAt: GatewayFrame.magic.count) {
+          corruptCandidateCount += 1
+          discardPrefix(nextHeader)
+          continue
+        }
+        if let nextMagic = nextMagicOffset(startingAt: GatewayFrame.magic.count) {
+          corruptCandidateCount += 1
+          discardPrefix(nextMagic)
+        }
+        break
+      }
       let frameData = Data(buffer.prefix(frameLength))
-      frames.append(try GatewayFrame.decode(frameData, maximumPayloadBytes: maximumPayloadBytes))
-      buffer = Data(buffer.dropFirst(frameLength))
+      do {
+        frames.append(
+          try GatewayFrame.decode(frameData, maximumPayloadBytes: maximumPayloadBytes))
+        // Data may retain a non-zero startIndex after removeFirst(), while the wire
+        // readers intentionally use zero-based contract offsets. Rebase each tail.
+        buffer = Data(buffer.dropFirst(frameLength))
+      } catch {
+        corruptCandidateCount += 1
+        if let nextHeader = nextValidHeaderOffset(startingAt: 1) {
+          discardPrefix(nextHeader)
+        } else if let nextMagic = nextMagicOffset(startingAt: 1) {
+          // Preserve a split candidate header until a later notification supplies
+          // enough bytes to validate it. A false-positive magic is discarded then.
+          discardPrefix(nextMagic)
+          break
+        } else {
+          // Keep a possible split magic suffix so the next append can complete it.
+          discardUnframedBytesPreservingMagicPrefix()
+          break
+        }
+      }
     }
     return frames
+  }
+
+  public mutating func reset() {
+    buffer.removeAll(keepingCapacity: true)
+    discardedByteCount = 0
+    recoveryCount = 0
+    corruptCandidateCount = 0
+  }
+
+  private mutating func alignToMagic() -> Bool {
+    guard !buffer.isEmpty else { return false }
+    if buffer.count >= GatewayFrame.magic.count,
+      buffer.prefix(GatewayFrame.magic.count) == GatewayFrame.magic
+    {
+      return true
+    }
+    if let range = buffer.range(of: GatewayFrame.magic), range.lowerBound > buffer.startIndex {
+      discardPrefix(buffer.distance(from: buffer.startIndex, to: range.lowerBound))
+      return true
+    }
+    discardUnframedBytesPreservingMagicPrefix()
+    return false
+  }
+
+  private func headerAtBufferStartIsValid(payloadLength: Int) -> Bool {
+    guard payloadLength <= maximumPayloadBytes,
+      buffer[4] == 1,
+      GatewayMessageType(rawValue: buffer[6]) != nil
+    else { return false }
+    let expected = buffer.readUInt32LittleEndian(at: 32)
+    return expected == CRC32C.checksum(buffer.prefix(32))
+  }
+
+  private func nextValidHeaderOffset(startingAt start: Int) -> Int? {
+    guard buffer.count >= GatewayFrame.headerLength, start < buffer.count else { return nil }
+    var searchStart = buffer.index(buffer.startIndex, offsetBy: start)
+    while searchStart < buffer.endIndex,
+      let range = buffer.range(
+        of: GatewayFrame.magic,
+        in: searchStart..<buffer.endIndex)
+    {
+      let offset = buffer.distance(from: buffer.startIndex, to: range.lowerBound)
+      guard buffer.count - offset >= GatewayFrame.headerLength else { return nil }
+      let candidate = Data(buffer.dropFirst(offset))
+      let payloadLength = Int(candidate.readUInt32LittleEndian(at: 8))
+      if payloadLength <= maximumPayloadBytes,
+        candidate[4] == 1,
+        GatewayMessageType(rawValue: candidate[6]) != nil,
+        candidate.readUInt32LittleEndian(at: 32) == CRC32C.checksum(candidate.prefix(32))
+      {
+        return offset
+      }
+      searchStart = buffer.index(after: range.lowerBound)
+    }
+    return nil
+  }
+
+  private func nextMagicOffset(startingAt start: Int) -> Int? {
+    guard start < buffer.count else { return nil }
+    let searchStart = buffer.index(buffer.startIndex, offsetBy: start)
+    guard let range = buffer.range(of: GatewayFrame.magic, in: searchStart..<buffer.endIndex)
+    else { return nil }
+    return buffer.distance(from: buffer.startIndex, to: range.lowerBound)
+  }
+
+  private mutating func discardPrefix(_ count: Int) {
+    guard count > 0 else { return }
+    let bounded = min(count, buffer.count)
+    buffer = Data(buffer.dropFirst(bounded))
+    discardedByteCount += bounded
+    recoveryCount += 1
+  }
+
+  private mutating func discardUnframedBytesPreservingMagicPrefix() {
+    let maximumSuffix = min(GatewayFrame.magic.count - 1, buffer.count)
+    var suffixCount = 0
+    if maximumSuffix > 0 {
+      for count in stride(from: maximumSuffix, through: 1, by: -1) {
+        if buffer.suffix(count) == GatewayFrame.magic.prefix(count) {
+          suffixCount = count
+          break
+        }
+      }
+    }
+    discardPrefix(buffer.count - suffixCount)
   }
 }
 

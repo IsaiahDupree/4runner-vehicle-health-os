@@ -1,7 +1,6 @@
 # Passive CAN logging, Recent Logs, export, and replay
 
-Status: implemented for iOS with the `v0.1.0-dev.11` gateway contract; physical end-to-end
-acceptance pending
+Status: implemented, physically exercised, and preserved as a reproducible offline corpus
 
 ## Outcome
 
@@ -13,6 +12,11 @@ shareable from Evidence.
 
 This design reduces the field loop from “stay at the car while every analysis runs” to “capture a
 controlled action sequence once, then replay and analyze it repeatedly at the desk.”
+
+The current immutable desk-development corpus contains eight real sessions and 5,176 retained
+observations. See
+[Real CAN replay and offline load testing](REAL-CAN-REPLAY-AND-LOAD-TESTING-2026-08-18.md) for
+its hashes, load/fault matrix, exact CLI, and Android historical-replay UX.
 
 The firmware-side record format, sampling policy, capacity, safety analysis, transfer messages,
 and one-trip procedure are specified in the firmware repository's
@@ -111,6 +115,18 @@ Automated checks cover:
 - stored-record inner CRC rejection;
 - capture chunk offsets, session identity, frame flags, identifiers, bytes, and lineage;
 - backward-compatible decoding of health payloads that do not include capture fields.
+
+They now also cover the full checked-in real corpus through both deployed wire paths, exact
+cross-language fixtures in Python/Swift/Kotlin, repeated full-speed load, hostile notification
+fragmentation, dropped fragments, CRC corruption, inserted noise, mid-frame disconnect, stream
+resynchronization, and Android replay cancellation. Replay failures are reported as transport
+quality; they cannot become vehicle-health findings.
+
+```bash
+.venv/bin/vhos validate-can-replay-corpus test-replay/real-can-2026-08-18
+.venv/bin/vhos replay-can-corpus test-replay/real-can-2026-08-18 \
+  --mode history --repeat 20 --fault clean
+```
 
 Release acceptance additionally requires a physical iPhone and gateway run that proves:
 

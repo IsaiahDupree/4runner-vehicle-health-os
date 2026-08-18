@@ -20,6 +20,10 @@ E0 plus the first native iOS control slice are implemented here:
 - offline replay with integrity, sequence, timestamp, and schema validation;
 - a versioned passive-CAN discovery analyzer that reports acquisition facts, sampling coverage,
   raw activity, checksum candidates, and correlations without assigning unverified vehicle meanings;
+- an immutable eight-session/5,176-record real-CAN replay corpus with SHA-256 provenance, clean and
+  faulted live/history reconstruction, and production-decoder load tests in Python, Swift, and Kotlin;
+- self-resynchronizing mobile stream decoders that surface discarded/corrupt transport bytes and
+  recover later valid frames without converting communication faults into vehicle-health claims;
 - per-ECU SAE J1979 supported-PID enumeration, pinned standard read-only value decoding, and an
   iPhone/Android passive-response path that cannot substitute zero for unavailable evidence;
 - synchronized Techstream/reference capture plus a candidate-only analyzer for `0x2C4`, `0x025`,
@@ -57,6 +61,11 @@ python3 -m venv .venv
 .venv/bin/vhos calculate-ac build/captures/ac-bench-sweep
 .venv/bin/vhos discover-can path/to/passive-can-recent-logs.ndjson \
   --output build/can-discovery.report.json
+.venv/bin/vhos validate-can-replay-corpus test-replay/real-can-2026-08-18
+.venv/bin/vhos replay-can-corpus test-replay/real-can-2026-08-18 \
+  --mode live --repeat 20 --fault clean
+.venv/bin/vhos replay-can-corpus test-replay/real-can-2026-08-18 \
+  --mode history --fault drop-fragment --fault-interval 257
 .venv/bin/vhos decode-j1979 path/to/j1979-responses.ndjson \
   --supported-output build/j1979-supported.json \
   --samples-output build/j1979-standard-samples.ndjson
@@ -99,6 +108,7 @@ The stable device labels and separation from transport identifiers are defined i
 | `equations/v1/` | Immutable A/C equation definitions with applicability and truth boundaries |
 | `tooling/` | Contract validator, simulator, bundle writer, and replay engine |
 | `tests/` | Contract, determinism, corruption, ordering, and replay tests |
+| `test-replay/` | Immutable real-capture corpora and cross-platform replay provenance |
 | `ios/` | Native iOS app, portable Swift core, and deterministic XcodeGen project |
 | `web-flasher/` | Public backup-first ESP32-S3 installer and recovery UI |
 | `android/` | Preserved original Android module boundary; not the primary client after ADR-0003 |
@@ -122,6 +132,9 @@ signed catalog/portal [`4runner-vhos-release-hub`](https://github.com/IsaiahDupr
 See [E0 implementation record](docs/delivery/E0-IMPLEMENTATION.md) for the exact backlog and acceptance mapping.
 The current saved-vehicle evidence and strict UI interpretation boundary are recorded in the
 [CAN discovery display baseline](docs/development/CAN-DISCOVERY-DISPLAY-BASELINE-2026-08-18.md).
+The device-free sustained-load, corruption, fragmentation, disconnect, and Android historical
+replay workflow is recorded in
+[the real-CAN replay record](docs/development/REAL-CAN-REPLAY-AND-LOAD-TESTING-2026-08-18.md).
 The supported-PID, synchronized Toyota-reference, and private-outbox implementation is recorded in
 [the August 18 J1979/evidence delivery](docs/development/J1979-REFERENCE-VALIDATION-AND-PRIVATE-OUTBOX-2026-08-18.md).
 The governing unknown-by-default whole-vehicle model, head-unit inventory contract, 2005 4Runner

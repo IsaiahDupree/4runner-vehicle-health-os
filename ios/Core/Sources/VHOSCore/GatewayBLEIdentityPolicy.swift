@@ -8,7 +8,7 @@ public enum GatewayBLEIdentityKind: Equatable, Sendable {
 public enum GatewayBLEIdentityPolicy {
   public static let vhosServiceUUID = "33613EB3-FFCA-42D1-83FA-A18F12B3F123"
   public static let factoryServiceUUID = "FEE0"
-  public static let minimumReliableConnectionRSSI = -84
+  public static let minimumReliableConnectionRSSI = -72
 
   public static func nameSuggestsGateway(_ localName: String?) -> Bool {
     guard let localName else { return false }

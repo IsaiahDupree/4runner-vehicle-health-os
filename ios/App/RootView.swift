@@ -312,10 +312,18 @@ private struct EvidenceView: View {
         if model.gateway.captureHistoryTransferActive {
           HStack {
             ProgressView()
-            Text("Downloading retained history…")
+            Text(model.gateway.captureSyncMessage)
           }
+          Button("Stop transfer and resume recording") {
+            model.resumeGatewayCapture()
+          }
+          .disabled(model.gateway.state != .vhosConnected)
         } else if model.gateway.captureLogIndex?.logging == false {
-          Button("Resume passive recording") {
+          Button("Download paused history and resume") {
+            model.pauseDownloadAndResumeGatewayHistory()
+          }
+          .disabled(model.gateway.state != .vhosConnected)
+          Button("Resume passive recording now") {
             model.resumeGatewayCapture()
           }
           .disabled(model.gateway.state != .vhosConnected)

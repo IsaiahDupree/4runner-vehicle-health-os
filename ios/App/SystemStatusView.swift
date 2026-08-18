@@ -909,18 +909,18 @@ struct SystemStatusView: View {
 
   private var discoverySignalLevel: IndicatorLevel {
     guard let rssi = gateway.discoveredRSSI else { return .pending }
-    return rssi <= -80 ? .warning : .pass
+    return rssi < GatewayBLEIdentityPolicy.minimumReliableConnectionRSSI ? .warning : .pass
   }
 
   private var discoverySignalDetail: String {
     guard let rssi = gateway.discoveredRSSI else {
       return "RSSI is available after a gateway advertisement or physical link is measured"
     }
-    if rssi <= -90 {
-      return "Very weak commissioning signal; place the iPhone beside the ESP32 before pairing"
-    }
     if rssi <= -80 {
-      return "Weak signal; move closer before pairing, evidence transfer, or OTA"
+      return "Very weak signal; move the iPhone beside the ESP32 before evidence transfer or OTA"
+    }
+    if rssi < GatewayBLEIdentityPolicy.minimumReliableConnectionRSSI {
+      return "Signal is below the reliable reconnect threshold; move the iPhone closer while the app waits without disturbing the saved bond"
     }
     return gateway.peripheralConnected
       ? "Live RSSI from the selected physical BLE link; no vehicle-health inference is applied"

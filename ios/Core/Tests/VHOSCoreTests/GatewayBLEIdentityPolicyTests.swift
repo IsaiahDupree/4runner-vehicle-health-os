@@ -5,8 +5,11 @@ import Testing
 struct GatewayBLEIdentityPolicyTests {
   @Test func connectionAttemptWaitsAtFringeRange() {
     #expect(GatewayBLEIdentityPolicy.connectionAttemptIsReliable(observedRSSI: nil))
-    #expect(GatewayBLEIdentityPolicy.connectionAttemptIsReliable(observedRSSI: -84))
-    #expect(!GatewayBLEIdentityPolicy.connectionAttemptIsReliable(observedRSSI: -85))
+    #expect(GatewayBLEIdentityPolicy.connectionAttemptIsReliable(observedRSSI: -65))
+    #expect(GatewayBLEIdentityPolicy.connectionAttemptIsReliable(observedRSSI: -71))
+    #expect(GatewayBLEIdentityPolicy.connectionAttemptIsReliable(observedRSSI: -72))
+    #expect(!GatewayBLEIdentityPolicy.connectionAttemptIsReliable(observedRSSI: -73))
+    #expect(!GatewayBLEIdentityPolicy.connectionAttemptIsReliable(observedRSSI: -79))
     #expect(!GatewayBLEIdentityPolicy.connectionAttemptIsReliable(observedRSSI: -96))
   }
 

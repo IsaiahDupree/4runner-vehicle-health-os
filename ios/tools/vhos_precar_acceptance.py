@@ -30,24 +30,27 @@ class PhysicalPhase:
     health_frames: int
     timeout_seconds: int
     dwell_seconds: int
+    soak_seconds: int = 0
+    minimum_activity_rate: float = 0.0
+    maximum_activity_gap: float = 0.0
 
 
 PROFILES: dict[str, tuple[PhysicalPhase, ...]] = {
     "quick": (
-        PhysicalPhase("health-smoke", 0, "esp-reset", 10, 75, 0),
-        PhysicalPhase("mixed-recovery", 2, "esp-reset,app-relaunch", 5, 55, 2),
+        PhysicalPhase("health-smoke", 0, "esp-reset", 5, 75, 0, 20, 0.35, 5),
+        PhysicalPhase("mixed-recovery", 2, "esp-reset,app-relaunch", 3, 55, 2, 10, 0.35, 5),
     ),
     "standard": (
-        PhysicalPhase("health-soak", 0, "esp-reset", 30, 120, 0),
-        PhysicalPhase("reset-storm", 3, "esp-reset", 5, 55, 2),
-        PhysicalPhase("app-death-storm", 3, "app-relaunch", 5, 55, 2),
-        PhysicalPhase("mixed-recovery", 6, "esp-reset,app-relaunch", 5, 55, 2),
+        PhysicalPhase("health-soak", 0, "esp-reset", 5, 120, 0, 120, 0.35, 5),
+        PhysicalPhase("reset-storm", 3, "esp-reset", 3, 55, 2, 15, 0.35, 5),
+        PhysicalPhase("app-death-storm", 3, "app-relaunch", 3, 55, 2, 15, 0.35, 5),
+        PhysicalPhase("mixed-recovery", 6, "esp-reset,app-relaunch", 3, 55, 2, 15, 0.35, 5),
     ),
     "endurance": (
-        PhysicalPhase("health-soak", 0, "esp-reset", 300, 900, 0),
-        PhysicalPhase("reset-storm", 10, "esp-reset", 10, 75, 3),
-        PhysicalPhase("app-death-storm", 10, "app-relaunch", 10, 75, 3),
-        PhysicalPhase("mixed-recovery", 20, "esp-reset,app-relaunch", 10, 75, 3),
+        PhysicalPhase("health-soak", 0, "esp-reset", 5, 900, 0, 600, 0.35, 5),
+        PhysicalPhase("reset-storm", 10, "esp-reset", 5, 75, 3, 30, 0.35, 5),
+        PhysicalPhase("app-death-storm", 10, "app-relaunch", 5, 75, 3, 30, 0.35, 5),
+        PhysicalPhase("mixed-recovery", 20, "esp-reset,app-relaunch", 5, 75, 3, 30, 0.35, 5),
     ),
 }
 
@@ -188,8 +191,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--minimum-rssi",
         type=int,
-        default=-80,
-        help="Required connected-link RSSI floor for every physical cycle (default: -80 dBm)",
+        default=-72,
+        help="Required connected-link RSSI floor for every physical cycle (default: -72 dBm)",
     )
     parser.add_argument("--firmware-repo", type=Path)
     parser.add_argument("--output", type=Path)
@@ -402,6 +405,12 @@ def main() -> int:
                     expected_firmware,
                     "--minimum-rssi",
                     str(args.minimum_rssi),
+                    "--soak-seconds",
+                    str(phase.soak_seconds),
+                    "--minimum-activity-rate",
+                    str(phase.minimum_activity_rate),
+                    "--maximum-activity-gap",
+                    str(phase.maximum_activity_gap),
                     "--output",
                     str(phase_output),
                 ]
@@ -420,7 +429,8 @@ def main() -> int:
                     f"physical-{phase.name}",
                     command,
                     repo,
-                    timeout=(phase.cycles + 1) * (phase.timeout_seconds + phase.dwell_seconds + 10),
+                    timeout=(phase.cycles + 1)
+                    * (phase.timeout_seconds + phase.dwell_seconds + phase.soak_seconds + 10),
                 )
                 # Replace the generic command gate with the richer physical result.
                 run.summary["gates"].pop()

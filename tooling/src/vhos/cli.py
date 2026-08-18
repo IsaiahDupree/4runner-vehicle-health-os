@@ -9,6 +9,13 @@ from pathlib import Path
 from .ac_metrics import SIMULATOR_AC_SIGNALS, calculate_ac_metrics
 from .bundles import BundleError, load_validated_bundle, write_simulator_bundle
 from .can_discovery import CANDiscoveryError, analyze_passive_can, load_passive_can_ndjson
+from .can_replay import (
+    CANReplayError,
+    build_can_replay_corpus,
+    load_validated_can_replay_corpus,
+    replay_can_corpus,
+    write_can_replay_fixture,
+)
 from .contracts import ContractCatalog, ContractError
 from .evidence_inbox import EvidenceInboxError, EvidenceInboxStore, serve_evidence_inbox
 from .firmware_package import build_firmware_package, verify_firmware_package
@@ -65,6 +72,44 @@ def build_parser() -> argparse.ArgumentParser:
         help="One or more passive CAN NDJSON files or directories",
     )
     discover_can.add_argument("--output", type=Path)
+
+    build_can_replay = subcommands.add_parser(
+        "build-can-replay-corpus",
+        help="Pin real passive-CAN evidence into a checksum-verified offline replay corpus",
+    )
+    build_can_replay.add_argument("input", type=Path, nargs="+")
+    build_can_replay.add_argument("--output", type=Path, required=True)
+    build_can_replay.add_argument("--corpus-id", required=True)
+
+    validate_can_replay = subcommands.add_parser(
+        "validate-can-replay-corpus",
+        help="Verify every source hash, record identity, statistic, and semantic digest",
+    )
+    validate_can_replay.add_argument("corpus", type=Path)
+
+    replay_can = subcommands.add_parser(
+        "replay-can-corpus",
+        help="Replay real observations through deployed VHOS framing with optional faults",
+    )
+    replay_can.add_argument("corpus", type=Path)
+    replay_can.add_argument("--mode", choices=["live", "history"], default="live")
+    replay_can.add_argument("--repeat", type=int, default=1)
+    replay_can.add_argument(
+        "--fault",
+        choices=["clean", "drop-fragment", "corrupt-payload", "disconnect-mid-frame"],
+        default="clean",
+    )
+    replay_can.add_argument("--fault-interval", type=int, default=257)
+    replay_can.add_argument("--output", type=Path)
+
+    replay_fixture = subcommands.add_parser(
+        "export-can-replay-fixture",
+        help="Export a deterministic real-capture excerpt for another platform's contract tests",
+    )
+    replay_fixture.add_argument("corpus", type=Path)
+    replay_fixture.add_argument("--session-id", type=int, required=True)
+    replay_fixture.add_argument("--records", type=int, required=True)
+    replay_fixture.add_argument("--output", type=Path, required=True)
 
     decode_j1979 = subcommands.add_parser(
         "decode-j1979",
@@ -223,6 +268,56 @@ def main(argv: list[str] | None = None) -> int:
                 )
             _print_json(report)
             return 0
+        if args.command == "build-can-replay-corpus":
+            manifest = build_can_replay_corpus(
+                args.input,
+                args.output,
+                corpus_id=args.corpus_id,
+            )
+            _print_json(
+                {
+                    "corpus": str(args.output.resolve()),
+                    "corpus_id": manifest["corpus_id"],
+                    "records": manifest["statistics"]["records"],
+                    "sessions": manifest["statistics"]["sessions"],
+                    "semantic_digest": manifest["semantic_digest"],
+                    "required_display_label": manifest["display_policy"]["required_label"],
+                }
+            )
+            return 0
+        if args.command == "validate-can-replay-corpus":
+            corpus = load_validated_can_replay_corpus(args.corpus)
+            _print_json(
+                {
+                    "valid": True,
+                    "corpus_id": corpus.manifest["corpus_id"],
+                    "records": len(corpus.records),
+                    "semantic_digest": corpus.manifest["semantic_digest"],
+                }
+            )
+            return 0
+        if args.command == "replay-can-corpus":
+            report = replay_can_corpus(
+                args.corpus,
+                mode=args.mode,
+                repeat=args.repeat,
+                fault=args.fault,
+                fault_interval=args.fault_interval,
+            )
+            if args.output:
+                _write_new_json(args.output, report)
+            _print_json(report)
+            return 0
+        if args.command == "export-can-replay-fixture":
+            _print_json(
+                write_can_replay_fixture(
+                    args.corpus,
+                    args.output,
+                    session_id=args.session_id,
+                    limit=args.records,
+                )
+            )
+            return 0
         if args.command == "decode-j1979":
             responses, sources = load_j1979_ndjson(args.input)
             supported = enumerate_supported_pids(responses)
@@ -323,6 +418,7 @@ def main(argv: list[str] | None = None) -> int:
     except (
         BundleError,
         CANDiscoveryError,
+        CANReplayError,
         ContractError,
         EvidenceInboxError,
         J1979Error,

@@ -1,0 +1,90 @@
+{
+  "assembled_from_capture_at": "2026-08-18T19:01:28Z",
+  "contract": "can.replay.corpus",
+  "contract_version": "1.0.0",
+  "corpus_id": "2005-4runner-real-can-2026-08-18",
+  "display_policy": {
+    "prohibited_claims": [
+      "live vehicle state",
+      "accepted CAN signal meaning",
+      "vehicle health conclusion",
+      "control authority"
+    ],
+    "provenance": "Recorded listen-only gateway evidence replayed offline. Timing, identifiers, payloads, session IDs, and source sequences are preserved.",
+    "required_label": "HISTORICAL REPLAY \u2022 NOT LIVE"
+  },
+  "gateway_ids": [
+    "esp32-9454c5b08d14"
+  ],
+  "semantic_digest": "94b5e7a86d062f81509c6a442aa9229800dc691860464abfb1dd22053b10aab5",
+  "source_classification": "REAL_CAPTURE_REPLAY",
+  "source_files": [
+    {
+      "byte_count": 797958,
+      "path": "sessions/627753796.ndjson",
+      "record_count": 1984,
+      "session_id": 627753796,
+      "sha256": "94f3aa46c2734fcf514a7d06fe567b4b0131c937c7818f22ff41cc52c1226220"
+    },
+    {
+      "byte_count": 163559,
+      "path": "sessions/628897492.ndjson",
+      "record_count": 408,
+      "session_id": 628897492,
+      "sha256": "7f1286627b3b000c4d4698f327af3f088ac0a73c0ea1e6818fd7adeaf9782981"
+    },
+    {
+      "byte_count": 346930,
+      "path": "sessions/740616386.ndjson",
+      "record_count": 864,
+      "session_id": 740616386,
+      "sha256": "34ea3d3ae8b71241f9d0f1a5580c4c1eae80aa55817e56daf129a092d9a60324"
+    },
+    {
+      "byte_count": 173622,
+      "path": "sessions/1007674331.ndjson",
+      "record_count": 432,
+      "session_id": 1007674331,
+      "sha256": "b26a4377e654d9d5c5a1fe3ff02b61b336f91eb5a7dd02c4e93ba0c3e55cfeb4"
+    },
+    {
+      "byte_count": 241305,
+      "path": "sessions/1846258254.ndjson",
+      "record_count": 600,
+      "session_id": 1846258254,
+      "sha256": "ca82592df7fd9fb52a7eb3f05284d9aecf58a57907bc4de958093b540781fce2"
+    },
+    {
+      "byte_count": 125371,
+      "path": "sessions/2020748856.ndjson",
+      "record_count": 312,
+      "session_id": 2020748856,
+      "sha256": "38f0a0048be7333ab2046b9399c2807f95efe34d10dd18368b285fb7961b594f"
+    },
+    {
+      "byte_count": 97326,
+      "path": "sessions/2175731012.ndjson",
+      "record_count": 240,
+      "session_id": 2175731012,
+      "sha256": "b5a7296633145f3175f39a9691030550c3ec9ce3aad503d37f4d62cee3c85c7f"
+    },
+    {
+      "byte_count": 134952,
+      "path": "sessions/4020849719.ndjson",
+      "record_count": 336,
+      "session_id": 4020849719,
+      "sha256": "da57d792c53399349a9b4ced66da233eca0b4e34b946d1612b5762d3651d003e"
+    }
+  ],
+  "statistics": {
+    "bitrates_bps": [
+      500000
+    ],
+    "listen_only_records": 5176,
+    "records": 5176,
+    "sessions": 8,
+    "total_source_bytes": 2081023,
+    "unique_identifiers": 17
+  },
+  "vehicle_claims_authorized": false
+}
