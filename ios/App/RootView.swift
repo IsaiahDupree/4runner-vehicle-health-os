@@ -295,10 +295,15 @@ private struct EvidenceView: View {
         Text(model.gateway.captureSyncMessage)
           .font(.footnote)
           .foregroundStyle(.secondary)
-        Button("Refresh and sync gateway logs") {
+        Button("Refresh gateway log inventory") {
           model.gateway.refreshCaptureLogIndex()
         }
         .disabled(model.gateway.state != .vhosConnected)
+        Text(
+          "To protect the CAN receive path, this build does not bulk-download history while the gateway recorder is actively writing. Existing on-device logs are retained."
+        )
+        .font(.footnote)
+        .foregroundStyle(.secondary)
       }
       Section("Recent logs on iPhone") {
         if model.gateway.captureSessions.isEmpty {
@@ -306,7 +311,7 @@ private struct EvidenceView: View {
             "No synchronized logs",
             systemImage: "externaldrive.badge.wifi",
             description: Text(
-              "The app automatically downloads the gateway's current and previous capture segments after reconnecting."))
+              "The app downloads gateway capture segments only while the recorder is not actively writing."))
         } else {
           ForEach(model.gateway.captureSessions.prefix(12)) { session in
             VStack(alignment: .leading, spacing: 4) {

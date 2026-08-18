@@ -1633,9 +1633,24 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       Self.commissioningTrace(
         "CAPTURE_INDEX current_session=\(index.currentSessionID) current_records=\(index.currentRecords) previous_session=\(index.previousSessionID) previous_records=\(index.previousRecords) retained=\(index.retainedRecords) queue_drops=\(index.queueDroppedRecords) write_failures=\(index.storageWriteFailures)"
       )
-      if captureSyncSuspendedForOTA, !index.logging {
+      switch CaptureSyncPolicy.mode(
+        recorderIsLogging: index.logging,
+        suspendedForOTA: captureSyncSuspendedForOTA
+      ) {
+      case .otaPaused:
         captureSyncMessage = "Passive flight recorder is flushed and paused for OTA."
-      } else {
+      case .inventoryOnlyWhileRecording:
+        captureSyncTask?.cancel()
+        captureSyncTask = nil
+        captureChunkResponseTask?.cancel()
+        captureChunkResponseTask = nil
+        captureSyncTargets.removeAll()
+        captureSyncMessage =
+          "Gateway inventory refreshed. History download is deferred while CAN recording is active to protect live capture and BLE stability."
+        Self.commissioningTrace(
+          "CAPTURE_SYNC_DEFERRED reason=recorder-active policy=inventory-only current_session=\(index.currentSessionID) current_records=\(index.currentRecords) previous_session=\(index.previousSessionID) previous_records=\(index.previousRecords)"
+        )
+      case .transferHistory:
         beginCaptureSync(index)
       }
     case .captureLogChunk:

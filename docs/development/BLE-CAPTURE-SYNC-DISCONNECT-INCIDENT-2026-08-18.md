@@ -1,8 +1,9 @@
 # BLE capture-sync disconnect incident
 
 Date: 2026-08-18
-Status: firmware dev29 and iOS 0.3.3 (9) installed; BLE reset/process-loss recovery passed;
-nonempty vehicle-capture transfer acceptance remains open
+Status: nonempty in-vehicle transfer failure reproduced on firmware dev29 and iOS 0.3.4 (10);
+iOS 0.3.5 (11) contains the failure by using inventory-only refresh while recording is active;
+firmware export hardening and physical regression acceptance remain open
 
 ## Symptom
 
@@ -69,3 +70,42 @@ recovery paths. It does not yet prove:
 
 Those remain field gates. No simulator output or zero-frame USB-bench report may be substituted for
 them.
+
+## Nonempty in-vehicle reproduction
+
+The previously open nonempty-transfer gate failed during the next in-vehicle run. The persistent
+iPhone BLE flight recorder establishes this chronology in UTC:
+
+| Time | Evidence |
+| --- | --- |
+| 15:09:54.750 | The iPhone verified the `0.1.0-dev.29` gateway contract. |
+| 15:09:54.942 | Health reported 3,388 vehicle frames and 21 TWAI receive misses/overruns. |
+| 15:10:03.155 | Health reported 7,807 vehicle frames and 57 receive misses/overruns, matching the field screenshot. |
+| 15:10:05.201 | Health advanced to 8,893 vehicle frames and 66 receive misses/overruns. |
+| 15:09:55–15:10:06 | In parallel, the app requested 24-record chunks from previous capture session `2175731012`. |
+| 15:10:06.594 | CoreBluetooth reported a link disconnect. |
+| 15:12:50.604 | A later application session verified dev29 again, with reset CAN counters and different capture-session identifiers, proving the gateway had rebooted during the recovery interval. |
+| 15:13:11.032 | A second historical download was followed by another link disconnect. |
+
+The source counters called **Dropped frames** in the UI are the gateway's cumulative TWAI
+`rx_missed_count + rx_overrun_count`. They are not inferred from BLE sequence gaps. The move to a
+firmware worker fixed filesystem work on the NimBLE callback thread, but this field run proves that
+concurrent bulk export still creates unacceptable pressure while live CAN recording is active. The
+available evidence does not identify the exact reset instruction or task; that requires a retained
+reset reason and synchronized UART evidence in a later firmware build.
+
+## iOS 0.3.5 containment
+
+iOS 0.3.5 (11) changes capture synchronization policy:
+
+- a capture index with `logging=true` updates inventory and recording status only;
+- any pending history-transfer task and chunk timeout are cancelled;
+- no historical capture-read command is issued while the recorder is actively writing;
+- current and previous records remain on the ESP32; and
+- the app emits `CAPTURE_SYNC_DEFERRED reason=recorder-active policy=inventory-only` into its
+  connection flight recorder.
+
+This containment protects the live CAN receive path and BLE application session. It does not claim
+that firmware dev29 can safely export a nonempty capture concurrently with recording. Resumable
+bulk transfer must remain deferred until the recorder is stopped or a later firmware version passes
+the in-vehicle concurrency, forced-disconnect, and power-loss matrix.
