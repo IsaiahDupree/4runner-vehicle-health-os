@@ -59,6 +59,11 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         peripheral, characteristic: characteristic, error: error,
         callbackSession: linkSession)
     }
+
+    func peripheral(_ peripheral: CBPeripheral, didReadRSSI RSSI: NSNumber, error: Error?) {
+      owner?.handleRSSIRead(
+        peripheral, rssi: RSSI, error: error, callbackSession: linkSession)
+    }
   }
 
   static let shared = GatewayBLEClient()
@@ -78,6 +83,9 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   private static let handshakeResponseTimeout: Duration = .seconds(2)
   private static let notificationEnableTimeout: Duration = .seconds(15)
   private static let restoredCleanupTimeout: Duration = .seconds(4)
+  private static let captureInitialSyncDelay: Duration = .seconds(3)
+  private static let captureChunkInterval: Duration = .milliseconds(500)
+  private static let captureChunkResponseTimeout: Duration = .seconds(8)
   private static let autoScanArgument = "--vhos-auto-scan"
   private static let autoScanEnvironmentKey = "VHOS_AUTO_SCAN"
   private static let commissioningTraceEnvironmentKey = "VHOS_COMMISSIONING_TRACE"
@@ -138,6 +146,8 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   private let portableFrameStore = PortableFrameStore()
   private var captureSyncTargets: [CaptureSyncTarget] = []
   private var captureSyncSuspendedForOTA = false
+  private var captureSyncTask: Task<Void, Never>?
+  private var captureChunkResponseTask: Task<Void, Never>?
 
   var bluetoothStateDescription = "Initializing"
   var bluetoothReady = false
@@ -224,10 +234,9 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     scanRequested = CommandLine.arguments.contains(Self.autoScanArgument)
       || ProcessInfo.processInfo.environment[Self.autoScanEnvironmentKey] == "1"
     reconnectIntentRequested = scanRequested
-    // State restoration is required for a bonded gateway: iOS may intentionally satisfy later
-    // connections from its GATT cache and omit a fresh service-discovery callback. Firmware schema
-    // epochs rotate the BLE identity whenever that cache becomes incompatible, and outbound data
-    // uses one CCCD, so the restored object graph is both bounded and safe to adopt.
+    // State restoration is required for a bonded gateway, but a physical link inherited from a
+    // previous app process is retired before reuse. The saved peripheral identifier and iOS bond
+    // survive; a fresh link establishes one current-process delegate, CCCD, and VHOS contract.
     central = CBCentralManager(
       delegate: self,
       queue: .main,
@@ -427,6 +436,10 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   func setCaptureLogging(_ enabled: Bool) throws {
     captureSyncSuspendedForOTA = !enabled
     if !enabled {
+      captureSyncTask?.cancel()
+      captureSyncTask = nil
+      captureChunkResponseTask?.cancel()
+      captureChunkResponseTask = nil
       captureSyncTargets.removeAll()
     }
     try writeFrame(
@@ -594,26 +607,35 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     candidateAdvertisedVHOSService = false
     candidateWasPreviouslyValidated = true
     if restored.state == .connected {
-      scanRequested = false
-      scanActive = false
-      scanMode = "Restored connection"
-      discoveredName = restored.name
-      discoveredIdentifier = restored.identifier.uuidString
-      beginServiceDiscovery(restored, source: "state-restoration")
-      return
-    }
-    if restored.state == .connecting {
-      peripheral = restored
       automaticReconnectEnabled = true
       userRequestedDisconnect = false
+      scanRequested = true
+      scanAfterRestorationCleanup = true
       discoveredName = restored.name
       discoveredIdentifier = restored.identifier.uuidString
       state = .connecting
-      transportMessage = "Restoring the in-progress gateway connection…"
+      transportMessage =
+        "Closing the link inherited from the previous app process before reconnecting…"
       Self.commissioningTrace(
-        "RESTORE_WAITING id=\(restored.identifier.uuidString) state=\(restored.state.rawValue)"
+        "RESTORE_CONNECTED_RETIRED peripheral=\(peripheralEvidence(restored)) action=fresh-physical-link-preserve-bond"
       )
-      armConnectionTimeout(restored, source: "restored-connecting")
+      retireRestoredPeripheral(restored, reason: "restore-connected-from-previous-process")
+      return
+    }
+    if restored.state == .connecting {
+      automaticReconnectEnabled = true
+      userRequestedDisconnect = false
+      scanRequested = true
+      scanAfterRestorationCleanup = true
+      discoveredName = restored.name
+      discoveredIdentifier = restored.identifier.uuidString
+      state = .connecting
+      transportMessage =
+        "Closing the in-progress link inherited from the previous app process before reconnecting…"
+      Self.commissioningTrace(
+        "RESTORE_CONNECTING_RETIRED peripheral=\(peripheralEvidence(restored)) action=fresh-physical-link-preserve-bond"
+      )
+      retireRestoredPeripheral(restored, reason: "restore-connecting-from-previous-process")
       return
     }
     if restored.state == .disconnecting {
@@ -1022,21 +1044,22 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       self.notificationEnableTask = nil
       self.notificationPairingPending = false
       self.notificationSetupInFlight = nil
-      self.reconnectIntentRequested = false
-      self.automaticReconnectEnabled = false
+      self.reconnectIntentRequested = true
+      self.automaticReconnectEnabled = true
       self.automaticReconnectActive = false
+      self.scanAfterRestorationCleanup = true
       self.lastTransportFailureAt = Date()
       self.lastTransportFailureEvidence =
         "notification-enable-timeout: uuid=\(characteristic.uuid.uuidString) link_session=\(callbackSession)"
       Self.commissioningTrace(
-        "SUBSCRIBE_WATCHDOG_TIMEOUT uuid=\(characteristic.uuid.uuidString) link_session=\(callbackSession) action=retire-link-for-explicit-reconnect"
+        "SUBSCRIBE_WATCHDOG_TIMEOUT uuid=\(characteristic.uuid.uuidString) link_session=\(callbackSession) action=retire-link-for-automatic-reconnect"
       )
       self.retireRestoredPeripheral(peripheral, reason: "notification-enable-timeout")
       self.resetTransportSession()
       self.state = .degraded
       self.transportMessage = self.connectionCleanupActive
-        ? "The encrypted stream did not confirm. Finishing this BLE link before Reconnect becomes available…"
-        : "The encrypted stream did not confirm. Select Reconnect to start one clean session."
+        ? "The encrypted stream did not confirm. Closing this BLE link before reconnecting automatically…"
+        : "The encrypted stream did not confirm. Reconnecting automatically…"
     }
   }
 
@@ -1049,6 +1072,10 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     else { return }
     notificationEnableTask?.cancel()
     notificationEnableTask = nil
+    captureSyncTask?.cancel()
+    captureSyncTask = nil
+    captureChunkResponseTask?.cancel()
+    captureChunkResponseTask = nil
     notificationPairingPending = false
     notificationSetupInFlight = nil
     reconnectIntentRequested = false
@@ -1244,6 +1271,17 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       handshakeWriteAttemptInFlight = nil
       pendingCommandChunks.removeAll()
       commandChunksPending = 0
+      if captureChunkResponseTask != nil, handshake != nil {
+        captureChunkResponseTask?.cancel()
+        captureChunkResponseTask = nil
+        recordTransportFailure(error, event: "capture-sync-write-failed")
+        captureSyncMessage =
+          "Recent-log sync paused after a gateway write error; live health remains connected."
+        Self.commissioningTrace(
+          "CAPTURE_SYNC_PAUSED reason=write-error link_session=\(linkSession) error={\(Self.errorEvidence(error))}"
+        )
+        return
+      }
       if isSecurityNegotiationError(error),
         handshakeSecurityRetryCount < Self.securityRetryLimit
       {
@@ -1620,6 +1658,10 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
 
   private func beginCaptureSync(_ index: CaptureLogIndex) {
     guard let gatewayID = handshake?.gatewayID else { return }
+    captureSyncTask?.cancel()
+    captureSyncTask = nil
+    captureChunkResponseTask?.cancel()
+    captureChunkResponseTask = nil
     captureSyncTargets.removeAll()
     let candidates: [(UInt8, UInt32, UInt32)] = [
       (1, index.previousSessionID, index.previousRecords),
@@ -1637,10 +1679,26 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         ))
     }
     captureSessions = captureStore.summaries()
-    requestNextCaptureChunk()
+    scheduleNextCaptureChunk(after: Self.captureInitialSyncDelay)
+  }
+
+  private func scheduleNextCaptureChunk(after delay: Duration) {
+    captureSyncTask?.cancel()
+    let scheduledSession = linkSession
+    captureSyncTask = Task { [weak self] in
+      try? await Task.sleep(for: delay)
+      guard !Task.isCancelled, let self, self.linkSession == scheduledSession,
+        self.applicationSessionHealthy, !self.captureSyncSuspendedForOTA
+      else { return }
+      self.captureSyncTask = nil
+      self.requestNextCaptureChunk()
+    }
   }
 
   private func requestNextCaptureChunk() {
+    guard applicationSessionHealthy, !captureSyncSuspendedForOTA,
+      captureChunkResponseTask == nil
+    else { return }
     while let target = captureSyncTargets.first,
       target.recordOffset >= target.totalRecords
     {
@@ -1665,8 +1723,33 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       )
       captureSyncMessage =
         "Syncing session \(target.sessionID): \(target.recordOffset)/\(target.totalRecords) records…"
+      armCaptureChunkResponseTimeout(for: target)
     } catch {
       captureSyncMessage = error.localizedDescription
+    }
+  }
+
+  private func armCaptureChunkResponseTimeout(for target: CaptureSyncTarget) {
+    captureChunkResponseTask?.cancel()
+    let requestSession = linkSession
+    let requestSlot = target.slot
+    let requestSessionID = target.sessionID
+    let requestOffset = target.recordOffset
+    captureChunkResponseTask = Task { [weak self] in
+      try? await Task.sleep(for: Self.captureChunkResponseTimeout)
+      guard !Task.isCancelled, let self, self.linkSession == requestSession,
+        self.applicationSessionHealthy,
+        let current = self.captureSyncTargets.first,
+        current.slot == requestSlot,
+        current.sessionID == requestSessionID,
+        current.recordOffset == requestOffset
+      else { return }
+      self.captureChunkResponseTask = nil
+      self.captureSyncMessage =
+        "Recent-log sync paused at record \(requestOffset); the live vehicle session remains connected."
+      Self.commissioningTrace(
+        "CAPTURE_SYNC_PAUSED reason=chunk-timeout link_session=\(requestSession) slot=\(requestSlot) session=\(requestSessionID) offset=\(requestOffset) timeout_seconds=8"
+      )
     }
   }
 
@@ -1678,6 +1761,8 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     else {
       throw CaptureSyncError.unexpectedChunk
     }
+    captureChunkResponseTask?.cancel()
+    captureChunkResponseTask = nil
     guard let gatewayID = handshake?.gatewayID else { return }
     let appended = try captureStore.append(
       chunk.records,
@@ -1696,7 +1781,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     } else if chunk.records.isEmpty {
       throw CaptureSyncError.emptyNonterminalChunk
     }
-    requestNextCaptureChunk()
+    scheduleNextCaptureChunk(after: Self.captureChunkInterval)
   }
 
   private func record(_ frame: GatewayFrame) {
@@ -1852,6 +1937,8 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     Self.commissioningTrace(
       "LINK_CONNECTED link_session=\(linkSession) peripheral=\(peripheralEvidence(peripheral)) source=\(source) state=\(peripheral.state.rawValue)"
     )
+    Self.commissioningTrace("LINK_RSSI_REQUEST link_session=\(linkSession) reason=connected")
+    peripheral.readRSSI()
     if let services = peripheral.services, !services.isEmpty {
       Self.commissioningTrace(
         "GATT_CACHE_ADOPTED id=\(peripheral.identifier.uuidString) service_count=\(services.count)"
@@ -2050,6 +2137,29 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       return false
     }
     return true
+  }
+
+  private func handleRSSIRead(
+    _ peripheral: CBPeripheral, rssi: NSNumber, error: Error?, callbackSession: UInt64
+  ) {
+    guard acceptsPeripheralCallback(
+      peripheral, callbackSession: callbackSession, event: "rssi-read")
+    else { return }
+    if let error {
+      Self.commissioningTrace(
+        "LINK_RSSI_FAILED link_session=\(callbackSession) error={\(Self.errorEvidence(error))}"
+      )
+      return
+    }
+    let value = rssi.intValue
+    guard value != 127 else {
+      Self.commissioningTrace(
+        "LINK_RSSI_FAILED link_session=\(callbackSession) error={unavailable-sentinel}"
+      )
+      return
+    }
+    discoveredRSSI = value
+    Self.commissioningTrace("LINK_RSSI link_session=\(callbackSession) rssi=\(value)")
   }
 
   private var activePeripheralEvidence: String {
@@ -2439,6 +2549,10 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     handshakeResponseTask = nil
     notificationEnableTask?.cancel()
     notificationEnableTask = nil
+    captureSyncTask?.cancel()
+    captureSyncTask = nil
+    captureChunkResponseTask?.cancel()
+    captureChunkResponseTask = nil
     handshakeWriteAttemptInFlight = nil
     selectedPeripheral?.delegate = nil
     retireActivePeripheralDelegate()

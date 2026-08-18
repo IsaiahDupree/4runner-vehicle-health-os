@@ -61,6 +61,8 @@ The simulator namespace is deliberately separate from live vehicle data. It crea
 - Development release and recovery evidence: [v0.1.0-dev.1](https://github.com/IsaiahDupree/4runner-vhos-firmware/releases/tag/v0.1.0-dev.1)
 - Hardware/software baseline: [recommended hardware](docs/hardware/RECOMMENDED-HARDWARE.md) and [software baseline](docs/hardware/SOFTWARE-BASELINE.md)
 - SoftAP incident and default-off activation decision: [2026-08-16 record](docs/development/ESP32-SOFTAP-ACTIVATION-INCIDENT-2026-08-16.md)
+- One-command pre-car contracts/build/reset/app-death suite and true-power boundary: [BLE fault-injection plan](docs/development/BLE-FAULT-INJECTION-TEST-PLAN.md)
+- Capture-export disconnect and dev28/dev29 recovery: [2026-08-18 incident](docs/development/BLE-CAPTURE-SYNC-DISCONNECT-INCIDENT-2026-08-18.md)
 
 The first installation and recovery path uses a desktop Chrome or Edge browser, USB-C data, and Web
 Serial. The browser requires a full-flash backup before it installs the merged image. The iPhone OTA

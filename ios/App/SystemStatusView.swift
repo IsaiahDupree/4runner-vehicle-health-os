@@ -277,7 +277,7 @@ struct SystemStatusView: View {
               || gateway.connectionCleanupActive
             ? .active : connectionFailureLevel)),
       StatusIndicator(
-        "transport.rssi", title: "Discovery signal",
+        "transport.rssi", title: "Radio signal",
         value: gateway.discoveredRSSI.map { "\($0) dBm" } ?? "UNAVAILABLE",
         detail: discoverySignalDetail,
         level: discoverySignalLevel),
@@ -839,7 +839,7 @@ struct SystemStatusView: View {
 
   private var discoverySignalDetail: String {
     guard let rssi = gateway.discoveredRSSI else {
-      return "RSSI is available after a supported gateway advertisement is selected"
+      return "RSSI is available after a gateway advertisement or physical link is measured"
     }
     if rssi <= -90 {
       return "Very weak commissioning signal; place the iPhone beside the ESP32 before pairing"
@@ -847,7 +847,9 @@ struct SystemStatusView: View {
     if rssi <= -80 {
       return "Weak signal; move closer before pairing, evidence transfer, or OTA"
     }
-    return "RSSI from the selected gateway advertisement; no vehicle-health inference is applied"
+    return gateway.peripheralConnected
+      ? "Live RSSI from the selected physical BLE link; no vehicle-health inference is applied"
+      : "RSSI from the selected gateway advertisement; no vehicle-health inference is applied"
   }
 
   private var connectionFailureLevel: IndicatorLevel {

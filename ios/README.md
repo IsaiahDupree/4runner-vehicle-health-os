@@ -44,8 +44,10 @@ The OBD-II summary becomes `CONFIRMED` only after a `READ_CONFIRMED` experiment 
 `PASSIVE_LOCK` result is labeled `NETWORK ONLY`, because observed vehicle-bus traffic does not by
 itself prove that a standards-based diagnostic request succeeded.
 
-Discovery RSSI at or below -80 dBm is shown as `CHECK`, not `PASS`; at or below -90 dBm the app
-directs the operator to place the iPhone beside the gateway before pairing. A connection timeout
+Advertisement or connected-link RSSI at or below -80 dBm is shown as `CHECK`, not `PASS`; at or
+below -90 dBm the app directs the operator to place the iPhone beside the gateway before pairing.
+The app reads RSSI again from each exact physical-link epoch and exposes it as `LINK_RSSI` in the
+commissioning trace, so automated acceptance cannot rely on an old scan value. A connection timeout
 while the encrypted notification subscription is pending is reported as CoreBluetooth error 6
 (`connectionTimeout`); error 15 is reported as `encryptionTimedOut`. Both retain their exact domain,
 numeric code, symbolic name, message, wall-clock timestamp, and monotonic commissioning timestamp.
@@ -66,9 +68,11 @@ service scan. `Disconnect` is the only control that clears that intent.
 
 CoreBluetooth state restoration remains enabled under a versioned restoration identifier, but a
 service match alone is not enough to resume a restored object. The app promotes only the peripheral
-identifier that delivered a decoded, CRC-valid VHOS handshake. On a later launch it may resume that
-one verified object; unverified, older, or additional restored objects are cancelled and their
-disconnect callbacks are drained before the verified object or a fresh scan can proceed. The first
+identifier that delivered a decoded, CRC-valid VHOS handshake. On a later launch, a connected or
+connecting object inherited from the previous app process is always cancelled before reuse. Its
+disconnect callback is drained, while the verified identifier and iOS bond are retained; the app
+then opens one fresh physical link with a current-process delegate, CCCD, and contract. Unverified,
+older, or additional restored objects use the same bounded cleanup boundary. The first
 `Connect` after a restoration-identifier epoch change starts from a fresh app selection while
 retaining the iOS-managed bond. If CoreBluetooth supplies an incomplete object in the current
 epoch, the app automatically retires it before scanning, without requiring Settings → Forget This
@@ -138,6 +142,31 @@ disables reconnect while retaining the saved identifier and iOS-managed bond, an
 `dev.23` physical run observed that behavior followed by a no-Pair saved-ID `Reconnect`. Repeating
 that manual sequence on `0.3.2 (8)` remains a regression check.
 
+## Fault-injection acceptance: iOS `0.3.3 (9)` with gateway `0.1.0-dev.29`
+
+The real-device harness now alternates ESP32 hard resets and iPhone app process death, then requires
+a new physical link, CRC-valid handshake, and a configurable number of live health frames inside
+one recovery budget. It does not use simulator data as its oracle.
+
+The strict six-cycle run completed three gateway resets and three connected app relaunches. All six
+cycles verified firmware dev29 and produced five subsequent health frames inside 55 seconds. The
+run also exercised an incidental -96 dBm scan, existing-bond encryption, CoreBluetooth inherited-
+link retirement, controller reason 531 cleanup, and supervision-timeout recovery. It required no
+Pair sheet, Settings removal, NVS erase, or manual Connect.
+
+The subsequent one-command pre-car run exposed why an incidental weak-RF pass must not define a
+release condition: one mixed cycle timed out, and a focused rerun measured the gateway at -90 dBm.
+The app and harness now measure the exact connected-link epoch and require -80 dBm by default. With
+the bench restored to -62 through -68 dBm, the RSSI-qualified quick profile passed its ten-frame
+soak, ESP reset, and app-process-death recovery, with exact dev29 handshakes and all required health
+frames. The test plan retains both the failed discovery and stopped passing evidence hashes.
+
+See the [fault-injection test plan](../docs/development/BLE-FAULT-INJECTION-TEST-PLAN.md) for the
+command, exact recovery latencies, stopped-log hashes, failure found by the first strict run, true
+power-cut hardware boundary, and the remaining vehicle/OTA/soak matrix. The capture-export incident
+and dev28/dev29 corrections are recorded in the
+[capture-sync incident](../docs/development/BLE-CAPTURE-SYNC-DISCONNECT-INCIDENT-2026-08-18.md).
+
 The original August 16 commissioning record is documented in
 [`BLE-RESTORATION-INCIDENT-2026-08-16.md`](../docs/development/BLE-RESTORATION-INCIDENT-2026-08-16.md).
 The exact `dev.20` security timeout, disconnect-reason decoding, `dev.22` pre-`CONNECT` restore
@@ -172,6 +201,39 @@ For an attached development iPhone, the commissioning harness can launch the app
 `--vhos-auto-scan` or `VHOS_AUTO_SCAN=1`. Either input starts the same CoreBluetooth scan exposed
 by the on-screen control; neither bypasses Bluetooth permission, pairing approval, firmware trust,
 or vehicle-safety gates.
+
+The fault-injection harness is separate and exits nonzero unless every selected fault reaches a
+fresh verified contract plus live health:
+
+```bash
+uv run --script ios/tools/vhos_ble_fault_injection.py \
+  --iphone <CoreDevice-ID> \
+  --serial /dev/cu.usbserial-0001 \
+  --cycles 6 \
+  --faults esp-reset,app-relaunch \
+  --timeout 55 \
+  --health-frames 5 \
+  --minimum-rssi -80
+```
+
+The normal pre-car gate wraps contracts, corruption/replay tests, Swift tests, an ESP-IDF build,
+a signed iPhone build/install, stream soak, reset storms, app-death storms, and mixed recovery into
+one evidence summary:
+
+```bash
+python3 ios/tools/vhos_precar_acceptance.py \
+  --profile standard \
+  --iphone <CoreDevice-ID> \
+  --serial /dev/cu.usbserial-0001 \
+  --minimum-rssi -80
+```
+
+Use `quick` while iterating and `endurance` for release-candidate stress. Optional true USB rail
+cuts require `--include-power --usb-hub <location> --usb-port <port>` and compatible per-port
+switching hardware. The default RF floor fails a marginal bench before its timeouts can be mistaken
+for firmware defects; lower it only for a separately labeled range/recovery experiment. See the
+[fault-injection test plan](../docs/development/BLE-FAULT-INJECTION-TEST-PLAN.md)
+for exact profile counts, failure oracles, evidence layout, and claims that remain car-only.
 
 ## Gateway contract UUIDs
 
