@@ -8,6 +8,12 @@
 - Decoder authority: every CAN identifier, field meaning, byte order, and scale below is a
   `DISCOVERY_CANDIDATE`, not an accepted 4Runner Vehicle Signal Pack definition.
 
+An expanded 2,544-record refresh and the implemented `can.discovery.report@1.0.0` display boundary
+are recorded separately in the
+[2026-08-18 CAN discovery display baseline](CAN-DISCOVERY-DISPLAY-BASELINE-2026-08-18.md). This
+document retains the original 2,136-record snapshot and focal-session calculations rather than
+silently rewriting their evidence boundary.
+
 ## Outcome
 
 The capture reportedly contains strong, coherent 11-bit CAN traffic at 500 kbit/s and is already

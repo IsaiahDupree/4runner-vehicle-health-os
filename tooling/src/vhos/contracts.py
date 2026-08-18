@@ -15,6 +15,7 @@ class ContractError(ValueError):
 
 SCHEMA_BY_CONTRACT = {
     "ai.claim": "ai-claim.schema.json",
+    "can.discovery.report": "can-discovery-report.schema.json",
     "calculation.run": "calculation-run.schema.json",
     "capture.bundle.manifest": "capture-bundle-manifest.schema.json",
     "equation.definition": "equation-definition.schema.json",

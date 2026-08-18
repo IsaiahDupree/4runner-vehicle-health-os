@@ -7,6 +7,7 @@ from pathlib import Path
 
 from .ac_metrics import SIMULATOR_AC_SIGNALS, calculate_ac_metrics
 from .bundles import BundleError, load_validated_bundle, write_simulator_bundle
+from .can_discovery import CANDiscoveryError, analyze_passive_can, load_passive_can_ndjson
 from .contracts import ContractCatalog, ContractError
 from .firmware_package import build_firmware_package, verify_firmware_package
 from .replay import replay_bundle
@@ -43,6 +44,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     calculate_ac.add_argument("bundle", type=Path)
     calculate_ac.add_argument("--output", type=Path)
+
+    discover_can = subcommands.add_parser(
+        "discover-can",
+        help="Analyze passive CAN NDJSON without assigning unverified vehicle meanings",
+    )
+    discover_can.add_argument(
+        "input",
+        type=Path,
+        nargs="+",
+        help="One or more passive CAN NDJSON files or directories",
+    )
+    discover_can.add_argument("--output", type=Path)
 
     package_firmware = subcommands.add_parser(
         "package-firmware", help="Create a signed .vhosota distribution package"
@@ -139,6 +152,22 @@ def main(argv: list[str] | None = None) -> int:
                 )
             _print_json(report)
             return 0
+        if args.command == "discover-can":
+            records, sources = load_passive_can_ndjson(args.input)
+            report = analyze_passive_can(records, sources=sources)
+            ContractCatalog.load().validate(report)
+            if args.output:
+                if args.output.exists():
+                    raise CANDiscoveryError(
+                        f"CAN discovery output already exists: {args.output}"
+                    )
+                args.output.parent.mkdir(parents=True, exist_ok=True)
+                args.output.write_text(
+                    json.dumps(report, indent=2, sort_keys=True) + "\n",
+                    encoding="utf-8",
+                )
+            _print_json(report)
+            return 0
         if args.command == "validate-bundle":
             manifest, observations = load_validated_bundle(args.bundle)
             _print_json(
@@ -173,7 +202,7 @@ def main(argv: list[str] | None = None) -> int:
                 }
             )
             return 0
-    except (BundleError, ContractError, OSError, ValueError) as exc:
+    except (BundleError, CANDiscoveryError, ContractError, OSError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
     parser.error("Unhandled command")

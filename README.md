@@ -18,6 +18,8 @@ E0 plus the first native iOS control slice are implemented here:
 - deterministic simulator capture bundles with hashes and manifests;
 - an A/C bench-sweep capture/replay path, A/C node telemetry and POST contracts, and evidence-bound pressure-lift, pressure-ratio, and vent-delta calculations;
 - offline replay with integrity, sequence, timestamp, and schema validation;
+- a versioned passive-CAN discovery analyzer that reports acquisition facts, sampling coverage,
+  raw activity, checksum candidates, and correlations without assigning unverified vehicle meanings;
 - CI checks for schema validity and deterministic replay;
 - a Swift 6 core with CRC32C framing, guarded discovery plans, signed firmware verification, OTA preflight, and AI evidence handoff;
 - a buildable native SwiftUI app with handshake-verified CoreBluetooth restoration,
@@ -48,6 +50,8 @@ python3 -m venv .venv
 .venv/bin/vhos simulate --scenario ac-bench-sweep --output build/captures/ac-bench-sweep
 .venv/bin/vhos validate-bundle build/captures/ac-bench-sweep
 .venv/bin/vhos calculate-ac build/captures/ac-bench-sweep
+.venv/bin/vhos discover-can path/to/passive-can-recent-logs.ndjson \
+  --output build/can-discovery.report.json
 .venv/bin/python -m pytest
 ```
 
@@ -104,6 +108,8 @@ signed catalog/portal [`4runner-vhos-release-hub`](https://github.com/IsaiahDupr
 5. E5/E6: maintenance schedule and equation/lineage engines before owner-facing scoring.
 
 See [E0 implementation record](docs/delivery/E0-IMPLEMENTATION.md) for the exact backlog and acceptance mapping.
+The current saved-vehicle evidence and strict UI interpretation boundary are recorded in the
+[CAN discovery display baseline](docs/development/CAN-DISCOVERY-DISPLAY-BASELINE-2026-08-18.md).
 
 ## Safety boundary
 
