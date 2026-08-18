@@ -84,20 +84,26 @@ struct SystemStatusView: View {
 
       Section("Connection controls") {
         HStack {
-          Button {
-            gateway.startScan()
+          Button(role: primaryConnectionControlRole) {
+            if connectionFlowInProgress {
+              gateway.disconnect()
+            } else {
+              gateway.startScan(
+                source: gateway.hasVerifiedSavedGateway ? "user-reconnect" : "user-connect")
+            }
           } label: {
             Label(
-              gateway.scanActive ? "Scanning…" : "Scan for gateway",
-              systemImage: "antenna.radiowaves.left.and.right")
+              primaryConnectionControlTitle,
+              systemImage: primaryConnectionControlIcon)
           }
-          .disabled(
-            gateway.scanActive || gateway.peripheralConnected || gateway.state == .connecting)
+          .disabled(gateway.applicationSessionHealthy || gateway.connectionCleanupActive)
 
           Spacer()
 
-          Button("Disconnect", role: .destructive) { gateway.disconnect() }
-            .disabled(!gateway.peripheralConnected && gateway.state == .disconnected)
+          Button("Disconnect", role: .destructive) {
+            gateway.disconnect()
+          }
+          .disabled(!gateway.applicationSessionHealthy || gateway.connectionCleanupActive)
         }
         if let message = gateway.transportMessage {
           Text(message)
@@ -138,7 +144,7 @@ struct SystemStatusView: View {
   }
 
   private var esp32Summary: StatusIndicator {
-    if gateway.handshake != nil {
+    if gateway.applicationSessionHealthy {
       return StatusIndicator(
         "summary.esp32", title: "ESP32", value: "VHOS ONLINE",
         detail: gateway.canonicalDisplayName, level: .pass)
@@ -148,15 +154,36 @@ struct SystemStatusView: View {
         "summary.esp32", title: "ESP32", value: "FACTORY MODE",
         detail: "BLE connected; VHOS firmware required", level: .warning)
     }
+    if gateway.connectionCleanupActive {
+      return StatusIndicator(
+        "summary.esp32", title: "ESP32", value: "FINISHING…",
+        detail: gateway.transportMessage ?? "Closing the previous physical BLE link",
+        level: .active)
+    }
     if gateway.state == .failed || gateway.state == .degraded {
       return StatusIndicator(
         "summary.esp32", title: "ESP32", value: "LINK ERROR",
         detail: gateway.transportMessage ?? "Gateway link failed", level: .blocked)
     }
-    if gateway.peripheralConnected || gateway.state == .connecting || gateway.scanActive {
+    if gateway.peripheralConnected {
+      return StatusIndicator(
+        "summary.esp32", title: "ESP32", value: "VERIFYING…",
+        detail: gateway.lastHealthReceivedAt == nil
+          ? "Physical BLE connected; awaiting VHOS handshake"
+          : "Health data is arriving; awaiting VHOS handshake",
+        level: .active)
+    }
+    if gateway.state == .connecting || gateway.state == .scanning || gateway.scanActive
+      || gateway.automaticReconnectActive
+    {
       return StatusIndicator(
         "summary.esp32", title: "ESP32", value: "CONNECTING",
         detail: gateway.transportMessage ?? "Negotiating", level: .active)
+    }
+    if gateway.hasVerifiedSavedGateway {
+      return StatusIndicator(
+        "summary.esp32", title: "ESP32", value: "OFFLINE",
+        detail: "Verified saved gateway available for Reconnect", level: .pending)
     }
     return StatusIndicator(
       "summary.esp32", title: "ESP32", value: "NOT CONNECTED",
@@ -223,8 +250,8 @@ struct SystemStatusView: View {
         "transport.scan", title: "Gateway scan",
         value: gateway.scanActive
           ? "SCANNING"
-          : (gateway.gatewayIdentityValidated
-            ? "VERIFIED" : (gateway.discoveredName == nil ? "IDLE" : "CANDIDATE")),
+          : (gateway.discoveredName == nil
+            ? "IDLE" : (gateway.gatewayIdentityValidated ? "FOUND" : "CANDIDATE")),
         detail: gateway.discoveredName.map { _ in gateway.canonicalDisplayName }
           ?? gateway.lastObservedAdvertisement.map {
             "Observed \(gateway.scanObservationCount) advertisements; latest: \($0)"
@@ -236,13 +263,18 @@ struct SystemStatusView: View {
             ? .pass : (gateway.discoveredName == nil ? .pending : .active))),
       StatusIndicator(
         "transport.peripheral", title: "Gateway BLE link",
-        value: gateway.peripheralConnected
-          ? (gateway.gatewayIdentityValidated ? "VERIFIED" : "VALIDATING")
-          : (gateway.automaticReconnectActive ? "RECONNECTING" : "DISCONNECTED"),
-        detail: peripheralDetail,
-        level: gateway.gatewayIdentityValidated
+        value: gateway.connectionCleanupActive
+          ? "DISCONNECTING"
+          : (gateway.peripheralConnected
+            ? (gateway.applicationSessionHealthy ? "CONNECTED" : "PHYSICAL LINK")
+            : (gateway.automaticReconnectActive ? "RECONNECTING" : "DISCONNECTED")),
+        detail: gateway.peripheralConnected && !gateway.applicationSessionHealthy
+          ? "Physical BLE link established; VHOS application contract pending"
+          : peripheralDetail,
+        level: gateway.applicationSessionHealthy
           ? .pass
           : (gateway.peripheralConnected || gateway.automaticReconnectActive
+              || gateway.connectionCleanupActive
             ? .active : connectionFailureLevel)),
       StatusIndicator(
         "transport.rssi", title: "Discovery signal",
@@ -828,12 +860,44 @@ struct SystemStatusView: View {
 
   private var peripheralDetail: String {
     if gateway.automaticReconnectActive {
-      return "Automatic reconnect attempt \(gateway.reconnectAttemptCount) • \(gateway.canonicalDisplayName)"
+      return
+        "Automatic reconnect attempt \(gateway.reconnectAttemptCount) • \(gateway.canonicalDisplayName)"
+    }
+    if !gateway.peripheralConnected, let evidence = gateway.lastTransportFailureEvidence,
+      let date = gateway.lastTransportFailureAt
+    {
+      return "Last failure at \(clockTime(date)) • \(evidence)"
     }
     if gateway.discoveredName != nil || gateway.discoveredIdentifier != nil {
       return gateway.canonicalDisplayName
     }
     return "No ESP32 gateway BLE connection"
+  }
+
+  private var connectionFlowInProgress: Bool {
+    !gateway.applicationSessionHealthy
+      && (gateway.connectionCleanupActive || gateway.peripheralConnected || gateway.scanActive
+        || gateway.automaticReconnectActive || gateway.state == .scanning
+        || gateway.state == .connecting)
+  }
+
+  private var primaryConnectionControlTitle: String {
+    if gateway.applicationSessionHealthy { return "Connected" }
+    if gateway.connectionCleanupActive { return "Finishing…" }
+    if connectionFlowInProgress { return "Cancel" }
+    return gateway.hasVerifiedSavedGateway ? "Reconnect" : "Connect"
+  }
+
+  private var primaryConnectionControlIcon: String {
+    if gateway.applicationSessionHealthy { return "checkmark.circle.fill" }
+    if gateway.connectionCleanupActive { return "hourglass" }
+    if connectionFlowInProgress { return "xmark.circle" }
+    return gateway.hasVerifiedSavedGateway
+      ? "arrow.clockwise" : "antenna.radiowaves.left.and.right"
+  }
+
+  private var primaryConnectionControlRole: ButtonRole? {
+    connectionFlowInProgress && !gateway.connectionCleanupActive ? .cancel : nil
   }
 
   private var lastFrameDetail: String {

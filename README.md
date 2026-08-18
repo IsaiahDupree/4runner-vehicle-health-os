@@ -20,7 +20,9 @@ E0 plus the first native iOS control slice are implemented here:
 - offline replay with integrity, sequence, timestamp, and schema validation;
 - CI checks for schema validity and deterministic replay;
 - a Swift 6 core with CRC32C framing, guarded discovery plans, signed firmware verification, OTA preflight, and AI evidence handoff;
-- a buildable native SwiftUI app with BLE state restoration, WiCAN factory detection, gateway health, signed semantic experiments, private-network OTA, and evidence export;
+- a buildable native SwiftUI app with handshake-verified CoreBluetooth restoration,
+  encrypted-bond reconnection, WiCAN factory detection, gateway health, signed semantic experiments,
+  private-network OTA, and evidence export;
 - a signed public Release Hub consumed by iPhone and Android for target-aware Android, OBD ESP32,
   and A/C recovery artifact discovery and verified staging;
 - a public WiCAN Pro ESP32-S3 firmware fork with passive/listen-only enforcement, framed BLE health reporting, OTA A/B partitions, and rollback self-tests;

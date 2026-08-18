@@ -25,11 +25,15 @@ service and four characteristics. The subsequent bond-loss incident was repaired
 that identity directly. A full NVS erase therefore presents a new peripheral to Core Bluetooth
 instead of trapping both peers in a stale encryption loop.
 
-Physical acceptance completed with encrypted evidence, health, and OTA subscriptions; a verified
-versioned handshake; recurring health frames; and a successful reconnect after reboot with the
-same identity and `1/1` bond records. The transport gate is closed. OBD-II remains unverified
-because the latest health evidence contains zero vehicle-bus frames and no bounded protocol
-experiment result.
+Physical acceptance for the `dev.9` identity-selection incident completed with encrypted evidence,
+health, and OTA subscriptions; a verified versioned handshake; recurring health frames; and a
+successful reconnect after reboot with the same identity and `1/1` bond records. That closed this
+incident's wrong-device and bond-loss gates; it was not a permanent claim that every later firmware
+and iOS transport revision had passed durability acceptance. The later `dev.20` through `dev.23`
+pairing/restore diagnosis is recorded in the
+[2026-08-17 incident](BLE-PAIRING-RESET-INCIDENT-2026-08-17.md). OBD-II remains unverified because
+the latest health evidence contains zero vehicle-bus frames and no bounded protocol experiment
+result.
 
 ## User-visible symptom
 

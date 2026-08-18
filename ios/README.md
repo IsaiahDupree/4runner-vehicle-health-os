@@ -4,7 +4,8 @@ Native SwiftUI control surface for the VHOS gateway contract. Minimum deployment
 
 ## Implemented
 
-- CoreBluetooth discovery and state restoration.
+- CoreBluetooth discovery, handshake-verified state restoration, encrypted-bond reuse, and
+  app-managed reconnection.
 - Read-only recognition of factory WiCAN BLE service `FEE0` / characteristic `FEE1`.
 - Versioned VHOS BLE service and framed message transport with CRC32C.
 - Gateway handshake, live health, bounded protocol-discovery results, and evidence export.
@@ -44,30 +45,105 @@ The OBD-II summary becomes `CONFIRMED` only after a `READ_CONFIRMED` experiment 
 itself prove that a standards-based diagnostic request succeeded.
 
 Discovery RSSI at or below -80 dBm is shown as `CHECK`, not `PASS`; at or below -90 dBm the app
-directs the operator to place the iPhone beside the gateway before pairing. CoreBluetooth error 15
-(`encryptionTimedOut`) is translated into a visible stale-bond recovery instruction instead of an
-opaque transport failure.
+directs the operator to place the iPhone beside the gateway before pairing. A connection timeout
+while the encrypted notification subscription is pending is reported as CoreBluetooth error 6
+(`connectionTimeout`); error 15 is reported as `encryptionTimedOut`. Both retain their exact domain,
+numeric code, symbolic name, message, wall-clock timestamp, and monotonic commissioning timestamp.
 
 If CoreBluetooth reports `peerRemovedPairingInformation`, the app discards the restored central
 session once and immediately scans again with a clean, non-restored central. This prevents an old
 restoration object from repeatedly terminating an otherwise valid post-forget connection.
 
-Connections use CoreBluetooth state restoration plus one app-managed reconnect policy. The app
+Connections reuse the iOS-managed encrypted bond plus one app-managed reconnect policy. The app
 retries the saved peripheral at 1, 2, 4, 8, 15, and then 30-second intervals until the user
 explicitly disconnects. The CoreBluetooth system auto-reconnect option is intentionally disabled:
 physical testing showed that it could reconnect immediately while the app's bounded retry was
 pending, creating overlapping connect attempts and a rapid timeout cycle. Ordinary radio loss,
 app backgrounding, and gateway restarts still do not require removing the saved BLE bond.
+An explicit reconnect intent survives a temporary Bluetooth powered-off/reset state: when the radio
+returns, the app retrieves the handshake-verified UUID first and only then falls back to a VHOS
+service scan. `Disconnect` is the only control that clears that intent.
 
-State restoration treats `.connected` and `.connecting` peripherals as live transport state. The
-app resumes service discovery directly instead of issuing a duplicate connect request or scanning
-for a gateway that cannot advertise while connected. Before scanning, it also checks for a
-system-connected peripheral exposing either supported service. A six-second GATT discovery
-watchdog cancels an unresponsive restored link and reconnects with the existing bond. Reconnect
-backoff resets only after the versioned VHOS handshake succeeds, not after a transient radio link.
+CoreBluetooth state restoration remains enabled under a versioned restoration identifier, but a
+service match alone is not enough to resume a restored object. The app promotes only the peripheral
+identifier that delivered a decoded, CRC-valid VHOS handshake. On a later launch it may resume that
+one verified object; unverified, older, or additional restored objects are cancelled and their
+disconnect callbacks are drained before the verified object or a fresh scan can proceed. The first
+`Connect` after a restoration-identifier epoch change starts from a fresh app selection while
+retaining the iOS-managed bond. If CoreBluetooth supplies an incomplete object in the current
+epoch, the app automatically retires it before scanning, without requiring Settings → Forget This
+Device. During retirement the control reads `Finishing…` and cannot start a duplicate session. A
+four-second cleanup watchdog either observes the exact object become disconnected or rebuilds the
+central only after cancelling that stale object; the saved bond and verified identifier remain.
 
-The August 16, 2026 commissioning incident and physical validation record are documented in
-[`docs/development/BLE-RESTORATION-INCIDENT-2026-08-16.md`](../docs/development/BLE-RESTORATION-INCIDENT-2026-08-16.md).
+Before a normal scan, the app may also adopt one coherent system-connected peripheral exposing the
+VHOS service. Every callback is accepted only from the exact selected `CBPeripheral` object, so an
+older restored wrapper cannot overwrite the active connection. Each physical adoption also receives
+a link-scoped delegate epoch; service, characteristic, notification, value, and write callbacks must
+match both that epoch and the currently connected object. Central callbacks must come from the exact
+current manager, and replacement managers rotate and persist a unique restoration identifier before
+they become active. A GATT discovery watchdog retires an unresponsive link and starts a fresh
+service-filtered scan only after disconnection is confirmed. Reconnect backoff resets only after the
+versioned VHOS handshake succeeds, not after a transient radio link.
+
+Each physical link issues one encrypted CCCD request for the framed evidence stream. Pairing-pending
+state suppresses duplicate requests on that link; health and OTA status remain logical frame types
+multiplexed over the same stream. A failed secure subscription closes the link before a later
+physical connection may make its own single request. Cached `isNotifying` state never proves the
+current link: a current-epoch CCCD callback is required, and a 15-second enable watchdog retires a
+link whose callback never arrives. A later notification-disabled callback also closes that exact
+session instead of leaving a physically connected but unusable transport.
+
+After the encrypted stream is ready, the app allows three link-session-bound, idempotent handshake
+requests. Each request first has a two-second write-progress/final-ACK deadline. Its separate
+two-second response deadline begins only after the final `.withResponse` write callback succeeds,
+so attempt N+1 can never queue behind unfinished chunks from attempt N. A missing write ACK closes
+that exact stale link without queuing another request. A decoded handshake cancels both phases. If
+all three acknowledged requests receive no response—even if health frames continue to arrive—the
+app marks the contract `DEGRADED`, closes that physical link, and waits for an explicit `Reconnect`;
+it does not create a second session beside the unresponsive one.
+
+The connection controls reflect that lifecycle. `Connect` appears only when no handshake-verified
+gateway has been saved. `Reconnect` first retrieves that known CoreBluetooth UUID and connects it,
+then falls back to the VHOS service scan if retrieval returns nothing. `Cancel` stops scanning,
+physical-link negotiation, contract validation, or automatic reconnect. `Connected` is disabled
+until a CRC-valid handshake has made the application session healthy. A separate `Disconnect`
+tears down that healthy link and disables automatic reconnect while preserving both the iOS bond
+and the handshake-verified peripheral identifier. The commissioning trace records that user intent
+before any connection state is cleared.
+
+## Physical acceptance: iOS `0.3.2 (8)` with gateway `0.1.0-dev.26`
+
+The August 18 attached-device run in `/tmp/vhos-dev24-acceptance.IbXL3W/` exercised the saved
+identity and automatic-loss paths without a Pair sheet or **Forget This Device**:
+
+| UTC time | Evidence | Product state |
+| --- | --- | --- |
+| `00:18:17.027` | `KNOWN_GATEWAY_RECONNECT` and direct `CONNECT_REQUEST` | The verified saved UUID was retrieved before service-scan fallback |
+| `00:18:17.536` | `LINK_CONNECTED link_session=1` | Physical BLE became active; this alone was still not application verification |
+| `00:18:17.822` | `SUBSCRIBE_READY ... link_session=1` | The current physical epoch confirmed its encrypted stream CCCD |
+| `00:18:17.992` | `HANDSHAKE_VERIFIED firmware=0.1.0-dev.26` | The UI could truthfully converge from Verifying to Connected |
+| `00:18:18.188` onward | recurring `HEALTH_DECODED` | Live framed application data remained continuous until the forced reset/loss |
+| `00:20:34.188` | exact `CBError.connectionTimeout` | The lost gateway was recorded as transport loss, not app crash or OBD failure |
+| `00:20:34.194` | `RECONNECT_SCHEDULED attempt=1` | Automatic reconnect intent remained active |
+| `00:21:25.797` | `LINK_CONNECTED link_session=2` after the gateway returned | Recovery created a distinct physical-link epoch on the saved identity |
+| `00:21:26.026` | `SUBSCRIBE_READY ... link_session=2` | The recovered link proved its own CCCD rather than trusting cached state |
+| `00:21:26.215` | `HANDSHAKE_VERIFIED firmware=0.1.0-dev.26` | The recovered application contract verified on attempt 1 |
+| `00:21:26.365` onward | recurring health and capture-index traffic | Live application data and evidence synchronization resumed |
+
+This run physically accepts known-UUID direct connect and one forced-reset automatic recovery. It
+does not convert every documented control into a new physical pass. In particular, explicit
+`Disconnect` was not tapped again on the final `0.3.2 (8)` build. Source review confirms that it
+disables reconnect while retaining the saved identifier and iOS-managed bond, and an earlier
+`dev.23` physical run observed that behavior followed by a no-Pair saved-ID `Reconnect`. Repeating
+that manual sequence on `0.3.2 (8)` remains a regression check.
+
+The original August 16 commissioning record is documented in
+[`BLE-RESTORATION-INCIDENT-2026-08-16.md`](../docs/development/BLE-RESTORATION-INCIDENT-2026-08-16.md).
+The exact `dev.20` security timeout, disconnect-reason decoding, `dev.22` pre-`CONNECT` restore
+ordering, `dev.23` restored-state correction, and final `0.3.2 (8)` / `dev.26` recovery evidence are
+documented in
+[`BLE-PAIRING-RESET-INCIDENT-2026-08-17.md`](../docs/development/BLE-PAIRING-RESET-INCIDENT-2026-08-17.md).
 
 ## Build
 

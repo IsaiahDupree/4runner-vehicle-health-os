@@ -6,9 +6,61 @@ import VHOSCore
 
 @MainActor
 @Observable
-final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate,
-  @preconcurrency CBPeripheralDelegate
+final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
 {
+  @MainActor
+  private final class LinkScopedPeripheralDelegate: NSObject,
+    @preconcurrency CBPeripheralDelegate
+  {
+    weak var owner: GatewayBLEClient?
+    let linkSession: UInt64
+
+    init(owner: GatewayBLEClient, linkSession: UInt64) {
+      self.owner = owner
+      self.linkSession = linkSession
+    }
+
+    func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
+      owner?.handleServicesDiscovered(peripheral, error: error, callbackSession: linkSession)
+    }
+
+    func peripheral(
+      _ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService,
+      error: Error?
+    ) {
+      owner?.handleCharacteristicsDiscovered(
+        peripheral, service: service, error: error, callbackSession: linkSession)
+    }
+
+    func peripheral(
+      _ peripheral: CBPeripheral,
+      didUpdateNotificationStateFor characteristic: CBCharacteristic,
+      error: Error?
+    ) {
+      owner?.handleNotificationStateUpdated(
+        peripheral, characteristic: characteristic, error: error,
+        callbackSession: linkSession)
+    }
+
+    func peripheral(
+      _ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic,
+      error: Error?
+    ) {
+      owner?.handleValueUpdated(
+        peripheral, characteristic: characteristic, error: error,
+        callbackSession: linkSession)
+    }
+
+    func peripheral(
+      _ peripheral: CBPeripheral, didWriteValueFor characteristic: CBCharacteristic,
+      error: Error?
+    ) {
+      owner?.handleValueWritten(
+        peripheral, characteristic: characteristic, error: error,
+        callbackSession: linkSession)
+    }
+  }
+
   static let shared = GatewayBLEClient()
 
   private static let logger = Logger(
@@ -21,18 +73,29 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   static let factoryService = CBUUID(string: "FEE0")
   static let factoryCharacteristic = CBUUID(string: "FEE1")
   private static let securityRetryLimit = 30
+  private static let handshakeResponseAttemptLimit = 3
+  private static let handshakeWriteAckTimeout: Duration = .seconds(2)
+  private static let handshakeResponseTimeout: Duration = .seconds(2)
+  private static let notificationEnableTimeout: Duration = .seconds(15)
+  private static let restoredCleanupTimeout: Duration = .seconds(4)
   private static let autoScanArgument = "--vhos-auto-scan"
   private static let autoScanEnvironmentKey = "VHOS_AUTO_SCAN"
   private static let commissioningTraceEnvironmentKey = "VHOS_COMMISSIONING_TRACE"
   private static let centralRestoreIdentifier =
-    "com.isaiahdupree.VehicleHealthOS.central.v2"
+    "com.isaiahdupree.VehicleHealthOS.central.v3"
+  private static let centralRestoreIdentifierKey =
+    "vhos.currentCentralRestoreIdentifier.v1"
   private static let validatedPeripheralIdentifiersKey =
     "vhos.validatedGatewayPeripheralIdentifiers.v1"
+  private static let handshakeVerifiedPeripheralIdentifierKey =
+    "vhos.handshakeVerifiedGatewayPeripheralIdentifier.v1"
 
   private var central: CBCentralManager!
+  private var currentCentralRestoreIdentifier = ""
   private let instanceID = String(UUID().uuidString.prefix(8))
   private var peripheral: CBPeripheral?
   private var command: CBCharacteristic?
+  private var factoryReadCharacteristic: CBCharacteristic?
   private var streamDecoder = GatewayFrameStreamDecoder()
   private var sequence: UInt64 = 1
   private var scanRequested = false
@@ -40,13 +103,34 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   private var reconnectTask: Task<Void, Never>?
   private var serviceDiscoveryTask: Task<Void, Never>?
   private var restoredConnectionTask: Task<Void, Never>?
+  private var restoredCleanupTask: Task<Void, Never>?
+  private var restoredCleanupGeneration: UInt64 = 0
+  private var centralCleanupRecoveryPending = false
+  private var handshakeRetryTask: Task<Void, Never>?
+  private var handshakeWriteAckTask: Task<Void, Never>?
+  private var handshakeResponseTask: Task<Void, Never>?
+  private var notificationEnableTask: Task<Void, Never>?
   private var freshCentralRecoveryAttempted = false
+  private var reconnectIntentRequested = false
   private var automaticReconnectEnabled = false
   private var userRequestedDisconnect = false
   private var handshakeRequested = false
   private var handshakeSecurityRetryCount = 0
-  private var notificationSecurityRetryCounts: [CBUUID: Int] = [:]
+  private var handshakeResponseAttemptCount = 0
+  private var handshakeWriteAttemptInFlight: Int?
+  private var notificationCharacteristics: [CBUUID: CBCharacteristic] = [:]
+  private var notificationSetupInFlight: CBUUID?
+  private var notificationRequestSession: UInt64?
+  private var notificationPairingPending = false
+  private var linkSession: UInt64 = 0
+  private var activePeripheralDelegate: LinkScopedPeripheralDelegate?
+  private var retiredPeripheralDelegates: [UInt64: LinkScopedPeripheralDelegate] = [:]
+  private var retiredRestoredPeripherals: [ObjectIdentifier: CBPeripheral] = [:]
+  private var pendingRestoredPeripheral: CBPeripheral?
+  private var scanAfterRestorationCleanup = false
   private var pendingCommandChunks: [Data] = []
+  private var pendingStaleGATTRescan = false
+  private var pendingStaleGATTReason: String?
   private var candidateNameSuggestsGateway = false
   private var candidateAdvertisedVHOSService = false
   private var candidateWasPreviouslyValidated = false
@@ -103,6 +187,10 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   var portableFrameCount = 0
   var lastEvidenceSyncMessage = "No Android/iPhone evidence sync has run."
   var transportMessage: String?
+  var lastTransportFailureAt: Date?
+  var lastTransportFailureEvidence: String?
+  var verifiedSavedGatewayIdentifier: String?
+  var connectionCleanupActive = false
   var automaticReconnectActive = false
   var reconnectAttemptCount = 0
 
@@ -116,31 +204,66 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     Array(experimentResults.dropFirst(currentSessionResultStartIndex))
   }
 
+  var hasVerifiedSavedGateway: Bool {
+    verifiedSavedGatewayIdentifier != nil
+  }
+
+  var applicationSessionHealthy: Bool {
+    peripheralConnected && gatewayIdentityValidated && state == .vhosConnected
+      && handshake != nil && lastHandshakeReceivedAt != nil && decodedFrameCount > 0
+  }
+
   private override init() {
     super.init()
+    currentCentralRestoreIdentifier =
+      UserDefaults.standard.string(forKey: Self.centralRestoreIdentifierKey)
+      ?? Self.centralRestoreIdentifier
+    verifiedSavedGatewayIdentifier = UserDefaults.standard.string(
+      forKey: Self.handshakeVerifiedPeripheralIdentifierKey
+    ).flatMap { UUID(uuidString: $0)?.uuidString.uppercased() }
     scanRequested = CommandLine.arguments.contains(Self.autoScanArgument)
       || ProcessInfo.processInfo.environment[Self.autoScanEnvironmentKey] == "1"
+    reconnectIntentRequested = scanRequested
+    // State restoration is required for a bonded gateway: iOS may intentionally satisfy later
+    // connections from its GATT cache and omit a fresh service-discovery callback. Firmware schema
+    // epochs rotate the BLE identity whenever that cache becomes incompatible, and outbound data
+    // uses one CCCD, so the restored object graph is both bounded and safe to adopt.
     central = CBCentralManager(
       delegate: self,
       queue: .main,
-      options: [
-        CBCentralManagerOptionRestoreIdentifierKey: Self.centralRestoreIdentifier
-      ]
+      options: [CBCentralManagerOptionRestoreIdentifierKey: currentCentralRestoreIdentifier]
     )
     portableFrameCount = portableFrameStore.count()
     if scanRequested {
       Self.logger.info("BLE auto-scan requested by commissioning launch")
       trace("AUTO_SCAN_REQUESTED")
     }
-    trace("CLIENT_INITIALIZED")
+    trace("CLIENT_INITIALIZED restore_identifier=\(currentCentralRestoreIdentifier)")
   }
 
-  func startScan(source: String = "user") {
+  func startScan(source: String = "user", skipConnectedRetrieval: Bool = false) {
+    reconnectIntentRequested = true
     trace(
       "SCAN_REQUEST source=\(source) state=\(state.rawValue) peripheral=\(peripheral?.identifier.uuidString ?? "none") connected=\(peripheralConnected) active=\(scanActive)"
     )
     if state == .connecting, peripheral != nil {
       Self.commissioningTrace("SCAN_IGNORED reason=gateway-connection-in-progress")
+      return
+    }
+    if pendingStaleGATTRescan {
+      transportMessage =
+        "Waiting for the stale BLE link to close before scanning for the gateway again…"
+      Self.commissioningTrace("SCAN_IGNORED reason=stale-gatt-disconnect-pending")
+      return
+    }
+    if !retiredRestoredPeripherals.isEmpty {
+      scanRequested = true
+      scanAfterRestorationCleanup = true
+      transportMessage =
+        "Closing an older restored BLE link before scanning for the gateway…"
+      Self.commissioningTrace(
+        "SCAN_DEFERRED reason=restoration-cleanup count=\(retiredRestoredPeripherals.count)"
+      )
       return
     }
     reconnectTask?.cancel()
@@ -163,12 +286,65 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       transportMessage = "Bluetooth is not powered on."
       return
     }
-    let connected = central.retrieveConnectedPeripherals(withServices: [Self.vhosService]).first
+    if !skipConnectedRetrieval,
+      let savedIdentifier = verifiedSavedGatewayIdentifier,
+      let savedUUID = UUID(uuidString: savedIdentifier),
+      let known = central.retrievePeripherals(withIdentifiers: [savedUUID]).first
+    {
+      if known.state == .disconnecting {
+        retireRestoredPeripheral(known, reason: "saved-gateway-still-disconnecting")
+        scanAfterRestorationCleanup = true
+        scanRequested = true
+        transportMessage =
+          "Waiting for the saved gateway link to close before reconnecting…"
+        Self.commissioningTrace(
+          "KNOWN_GATEWAY_RECONNECT_DEFERRED peripheral=\(peripheralEvidence(known))"
+        )
+        return
+      }
+      resetTransportSession()
+      scanRequested = false
+      scanActive = false
+      scanMode = "Saved gateway"
+      discoveredName = known.name
+      discoveredIdentifier = known.identifier.uuidString
+      candidateNameSuggestsGateway = GatewayBLEIdentityPolicy.nameSuggestsGateway(known.name)
+      candidateAdvertisedVHOSService = false
+      candidateWasPreviouslyValidated = true
+      state = .connecting
+      transportMessage = "Saved VHOS gateway found; reconnecting…"
+      Self.commissioningTrace(
+        "KNOWN_GATEWAY_RECONNECT peripheral=\(peripheralEvidence(known)) source=\(source)"
+      )
+      connect(known)
+      return
+    }
+    if !skipConnectedRetrieval, verifiedSavedGatewayIdentifier != nil {
+      Self.commissioningTrace(
+        "KNOWN_GATEWAY_RETRIEVAL_EMPTY action=service-scan-fallback source=\(source)"
+      )
+    }
+    let connectedCandidates = skipConnectedRetrieval
+      ? []
+      : central.retrieveConnectedPeripherals(withServices: [Self.vhosService])
+        .filter { $0.state == .connected }
+    if connectedCandidates.count > 1 {
+      for extra in connectedCandidates {
+        retireRestoredPeripheral(extra, reason: "retrieve-connected-ambiguous")
+      }
+      scanAfterRestorationCleanup = true
+      scanRequested = true
+      transportMessage =
+        "Closing ambiguous system BLE links before selecting the gateway…"
+      return
+    }
+    let connected = connectedCandidates.first(where: isHandshakeVerified)
+      ?? (connectedCandidates.count == 1 ? connectedCandidates.first : nil)
     if let connected {
       resetTransportSession()
       scanRequested = false
       scanActive = false
-      scanMode = "Restored connection"
+      scanMode = "Existing connection"
       discoveredName = connected.name
       discoveredIdentifier = connected.identifier.uuidString
       candidateNameSuggestsGateway = GatewayBLEIdentityPolicy.nameSuggestsGateway(connected.name)
@@ -206,16 +382,28 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   }
 
   func disconnect() {
+    Self.commissioningTrace(
+      "USER_DISCONNECT_INTENT action=\(peripheralConnected ? "disconnect-active-link" : "cancel-connection-flow") state=\(state.rawValue) link_session=\(linkSession) scan_active=\(scanActive) peripheral_connected=\(peripheralConnected) reconnect_active=\(automaticReconnectActive) pairing_pending=\(notificationPairingPending) peripheral={\(activePeripheralEvidence)}"
+    )
+    pendingStaleGATTRescan = false
+    pendingStaleGATTReason = nil
+    pendingRestoredPeripheral = nil
+    scanAfterRestorationCleanup = false
     userRequestedDisconnect = true
+    reconnectIntentRequested = false
     automaticReconnectEnabled = false
     automaticReconnectActive = false
     reconnectTask?.cancel()
     scanRequested = false
     scanFallbackTask?.cancel()
     central.stopScan()
-    if let peripheral { central.cancelPeripheralConnection(peripheral) }
+    if let peripheral {
+      retireRestoredPeripheral(peripheral, reason: "user-disconnect-or-cancel")
+    }
     resetConnection()
-    transportMessage = "Gateway disconnected by user."
+    transportMessage = connectionCleanupActive
+      ? "Finishing the current BLE link before Reconnect becomes available…"
+      : "Gateway disconnected by user."
   }
 
   func sendSignedExperimentPlan(_ envelope: SignedExperimentPlanEnvelope) throws {
@@ -276,39 +464,132 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   }
 
   func centralManagerDidUpdateState(_ central: CBCentralManager) {
+    guard central === self.central else {
+      Self.commissioningTrace(
+        "STALE_CENTRAL_STATE_IGNORED candidate=\(ObjectIdentifier(central)) active=\(ObjectIdentifier(self.central))"
+      )
+      return
+    }
     bluetoothStateDescription = central.state.description
     bluetoothReady = central.state == .poweredOn
     Self.commissioningTrace(
-      "CENTRAL_STATE state=\(central.state.description) scan_requested=\(scanRequested)"
+      "CENTRAL_STATE state=\(central.state.description) scan_requested=\(scanRequested) reconnect_intent=\(reconnectIntentRequested) reconnect_enabled=\(automaticReconnectEnabled) user_disconnected=\(userRequestedDisconnect) cleanup_active=\(connectionCleanupActive)"
     )
-    if central.state == .poweredOn, scanRequested { startScan(source: "central-state") }
-    if central.state != .poweredOn {
-      scanActive = false
-      resetTransportSession()
-      state = .disconnected
-      transportMessage = "Bluetooth state: \(central.state.description)"
+    if central.state == .poweredOn {
+      if centralCleanupRecoveryPending {
+        centralCleanupRecoveryPending = false
+        connectionCleanupActive = false
+        Self.commissioningTrace(
+          "CLEANUP_CENTRAL_RECOVERY_READY reconnect_intent=\(scanRequested && !userRequestedDisconnect)"
+        )
+      }
+      if scanRequested, !userRequestedDisconnect, retiredRestoredPeripherals.isEmpty {
+        startScan(source: "bluetooth-powered-on")
+      }
+      return
     }
+
+    let shouldReconnectWhenPoweredOn = reconnectIntentRequested && !userRequestedDisconnect
+    reconnectTask?.cancel()
+    scanFallbackTask?.cancel()
+    central.stopScan()
+    scanActive = false
+    scanRequested = shouldReconnectWhenPoweredOn
+    automaticReconnectActive = shouldReconnectWhenPoweredOn
+    if !centralCleanupRecoveryPending {
+      restoredCleanupTask?.cancel()
+      restoredCleanupTask = nil
+      retiredRestoredPeripherals.removeAll()
+      pendingRestoredPeripheral = nil
+      scanAfterRestorationCleanup = false
+      connectionCleanupActive = false
+    }
+    resetTransportSession()
+    state = shouldReconnectWhenPoweredOn ? .connecting : .disconnected
+    transportMessage = shouldReconnectWhenPoweredOn
+      ? "Bluetooth is \(central.state.description); reconnecting to the verified gateway when the radio is ready…"
+      : "Bluetooth state: \(central.state.description)"
+    Self.commissioningTrace(
+      "BLUETOOTH_RECONNECT_INTENT preserved=\(shouldReconnectWhenPoweredOn) saved_id=\(verifiedSavedGatewayIdentifier ?? "none")"
+    )
   }
 
   func centralManager(_ central: CBCentralManager, willRestoreState dict: [String: Any]) {
-    let restoredPeripherals =
-      (dict[CBCentralManagerRestoredStatePeripheralsKey] as? [CBPeripheral]) ?? []
-    guard
-      let restored = restoredPeripherals.first(where: { isPreviouslyValidated($0) })
-    else {
-      for peripheral in restoredPeripherals
-      where peripheral.state == .connected || peripheral.state == .connecting {
-        central.cancelPeripheralConnection(peripheral)
-      }
-      scanRequested = true
-      transportMessage =
-        "Discarded an unverified restored BLE device; scanning for the VHOS service…"
+    guard central === self.central else {
       Self.commissioningTrace(
-        "RESTORE_REJECTED count=\(restoredPeripherals.count) reason=not-previously-validated"
+        "STALE_CENTRAL_RESTORE_IGNORED candidate=\(ObjectIdentifier(central)) active=\(ObjectIdentifier(self.central))"
       )
-      if central.state == .poweredOn { startScan(source: "restore-rejection") }
       return
     }
+    let restoredPeripherals =
+      (dict[CBCentralManagerRestoredStatePeripheralsKey] as? [CBPeripheral]) ?? []
+    if userRequestedDisconnect {
+      for restored in restoredPeripherals {
+        retireRestoredPeripheral(restored, reason: "late-restore-after-user-disconnect")
+      }
+      Self.commissioningTrace(
+        "RESTORE_REJECTED reason=user-disconnected count=\(restoredPeripherals.count)"
+      )
+      return
+    }
+    if !restoredPeripherals.isEmpty {
+      reconnectIntentRequested = true
+    }
+    let eligible = restoredPeripherals.filter(isHandshakeVerified).sorted {
+      restorationStateRank($0.state) < restorationStateRank($1.state)
+    }
+    let restored = eligible.first
+    let extras = restoredPeripherals.filter { candidate in
+      guard let restored else { return true }
+      return candidate !== restored
+    }
+
+    if let active = peripheral {
+      for extra in restoredPeripherals where extra !== active {
+        retireRestoredPeripheral(extra, reason: "restore-arrived-after-active-selection")
+      }
+      Self.commissioningTrace(
+        "RESTORE_IGNORED reason=active-peripheral-exists active=\(peripheralEvidence(active)) restored_count=\(restoredPeripherals.count)"
+      )
+      return
+    }
+
+    guard let restored else {
+      for extra in extras {
+        retireRestoredPeripheral(extra, reason: "restore-not-handshake-verified")
+      }
+      scanRequested = true
+      scanAfterRestorationCleanup = !retiredRestoredPeripherals.isEmpty
+      transportMessage =
+        "Discarded an incomplete restored BLE session; scanning for the VHOS service…"
+      Self.commissioningTrace(
+        "RESTORE_REJECTED count=\(restoredPeripherals.count) reason=handshake-not-verified cleanup=\(retiredRestoredPeripherals.count)"
+      )
+      if central.state == .poweredOn, retiredRestoredPeripherals.isEmpty {
+        startScan(source: "restore-rejection")
+      }
+      return
+    }
+
+    for extra in extras {
+      retireRestoredPeripheral(extra, reason: "restore-extra")
+    }
+    if !retiredRestoredPeripherals.isEmpty {
+      pendingRestoredPeripheral = restored
+      scanRequested = false
+      scanAfterRestorationCleanup = false
+      transportMessage =
+        "Closing older restored BLE links before resuming the verified gateway…"
+      Self.commissioningTrace(
+        "RESTORE_DEFERRED selected=\(peripheralEvidence(restored)) cleanup=\(retiredRestoredPeripherals.count)"
+      )
+      return
+    }
+    resumeRestoredPeripheral(restored)
+  }
+
+  private func resumeRestoredPeripheral(_ restored: CBPeripheral) {
+    reconnectIntentRequested = true
     candidateNameSuggestsGateway = GatewayBLEIdentityPolicy.nameSuggestsGateway(restored.name)
     candidateAdvertisedVHOSService = false
     candidateWasPreviouslyValidated = true
@@ -323,7 +604,6 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     }
     if restored.state == .connecting {
       peripheral = restored
-      restored.delegate = self
       automaticReconnectEnabled = true
       userRequestedDisconnect = false
       discoveredName = restored.name
@@ -333,7 +613,18 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       Self.commissioningTrace(
         "RESTORE_WAITING id=\(restored.identifier.uuidString) state=\(restored.state.rawValue)"
       )
-      armRestoredConnectionTimeout(restored)
+      armConnectionTimeout(restored, source: "restored-connecting")
+      return
+    }
+    if restored.state == .disconnecting {
+      scanRequested = true
+      scanAfterRestorationCleanup = true
+      transportMessage =
+        "Waiting for the restored gateway link to close before reconnecting…"
+      Self.commissioningTrace(
+        "RESTORE_DISCONNECTING_DEFERRED peripheral=\(peripheralEvidence(restored))"
+      )
+      retireRestoredPeripheral(restored, reason: "restore-still-disconnecting")
       return
     }
     if scanRequested {
@@ -343,7 +634,6 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       return
     }
     peripheral = restored
-    restored.delegate = self
     automaticReconnectEnabled = true
     userRequestedDisconnect = false
     discoveredName = restored.name
@@ -359,6 +649,20 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     advertisementData: [String: Any],
     rssi: NSNumber
   ) {
+    guard central === self.central else {
+      Self.commissioningTrace(
+        "STALE_CENTRAL_DISCOVERY_IGNORED candidate=\(ObjectIdentifier(central)) active=\(ObjectIdentifier(self.central))"
+      )
+      return
+    }
+    guard scanActive, scanRequested, state == .scanning, !userRequestedDisconnect,
+      !connectionCleanupActive
+    else {
+      Self.commissioningTrace(
+        "STALE_SCAN_DISCOVERY_IGNORED scan_active=\(scanActive) scan_requested=\(scanRequested) state=\(state.rawValue) user_disconnected=\(userRequestedDisconnect) cleanup=\(connectionCleanupActive) peripheral=\(peripheralEvidence(peripheral))"
+      )
+      return
+    }
     let advertised = advertisementData[CBAdvertisementDataServiceUUIDsKey] as? [CBUUID] ?? []
     let overflow = advertisementData[CBAdvertisementDataOverflowServiceUUIDsKey] as? [CBUUID] ?? []
     let solicited = advertisementData[CBAdvertisementDataSolicitedServiceUUIDsKey] as? [CBUUID] ?? []
@@ -378,13 +682,24 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       )
     }
     guard supported else { return }
+    if retiredRestoredPeripherals[ObjectIdentifier(peripheral)] != nil {
+      Self.commissioningTrace(
+        "RETIRED_DISCOVERY_IGNORED peripheral=\(peripheralEvidence(peripheral))"
+      )
+      return
+    }
+    if let active = self.peripheral, active !== peripheral {
+      Self.commissioningTrace(
+        "PARALLEL_DISCOVERY_IGNORED active=\(peripheralEvidence(active)) candidate=\(peripheralEvidence(peripheral))"
+      )
+      return
+    }
     central.stopScan()
     scanFallbackTask?.cancel()
     scanRequested = false
     scanActive = false
     scanMode = "Matched"
     self.peripheral = peripheral
-    peripheral.delegate = self
     discoveredName = name.isEmpty ? nil : name
     discoveredIdentifier = peripheral.identifier.uuidString
     discoveredRSSI = rssi.intValue == 127 ? nil : rssi.intValue
@@ -403,9 +718,23 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   }
 
   func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
-    guard self.peripheral?.identifier == peripheral.identifier else {
+    guard central === self.central else {
       Self.commissioningTrace(
-        "STALE_LINK_CONNECTED_IGNORED id=\(peripheral.identifier.uuidString)"
+        "STALE_CENTRAL_CONNECT_IGNORED candidate=\(ObjectIdentifier(central)) active=\(ObjectIdentifier(self.central)) peripheral=\(peripheralEvidence(peripheral))"
+      )
+      central.cancelPeripheralConnection(peripheral)
+      return
+    }
+    if retiredRestoredPeripherals[ObjectIdentifier(peripheral)] != nil {
+      Self.commissioningTrace(
+        "RETIRED_LINK_CONNECTED_CANCEL peripheral=\(peripheralEvidence(peripheral))"
+      )
+      central.cancelPeripheralConnection(peripheral)
+      return
+    }
+    guard isActivePeripheral(peripheral) else {
+      Self.commissioningTrace(
+        "STALE_LINK_CONNECTED_IGNORED peripheral=\(peripheralEvidence(peripheral)) active=\(activePeripheralEvidence)"
       )
       central.cancelPeripheralConnection(peripheral)
       return
@@ -416,17 +745,32 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   func centralManager(
     _ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?
   ) {
-    guard self.peripheral?.identifier == peripheral.identifier else {
+    guard central === self.central else {
       Self.commissioningTrace(
-        "STALE_LINK_FAILURE_IGNORED id=\(peripheral.identifier.uuidString)"
+        "STALE_CENTRAL_CONNECT_FAILURE_IGNORED candidate=\(ObjectIdentifier(central)) active=\(ObjectIdentifier(self.central)) peripheral=\(peripheralEvidence(peripheral))"
       )
       return
     }
-    let failure = error.map {
-      let value = $0 as NSError
-      return "domain=\(value.domain) code=\(value.code) message=\(value.localizedDescription)"
-    } ?? "none"
-    Self.commissioningTrace("LINK_FAILED_DETAIL \(failure)")
+    if peripheralConnected, isActivePeripheral(peripheral) {
+      Self.commissioningTrace(
+        "STALE_CONNECT_FAILURE_IGNORED reason=current-link-already-connected peripheral=\(peripheralEvidence(peripheral))"
+      )
+      return
+    }
+    if completeRetiredPeripheral(peripheral, event: "connect-failure", error: error) { return }
+    guard isActivePeripheral(peripheral) else {
+      Self.commissioningTrace(
+        "STALE_LINK_FAILURE_IGNORED peripheral=\(peripheralEvidence(peripheral)) active=\(activePeripheralEvidence)"
+      )
+      return
+    }
+    if pendingStaleGATTRescan {
+      completeStaleGATTRecovery(after: peripheral, event: "connect-failure")
+      return
+    }
+    let failure = Self.errorEvidence(error)
+    recordTransportFailure(error, event: "link-connect-failed")
+    Self.commissioningTrace("LINK_FAILED_DETAIL error={\(failure)}")
     if isPeerPairingInformationRemoved(error), !freshCentralRecoveryAttempted {
       rebuildCentralForFreshPairing()
       return
@@ -445,6 +789,19 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   func centralManager(
     _ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?
   ) {
+    guard central === self.central else {
+      Self.commissioningTrace(
+        "STALE_CENTRAL_DISCONNECT_IGNORED candidate=\(ObjectIdentifier(central)) active=\(ObjectIdentifier(self.central)) peripheral=\(peripheralEvidence(peripheral))"
+      )
+      return
+    }
+    if completeRetiredPeripheral(peripheral, event: "disconnect", error: error) { return }
+    if peripheralConnected, isActivePeripheral(peripheral), peripheral.state == .connected {
+      Self.commissioningTrace(
+        "STALE_LEGACY_DISCONNECT_IGNORED reason=current-link-still-connected link_session=\(linkSession)"
+      )
+      return
+    }
     handleDisconnect(peripheral, isSystemReconnecting: false, error: error)
   }
 
@@ -455,30 +812,55 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     isReconnecting: Bool,
     error: Error?
   ) {
-    handleDisconnect(peripheral, isSystemReconnecting: isReconnecting, error: error)
-  }
-
-  func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
-    guard self.peripheral?.identifier == peripheral.identifier else {
+    guard central === self.central else {
       Self.commissioningTrace(
-        "STALE_SERVICE_RESULT_IGNORED id=\(peripheral.identifier.uuidString)"
+        "STALE_CENTRAL_DISCONNECT_IGNORED candidate=\(ObjectIdentifier(central)) active=\(ObjectIdentifier(self.central)) peripheral=\(peripheralEvidence(peripheral))"
       )
       return
     }
+    if completeRetiredPeripheral(peripheral, event: "disconnect", error: error) { return }
+    if let connectedAt,
+      Date(timeIntervalSinceReferenceDate: timestamp) < connectedAt
+    {
+      Self.commissioningTrace(
+        "STALE_TIMESTAMPED_DISCONNECT_IGNORED callback_timestamp=\(timestamp) connected_at=\(connectedAt.timeIntervalSinceReferenceDate) link_session=\(linkSession)"
+      )
+      return
+    }
+    handleDisconnect(peripheral, isSystemReconnecting: isReconnecting, error: error)
+  }
+
+  private func handleServicesDiscovered(
+    _ peripheral: CBPeripheral, error: Error?, callbackSession: UInt64
+  ) {
+    guard acceptsPeripheralCallback(
+      peripheral, callbackSession: callbackSession, event: "service-discovery")
+    else { return }
     serviceDiscoveryTask?.cancel()
     if let error {
-      let value = error as NSError
+      recordTransportFailure(error, event: "service-discovery-failed")
       Self.commissioningTrace(
-        "SERVICE_DISCOVERY_FAILED domain=\(value.domain) code=\(value.code) message=\(value.localizedDescription)"
+        "SERVICE_DISCOVERY_FAILED link_session=\(linkSession) error={\(Self.errorEvidence(error))}"
       )
       refreshStaleGATTCandidate(
         peripheral,
         reason: "Gateway services did not respond; scanning for its current BLE identity…")
       return
     }
-    let services = peripheral.services ?? []
+    processDiscoveredServices(
+      peripheral, services: peripheral.services ?? [], source: "callback",
+      callbackSession: callbackSession)
+  }
+
+  private func processDiscoveredServices(
+    _ peripheral: CBPeripheral, services: [CBService], source: String,
+    callbackSession: UInt64
+  ) {
+    guard acceptsPeripheralCallback(
+      peripheral, callbackSession: callbackSession, event: "process-services-\(source)")
+    else { return }
     Self.commissioningTrace(
-      "SERVICES_DISCOVERED uuids=\(services.map { $0.uuid.uuidString }.joined(separator: ","))"
+      "SERVICES_DISCOVERED source=\(source) uuids=\(services.map { $0.uuid.uuidString }.joined(separator: ","))"
     )
     let kind = GatewayBLEIdentityPolicy.provenGatewayKind(
       localName: discoveredName ?? peripheral.name,
@@ -493,16 +875,28 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     for service in services {
       if kind == .vhos, service.uuid == Self.vhosService {
         vhosServiceDiscovered = true
-        peripheral.discoverCharacteristics(
-          [
-            Self.commandCharacteristic, Self.streamCharacteristic, Self.statusCharacteristic,
-            Self.otaStatusCharacteristic,
-          ],
-          for: service
-        )
+        if let characteristics = service.characteristics, !characteristics.isEmpty {
+          processDiscoveredCharacteristics(
+            peripheral, service: service, characteristics: characteristics, source: "cache",
+            callbackSession: callbackSession)
+        } else {
+          peripheral.discoverCharacteristics(
+            [
+              Self.commandCharacteristic, Self.streamCharacteristic, Self.statusCharacteristic,
+              Self.otaStatusCharacteristic,
+            ],
+            for: service
+          )
+        }
       } else if kind == .factoryWiCAN, service.uuid == Self.factoryService {
         factoryServiceDiscovered = true
-        peripheral.discoverCharacteristics([Self.factoryCharacteristic], for: service)
+        if let characteristics = service.characteristics, !characteristics.isEmpty {
+          processDiscoveredCharacteristics(
+            peripheral, service: service, characteristics: characteristics, source: "cache",
+            callbackSession: callbackSession)
+        } else {
+          peripheral.discoverCharacteristics([Self.factoryCharacteristic], for: service)
+        }
       }
     }
     if vhosServiceDiscovered || factoryServiceDiscovered {
@@ -510,84 +904,175 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     }
   }
 
-  func peripheral(
-    _ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?
+  private func handleCharacteristicsDiscovered(
+    _ peripheral: CBPeripheral, service: CBService, error: Error?,
+    callbackSession: UInt64
   ) {
+    guard acceptsPeripheralCallback(
+      peripheral, callbackSession: callbackSession, event: "characteristic-discovery")
+    else { return }
     serviceDiscoveryTask?.cancel()
     if let error {
-      let value = error as NSError
+      recordTransportFailure(error, event: "characteristic-discovery-failed")
       Self.commissioningTrace(
-        "CHARACTERISTICS_FAILED service=\(service.uuid.uuidString) domain=\(value.domain) code=\(value.code)"
+        "CHARACTERISTICS_FAILED service=\(service.uuid.uuidString) link_session=\(linkSession) error={\(Self.errorEvidence(error))}"
       )
       refreshStaleGATTCandidate(
         peripheral,
         reason: "Gateway characteristics did not respond; scanning for its current BLE identity…")
       return
     }
-    for characteristic in service.characteristics ?? [] {
+    processDiscoveredCharacteristics(
+      peripheral, service: service, characteristics: service.characteristics ?? [], source: "callback",
+      callbackSession: callbackSession)
+  }
+
+  private func processDiscoveredCharacteristics(
+    _ peripheral: CBPeripheral, service: CBService, characteristics: [CBCharacteristic],
+    source: String, callbackSession: UInt64
+  ) {
+    guard acceptsPeripheralCallback(
+      peripheral, callbackSession: callbackSession, event: "process-characteristics-\(source)")
+    else { return }
+    for characteristic in characteristics {
       switch characteristic.uuid {
       case Self.commandCharacteristic:
         command = characteristic
         commandChannelReady = characteristic.properties.contains(.write)
       case Self.streamCharacteristic:
         streamChannelDiscovered = true
-        peripheral.setNotifyValue(true, for: characteristic)
+        streamNotificationsEnabled = false
+        notificationCharacteristics[characteristic.uuid] = characteristic
       case Self.statusCharacteristic:
         healthChannelDiscovered = true
-        peripheral.setNotifyValue(true, for: characteristic)
+        healthNotificationsEnabled = streamNotificationsEnabled
       case Self.otaStatusCharacteristic:
         otaStatusChannelDiscovered = true
-        peripheral.setNotifyValue(true, for: characteristic)
+        otaStatusNotificationsEnabled = streamNotificationsEnabled
       case Self.factoryCharacteristic:
+        factoryReadCharacteristic = characteristic
         state = .factoryCompatible
         factoryBanner =
           "Factory WiCAN BLE service detected. Install the VHOS firmware fork before vehicle experiments."
         if characteristic.properties.contains(.read) { peripheral.readValue(for: characteristic) }
-        if characteristic.properties.contains(.notify) {
-          peripheral.setNotifyValue(true, for: characteristic)
-        }
       default:
         break
       }
     }
     Self.commissioningTrace(
-      "CHARACTERISTICS_DISCOVERED service=\(service.uuid.uuidString) count=\(service.characteristics?.count ?? 0)"
+      "CHARACTERISTICS_DISCOVERED source=\(source) service=\(service.uuid.uuidString) count=\(characteristics.count)"
     )
-    if service.uuid == Self.vhosService { requestHandshakeIfReady() }
+    if service.uuid == Self.vhosService {
+      enableNextNotificationIfNeeded(on: peripheral, callbackSession: callbackSession)
+    }
   }
 
-  func peripheral(
-    _ peripheral: CBPeripheral,
-    didUpdateNotificationStateFor characteristic: CBCharacteristic,
-    error: Error?
+  /// All framed outbound traffic is multiplexed over the evidence stream. A single encrypted CCCD
+  /// avoids losing later notification requests while Just Works pairing is still in flight. Health
+  /// and OTA remain distinct, CRC-protected message types within that shared transport.
+  private func enableNextNotificationIfNeeded(
+    on peripheral: CBPeripheral, callbackSession: UInt64
   ) {
-    if let error {
-      let retryCount = notificationSecurityRetryCounts[characteristic.uuid, default: 0]
-      if isSecurityNegotiationError(error), retryCount < Self.securityRetryLimit {
-        let nextRetry = retryCount + 1
-        notificationSecurityRetryCounts[characteristic.uuid] = nextRetry
-        transportMessage =
-          "Pairing with ESP32; secure notification retry \(nextRetry)/\(Self.securityRetryLimit)…"
-        Self.logger.info(
-          "Waiting for BLE pairing before notification retry uuid=\(characteristic.uuid.uuidString, privacy: .public) attempt=\(nextRetry)"
+    guard acceptsPeripheralCallback(
+      peripheral, callbackSession: callbackSession, event: "notification-enable-next")
+    else { return }
+    guard notificationSetupInFlight == nil else { return }
+
+    let orderedUUIDs = [Self.streamCharacteristic]
+    for uuid in orderedUUIDs {
+      guard let characteristic = notificationCharacteristics[uuid] else { return }
+      guard notificationRequestSession != linkSession else {
+        Self.commissioningTrace(
+          "SUBSCRIBE_DUPLICATE_SUPPRESSED uuid=\(uuid.uuidString) link_session=\(linkSession)"
         )
-        Task { [weak self, weak peripheral] in
-          try? await Task.sleep(for: .seconds(1))
-          guard !Task.isCancelled, let self, let peripheral, self.peripheralConnected else {
-            return
-          }
-          peripheral.setNotifyValue(true, for: characteristic)
-        }
         return
       }
-      state = .degraded
-      transportMessage = error.localizedDescription
+      notificationSetupInFlight = uuid
+      notificationRequestSession = linkSession
+      notificationPairingPending = true
+      Self.commissioningTrace(
+        "SUBSCRIBE_REQUEST uuid=\(uuid.uuidString) link_session=\(linkSession) peripheral=\(peripheralEvidence(peripheral)) attempt=1"
+      )
+      peripheral.setNotifyValue(true, for: characteristic)
+      armNotificationEnableWatchdog(
+        on: peripheral, characteristic: characteristic, callbackSession: callbackSession)
       return
     }
-    notificationSecurityRetryCounts[characteristic.uuid] = 0
+    requestHandshakeIfReady()
+  }
+
+  private func armNotificationEnableWatchdog(
+    on peripheral: CBPeripheral, characteristic: CBCharacteristic,
+    callbackSession: UInt64
+  ) {
+    notificationEnableTask?.cancel()
+    Self.commissioningTrace(
+      "SUBSCRIBE_WATCHDOG_ARMED uuid=\(characteristic.uuid.uuidString) link_session=\(callbackSession) timeout_seconds=15"
+    )
+    notificationEnableTask = Task { [weak self, weak peripheral, weak characteristic] in
+      try? await Task.sleep(for: Self.notificationEnableTimeout)
+      guard !Task.isCancelled, let self, let peripheral, let characteristic,
+        self.acceptsPeripheralCallback(
+          peripheral, callbackSession: callbackSession, event: "notification-watchdog"),
+        self.notificationRequestSession == callbackSession,
+        self.notificationSetupInFlight == characteristic.uuid,
+        self.notificationCharacteristics[characteristic.uuid] === characteristic,
+        !self.streamNotificationsEnabled
+      else { return }
+      self.notificationEnableTask = nil
+      self.notificationPairingPending = false
+      self.notificationSetupInFlight = nil
+      self.reconnectIntentRequested = false
+      self.automaticReconnectEnabled = false
+      self.automaticReconnectActive = false
+      self.lastTransportFailureAt = Date()
+      self.lastTransportFailureEvidence =
+        "notification-enable-timeout: uuid=\(characteristic.uuid.uuidString) link_session=\(callbackSession)"
+      Self.commissioningTrace(
+        "SUBSCRIBE_WATCHDOG_TIMEOUT uuid=\(characteristic.uuid.uuidString) link_session=\(callbackSession) action=retire-link-for-explicit-reconnect"
+      )
+      self.retireRestoredPeripheral(peripheral, reason: "notification-enable-timeout")
+      self.resetTransportSession()
+      self.state = .degraded
+      self.transportMessage = self.connectionCleanupActive
+        ? "The encrypted stream did not confirm. Finishing this BLE link before Reconnect becomes available…"
+        : "The encrypted stream did not confirm. Select Reconnect to start one clean session."
+    }
+  }
+
+  private func failNotificationSetup(
+    on peripheral: CBPeripheral, callbackSession: UInt64, reason: String,
+    evidence: String
+  ) {
+    guard acceptsPeripheralCallback(
+      peripheral, callbackSession: callbackSession, event: "notification-failure")
+    else { return }
+    notificationEnableTask?.cancel()
+    notificationEnableTask = nil
+    notificationPairingPending = false
+    notificationSetupInFlight = nil
+    reconnectIntentRequested = false
+    automaticReconnectEnabled = false
+    automaticReconnectActive = false
+    lastTransportFailureAt = Date()
+    lastTransportFailureEvidence = "\(evidence) link_session=\(callbackSession)"
+    Self.commissioningTrace(
+      "SUBSCRIBE_LINK_RETIRED link_session=\(callbackSession) reason=\(evidence) action=explicit-reconnect"
+    )
+    retireRestoredPeripheral(peripheral, reason: evidence)
+    resetTransportSession()
+    state = .degraded
+    transportMessage = connectionCleanupActive
+      ? "\(reason). Finishing this BLE link before Reconnect becomes available…"
+      : "\(reason). Select Reconnect to start one clean session."
+  }
+
+  private func updateNotificationState(for characteristic: CBCharacteristic) {
     switch characteristic.uuid {
     case Self.streamCharacteristic:
       streamNotificationsEnabled = characteristic.isNotifying
+      healthNotificationsEnabled = characteristic.isNotifying
+      otaStatusNotificationsEnabled = characteristic.isNotifying
     case Self.statusCharacteristic:
       healthNotificationsEnabled = characteristic.isNotifying
     case Self.otaStatusCharacteristic:
@@ -595,14 +1080,124 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     default:
       break
     }
-    requestHandshakeIfReady()
   }
 
-  func peripheral(
-    _ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?
+  private func handleNotificationStateUpdated(
+    _ peripheral: CBPeripheral, characteristic: CBCharacteristic, error: Error?,
+    callbackSession: UInt64
   ) {
+    guard acceptsPeripheralCallback(
+      peripheral, callbackSession: callbackSession, event: "notification-state")
+    else { return }
+    if characteristic.uuid == Self.streamCharacteristic,
+      let expected = notificationCharacteristics[characteristic.uuid], expected !== characteristic
+    {
+      Self.commissioningTrace(
+        "STALE_SUBSCRIBE_CHARACTERISTIC_IGNORED uuid=\(characteristic.uuid.uuidString) link_session=\(linkSession)"
+      )
+      return
+    }
+    if characteristic.uuid == Self.streamCharacteristic,
+      notificationRequestSession == callbackSession,
+      notificationSetupInFlight == nil,
+      streamNotificationsEnabled,
+      error != nil || !characteristic.isNotifying
+    {
+      failNotificationSetup(
+        on: peripheral, callbackSession: callbackSession,
+        reason: "The encrypted stream stopped notifying",
+        evidence: "notification-disabled-after-enable: \(Self.errorEvidence(error))")
+      return
+    }
+    guard notificationRequestSession == callbackSession,
+      notificationSetupInFlight == characteristic.uuid
+    else {
+      Self.commissioningTrace(
+        "STALE_SUBSCRIBE_TOKEN_IGNORED uuid=\(characteristic.uuid.uuidString) callback_session=\(callbackSession) request_session=\(notificationRequestSession.map(String.init) ?? "none") in_flight=\(notificationSetupInFlight?.uuidString ?? "none")"
+      )
+      return
+    }
+    notificationEnableTask?.cancel()
+    notificationEnableTask = nil
     if let error {
-      transportMessage = error.localizedDescription
+      notificationPairingPending = false
+      if notificationSetupInFlight == characteristic.uuid {
+        notificationSetupInFlight = nil
+      }
+      let evidence = Self.errorEvidence(error)
+      recordTransportFailure(error, event: "stream-subscribe-failed")
+      Self.commissioningTrace(
+        "SUBSCRIBE_FAILED uuid=\(characteristic.uuid.uuidString) link_session=\(linkSession) error={\(evidence)}"
+      )
+      let reason = isSecurityNegotiationError(error)
+        ? "Secure BLE setup did not complete"
+        : "BLE notification setup failed (\(Self.errorSymbol(error))): \(error.localizedDescription)"
+      failNotificationSetup(
+        on: peripheral, callbackSession: callbackSession, reason: reason,
+        evidence: "notification-enable-failed: \(evidence)")
+      return
+    }
+    notificationPairingPending = false
+    updateNotificationState(for: characteristic)
+    if notificationSetupInFlight == characteristic.uuid {
+      notificationSetupInFlight = nil
+    }
+    Self.commissioningTrace(
+      "SUBSCRIBE_READY uuid=\(characteristic.uuid.uuidString) enabled=\(characteristic.isNotifying) link_session=\(linkSession)"
+    )
+    guard characteristic.isNotifying || characteristic.uuid != Self.streamCharacteristic else {
+      transportMessage =
+        "The encrypted stream did not enable. Reconnecting without duplicating the request…"
+      Self.commissioningTrace(
+        "SUBSCRIBE_DISABLED_UNEXPECTED action=cancel-link link_session=\(linkSession)"
+      )
+      failNotificationSetup(
+        on: peripheral, callbackSession: callbackSession,
+        reason: "The encrypted stream did not enable",
+        evidence: "notification-enable-disabled")
+      return
+    }
+    if characteristic.uuid == Self.streamCharacteristic, characteristic.isNotifying {
+      requestHandshakeIfReady()
+    } else {
+      enableNextNotificationIfNeeded(on: peripheral, callbackSession: callbackSession)
+    }
+  }
+
+  private func handleValueUpdated(
+    _ peripheral: CBPeripheral, characteristic: CBCharacteristic, error: Error?,
+    callbackSession: UInt64
+  ) {
+    guard acceptsPeripheralCallback(
+      peripheral, callbackSession: callbackSession, event: "value-update")
+    else { return }
+    let isCurrentStream = characteristic.uuid == Self.streamCharacteristic
+      && notificationCharacteristics[Self.streamCharacteristic] === characteristic
+      && notificationRequestSession == callbackSession
+      && streamNotificationsEnabled
+    let isCurrentFactory = characteristic.uuid == Self.factoryCharacteristic
+      && factoryServiceDiscovered && factoryReadCharacteristic === characteristic
+    guard isCurrentStream || isCurrentFactory else {
+      Self.commissioningTrace(
+        "STALE_OR_UNEXPECTED_VALUE_IGNORED uuid=\(characteristic.uuid.uuidString) link_session=\(linkSession) stream_confirmed=\(streamNotificationsEnabled)"
+      )
+      return
+    }
+    if characteristic.uuid == Self.streamCharacteristic,
+      let expected = notificationCharacteristics[characteristic.uuid], expected !== characteristic
+    {
+      Self.commissioningTrace(
+        "STALE_VALUE_CHARACTERISTIC_IGNORED uuid=\(characteristic.uuid.uuidString) link_session=\(linkSession)"
+      )
+      return
+    }
+    if let error {
+      recordTransportFailure(error, event: "notification-value-failed")
+      transportMessage =
+        "Gateway stream read failed (\(Self.errorSymbol(error))): \(error.localizedDescription)"
+      Self.commissioningTrace(
+        "VALUE_UPDATE_FAILED uuid=\(characteristic.uuid.uuidString) link_session=\(linkSession) error={\(Self.errorEvidence(error))}"
+      )
       return
     }
     guard let value = characteristic.value else { return }
@@ -625,11 +1220,28 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     }
   }
 
-  func peripheral(
-    _ peripheral: CBPeripheral, didWriteValueFor characteristic: CBCharacteristic, error: Error?
+  private func handleValueWritten(
+    _ peripheral: CBPeripheral, characteristic: CBCharacteristic, error: Error?,
+    callbackSession: UInt64
   ) {
-    guard characteristic.uuid == Self.commandCharacteristic else { return }
+    guard acceptsPeripheralCallback(
+      peripheral, callbackSession: callbackSession, event: "value-write"),
+      characteristic.uuid == Self.commandCharacteristic,
+      command === characteristic
+    else {
+      Self.commissioningTrace(
+        "STALE_WRITE_RESULT_IGNORED peripheral=\(peripheralEvidence(peripheral)) uuid=\(characteristic.uuid.uuidString)"
+      )
+      return
+    }
+    handshakeRetryTask?.cancel()
+    handshakeRetryTask = nil
     if let error {
+      handshakeWriteAckTask?.cancel()
+      handshakeWriteAckTask = nil
+      handshakeResponseTask?.cancel()
+      handshakeResponseTask = nil
+      handshakeWriteAttemptInFlight = nil
       pendingCommandChunks.removeAll()
       commandChunksPending = 0
       if isSecurityNegotiationError(error),
@@ -642,35 +1254,90 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         Self.logger.info(
           "Waiting for BLE encryption before handshake retry \(self.handshakeSecurityRetryCount)"
         )
-        Task { [weak self] in
+        let retrySession = linkSession
+        handshakeRetryTask = Task { [weak self, weak peripheral] in
           try? await Task.sleep(for: .seconds(1))
-          guard !Task.isCancelled else { return }
-          self?.requestHandshakeIfReady()
+          guard !Task.isCancelled, let self, let peripheral,
+            self.linkSession == retrySession, self.isActivePeripheral(peripheral),
+            self.peripheralConnected
+          else { return }
+          self.handshakeRetryTask = nil
+          self.requestHandshakeIfReady()
         }
         return
       }
+      recordTransportFailure(error, event: "command-write-failed")
+      Self.commissioningTrace(
+        "COMMAND_WRITE_FAILED link_session=\(linkSession) error={\(Self.errorEvidence(error))}"
+      )
       state = .degraded
-      transportMessage = error.localizedDescription
+      transportMessage =
+        "Gateway command failed (\(Self.errorSymbol(error))): \(error.localizedDescription)"
       return
     }
     if !pendingCommandChunks.isEmpty { pendingCommandChunks.removeFirst() }
     commandChunksPending = pendingCommandChunks.count
-    sendNextCommandChunk()
+    if !pendingCommandChunks.isEmpty {
+      sendNextCommandChunk()
+      if let attempt = handshakeWriteAttemptInFlight {
+        armHandshakeWriteAckWatchdog(on: peripheral, attempt: attempt)
+      }
+      return
+    }
+    if let attempt = handshakeWriteAttemptInFlight, handshakeRequested, handshake == nil {
+      handshakeWriteAckTask?.cancel()
+      handshakeWriteAckTask = nil
+      handshakeWriteAttemptInFlight = nil
+      handshakeResponseAttemptCount = attempt
+      Self.commissioningTrace(
+        "HANDSHAKE_REQUEST_WRITE_ACK link_session=\(linkSession) attempt=\(attempt)"
+      )
+      armHandshakeResponseWatchdog(on: peripheral, attempt: attempt)
+    }
   }
 
   private func requestHandshake() {
     do {
+      guard let peripheral, isActivePeripheral(peripheral), peripheralConnected else {
+        throw GatewayBLEError.commandChannelUnavailable
+      }
+      guard pendingCommandChunks.isEmpty, handshakeWriteAttemptInFlight == nil,
+        handshakeResponseTask == nil
+      else {
+        Self.commissioningTrace(
+          "HANDSHAKE_REQUEST_SUPPRESSED reason=prior-attempt-unfinished link_session=\(linkSession) chunks=\(pendingCommandChunks.count) write_attempt=\(handshakeWriteAttemptInFlight.map(String.init) ?? "none") response_waiting=\(handshakeResponseTask != nil)"
+        )
+        return
+      }
+      let attempt = handshakeResponseAttemptCount + 1
+      guard attempt <= Self.handshakeResponseAttemptLimit else { return }
+      Self.commissioningTrace(
+        "HANDSHAKE_REQUEST_WRITE_BEGIN link_session=\(linkSession) attempt=\(attempt)"
+      )
       let payload = try VHOSJSON.encoder().encode(HandshakeRequest())
+      handshakeWriteAttemptInFlight = attempt
       try writeFrame(type: .handshake, payload: payload)
+      armHandshakeWriteAckWatchdog(on: peripheral, attempt: attempt)
     } catch {
+      handshakeWriteAckTask?.cancel()
+      handshakeWriteAckTask = nil
+      handshakeWriteAttemptInFlight = nil
+      handshakeRequested = false
       state = .failed
       transportMessage = error.localizedDescription
+      Self.commissioningTrace(
+        "HANDSHAKE_REQUEST_WRITE_SETUP_FAILED link_session=\(linkSession) error={\(Self.errorEvidence(error))}"
+      )
     }
   }
 
   private func requestHandshakeIfReady() {
     guard
+      handshake == nil,
       !handshakeRequested,
+      handshakeWriteAttemptInFlight == nil,
+      handshakeResponseTask == nil,
+      pendingCommandChunks.isEmpty,
       command != nil,
       streamNotificationsEnabled,
       healthNotificationsEnabled,
@@ -678,6 +1345,126 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     else { return }
     handshakeRequested = true
     requestHandshake()
+  }
+
+  private func armHandshakeWriteAckWatchdog(on peripheral: CBPeripheral, attempt: Int) {
+    handshakeWriteAckTask?.cancel()
+    let writeSession = linkSession
+    Self.commissioningTrace(
+      "HANDSHAKE_WRITE_ACK_WATCHDOG_ARMED link_session=\(writeSession) attempt=\(attempt) outstanding_chunks=\(pendingCommandChunks.count) timeout_seconds=2"
+    )
+    handshakeWriteAckTask = Task { [weak self, weak peripheral] in
+      try? await Task.sleep(for: Self.handshakeWriteAckTimeout)
+      guard !Task.isCancelled, let self, let peripheral,
+        self.linkSession == writeSession, self.isActivePeripheral(peripheral),
+        self.peripheralConnected, self.handshake == nil,
+        self.handshakeWriteAttemptInFlight == attempt,
+        !self.pendingCommandChunks.isEmpty
+      else { return }
+      self.handshakeWriteAckTask = nil
+      let outstandingChunks = self.pendingCommandChunks.count
+      self.pendingCommandChunks.removeAll()
+      self.commandChunksPending = 0
+      self.handshakeWriteAttemptInFlight = nil
+      self.handshakeRequested = false
+      Self.commissioningTrace(
+        "HANDSHAKE_WRITE_ACK_TIMEOUT link_session=\(writeSession) attempt=\(attempt) outstanding_chunks=\(outstandingChunks) action=cancel-link-no-retry"
+      )
+      self.failHandshakeWriteAcknowledgement(on: peripheral, attempt: attempt)
+    }
+  }
+
+  private func armHandshakeResponseWatchdog(on peripheral: CBPeripheral, attempt: Int) {
+    handshakeResponseTask?.cancel()
+    let responseSession = linkSession
+    Self.commissioningTrace(
+      "HANDSHAKE_REQUEST_QUEUED link_session=\(responseSession) attempt=\(attempt) limit=\(Self.handshakeResponseAttemptLimit) timeout_seconds=2"
+    )
+    handshakeResponseTask = Task { [weak self, weak peripheral] in
+      try? await Task.sleep(for: Self.handshakeResponseTimeout)
+      guard !Task.isCancelled, let self, let peripheral,
+        self.linkSession == responseSession, self.isActivePeripheral(peripheral),
+        self.peripheralConnected, self.handshake == nil,
+        self.handshakeResponseAttemptCount == attempt
+      else { return }
+      self.handshakeResponseTask = nil
+      Self.commissioningTrace(
+        "HANDSHAKE_RESPONSE_TIMEOUT link_session=\(responseSession) attempt=\(attempt) limit=\(Self.handshakeResponseAttemptLimit) health_received=\(self.lastHealthReceivedAt != nil)"
+      )
+      if self.handshakeWriteAttemptInFlight != nil || !self.pendingCommandChunks.isEmpty {
+        Self.commissioningTrace(
+          "HANDSHAKE_RETRY_BLOCKED reason=prior-write-unfinished link_session=\(responseSession) attempt=\(attempt) chunks=\(self.pendingCommandChunks.count)"
+        )
+        self.failHandshakeWriteAcknowledgement(on: peripheral, attempt: attempt)
+        return
+      }
+      if attempt < Self.handshakeResponseAttemptLimit {
+        self.handshakeRequested = false
+        self.transportMessage =
+          "Gateway contract did not answer; retrying handshake \(attempt + 1)/\(Self.handshakeResponseAttemptLimit)…"
+        self.requestHandshakeIfReady()
+        return
+      }
+      self.failUnresponsiveHandshake(on: peripheral, attempts: attempt)
+    }
+  }
+
+  private func failUnresponsiveHandshake(on peripheral: CBPeripheral, attempts: Int) {
+    guard isActivePeripheral(peripheral), handshake == nil else { return }
+    handshakeRetryTask?.cancel()
+    handshakeRetryTask = nil
+    handshakeWriteAckTask?.cancel()
+    handshakeWriteAckTask = nil
+    handshakeResponseTask?.cancel()
+    handshakeResponseTask = nil
+    handshakeWriteAttemptInFlight = nil
+    handshakeRequested = false
+    reconnectIntentRequested = false
+    automaticReconnectEnabled = false
+    automaticReconnectActive = false
+    let message =
+      "Physical BLE is available, but the VHOS contract did not answer after \(attempts) handshake attempts. Select Reconnect to start one clean session."
+    lastTransportFailureAt = Date()
+    lastTransportFailureEvidence =
+      "handshake-response-timeout: attempts=\(attempts) link_session=\(linkSession)"
+    Self.commissioningTrace(
+      "HANDSHAKE_RESPONSE_EXHAUSTED link_session=\(linkSession) attempts=\(attempts) action=cancel-link-for-explicit-reconnect peripheral={\(peripheralEvidence(peripheral))}"
+    )
+    retireRestoredPeripheral(peripheral, reason: "handshake-response-timeout")
+    resetTransportSession()
+    state = .degraded
+    transportMessage = connectionCleanupActive
+      ? "\(message) Finishing the unresponsive link first…" : message
+  }
+
+  private func failHandshakeWriteAcknowledgement(on peripheral: CBPeripheral, attempt: Int) {
+    guard isActivePeripheral(peripheral), handshake == nil else { return }
+    handshakeRetryTask?.cancel()
+    handshakeRetryTask = nil
+    handshakeWriteAckTask?.cancel()
+    handshakeWriteAckTask = nil
+    handshakeResponseTask?.cancel()
+    handshakeResponseTask = nil
+    handshakeWriteAttemptInFlight = nil
+    pendingCommandChunks.removeAll()
+    commandChunksPending = 0
+    handshakeRequested = false
+    reconnectIntentRequested = false
+    automaticReconnectEnabled = false
+    automaticReconnectActive = false
+    let message =
+      "The saved BLE link did not acknowledge handshake write attempt \(attempt). Select Reconnect after this stale link closes."
+    lastTransportFailureAt = Date()
+    lastTransportFailureEvidence =
+      "handshake-write-ack-timeout: attempt=\(attempt) link_session=\(linkSession)"
+    Self.commissioningTrace(
+      "HANDSHAKE_WRITE_FAILURE_LINK_CLOSE link_session=\(linkSession) attempt=\(attempt) peripheral={\(peripheralEvidence(peripheral))}"
+    )
+    retireRestoredPeripheral(peripheral, reason: "handshake-write-ack-timeout")
+    resetTransportSession()
+    state = .degraded
+    transportMessage = connectionCleanupActive
+      ? "\(message) Finishing the unresponsive link first…" : message
   }
 
   private func consume(_ frame: GatewayFrame) throws {
@@ -692,7 +1479,23 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     }
     switch frame.messageType {
     case .handshake:
+      guard handshakeRequested, handshakeWriteAttemptInFlight == nil,
+        pendingCommandChunks.isEmpty, handshakeResponseTask != nil,
+        notificationRequestSession == linkSession, streamNotificationsEnabled
+      else {
+        Self.commissioningTrace(
+          "UNSOLICITED_OR_STALE_HANDSHAKE_IGNORED link_session=\(linkSession) requested=\(handshakeRequested) write_in_flight=\(handshakeWriteAttemptInFlight != nil) chunks=\(pendingCommandChunks.count) response_window=\(handshakeResponseTask != nil) stream_confirmed=\(streamNotificationsEnabled)"
+        )
+        return
+      }
       let value = try VHOSJSON.decoder().decode(GatewayHandshake.self, from: frame.payload)
+      handshakeRetryTask?.cancel()
+      handshakeRetryTask = nil
+      handshakeWriteAckTask?.cancel()
+      handshakeWriteAckTask = nil
+      handshakeResponseTask?.cancel()
+      handshakeResponseTask = nil
+      handshakeWriteAttemptInFlight = nil
       _ = try portableFrameStore.append(
         frame: frame,
         sourceRole: .obdCAN,
@@ -702,6 +1505,9 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       portableFrameCount = portableFrameStore.count()
       handshake = value
       lastHandshakeReceivedAt = Date()
+      if let peripheral, isActivePeripheral(peripheral) {
+        rememberHandshakeVerified(peripheral)
+      }
       state = .vhosConnected
       reconnectAttemptCount = 0
       transportMessage = "VHOS gateway contract active."
@@ -926,8 +1732,14 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   }
 
   private func connect(_ peripheral: CBPeripheral) {
+    if let active = self.peripheral, active !== peripheral {
+      Self.commissioningTrace(
+        "PARALLEL_CONNECT_REJECTED active=\(peripheralEvidence(active)) candidate=\(peripheralEvidence(peripheral))"
+      )
+      central.cancelPeripheralConnection(peripheral)
+      return
+    }
     self.peripheral = peripheral
-    peripheral.delegate = self
     if peripheral.state == .connected {
       beginServiceDiscovery(peripheral, source: "already-connected")
       return
@@ -936,39 +1748,63 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       state = .connecting
       transportMessage = "Waiting for the existing gateway connection…"
       Self.commissioningTrace("CONNECT_WAITING id=\(peripheral.identifier.uuidString)")
-      armRestoredConnectionTimeout(peripheral)
+      armConnectionTimeout(peripheral, source: "existing-connect-request")
       return
     }
+    if peripheral.state == .disconnecting {
+      scanRequested = true
+      scanAfterRestorationCleanup = true
+      transportMessage = "Waiting for the previous gateway link to close before reconnecting…"
+      Self.commissioningTrace(
+        "CONNECT_DISCONNECTING_DEFERRED peripheral=\(peripheralEvidence(peripheral))"
+      )
+      retireRestoredPeripheral(peripheral, reason: "connect-called-while-disconnecting")
+      return
+    }
+    guard peripheral.state == .disconnected else {
+      Self.commissioningTrace(
+        "CONNECT_STATE_REJECTED peripheral=\(peripheralEvidence(peripheral))"
+      )
+      return
+    }
+    Self.commissioningTrace(
+      "CONNECT_REQUEST peripheral=\(peripheralEvidence(peripheral)) reconnect_attempt=\(reconnectAttemptCount)"
+    )
     central.connect(
       peripheral,
       options: [
         CBConnectPeripheralOptionNotifyOnDisconnectionKey: true,
       ])
+    armConnectionTimeout(peripheral, source: "new-connect-request")
   }
 
   private func handleDisconnect(
     _ peripheral: CBPeripheral, isSystemReconnecting: Bool, error: Error?
   ) {
-    guard self.peripheral?.identifier == peripheral.identifier else {
+    if completeRetiredPeripheral(peripheral, event: "disconnect", error: error) { return }
+    guard isActivePeripheral(peripheral) else {
       Self.commissioningTrace(
-        "STALE_DISCONNECT_IGNORED id=\(peripheral.identifier.uuidString)"
+        "STALE_DISCONNECT_IGNORED peripheral=\(peripheralEvidence(peripheral)) "
+          + "active=\(activePeripheralEvidence)"
       )
       return
     }
-    let failure = error.map {
-      let value = $0 as NSError
-      return "domain=\(value.domain) code=\(value.code) message=\(value.localizedDescription)"
-    } ?? "none"
+    if pendingStaleGATTRescan {
+      completeStaleGATTRecovery(after: peripheral, event: "disconnect")
+      return
+    }
+    let failure = Self.errorEvidence(error)
+    recordTransportFailure(error, event: "link-disconnected")
     Self.commissioningTrace(
-      "LINK_DISCONNECTED system_reconnecting=\(isSystemReconnecting) \(failure)"
+      "LINK_DISCONNECTED link_session=\(linkSession) pairing_pending=\(notificationPairingPending) system_reconnecting=\(isSystemReconnecting) error={\(failure)}"
     )
     if userRequestedDisconnect || !automaticReconnectEnabled {
       resetConnection()
       transportMessage = "Gateway disconnected by user."
       return
     }
-    resetTransportSession(preservingSelection: true)
     if isSystemReconnecting {
+      resetTransportSession(preservingSelection: true)
       automaticReconnectActive = true
       state = .connecting
       transportMessage = "Connection interrupted; iPhone is automatically reconnecting…"
@@ -979,33 +1815,63 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   }
 
   private func beginServiceDiscovery(_ peripheral: CBPeripheral, source: String) {
+    if isActivePeripheral(peripheral), peripheralConnected {
+      Self.commissioningTrace(
+        "LINK_CONNECTED_DUPLICATE_IGNORED link_session=\(linkSession) source=\(source) peripheral=\(peripheralEvidence(peripheral))"
+      )
+      return
+    }
+    if let active = self.peripheral, active !== peripheral {
+      Self.commissioningTrace(
+        "PARALLEL_LINK_ADOPTION_REJECTED source=\(source) active=\(peripheralEvidence(active)) candidate=\(peripheralEvidence(peripheral))"
+      )
+      central.cancelPeripheralConnection(peripheral)
+      return
+    }
     restoredConnectionTask?.cancel()
     reconnectTask?.cancel()
+    central.stopScan()
+    scanFallbackTask?.cancel()
+    scanRequested = false
+    scanActive = false
     automaticReconnectActive = false
     automaticReconnectEnabled = true
     userRequestedDisconnect = false
     self.peripheral = peripheral
-    peripheral.delegate = self
     peripheralConnected = true
     gatewayIdentityValidated = false
     connectedAt = Date()
     currentSessionResultStartIndex = experimentResults.count
+    linkSession &+= 1
+    installPeripheralDelegate(on: peripheral, for: linkSession)
+    notificationRequestSession = nil
+    notificationPairingPending = false
     state = .connecting
     transportMessage = "Connected; negotiating gateway contract…"
     Self.logger.info("ESP32 BLE connection established via \(source, privacy: .public)")
     Self.commissioningTrace(
-      "LINK_CONNECTED id=\(peripheral.identifier.uuidString) source=\(source) state=\(peripheral.state.rawValue)"
+      "LINK_CONNECTED link_session=\(linkSession) peripheral=\(peripheralEvidence(peripheral)) source=\(source) state=\(peripheral.state.rawValue)"
     )
-    peripheral.discoverServices([Self.vhosService, Self.factoryService])
-    armGATTDiscoveryTimeout(peripheral, phase: "services")
+    if let services = peripheral.services, !services.isEmpty {
+      Self.commissioningTrace(
+        "GATT_CACHE_ADOPTED id=\(peripheral.identifier.uuidString) service_count=\(services.count)"
+      )
+      processDiscoveredServices(
+        peripheral, services: services, source: "cache", callbackSession: linkSession)
+    } else {
+      peripheral.discoverServices([Self.vhosService, Self.factoryService])
+      armGATTDiscoveryTimeout(peripheral, phase: "services")
+    }
   }
 
   private func armGATTDiscoveryTimeout(_ peripheral: CBPeripheral, phase: String) {
     serviceDiscoveryTask?.cancel()
+    let discoverySession = linkSession
     serviceDiscoveryTask = Task { [weak self, weak peripheral] in
       try? await Task.sleep(for: .seconds(12))
       guard !Task.isCancelled, let self, let peripheral,
-        self.peripheral?.identifier == peripheral.identifier, self.peripheralConnected
+        self.acceptsPeripheralCallback(
+          peripheral, callbackSession: discoverySession, event: "gatt-watchdog-\(phase)")
       else { return }
       let complete = phase == "services"
         ? (self.vhosServiceDiscovered || self.factoryServiceDiscovered)
@@ -1020,14 +1886,17 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
           )
           self.refreshStaleGATTCandidate(
             peripheral,
-            reason: "The saved gateway database is stale; scanning for the current gateway identity…")
+            reason:
+              "The saved gateway database is stale; scanning for the current gateway identity…"
+          )
         } else {
           self.rejectCandidateAndResumeScanning(
             peripheral, reason: "BLE candidate did not prove a VHOS/WiCAN service identity.")
         }
         return
       }
-      self.transportMessage = "Verified gateway GATT is not responding; refreshing it automatically…"
+      self.transportMessage =
+        "Verified gateway GATT is not responding; refreshing it automatically…"
       Self.commissioningTrace(
         "GATT_DISCOVERY_TIMEOUT phase=\(phase) id=\(peripheral.identifier.uuidString) state=\(peripheral.state.rawValue)"
       )
@@ -1037,12 +1906,12 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     }
   }
 
-  private func armRestoredConnectionTimeout(_ peripheral: CBPeripheral) {
+  private func armConnectionTimeout(_ peripheral: CBPeripheral, source: String) {
     restoredConnectionTask?.cancel()
     restoredConnectionTask = Task { [weak self, weak peripheral] in
       try? await Task.sleep(for: .seconds(12))
       guard !Task.isCancelled, let self, let peripheral,
-        self.peripheral?.identifier == peripheral.identifier,
+        self.isActivePeripheral(peripheral),
         !self.peripheralConnected
       else { return }
       if peripheral.state == .connected {
@@ -1053,37 +1922,46 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         return
       }
       Self.commissioningTrace(
-        "RESTORED_CONNECT_TIMEOUT id=\(peripheral.identifier.uuidString) state=\(peripheral.state.rawValue) recovery=cancel-and-scan"
+        "CONNECT_TIMEOUT id=\(peripheral.identifier.uuidString) state=\(peripheral.state.rawValue) source=\(source) recovery=cancel-and-service-scan"
       )
       self.transportMessage =
         "The restored BLE connection stopped responding; scanning again automatically…"
-      self.central.cancelPeripheralConnection(peripheral)
+      self.retireRestoredPeripheral(peripheral, reason: "restored-connection-timeout")
       self.resetTransportSession()
-      self.startScan(source: "restored-connection-timeout")
+      self.scanRequested = true
+      self.scanAfterRestorationCleanup = true
+      if self.retiredRestoredPeripherals.isEmpty {
+        self.scanAfterRestorationCleanup = false
+        self.startScan(source: "connection-timeout-fallback", skipConnectedRetrieval: true)
+      }
     }
   }
 
   private func scheduleReconnect(to peripheral: CBPeripheral, error: Error?) {
     reconnectTask?.cancel()
+    let wasPairingPending = notificationPairingPending
+    let reason = connectionFailureMessage(
+      error,
+      fallback: "BLE link interrupted.",
+      pairingWasPending: wasPairingPending
+    )
     resetTransportSession(preservingSelection: true)
     self.peripheral = peripheral
-    peripheral.delegate = self
     reconnectAttemptCount += 1
     automaticReconnectActive = true
     state = .connecting
     let delays = [1, 2, 4, 8, 15, 30]
     let delay = delays[min(reconnectAttemptCount - 1, delays.count - 1)]
-    let reason = connectionFailureMessage(error, fallback: "BLE link interrupted.")
     transportMessage =
       "\(reason) Reconnecting automatically in \(delay) second\(delay == 1 ? "" : "s")…"
     Self.commissioningTrace(
-      "RECONNECT_SCHEDULED attempt=\(reconnectAttemptCount) delay=\(delay)"
+      "RECONNECT_SCHEDULED attempt=\(reconnectAttemptCount) delay=\(delay) previous_pairing_pending=\(wasPairingPending) error={\(Self.errorEvidence(error))}"
     )
     reconnectTask = Task { [weak self, weak peripheral] in
       try? await Task.sleep(for: .seconds(delay))
       guard !Task.isCancelled, let self, let peripheral,
         self.automaticReconnectEnabled, !self.userRequestedDisconnect,
-        self.central.state == .poweredOn
+        self.central.state == .poweredOn, self.isActivePeripheral(peripheral)
       else { return }
       self.transportMessage =
         "Reconnecting to \(self.canonicalDisplayName)…"
@@ -1097,13 +1975,238 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     Self.commissioningTrace("CENTRAL_REBUILD reason=peer-removed-pairing-information")
     central.stopScan()
     central.delegate = nil
+    restoredCleanupTask?.cancel()
+    restoredCleanupTask = nil
+    retiredRestoredPeripherals.removeAll()
+    pendingRestoredPeripheral = nil
+    scanAfterRestorationCleanup = false
+    connectionCleanupActive = false
+    centralCleanupRecoveryPending = false
     resetTransportSession()
     scanRequested = true
+    reconnectIntentRequested = true
     automaticReconnectEnabled = true
     userRequestedDisconnect = false
     state = .scanning
     transportMessage = "Resetting the Bluetooth session for fresh pairing…"
-    central = CBCentralManager(delegate: self, queue: .main, options: nil)
+    replaceCentralManager(reason: "peer-removed-pairing-information")
+  }
+
+  private func replaceCentralManager(reason: String) {
+    let previousIdentifier = currentCentralRestoreIdentifier
+    central.stopScan()
+    central.delegate = nil
+    let replacementIdentifier =
+      "\(Self.centralRestoreIdentifier).\(UUID().uuidString.lowercased())"
+    currentCentralRestoreIdentifier = replacementIdentifier
+    UserDefaults.standard.set(
+      replacementIdentifier, forKey: Self.centralRestoreIdentifierKey)
+    Self.commissioningTrace(
+      "CENTRAL_MANAGER_REPLACED reason=\(reason) previous_restore_id=\(previousIdentifier) replacement_restore_id=\(replacementIdentifier)"
+    )
+    central = CBCentralManager(
+      delegate: self,
+      queue: .main,
+      options: [CBCentralManagerOptionRestoreIdentifierKey: replacementIdentifier]
+    )
+  }
+
+  private func isActivePeripheral(_ candidate: CBPeripheral) -> Bool {
+    guard let peripheral else { return false }
+    return peripheral === candidate
+  }
+
+  private func installPeripheralDelegate(on peripheral: CBPeripheral, for session: UInt64) {
+    retireActivePeripheralDelegate()
+    let delegate = LinkScopedPeripheralDelegate(owner: self, linkSession: session)
+    activePeripheralDelegate = delegate
+    peripheral.delegate = delegate
+    if retiredPeripheralDelegates.count > 8,
+      let oldest = retiredPeripheralDelegates.keys.min()
+    {
+      retiredPeripheralDelegates.removeValue(forKey: oldest)
+    }
+    Self.commissioningTrace(
+      "PERIPHERAL_DELEGATE_INSTALLED link_session=\(session) peripheral=\(peripheralEvidence(peripheral))"
+    )
+  }
+
+  private func retireActivePeripheralDelegate() {
+    guard let delegate = activePeripheralDelegate else { return }
+    retiredPeripheralDelegates[delegate.linkSession] = delegate
+    activePeripheralDelegate = nil
+  }
+
+  private func acceptsPeripheralCallback(
+    _ candidate: CBPeripheral, callbackSession: UInt64, event: String
+  ) -> Bool {
+    guard callbackSession == linkSession, peripheralConnected,
+      isActivePeripheral(candidate),
+      activePeripheralDelegate?.linkSession == callbackSession
+    else {
+      Self.commissioningTrace(
+        "STALE_PERIPHERAL_CALLBACK_IGNORED event=\(event) callback_session=\(callbackSession) active_session=\(linkSession) connected=\(peripheralConnected) candidate={\(peripheralEvidence(candidate))} active={\(activePeripheralEvidence)}"
+      )
+      return false
+    }
+    return true
+  }
+
+  private var activePeripheralEvidence: String {
+    peripheral.map(peripheralEvidence) ?? "none"
+  }
+
+  private func peripheralEvidence(_ peripheral: CBPeripheral) -> String {
+    "id=\(peripheral.identifier.uuidString),object=\(ObjectIdentifier(peripheral)),state=\(peripheral.state.rawValue)"
+  }
+
+  private func restorationStateRank(_ state: CBPeripheralState) -> Int {
+    switch state {
+    case .connected: 0
+    case .connecting: 1
+    case .disconnected: 2
+    case .disconnecting: 3
+    @unknown default: 4
+    }
+  }
+
+  private func retireRestoredPeripheral(_ peripheral: CBPeripheral, reason: String) {
+    let key = ObjectIdentifier(peripheral)
+    guard retiredRestoredPeripherals[key] == nil else { return }
+    guard
+      peripheral.state == .connected || peripheral.state == .connecting
+        || peripheral.state == .disconnecting
+    else {
+      Self.commissioningTrace(
+        "RESTORED_PERIPHERAL_ALREADY_IDLE reason=\(reason) peripheral=\(peripheralEvidence(peripheral))"
+      )
+      return
+    }
+    if isActivePeripheral(peripheral) {
+      retireActivePeripheralDelegate()
+    }
+    peripheral.delegate = nil
+    retiredRestoredPeripherals[key] = peripheral
+    connectionCleanupActive = true
+    Self.commissioningTrace(
+      "RESTORED_PERIPHERAL_RETIRING reason=\(reason) peripheral=\(peripheralEvidence(peripheral))"
+    )
+    if peripheral.state != .disconnecting {
+      central.cancelPeripheralConnection(peripheral)
+    }
+    armRetiredPeripheralCleanupWatchdog()
+  }
+
+  @discardableResult
+  private func completeRetiredPeripheral(
+    _ peripheral: CBPeripheral, event: String, error: Error?
+  ) -> Bool {
+    let key = ObjectIdentifier(peripheral)
+    guard retiredRestoredPeripherals.removeValue(forKey: key) != nil else { return false }
+    Self.commissioningTrace(
+      "RESTORED_PERIPHERAL_RETIRED event=\(event) peripheral=\(peripheralEvidence(peripheral)) error={\(Self.errorEvidence(error))} remaining=\(retiredRestoredPeripherals.count)"
+    )
+    guard retiredRestoredPeripherals.isEmpty else {
+      armRetiredPeripheralCleanupWatchdog()
+      return true
+    }
+    finishRetiredPeripheralCleanup(source: event)
+    return true
+  }
+
+  private func finishRetiredPeripheralCleanup(source: String) {
+    restoredCleanupTask?.cancel()
+    restoredCleanupTask = nil
+    connectionCleanupActive = false
+    Self.commissioningTrace(
+      "RESTORED_CLEANUP_COMPLETE source=\(source) user_disconnected=\(userRequestedDisconnect) pending_restore=\(pendingRestoredPeripheral != nil) scan_after=\(scanAfterRestorationCleanup)"
+    )
+    if userRequestedDisconnect {
+      pendingRestoredPeripheral = nil
+      scanAfterRestorationCleanup = false
+      transportMessage = "Gateway disconnected by user."
+      return
+    }
+    if let restored = pendingRestoredPeripheral {
+      pendingRestoredPeripheral = nil
+      resumeRestoredPeripheral(restored)
+      return
+    }
+    if scanAfterRestorationCleanup {
+      scanAfterRestorationCleanup = false
+      startScan(source: "restoration-cleanup-complete", skipConnectedRetrieval: true)
+      return
+    }
+    if state == .degraded {
+      transportMessage =
+        "The previous BLE link is closed. Select Reconnect to start one clean session."
+    }
+  }
+
+  private func armRetiredPeripheralCleanupWatchdog() {
+    restoredCleanupTask?.cancel()
+    restoredCleanupGeneration &+= 1
+    let cleanupGeneration = restoredCleanupGeneration
+    guard !retiredRestoredPeripherals.isEmpty else {
+      connectionCleanupActive = false
+      return
+    }
+    connectionCleanupActive = true
+    Self.commissioningTrace(
+      "RESTORED_CLEANUP_WATCHDOG_ARMED generation=\(cleanupGeneration) count=\(retiredRestoredPeripherals.count) timeout_seconds=4"
+    )
+    restoredCleanupTask = Task { [weak self] in
+      try? await Task.sleep(for: Self.restoredCleanupTimeout)
+      guard !Task.isCancelled, let self,
+        self.restoredCleanupGeneration == cleanupGeneration,
+        !self.retiredRestoredPeripherals.isEmpty
+      else { return }
+      self.restoredCleanupTask = nil
+      let stillActive = self.retiredRestoredPeripherals.values.filter {
+        $0.state != .disconnected
+      }
+      Self.commissioningTrace(
+        "RESTORED_CLEANUP_WATCHDOG_FIRED generation=\(cleanupGeneration) retained=\(self.retiredRestoredPeripherals.count) still_active=\(stillActive.count)"
+      )
+      if stillActive.isEmpty {
+        self.retiredRestoredPeripherals.removeAll()
+        self.finishRetiredPeripheralCleanup(source: "watchdog-observed-disconnected")
+        return
+      }
+      self.rebuildCentralAfterCleanupTimeout(stillActive, generation: cleanupGeneration)
+    }
+  }
+
+  private func rebuildCentralAfterCleanupTimeout(
+    _ stillActive: [CBPeripheral], generation: UInt64
+  ) {
+    let shouldReconnect = reconnectIntentRequested && !userRequestedDisconnect
+    Self.commissioningTrace(
+      "RESTORED_CLEANUP_CENTRAL_RECOVERY generation=\(generation) active=\(stillActive.count) reconnect_intent=\(shouldReconnect) action=cancel-old-central-before-rebuild"
+    )
+    for stale in stillActive {
+      stale.delegate = nil
+      if stale.state != .disconnecting {
+        central.cancelPeripheralConnection(stale)
+      }
+    }
+    central.stopScan()
+    central.delegate = nil
+    restoredCleanupTask?.cancel()
+    restoredCleanupTask = nil
+    retiredRestoredPeripherals.removeAll()
+    pendingRestoredPeripheral = nil
+    scanAfterRestorationCleanup = false
+    resetTransportSession()
+    scanRequested = shouldReconnect
+    automaticReconnectActive = shouldReconnect
+    state = shouldReconnect ? .connecting : .disconnected
+    transportMessage = shouldReconnect
+      ? "Refreshing Core Bluetooth before reconnecting to the verified gateway…"
+      : "Finishing the previous BLE link…"
+    connectionCleanupActive = true
+    centralCleanupRecoveryPending = true
+    replaceCentralManager(reason: "retired-peripheral-cleanup-timeout")
   }
 
   private var validatedPeripheralIdentifiers: Set<String> {
@@ -1116,6 +2219,23 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     GatewayBLEIdentityPolicy.restorationIsAllowed(
       identifier: peripheral.identifier.uuidString,
       validatedIdentifiers: validatedPeripheralIdentifiers)
+  }
+
+  private func isHandshakeVerified(_ peripheral: CBPeripheral) -> Bool {
+    guard let identifier = verifiedSavedGatewayIdentifier else { return false }
+    return identifier.caseInsensitiveCompare(peripheral.identifier.uuidString) == .orderedSame
+  }
+
+  private func rememberHandshakeVerified(_ peripheral: CBPeripheral) {
+    let identifier = peripheral.identifier.uuidString.uppercased()
+    verifiedSavedGatewayIdentifier = identifier
+    UserDefaults.standard.set(
+      identifier,
+      forKey: Self.handshakeVerifiedPeripheralIdentifierKey
+    )
+    Self.commissioningTrace(
+      "RESTORATION_TRUST_PROMOTED peripheral=\(peripheralEvidence(peripheral)) link_session=\(linkSession) basis=verified-handshake"
+    )
   }
 
   private func rememberValidated(_ peripheral: CBPeripheral) {
@@ -1131,6 +2251,11 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     identifiers.remove(peripheral.identifier.uuidString.uppercased())
     UserDefaults.standard.set(
       identifiers.sorted(), forKey: Self.validatedPeripheralIdentifiersKey)
+    if isHandshakeVerified(peripheral) {
+      verifiedSavedGatewayIdentifier = nil
+      UserDefaults.standard.removeObject(
+        forKey: Self.handshakeVerifiedPeripheralIdentifierKey)
+    }
     candidateWasPreviouslyValidated = false
   }
 
@@ -1148,7 +2273,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   }
 
   private func refreshStaleGATTCandidate(_ peripheral: CBPeripheral, reason: String) {
-    guard self.peripheral?.identifier == peripheral.identifier else { return }
+    guard isActivePeripheral(peripheral) else { return }
     Self.commissioningTrace(
       "STALE_GATT_CANDIDATE_RETIRED id=\(peripheral.identifier.uuidString)"
     )
@@ -1156,15 +2281,49 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     automaticReconnectActive = false
     reconnectTask?.cancel()
     serviceDiscoveryTask?.cancel()
+    central.stopScan()
+    scanActive = false
+    scanRequested = false
+    pendingStaleGATTRescan = true
+    pendingStaleGATTReason = reason
+    state = .connecting
+    transportMessage =
+      "\(reason) Waiting for the stale BLE link to close; no Settings cleanup is required."
     central.cancelPeripheralConnection(peripheral)
-    resetTransportSession()
-    startScan(source: "stale-gatt-recovery")
-    transportMessage = "\(reason) No Settings cleanup is required."
   }
 
-  private func connectionFailureMessage(_ error: Error?, fallback: String) -> String {
+  private func completeStaleGATTRecovery(after peripheral: CBPeripheral, event: String) {
+    guard pendingStaleGATTRescan, isActivePeripheral(peripheral) else {
+      return
+    }
+    let reason = pendingStaleGATTReason
+      ?? "The saved gateway database is stale; scanning for the current gateway identity…"
+    pendingStaleGATTRescan = false
+    pendingStaleGATTReason = nil
+    Self.commissioningTrace(
+      "STALE_GATT_DISCONNECT_CONFIRMED id=\(peripheral.identifier.uuidString) event=\(event)"
+    )
+    resetTransportSession()
+    state = .disconnected
+    transportMessage = "\(reason) Starting a fresh service-filtered scan…"
+    startScan(source: "stale-gatt-disconnect-confirmed", skipConnectedRetrieval: true)
+  }
+
+  private func recordTransportFailure(_ error: Error?, event: String) {
+    guard let error else { return }
+    lastTransportFailureAt = Date()
+    lastTransportFailureEvidence = "\(event): \(Self.errorEvidence(error))"
+  }
+
+  private func connectionFailureMessage(
+    _ error: Error?, fallback: String, pairingWasPending: Bool = false
+  ) -> String {
     guard let error else { return fallback }
     let value = error as NSError
+    if value.domain == CBErrorDomain, value.code == 6, pairingWasPending {
+      return
+        "Secure BLE pairing timed out (CBError.connectionTimeout, code 6)."
+    }
     if value.domain == CBErrorDomain,
       value.code == CBError.encryptionTimedOut.rawValue
     {
@@ -1179,14 +2338,72 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       return
         "iPhone still has stale gateway pairing state. Toggle Bluetooth off and on, then scan again."
     }
-    return error.localizedDescription
+    return "\(error.localizedDescription) [\(Self.errorSymbol(error)), code \(value.code)]"
+  }
+
+  private static func errorSymbol(_ error: Error) -> String {
+    let value = error as NSError
+    if value.domain == CBErrorDomain {
+      switch value.code {
+      case 0: return "CBError.unknown"
+      case 1: return "CBError.invalidParameters"
+      case 2: return "CBError.invalidHandle"
+      case 3: return "CBError.notConnected"
+      case 4: return "CBError.outOfSpace"
+      case 5: return "CBError.operationCancelled"
+      case 6: return "CBError.connectionTimeout"
+      case 7: return "CBError.peripheralDisconnected"
+      case 8: return "CBError.uuidNotAllowed"
+      case 9: return "CBError.alreadyAdvertising"
+      case 10: return "CBError.connectionFailed"
+      case 11: return "CBError.connectionLimitReached"
+      case 12: return "CBError.unknownDevice"
+      case 13: return "CBError.operationNotSupported"
+      case 14: return "CBError.peerRemovedPairingInformation"
+      case 15: return "CBError.encryptionTimedOut"
+      case 16: return "CBError.tooManyLEPairedDevices"
+      default: return "CBError.unknownCode"
+      }
+    }
+    if value.domain == CBATTErrorDomain {
+      switch value.code {
+      case CBATTError.insufficientAuthentication.rawValue:
+        return "CBATTError.insufficientAuthentication"
+      case CBATTError.insufficientAuthorization.rawValue:
+        return "CBATTError.insufficientAuthorization"
+      case CBATTError.insufficientEncryption.rawValue:
+        return "CBATTError.insufficientEncryption"
+      default:
+        return "CBATTError.code\(value.code)"
+      }
+    }
+    return "\(value.domain).code\(value.code)"
+  }
+
+  private static func errorEvidence(_ error: Error?) -> String {
+    guard let error else { return "none" }
+    let value = error as NSError
+    let message = value.localizedDescription
+      .replacingOccurrences(of: "\n", with: " ")
+      .replacingOccurrences(of: "\r", with: " ")
+    return
+      "domain=\(value.domain) code=\(value.code) symbol=\(errorSymbol(error)) message=\(message)"
   }
 
   private static func commissioningTrace(_ message: String) {
     guard ProcessInfo.processInfo.environment[commissioningTraceEnvironmentKey] == "1" else {
       return
     }
-    FileHandle.standardError.write(Data("VHOS_COMMISSIONING \(message)\n".utf8))
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    let wallClock = formatter.string(from: Date())
+    let monotonicMicroseconds = UInt64(ProcessInfo.processInfo.systemUptime * 1_000_000)
+    FileHandle.standardError.write(
+      Data(
+        "VHOS_COMMISSIONING timestamp=\(wallClock) monotonic_us=\(monotonicMicroseconds) \(message)\n"
+          .utf8
+      )
+    )
   }
 
   private func trace(_ message: String) {
@@ -1214,14 +2431,30 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     scanFallbackTask?.cancel()
     serviceDiscoveryTask?.cancel()
     restoredConnectionTask?.cancel()
+    handshakeRetryTask?.cancel()
+    handshakeRetryTask = nil
+    handshakeWriteAckTask?.cancel()
+    handshakeWriteAckTask = nil
+    handshakeResponseTask?.cancel()
+    handshakeResponseTask = nil
+    notificationEnableTask?.cancel()
+    notificationEnableTask = nil
+    handshakeWriteAttemptInFlight = nil
+    selectedPeripheral?.delegate = nil
+    retireActivePeripheralDelegate()
     peripheral = nil
     command = nil
+    factoryReadCharacteristic = nil
     streamDecoder = GatewayFrameStreamDecoder()
     pendingCommandChunks.removeAll()
     commandChunksPending = 0
     handshakeRequested = false
     handshakeSecurityRetryCount = 0
-    notificationSecurityRetryCounts.removeAll()
+    handshakeResponseAttemptCount = 0
+    notificationCharacteristics.removeAll()
+    notificationSetupInFlight = nil
+    notificationRequestSession = nil
+    notificationPairingPending = false
     peripheralConnected = false
     gatewayIdentityValidated = false
     connectedAt = nil
