@@ -124,6 +124,9 @@ The current saved-vehicle evidence and strict UI interpretation boundary are rec
 [CAN discovery display baseline](docs/development/CAN-DISCOVERY-DISPLAY-BASELINE-2026-08-18.md).
 The supported-PID, synchronized Toyota-reference, and private-outbox implementation is recorded in
 [the August 18 J1979/evidence delivery](docs/development/J1979-REFERENCE-VALIDATION-AND-PRIVATE-OUTBOX-2026-08-18.md).
+The governing unknown-by-default whole-vehicle model, head-unit inventory contract, 2005 4Runner
+configuration guard, and evidence-basis separation are recorded in
+[the whole-vehicle digital-twin foundation](docs/development/WHOLE-VEHICLE-DIGITAL-TWIN-FOUNDATION-2026-08-18.md).
 
 ## Safety boundary
 

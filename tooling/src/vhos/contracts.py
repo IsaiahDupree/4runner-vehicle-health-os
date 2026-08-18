@@ -21,6 +21,7 @@ SCHEMA_BY_CONTRACT = {
     "capture.bundle.manifest": "capture-bundle-manifest.schema.json",
     "evidence.outbox-envelope": "evidence-outbox-envelope.schema.json",
     "equation.definition": "equation-definition.schema.json",
+    "platform.head-unit-inventory": "head-unit-inventory.schema.json",
     "raw.observation": "raw-observation.schema.json",
     "obd.j1979-response": "j1979-response.schema.json",
     "obd.j1979-standard-sample": "j1979-standard-sample.schema.json",
@@ -29,6 +30,9 @@ SCHEMA_BY_CONTRACT = {
     "sensor.node.telemetry": "sensor-node-telemetry.schema.json",
     "signal.definition": "signal-definition.schema.json",
     "signal.sample": "signal-sample.schema.json",
+    "vehicle.configuration-profile": "vehicle-profile.schema.json",
+    "vehicle.digital-twin.snapshot": "vehicle-digital-twin-snapshot.schema.json",
+    "vehicle.health-assessment": "vehicle-health-assessment.schema.json",
 }
 
 

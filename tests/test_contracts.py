@@ -7,7 +7,7 @@ from vhos.ids import deterministic_id
 def test_all_json_schemas_are_valid() -> None:
     checked = ContractCatalog.load().check_schemas()
 
-    assert len(checked) >= 19
+    assert len(checked) >= 23
 
 
 def test_vehicle_interpretation_requires_evidence() -> None:

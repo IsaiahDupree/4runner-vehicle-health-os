@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/head-unit-inventory.schema.json",
+  "title": "VHOS Android head-unit inventory v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract", "contract_version", "inventory_id", "captured_at", "application",
+    "hardware", "android", "display", "capabilities"
+  ],
+  "properties": {
+    "contract": {"const": "platform.head-unit-inventory"},
+    "contract_version": {"const": "1.0.0"},
+    "inventory_id": {"type": "string", "format": "uuid"},
+    "captured_at": {"$ref": "common.schema.json#/$defs/wallTime"},
+    "application": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["package_id", "version_name", "version_code", "installer_package"],
+      "properties": {
+        "package_id": {"const": "dev.vhos.headunit"},
+        "version_name": {"type": "string", "minLength": 1, "maxLength": 80},
+        "version_code": {"type": "integer", "minimum": 1},
+        "installer_package": {"type": ["string", "null"], "maxLength": 240}
+      }
+    },
+    "hardware": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "manufacturer", "model", "device", "product", "board", "hardware",
+        "cpu_descriptor", "supported_abis", "logical_cpu_count", "total_ram_bytes",
+        "available_ram_bytes", "total_internal_storage_bytes", "free_internal_storage_bytes",
+        "low_ram_device"
+      ],
+      "properties": {
+        "manufacturer": {"type": "string", "minLength": 1, "maxLength": 160},
+        "model": {"type": "string", "minLength": 1, "maxLength": 160},
+        "device": {"type": "string", "minLength": 1, "maxLength": 160},
+        "product": {"type": "string", "minLength": 1, "maxLength": 160},
+        "board": {"type": "string", "minLength": 1, "maxLength": 160},
+        "hardware": {"type": "string", "minLength": 1, "maxLength": 160},
+        "cpu_descriptor": {"type": ["string", "null"], "maxLength": 240},
+        "supported_abis": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1, "maxLength": 80}
+        },
+        "logical_cpu_count": {"type": "integer", "minimum": 1, "maximum": 1024},
+        "total_ram_bytes": {"type": "integer", "minimum": 1},
+        "available_ram_bytes": {"type": "integer", "minimum": 0},
+        "total_internal_storage_bytes": {"type": "integer", "minimum": 1},
+        "free_internal_storage_bytes": {"type": "integer", "minimum": 0},
+        "low_ram_device": {"type": "boolean"}
+      }
+    },
+    "android": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["release", "api_level", "security_patch", "build_fingerprint"],
+      "properties": {
+        "release": {"type": "string", "minLength": 1, "maxLength": 80},
+        "api_level": {"type": "integer", "minimum": 26},
+        "security_patch": {"type": "string", "maxLength": 80},
+        "build_fingerprint": {"type": "string", "minLength": 1, "maxLength": 512}
+      }
+    },
+    "display": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width_pixels", "height_pixels", "density_dpi", "width_dp", "height_dp"],
+      "properties": {
+        "width_pixels": {"type": "integer", "minimum": 1},
+        "height_pixels": {"type": "integer", "minimum": 1},
+        "density_dpi": {"type": "integer", "minimum": 1},
+        "width_dp": {"type": "integer", "minimum": 1},
+        "height_dp": {"type": "integer", "minimum": 1}
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ble_feature", "bluetooth_scan_permission", "bluetooth_connect_permission",
+        "notification_permission", "unknown_source_install", "battery_optimization_exempt"
+      ],
+      "properties": {
+        "ble_feature": {"type": "boolean"},
+        "bluetooth_scan_permission": {"enum": ["GRANTED", "DENIED", "NOT_APPLICABLE"]},
+        "bluetooth_connect_permission": {"enum": ["GRANTED", "DENIED", "NOT_APPLICABLE"]},
+        "notification_permission": {"enum": ["GRANTED", "DENIED", "NOT_APPLICABLE"]},
+        "unknown_source_install": {"enum": ["ALLOWED", "OWNER_APPROVAL_REQUIRED", "UNAVAILABLE"]},
+        "battery_optimization_exempt": {"type": "boolean"}
+      }
+    }
+  }
+}
