@@ -4,8 +4,8 @@ Date: 2026-08-18
 Status: nonempty in-vehicle transfer failure reproduced on firmware dev29 and iOS 0.3.4 (10);
 iOS 0.3.5 (11) contains the failure by using inventory-only refresh while recording is active;
 firmware dev31 adds a matching server-side exclusion boundary; iOS 0.3.8 (14) records the reset
-reason reported by dev31+ handshakes and defers fringe-range encrypted links; physical regression
-acceptance remains open
+reason reported by dev31+ handshakes and defers fringe-range encrypted links. The exact clean dev31
+artifact is now flashed and USB-bench boot verified; vehicle regression acceptance remains open
 
 ## Symptom
 
@@ -111,7 +111,7 @@ This containment protects the live CAN receive path and BLE application session.
 that firmware dev29 can safely export a nonempty capture concurrently with recording. Resumable
 bulk transfer remains deferred until the recorder is stopped.
 
-## Dev31 server boundary and iOS 0.3.6 evidence
+## Dev31 server boundary and iOS 0.3.8 evidence
 
 Firmware dev31 independently enforces the same rule: a history read or manual rotation is rejected
 until logging is stopped, CAN producers are quiescent, and every queued or in-flight record has
@@ -124,6 +124,12 @@ iOS 0.3.8 (14) preserves that optional reset reason in the persistent
 `reset_reason=unavailable`. After one saved-identifier attempt, an encryption timeout moves to a
 service-filtered scan. A matching advertisement weaker than -84 dBm remains visible but does not
 start another encrypted link; the recorder emits
-`WEAK_GATEWAY_DEFERRED` with the observed RSSI. The exact dev31 binary is source/build verified, but vehicle capture,
-paused export, forced mid-transfer disconnect, and electrical power-loss acceptance remain open
-until that binary is installed on the gateway and exercised in the car.
+`WEAK_GATEWAY_DEFERRED` with the observed RSSI. A physical iPhone trace from 0.3.8 (14) observed the
+gateway at -98 dBm and recorded exactly that deferral instead of entering another encrypted-link
+timeout loop.
+
+The exact clean dev31 application (`a4234a4cea591a6759f49457dac39fd1e50237556d46674db348d07dfef5d72e`)
+is flashed on the identified OBD gateway. USB-bench boot verified the clean embedded build ID,
+listen-only CAN startup, disabled SoftAP, retained 126,752-byte previous capture, and retained BLE
+bond records. Vehicle capture, paused export, forced mid-transfer disconnect, and electrical
+power-loss acceptance remain open until exercised in the car.
