@@ -1,8 +1,10 @@
 # Passive CAN capture analysis and acquisition roadmap — 2026-08-17
 
-- Status: user-provided field analysis preserved for replay and implementation planning.
-- Source artifact status: the originating NDJSON was not attached in this turn; numeric results
-  below must be reproduced from the immutable capture before they become verified project evidence.
+- Status: replay-verified against the immutable evidence copied from the installed iPhone app on
+  2026-08-17/18.
+- Source artifact: `iphone-vhos-evidence-20260817T2222-0400.zip`, 250,600 bytes, SHA-256
+  `6654e436c4945bc9d712c8c761b7769a56e2c6046976002e5135c6ffebfcf0b1`. The archive remains a
+  local evidence artifact rather than a public source file.
 - Decoder authority: every CAN identifier, field meaning, byte order, and scale below is a
   `DISCOVERY_CANDIDATE`, not an accepted 4Runner Vehicle Signal Pack definition.
 
@@ -18,9 +20,43 @@ signal-discovery analyzer.
 This record preserves the analysis while enforcing the project rule that an interesting
 correlation is not yet a decoded vehicle signal.
 
-## Reported capture metrics
+## Acquired iPhone evidence set
 
-| Metric | Reported result | Evidence meaning |
+The iPhone container copy reproduced the original 336-record focal capture and added four more
+sessions from the same gateway. All 2,136 retained records report 11-bit, non-RTR, 500 kbit/s,
+listen-only CAN. Seventeen identifiers occur in every session.
+
+| Session ID | Records | Duration (s) | Sequence span | Estimated observed rate (frames/s) | Retained rate (records/s) | Sequence coverage |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 740,616,386 | 864 | 23.532650 | 1–12,664 | 538.103 | 36.672 | 6.822% |
+| 1,007,674,331 | 432 | 11.676020 | 1–6,404 | 548.389 | 36.913 | 6.746% |
+| 1,846,258,254 | 192 | 5.130097 | 1–2,861 | 557.494 | 37.231 | 6.711% |
+| 2,020,748,856 | 312 | 8.364094 | 1–4,653 | 556.187 | 37.183 | 6.705% |
+| 4,020,849,719 | 336 | 9.099846 | 1–4,895 | 537.811 | 36.814 | 6.864% |
+
+The portable evidence store contains 1,599 CRC-protected VHOS logical frames:
+
+| Message type | Meaning | Frames |
+| ---: | --- | ---: |
+| 1 | Handshake | 65 |
+| 2 | Live raw CAN sample | 221 |
+| 4 | Gateway health | 1,185 |
+| 12 | Persistent-capture index | 53 |
+| 13 | Persistent-capture chunk | 75 |
+
+The six strongest change-rich discovery candidates across the retained set are `0x022`, `0x023`,
+`0x025`, `0x2C1`, `0x2C4`, and `0x2D0`. That ranking is based only on payload diversity; it grants
+no semantic name, unit, scale, or health authority.
+
+The focal session's Toyota-style checksum result was also reproduced. For the eight candidate
+families listed below, the final data byte equals the low eight bits of the 11-bit identifier's two
+bytes, actual DLC, and preceding payload bytes. The result is 271 valid of 271 applicable retained
+frames. This remains a candidate family rule until controlled corruption vectors and exact model
+applicability are versioned.
+
+## Reproduced focal-capture metrics
+
+| Metric | Reproduced result | Evidence meaning |
 | --- | ---: | --- |
 | Capture duration | 9.10 s | Short field snapshot |
 | Exported records | 336 | Records present in the analyzed NDJSON |
@@ -29,8 +65,8 @@ correlation is not yet a decoded vehicle signal.
 | Exported-record rate | ~36.9 records/s | Retained/exported subset, not raw receive throughput |
 | Sequence coverage in export | ~6.86% | Expected to be incomplete under the `dev.11` per-ID flash sampling policy |
 | Unique exported CAN IDs | 17 | Visible population in this short sampled interval |
-| Reported dynamic IDs | `022`, `023`, `025`, `2C1`, `2C4`, `2D0` | Candidates for controlled experiments |
-| Toyota-style checksum results | 271/271 applicable frames valid | Strong candidate payload-integrity evidence; algorithm/applicability must be replay-verified |
+| Change-rich IDs | `022`, `023`, `025`, `2C1`, `2C4`, `2D0` | Candidates for controlled experiments |
+| Toyota-style checksum results | 271/271 applicable frames valid | Strong candidate payload-integrity evidence; algorithm/applicability still requires versioned model validation |
 | Frame configuration | 11-bit, 500 kbit/s | Strongly supported by the passive gateway lock and capture |
 
 ### Critical interpretation of sequence coverage
@@ -53,7 +89,7 @@ bus rate because sequence is assigned before sampling.
 
 ### Settled-window stability
 
-The analysis reports a probable rotational candidate at `0x2C4` with:
+Replay of the focal capture produces a rotational candidate at `0x2C4` with:
 
 | Window | Mean | Minimum | Maximum | Standard deviation | CV |
 | --- | ---: | ---: | ---: | ---: | ---: |
@@ -78,10 +114,10 @@ idle range.
 
 ### `0x2D0` relationship candidate
 
-The first two bytes of `0x2D0` reportedly vary from approximately 2,599 to 3,099 while the compared
-`0x2C4` candidate varies from approximately 1,314 to 1,549. Reported findings:
+The first two bytes of `0x2D0` vary from approximately 2,599 to 3,099 while the compared `0x2C4`
+candidate varies from approximately 1,314 to 1,549. Reproduced findings:
 
-- correlation: approximately `0.994`;
+- correlation: approximately `0.994–0.996`, depending on the bounded nearest-time pairing rule;
 - median ratio: approximately `1.981`; and
 - provisional relation: `2D0_word ~= 2 * 2C4_candidate` in this capture.
 
@@ -102,14 +138,14 @@ driveline-speed hypothesis. Neither result alone establishes a production decode
 
 ### `0x025` repeated-channel consistency
 
-For all 43 reported `0x025` records, bytes 4, 5, and 6 are equal, with values reportedly spanning
-120–126. A meaning-independent consistency feature can be defined as:
+For all 43 focal-capture `0x025` records, bytes 4, 5, and 6 are equal, with values spanning 120–126.
+A meaning-independent consistency feature can be defined as:
 
 ```text
 candidate_channel_disagreement = max(byte4, byte5, byte6) - min(byte4, byte5, byte6)
 ```
 
-Reported result: `0` throughout this capture.
+Reproduced result: `0` throughout this capture.
 
 This can be used immediately as discovery evidence for repeated fields. It cannot be called a
 steering-sensor health metric until the field semantics, redundancy design, scaling, and
@@ -117,7 +153,7 @@ applicability are established for the exact 2005 4Runner configuration.
 
 ### `0x022` and `0x023` biased-channel hypothesis
 
-Reported 16-bit candidates cluster near decimal 512 (`0x0200`):
+Replayed 16-bit candidates cluster near decimal 512 (`0x0200`):
 
 | ID | Candidate word 0 | Candidate word 1 |
 | --- | ---: | ---: |
@@ -131,8 +167,9 @@ hypotheses.
 
 ## Candidate Toyota additive-checksum evidence
 
-The supplied analysis reports 271 valid checks out of 271 applicable frames when the calculation
-uses each frame's actual DLC, including a DLC of 7 for `0x023`. Reported matching IDs:
+The acquired focal capture reproduces 271 valid checks out of 271 applicable frames when the
+calculation uses the identifier's two bytes, each frame's actual DLC, and preceding payload bytes,
+including a DLC of 7 for `0x023`. Matching IDs:
 
 - `0x022`
 - `0x023`
@@ -143,7 +180,8 @@ uses each frame's actual DLC, including a DLC of 7 for `0x023`. Reported matchin
 - `0x2D0`
 - `0x420`
 
-Before this becomes gateway production telemetry, replay must establish:
+Before this becomes gateway production telemetry, versioned test vectors and controlled captures
+must lock down:
 
 1. the exact checksum construction;
 2. identifier inclusion/exclusion rules;

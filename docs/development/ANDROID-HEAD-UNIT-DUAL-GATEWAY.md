@@ -1,8 +1,8 @@
 # Android head-unit dual-ESP32 architecture and connection requirements
 
-Status: Android repository, first OBD/CAN vertical slice, Android/iPhone golden-bundle sync, and
-signed cross-target Release Hub implemented; physical head-unit acceptance and A/C node BLE/OTA
-implementation pending
+Status: public Android `0.1.0-dev.4` prerelease, first OBD/CAN vertical slice, transactional
+Android/iPhone evidence-bundle sync, and signed cross-target Release Hub implemented; physical
+head-unit acceptance and A/C node BLE/OTA implementation pending
 
 ## Outcome
 
@@ -31,7 +31,7 @@ it.
 
 | Device | Present role | Current connectivity | Android readiness |
 | --- | --- | --- | --- |
-| `VHOS-4R-OBD-B08D14` | Development OBD/CAN gateway; classic ESP32 with MrDIY CAN Shield v1.3+ | VHOS BLE service is implemented and physically enumerated; CAN is forced listen-only; normal Wi-Fi SoftAP is disabled | Ready for the first Android BLE/GATT client |
+| `VHOS-4R-OBD-B08D14` | Development OBD/CAN gateway; classic ESP32 with MrDIY CAN Shield v1.3+ | VHOS BLE service is implemented and physically enumerated; CAN is forced listen-only; normal Wi-Fi SoftAP is disabled | Android dev.4 client is build/release verified; physical head-unit BLE acceptance remains open |
 | A/C ESP32-S3, base MAC `20:6e:f1:98:bd:20` | Future ADC, pressure, temperature, power, POST/BIT, and storage node | Current `EMPTY_RECOVERY` image reports identity/health only over USB serial; BLE, Wi-Fi, ADC, and sensors are deliberately disabled | Not connectable from Android until the sensor-node BLE milestone is implemented |
 
 This distinction must remain visible in tickets and UI. The Android app can be proven against the
@@ -107,9 +107,9 @@ The current OBD/CAN gateway uses this public contract:
 | --- | --- | --- |
 | VHOS primary service | `33613EB3-FFCA-42D1-83FA-A18F12B3F123` | Advertised by a supported gateway |
 | Reliable command write | `B3D3279B-0244-4D54-A2AB-A1AB47A5FC0A` | Encrypted write / write without response with application acknowledgements where required |
-| Evidence stream | `265B90C0-A600-4659-BBBD-5CDA411C49CC` | Encrypted read/notify, framed payload chunks |
-| Health stream | `BCB5699A-A9B4-49B8-B69B-D2DFF19B41A9` | Encrypted read/notify, handshake and current health |
-| OTA status stream | `18D21F8E-D190-4DB3-923C-27BBFC355874` | Encrypted read/notify, update and rollback state |
+| Multiplexed stream | `265B90C0-A600-4659-BBBD-5CDA411C49CC` | The one encrypted CCCD enabled by current clients; carries independently typed evidence, health, capture, and OTA frames |
+| Health compatibility characteristic | `BCB5699A-A9B4-49B8-B69B-D2DFF19B41A9` | Must remain registered for the current GATT schema; current clients do not enable its CCCD |
+| OTA compatibility characteristic | `18D21F8E-D190-4DB3-923C-27BBFC355874` | Must remain registered for the current GATT schema; current clients do not enable its CCCD |
 
 The A/C firmware should reuse this transport service and characteristic contract so the Android
 transport implementation remains device-role neutral. The handshake's supported message types
@@ -133,7 +133,7 @@ Android accepts a device only after all of the following are true:
 
 1. the user has approved or previously associated the physical device;
 2. the advertised or discovered GATT service matches the VHOS contract;
-3. the encrypted link and required notifications are active;
+3. the encrypted link and current-link multiplexed stream notification are active;
 4. a complete handshake passes both CRC checks and deployed JSON contract decoding;
 5. the protocol major is supported;
 6. the declared maximum frame size is within the app's configured ceiling;
@@ -278,6 +278,14 @@ The first coexistence policy is explicit ownership handoff:
 
 A future controller-lease message may automate this handoff, but it requires a versioned shared
 contract and firmware implementation. Multi-central BLE support is not an MVP assumption.
+
+Historical transfer is already independent of BLE ownership. The iPhone can create a checksummed
+`.vhossync` archive and Android dev.4 can import it append-only. Android verifies the ZIP/manifest,
+segment and envelope hashes, outer VHOS CRC32C, persistent-record inner CRC32C, and listen-only proof
+before materializing imported CAN observations in the same transaction. Direct background transfer
+over the iPhone hotspot is not implemented yet; the present handoff uses an owner-selected file
+provider or removable storage. Live telemetry should come directly from the ESP32 after the iPhone
+releases its BLE connection.
 
 ## Ingest and durable evidence
 
@@ -483,7 +491,8 @@ entities directly.
 ### AH3 — Physical CAN gateway
 
 - Associate the current MrDIY gateway.
-- Complete secure discovery, four notifications, handshake, health, live CAN, and persistent log sync.
+- Complete secure discovery, the single encrypted multiplexed stream subscription, handshake,
+  health, live CAN, and persistent log sync.
 - Run foreground/background, sleep/resume, and head-unit reboot tests.
 
 ### AH4 — A/C node transport firmware
@@ -525,7 +534,8 @@ The Android head-unit client is not complete until physical evidence proves:
 1. exact head-unit identity and supported Android behavior are recorded;
 2. the app associates with the correct two devices without name-only trust;
 3. two encrypted GATT sessions stream concurrently for at least 30 minutes;
-4. all four shared characteristics and both role-specific handshakes are validated;
+4. the service, command, and three registered stream/compatibility characteristics are validated;
+   only the current multiplexed stream CCCD is enabled, and both role-specific handshakes pass;
 5. source CRC failures, sequence gaps, resets, drops, and stale data are visible and isolated;
 6. raw observations survive app termination, head-unit reboot, and ignition sleep/resume;
 7. CAN and A/C records retain distinct identity and time mappings in a combined export;
@@ -539,15 +549,16 @@ The Android head-unit client is not complete until physical evidence proves:
 
 ## Blocking decisions and next action
 
-The immediate next action is to capture the AH0 audit from the actual head unit. Required owner
-inputs are the model/SKU or Settings screenshots showing Android version, build number, storage,
-Bluetooth, and Wi-Fi details. USB debugging and installation posture should be recorded at the same
-time.
+The available Settings evidence identifies the head unit as model `Q91-A4-CPL`, reporting Android
+13.0, security patch level 2020-02-01, kernel 4.14.116, and build/custom build
+`android-trunk-p0`. Those labels are not sufficient acceptance proof. The next action is to install
+the public dev.4 APK through the iPhone-hotspot release portal and record package-install behavior,
+actual BLE-central operation, ABI/RAM/storage, ignition sleep/resume, and USB-debugging posture on
+that physical unit.
 
-In parallel, the existing Android implementation can begin only with platform-neutral
-`gateway-protocol`, capture, simulator/replay, and persistence tests. Physical A/C integration is
-blocked by design until the ESP32-S3 moves beyond `EMPTY_RECOVERY` and exposes real, versioned BLE
-telemetry.
+Development can continue with platform-neutral protocol/replay tests and physical OBD/CAN
+commissioning on the head unit. Physical A/C integration remains blocked by design until the
+ESP32-S3 moves beyond `EMPTY_RECOVERY` and exposes real, versioned BLE telemetry.
 
 ## References
 
