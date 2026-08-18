@@ -51,6 +51,7 @@ public struct GatewayHandshake: Codable, Equatable, Sendable {
   public let capabilities: Set<GatewayCapability>
   public let otaUploadURL: String?
   public let otaMaximumImageBytes: Int?
+  public let resetReason: Int?
 
   private enum CodingKeys: String, CodingKey {
     case contract
@@ -67,6 +68,7 @@ public struct GatewayHandshake: Codable, Equatable, Sendable {
     case capabilities
     case otaUploadURL = "otaUploadUrl"
     case otaMaximumImageBytes
+    case resetReason
   }
 
   public init(
@@ -83,7 +85,8 @@ public struct GatewayHandshake: Codable, Equatable, Sendable {
     capabilities: Set<GatewayCapability>,
     otaUploadURL: String?,
     otaMaximumImageBytes: Int?,
-    bootloaderVersion: String? = nil
+    bootloaderVersion: String? = nil,
+    resetReason: Int? = nil
   ) {
     self.contract = contract
     self.contractVersion = contractVersion
@@ -99,6 +102,7 @@ public struct GatewayHandshake: Codable, Equatable, Sendable {
     self.capabilities = capabilities
     self.otaUploadURL = otaUploadURL
     self.otaMaximumImageBytes = otaMaximumImageBytes
+    self.resetReason = resetReason
   }
 }
 

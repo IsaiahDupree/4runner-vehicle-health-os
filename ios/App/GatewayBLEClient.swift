@@ -1584,7 +1584,9 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       reconnectAttemptCount = 0
       transportMessage = "VHOS gateway contract active."
       Self.logger.info("VHOS gateway handshake verified")
-      Self.commissioningTrace("HANDSHAKE_VERIFIED firmware=\(value.firmwareVersion)")
+      Self.commissioningTrace(
+        "HANDSHAKE_VERIFIED firmware=\(value.firmwareVersion) reset_reason=\(value.resetReason.map(String.init) ?? "unavailable")"
+      )
       captureSessions = captureStore.summaries()
       if value.capabilities.contains(.persistentEvidenceLog) {
         refreshCaptureLogIndex()

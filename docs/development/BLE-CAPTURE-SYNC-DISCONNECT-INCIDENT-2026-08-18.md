@@ -3,7 +3,8 @@
 Date: 2026-08-18
 Status: nonempty in-vehicle transfer failure reproduced on firmware dev29 and iOS 0.3.4 (10);
 iOS 0.3.5 (11) contains the failure by using inventory-only refresh while recording is active;
-firmware export hardening and physical regression acceptance remain open
+firmware dev31 adds a matching server-side exclusion boundary; iOS 0.3.6 (12) records the reset
+reason reported by dev31+ handshakes; physical regression acceptance remains open
 
 ## Symptom
 
@@ -107,5 +108,18 @@ iOS 0.3.5 (11) changes capture synchronization policy:
 
 This containment protects the live CAN receive path and BLE application session. It does not claim
 that firmware dev29 can safely export a nonempty capture concurrently with recording. Resumable
-bulk transfer must remain deferred until the recorder is stopped or a later firmware version passes
-the in-vehicle concurrency, forced-disconnect, and power-loss matrix.
+bulk transfer remains deferred until the recorder is stopped.
+
+## Dev31 server boundary and iOS 0.3.6 evidence
+
+Firmware dev31 independently enforces the same rule: a history read or manual rotation is rejected
+until logging is stopped, CAN producers are quiescent, and every queued or in-flight record has
+finished. The read path repeats that proof while holding the capture-file lock. Periodic health now
+uses an in-memory status snapshot, export chunks are reduced to 12 records, and the handshake
+reports `reset_reason` from ESP-IDF.
+
+iOS 0.3.6 (12) preserves that optional reset reason in the persistent
+`HANDSHAKE_VERIFIED` flight-recorder event. Older firmware remains compatible and records
+`reset_reason=unavailable`. The exact dev31 binary is source/build verified, but vehicle capture,
+paused export, forced mid-transfer disconnect, and electrical power-loss acceptance remain open
+until that binary is installed on the gateway and exercised in the car.

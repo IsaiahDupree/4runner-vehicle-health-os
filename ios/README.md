@@ -10,9 +10,10 @@ Native SwiftUI control surface for the VHOS gateway contract. Minimum deployment
 - Versioned VHOS BLE service and framed message transport with CRC32C.
 - Gateway handshake, live health, bounded protocol-discovery results, and evidence export.
 - Resumable download of the ESP32 current/previous passive CAN flight-recorder segments, CRC
-  validation, durable iPhone NDJSON storage, Recent Logs, and share-sheet export. iOS 0.3.5 uses
+  validation, durable iPhone NDJSON storage, Recent Logs, and share-sheet export. iOS 0.3.6 uses
   inventory-only refresh while the recorder reports `logging=true`; bulk history transfer is
-  deferred until recording stops so it cannot destabilize live acquisition or BLE recovery.
+  deferred until recording stops so it cannot destabilize live acquisition or BLE recovery. It
+  also persists the optional ESP-IDF reset reason reported by dev31+ in the BLE flight recorder.
 - Always-on, bounded CoreBluetooth connection flight recorder with structured NDJSON export for
   scan, GATT, subscription, handshake, disconnect, and automatic-recovery diagnosis.
 - Live commissioning dashboard with distinct iPhone/BLE, ESP32 service/handshake, OBD-II,

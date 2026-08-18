@@ -3,6 +3,18 @@ import Testing
 
 @testable import VHOSCore
 
+@Test func gatewayHandshakePreservesFirmwareResetReason() throws {
+  let payload = Data(
+    """
+    {"active_config_id":"cfg","active_config_version":"1.0.0","capabilities":["capture.passive"],"contract":"gateway.handshake","contract_version":"1.0.0","firmware_build_id":"build","firmware_version":"0.1.0-dev.31","gateway_id":"esp32-test","hardware_revision":"A1","listen_only":true,"protocol_version":"1.0.0","reset_reason":7}
+    """.utf8)
+
+  let handshake = try VHOSJSON.decoder().decode(GatewayHandshake.self, from: payload)
+
+  #expect(handshake.resetReason == 7)
+  #expect(handshake.firmwareVersion == "0.1.0-dev.31")
+}
+
 @Test func otaActivationContractUsesExplicitIdentifiersAndDecodesCredentials() throws {
   let packageID = UUID(uuidString: "8D963E52-9FC9-4B3B-9C60-4A72C5E0148D")!
   let request = OTAControlRequest(
