@@ -20,6 +20,9 @@ E0 plus the first native iOS control slice are implemented here:
 - offline replay with integrity, sequence, timestamp, and schema validation;
 - a versioned passive-CAN discovery analyzer that reports acquisition facts, sampling coverage,
   raw activity, checksum candidates, and correlations without assigning unverified vehicle meanings;
+- a source-pinned 2005 4Runner passive-CAN hypothesis pack and real-corpus evaluator that exposes
+  candidate fields, conflicting transforms, limitations, and validation gates while keeping the
+  accepted signal count at zero;
 - an immutable eight-session/5,176-record real-CAN replay corpus with SHA-256 provenance, clean and
   faulted live/history reconstruction, and production-decoder load tests in Python, Swift, and Kotlin;
 - self-resynchronizing mobile stream decoders that surface discarded/corrupt transport bytes and
@@ -65,6 +68,9 @@ python3 -m venv .venv
 .venv/bin/vhos calculate-ac build/captures/ac-bench-sweep
 .venv/bin/vhos discover-can path/to/passive-can-recent-logs.ndjson \
   --output build/can-discovery.report.json
+.venv/bin/vhos evaluate-can-hypotheses \
+  test-replay/real-can-2026-08-18/sessions \
+  --output build/can-signal-hypotheses.report.json
 .venv/bin/vhos validate-can-replay-corpus test-replay/real-can-2026-08-18
 .venv/bin/vhos replay-can-corpus test-replay/real-can-2026-08-18 \
   --mode live --repeat 20 --fault clean
@@ -119,7 +125,7 @@ The stable device labels and separation from transport identifiers are defined i
 | `web-flasher/` | Public backup-first ESP32-S3 installer and recovery UI |
 | `android/` | Preserved original Android module boundary; not the primary client after ADR-0003 |
 | `firmware/` | Shared ESP32 component boundaries and read-only safety policy |
-| `vehicle-signal-packs/` | Validated vehicle-specific signal/configuration packs; no speculative constants |
+| `vehicle-signal-packs/` | Accepted signal/configuration packs plus separately contracted, discovery-only hypothesis packs that cannot feed owner health |
 
 Related public repositories keep runtime ownership separate: Android head unit
 [`4runner-vhos-android`](https://github.com/IsaiahDupree/4runner-vhos-android), OBD firmware
@@ -146,6 +152,9 @@ remaining hardware-in-loop gates are recorded in
 [the cross-device reliability lab](docs/development/CROSS-DEVICE-RELIABILITY-LAB-2026-08-18.md).
 The supported-PID, synchronized Toyota-reference, and private-outbox implementation is recorded in
 [the August 18 J1979/evidence delivery](docs/development/J1979-REFERENCE-VALIDATION-AND-PRIVATE-OUTBOX-2026-08-18.md).
+The current source-pinned Toyota signal candidates, corpus results, interpretation boundaries, and
+minimum validation session are recorded in
+[the CAN signal interpretation record](docs/development/CAN-SIGNAL-INTERPRETATION-2026-08-18.md).
 The governing unknown-by-default whole-vehicle model, head-unit inventory contract, 2005 4Runner
 configuration guard, and evidence-basis separation are recorded in
 [the whole-vehicle digital-twin foundation](docs/development/WHOLE-VEHICLE-DIGITAL-TWIN-FOUNDATION-2026-08-18.md).

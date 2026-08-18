@@ -28,6 +28,7 @@ from .j1979 import (
 )
 from .replay import replay_bundle
 from .reference_correlation import ReferenceCorrelationError, correlate_can_with_reference
+from .signal_hypotheses import SignalHypothesisError, evaluate_can_hypotheses
 from .simulator import generate_ac_bench_sweep, generate_cold_start_idle
 
 
@@ -73,6 +74,23 @@ def build_parser() -> argparse.ArgumentParser:
         help="One or more passive CAN NDJSON files or directories",
     )
     discover_can.add_argument("--output", type=Path)
+
+    evaluate_hypotheses = subcommands.add_parser(
+        "evaluate-can-hypotheses",
+        help="Evaluate unverified cross-model signal hypotheses against passive target evidence",
+    )
+    evaluate_hypotheses.add_argument(
+        "input",
+        type=Path,
+        nargs="+",
+        help="One or more passive CAN NDJSON files or directories",
+    )
+    evaluate_hypotheses.add_argument(
+        "--pack",
+        type=Path,
+        help="Versioned can.signal-hypothesis-pack; defaults to the checked-in 2005 4Runner pack",
+    )
+    evaluate_hypotheses.add_argument("--output", type=Path)
 
     build_can_replay = subcommands.add_parser(
         "build-can-replay-corpus",
@@ -277,6 +295,12 @@ def main(argv: list[str] | None = None) -> int:
                 )
             _print_json(report)
             return 0
+        if args.command == "evaluate-can-hypotheses":
+            report = evaluate_can_hypotheses(args.input, pack_path=args.pack)
+            if args.output:
+                _write_new_json(args.output, report)
+            _print_json(report)
+            return 0
         if args.command == "build-can-replay-corpus":
             manifest = build_can_replay_corpus(
                 args.input,
@@ -441,6 +465,7 @@ def main(argv: list[str] | None = None) -> int:
         EvidenceInboxError,
         J1979Error,
         ReferenceCorrelationError,
+        SignalHypothesisError,
         OSError,
         ValueError,
     ) as exc:

@@ -1,5 +1,10 @@
 # 2005 4Runner CAN and OBD source audit
 
+> Follow-up: the source-pinned, executable hypothesis pack and its evaluation against all 5,176
+> retained observations are documented in
+> [`CAN-SIGNAL-INTERPRETATION-2026-08-18.md`](CAN-SIGNAL-INTERPRETATION-2026-08-18.md).
+> This earlier audit preserves the capture and research boundary as it existed at the time.
+
 Date: 2026-08-18
 
 Status: discovery research; no signal promotion

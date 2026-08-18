@@ -14,9 +14,14 @@
   },
   "automatic_ingestion": {
     "repository_registry": "AVAILABLE",
-    "iphone_can_evidence": "MANUAL_SHARE_REQUIRED",
-    "iphone_ble_flight_recorder": "MANUAL_SHARE_REQUIRED",
-    "remote_agent_inbox": "NOT_IMPLEMENTED"
+    "iphone_can_evidence": "LOCAL_EXPORT_AND_PRIVATE_OUTBOX_IMPLEMENTED_CONFIGURATION_REQUIRED",
+    "iphone_ble_flight_recorder": "LOCAL_EXPORT_IMPLEMENTED",
+    "remote_agent_inbox": "IMPLEMENTED_CONFIGURATION_REQUIRED"
+  },
+  "hypothesis_artifacts": {
+    "pack": "vehicle-signal-packs/toyota-4runner-2005-passive-can-hypotheses.v1.json",
+    "evaluation": "docs/evidence/can-signal-hypotheses-2026-08-18-5176.report.json",
+    "accepted_signal_definitions": 0
   },
   "sources": [
     {
@@ -47,9 +52,19 @@
       "id": "comma-opendbc",
       "authority_level": "B",
       "publisher": "comma.ai",
-      "url": "https://github.com/commaai/opendbc",
+      "url": "https://github.com/commaai/opendbc/tree/b4ef5e1cf406ff143fa67bdbfb154739d43279c9/opendbc/dbc",
+      "revision": "b4ef5e1cf406ff143fa67bdbfb154739d43279c9",
       "scope": "Open DBC parsing, replay, CAN comparison, and vehicle-port workflow.",
       "limitations": "No accepted exact 2005 4Runner signal pack was established for this project during this review."
+    },
+    {
+      "id": "realdash-fj-cruiser-cedfdf49",
+      "authority_level": "C",
+      "publisher": "RealDash-extras contributor M. Main",
+      "url": "https://github.com/janimm/RealDash-extras/blob/cedfdf491b53d331625930909f949b657441f4a3/RealDash-CAN/XML-files/toyota/toyota_fj_can.xml",
+      "revision": "cedfdf491b53d331625930909f949b657441f4a3",
+      "scope": "Community mapping labeled for a 2012 Toyota FJ Cruiser and useful for related-platform field and scaling hypotheses.",
+      "limitations": "Later model year, community-maintained artifact, and no exact 2005 4Runner applicability proof."
     },
     {
       "id": "community-toyota-lexus-aim-dbc",
@@ -69,13 +84,13 @@
     }
   ],
   "capture_basis": {
-    "report": "docs/evidence/can-discovery-2026-08-18.report.json",
-    "sessions": 5,
-    "retained_records": 2544,
+    "report": "docs/evidence/can-discovery-2026-08-18-5176.report.json",
+    "sessions": 8,
+    "retained_records": 5176,
     "unique_identifiers": 17,
     "identifier_format": "11-bit",
     "bitrate_bps": 500000,
-    "sequence_coverage": 0.067987
+    "sequence_coverage": 0.068196
   },
   "candidate_cross_references": [
     {
@@ -109,23 +124,44 @@
     {
       "identifier": "0x2C1",
       "capture_present": true,
-      "reference_source_ids": ["csu-toyota-can-2010-camry", "community-toyota-lexus-aim-dbc"],
-      "reported_cross_model_meaning": "accelerator-pedal candidate",
+      "reference_source_ids": [
+        "csu-toyota-can-2010-camry",
+        "community-toyota-lexus-aim-dbc",
+        "realdash-fj-cruiser-cedfdf49"
+      ],
+      "reported_cross_model_meaning": "accelerator-pedal byte 6 candidate; related-platform scale 0.5 percent/count",
       "status": "CROSS_MODEL_CANDIDATE"
     },
     {
       "identifier": "0x2C4",
       "capture_present": true,
-      "reference_source_ids": ["csu-toyota-can-2010-camry", "community-toyota-lexus-aim-dbc"],
-      "reported_cross_model_meaning": "engine-speed candidate",
+      "reference_source_ids": [
+        "csu-toyota-can-2010-camry",
+        "community-toyota-lexus-aim-dbc",
+        "realdash-fj-cruiser-cedfdf49"
+      ],
+      "reported_cross_model_meaning": "engine-speed first-word candidate at 0.78125 rpm/count; byte 3 intake-air-temperature candidate",
       "status": "HIGH_PRIORITY_CROSS_MODEL_CANDIDATE"
     },
     {
       "identifier": "0x2D0",
       "capture_present": true,
-      "reference_source_ids": ["csu-toyota-can-2010-camry"],
-      "reported_cross_model_meaning": null,
-      "status": "CORROBORATED_ID_ONLY"
+      "reference_source_ids": [
+        "csu-toyota-can-2010-camry",
+        "realdash-fj-cruiser-cedfdf49"
+      ],
+      "reported_cross_model_meaning": "transmission turbine-speed first-word candidate at 0.390625 rpm/count; selector-code byte 2 candidate",
+      "status": "CROSS_MODEL_CANDIDATE"
+    },
+    {
+      "identifier": "0x224",
+      "capture_present": true,
+      "reference_source_ids": [
+        "csu-toyota-can-2010-camry",
+        "realdash-fj-cruiser-cedfdf49"
+      ],
+      "reported_cross_model_meaning": "brake-pressure field candidate; target evidence is static zero",
+      "status": "CROSS_MODEL_CANDIDATE_UNEXERCISED"
     },
     {
       "identifier": "0x420",
@@ -136,7 +172,7 @@
     }
   ],
   "standardized_read_path": {
-    "status": "RECOMMENDED_NEXT_IMPLEMENTATION",
+    "status": "IMPLEMENTED_AWAITING_IN_VEHICLE_RESPONSE_EVIDENCE",
     "protocol_family": "SAE J1979 over the vehicle-supported legislated OBD transport",
     "first_operation": "supported PID enumeration",
     "authority": "Read-only allowlist only; no Active Tests, DTC clearing, coding, reprogramming, or arbitrary payloads.",

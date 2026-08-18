@@ -16,6 +16,8 @@ class ContractError(ValueError):
 SCHEMA_BY_CONTRACT = {
     "ai.claim": "ai-claim.schema.json",
     "can.discovery.report": "can-discovery-report.schema.json",
+    "can.signal-hypothesis-evaluation": "can-signal-hypothesis-evaluation.schema.json",
+    "can.signal-hypothesis-pack": "can-signal-hypothesis-pack.schema.json",
     "can.replay.corpus": "can-replay-corpus.schema.json",
     "transport.link-reliability-matrix": "transport-link-reliability-matrix.schema.json",
     "calculation.run": "calculation-run.schema.json",

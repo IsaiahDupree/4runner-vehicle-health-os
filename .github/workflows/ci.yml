@@ -35,6 +35,7 @@ jobs:
       - name: Exercise immutable real-CAN replay and recovery
         run: |
           vhos validate-can-replay-corpus test-replay/real-can-2026-08-18
+          vhos evaluate-can-hypotheses test-replay/real-can-2026-08-18/sessions --output build/ci-can-signal-hypotheses.json
           vhos replay-can-corpus test-replay/real-can-2026-08-18 --mode live --repeat 5 --fault clean --output build/ci-real-can-live.json
           vhos replay-can-corpus test-replay/real-can-2026-08-18 --mode history --fault drop-fragment --fault-interval 257 --output build/ci-real-can-drop.json
           vhos replay-can-corpus test-replay/real-can-2026-08-18 --mode live --fault corrupt-payload --fault-interval 101 --output build/ci-real-can-corrupt.json
