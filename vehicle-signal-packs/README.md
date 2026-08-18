@@ -2,6 +2,11 @@
 
 This directory is empty of target-vehicle constants by design. A 2005 4Runner pack is not accepted until engine/drivetrain/trim applicability and each signal's source, transform, unit, range, cadence, and provenance are verified.
 
+Internet and reference research is tracked in
+[`research-source-registry.v1.json`](research-source-registry.v1.json) and the accompanying
+[`2005-4RUNNER-CAN-SOURCE-AUDIT-2026-08-18.md`](../docs/development/2005-4RUNNER-CAN-SOURCE-AUDIT-2026-08-18.md).
+Those records are AI-readable discovery inputs, not accepted signal definitions.
+
 ## Promotion path
 
 1. Record a versioned capture on the target vehicle.

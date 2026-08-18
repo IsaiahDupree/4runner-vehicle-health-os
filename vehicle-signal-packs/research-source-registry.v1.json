@@ -1,0 +1,152 @@
+{
+  "contract": "can.research-source-registry",
+  "contract_version": "1.0.0",
+  "generated_at": "2026-08-18",
+  "authority": "Research inputs and cross-model hypotheses only. Nothing in this registry is an accepted vehicle signal definition.",
+  "target": {
+    "make": "Toyota",
+    "model": "4Runner",
+    "model_year": 2005,
+    "engine": null,
+    "drivetrain": null,
+    "emissions_region": null,
+    "vin_resolved": false
+  },
+  "automatic_ingestion": {
+    "repository_registry": "AVAILABLE",
+    "iphone_can_evidence": "MANUAL_SHARE_REQUIRED",
+    "iphone_ble_flight_recorder": "MANUAL_SHARE_REQUIRED",
+    "remote_agent_inbox": "NOT_IMPLEMENTED"
+  },
+  "sources": [
+    {
+      "id": "sae-j1979-2010-index",
+      "authority_level": "A",
+      "publisher": "SAE International",
+      "url": "https://saemobilus.sae.org/standards/j1979_201009-e-e-diagnostic-test-modes",
+      "scope": "Standard emissions-related diagnostic services, message behavior, timing, and reference to PID definitions in the Digital Annex.",
+      "limitations": "The exact historical revision and Digital Annex must be selected and licensed; applicability must be verified for the exact vehicle, engine, model year, and region."
+    },
+    {
+      "id": "toyota-tis",
+      "authority_level": "A",
+      "publisher": "Toyota Motor Sales, U.S.A.",
+      "url": "https://www.techinfo.toyota.com/techInfoPortal/appmanager/t3/ti?_nfpb=true&_pageLabel=ti_whats_tis",
+      "scope": "Toyota model/year service, repair, wiring, and diagnostic information.",
+      "limitations": "Subscription content; does not itself provide a redistributable exact raw CAN DBC."
+    },
+    {
+      "id": "csu-toyota-can-2010-camry",
+      "authority_level": "B",
+      "publisher": "Colorado State University",
+      "url": "https://www.engr.colostate.edu/~jdaily/tucrrc/ToyotaCAN.html",
+      "scope": "Independent physical-measurement correlation of 11-bit, 500 kbit/s CAN on a 2010 Toyota Camry.",
+      "limitations": "Cross-model research only; no 2005 4Runner byte-layout, scale, unit, or applicability guarantee."
+    },
+    {
+      "id": "comma-opendbc",
+      "authority_level": "B",
+      "publisher": "comma.ai",
+      "url": "https://github.com/commaai/opendbc",
+      "scope": "Open DBC parsing, replay, CAN comparison, and vehicle-port workflow.",
+      "limitations": "No accepted exact 2005 4Runner signal pack was established for this project during this review."
+    },
+    {
+      "id": "community-toyota-lexus-aim-dbc",
+      "authority_level": "C",
+      "publisher": "CAN-DBC-Collection",
+      "url": "https://github.com/billyjack2/CAN-DBC-Collection/blob/6e2f88fd6cd9c1f47d0db7bd022711b106f27027/TOYOTA/LEXUS/can1v3.dbc",
+      "scope": "Candidate layouts for identifiers 0x025, 0x0B4, 0x224, 0x2C1, 0x2C4, and 0x588.",
+      "limitations": "Community artifact with no exact 2005 4Runner applicability proof and no license shown for importing its definitions."
+    },
+    {
+      "id": "aim-production-ecu-catalog",
+      "authority_level": "C",
+      "publisher": "AiM Sports",
+      "url": "https://www.aim-sportline.com/it/documentazione-connessioni-ecu-serie.htm",
+      "scope": "Vendor-published production-vehicle ECU protocol and connection catalog.",
+      "limitations": "No exact 2005 4Runner entry was established in this review."
+    }
+  ],
+  "capture_basis": {
+    "report": "docs/evidence/can-discovery-2026-08-18.report.json",
+    "sessions": 5,
+    "retained_records": 2544,
+    "unique_identifiers": 17,
+    "identifier_format": "11-bit",
+    "bitrate_bps": 500000,
+    "sequence_coverage": 0.067987
+  },
+  "candidate_cross_references": [
+    {
+      "identifier": "0x022",
+      "capture_present": true,
+      "reference_source_ids": ["csu-toyota-can-2010-camry"],
+      "reported_cross_model_meaning": "steering-like signals",
+      "status": "CROSS_MODEL_CANDIDATE"
+    },
+    {
+      "identifier": "0x023",
+      "capture_present": true,
+      "reference_source_ids": ["csu-toyota-can-2010-camry"],
+      "reported_cross_model_meaning": null,
+      "status": "CORROBORATED_ID_ONLY"
+    },
+    {
+      "identifier": "0x025",
+      "capture_present": true,
+      "reference_source_ids": ["csu-toyota-can-2010-camry", "community-toyota-lexus-aim-dbc"],
+      "reported_cross_model_meaning": "steering data / steering-angle candidate",
+      "status": "CROSS_MODEL_CANDIDATE"
+    },
+    {
+      "identifier": "0x223",
+      "capture_present": true,
+      "reference_source_ids": ["csu-toyota-can-2010-camry"],
+      "reported_cross_model_meaning": null,
+      "status": "CORROBORATED_ID_ONLY"
+    },
+    {
+      "identifier": "0x2C1",
+      "capture_present": true,
+      "reference_source_ids": ["csu-toyota-can-2010-camry", "community-toyota-lexus-aim-dbc"],
+      "reported_cross_model_meaning": "accelerator-pedal candidate",
+      "status": "CROSS_MODEL_CANDIDATE"
+    },
+    {
+      "identifier": "0x2C4",
+      "capture_present": true,
+      "reference_source_ids": ["csu-toyota-can-2010-camry", "community-toyota-lexus-aim-dbc"],
+      "reported_cross_model_meaning": "engine-speed candidate",
+      "status": "HIGH_PRIORITY_CROSS_MODEL_CANDIDATE"
+    },
+    {
+      "identifier": "0x2D0",
+      "capture_present": true,
+      "reference_source_ids": ["csu-toyota-can-2010-camry"],
+      "reported_cross_model_meaning": null,
+      "status": "CORROBORATED_ID_ONLY"
+    },
+    {
+      "identifier": "0x420",
+      "capture_present": true,
+      "reference_source_ids": [],
+      "reported_cross_model_meaning": null,
+      "status": "UNMAPPED"
+    }
+  ],
+  "standardized_read_path": {
+    "status": "RECOMMENDED_NEXT_IMPLEMENTATION",
+    "protocol_family": "SAE J1979 over the vehicle-supported legislated OBD transport",
+    "first_operation": "supported PID enumeration",
+    "authority": "Read-only allowlist only; no Active Tests, DTC clearing, coding, reprogramming, or arbitrary payloads.",
+    "independent_reference": "Toyota Techstream Data List or a trusted standard OBD scan tool"
+  },
+  "promotion_policy": {
+    "automatic_promotion": false,
+    "requires_exact_vehicle_applicability": true,
+    "requires_independent_reference": true,
+    "requires_golden_replay": true,
+    "requires_missing_stale_range_tests": true
+  }
+}
