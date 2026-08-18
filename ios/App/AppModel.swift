@@ -229,6 +229,10 @@ final class AppModel {
     try gateway.captureLogExportURL()
   }
 
+  func bleConnectionTraceExportURL() throws -> URL {
+    try gateway.bleConnectionTraceExportURL()
+  }
+
   func evidenceSyncExportURL() throws -> URL {
     let info = Bundle.main.infoDictionary
     return try gateway.evidenceSyncExportURL(

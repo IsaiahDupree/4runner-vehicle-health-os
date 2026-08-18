@@ -258,6 +258,7 @@ private struct EvidenceView: View {
   @Environment(AppModel.self) private var model
   @State private var exportURL: URL?
   @State private var canExportURL: URL?
+  @State private var bleTraceExportURL: URL?
   @State private var syncExportURL: URL?
   @State private var importingSync = false
 
@@ -322,6 +323,34 @@ private struct EvidenceView: View {
             ShareLink(item: canExportURL) {
               Label("Share passive-can-recent-logs.ndjson", systemImage: "square.and.arrow.up")
             }
+          }
+        }
+      }
+      Section("Bluetooth connection flight recorder") {
+        let trace = model.gateway.bleConnectionTraceSummary
+        LabeledContent("Connection events", value: trace.recordCount.formatted())
+        LabeledContent("Rotated files", value: trace.fileCount.formatted())
+        LabeledContent(
+          "Storage used",
+          value: ByteCountFormatter.string(fromByteCount: trace.byteCount, countStyle: .file))
+        Text(
+          "The iPhone records app-observable scan, selection, link, GATT, subscription, "
+            + "handshake, timeout, disconnect, and reconnect events as bounded NDJSON. "
+            + "It does not expose pairing keys or raw Bluetooth controller packets."
+        )
+        .font(.footnote)
+        .foregroundStyle(.secondary)
+        Button("Prepare Bluetooth connection log") {
+          do { bleTraceExportURL = try model.bleConnectionTraceExportURL() } catch {
+            model.errorMessage = error.localizedDescription
+          }
+        }
+        if let bleTraceExportURL {
+          ShareLink(item: bleTraceExportURL) {
+            Label(
+              "Share ble-connection-flight-recorder.ndjson",
+              systemImage: "square.and.arrow.up"
+            )
           }
         }
       }

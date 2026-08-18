@@ -70,6 +70,16 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
 
   private static let logger = Logger(
     subsystem: "com.isaiahdupree.VehicleHealthOS", category: "GatewayBLE")
+  private static let connectionTraceRecorder: BLEConnectionTraceRecorder? = {
+    do {
+      return try BLEConnectionTraceRecorder(
+        directory: BLEConnectionTraceRecorder.defaultDirectory())
+    } catch {
+      logger.error(
+        "BLE flight recorder unavailable: \(error.localizedDescription, privacy: .public)")
+      return nil
+    }
+  }()
   static let vhosService = CBUUID(string: "33613EB3-FFCA-42D1-83FA-A18F12B3F123")
   static let commandCharacteristic = CBUUID(string: "B3D3279B-0244-4D54-A2AB-A1AB47A5FC0A")
   static let streamCharacteristic = CBUUID(string: "265B90C0-A600-4659-BBBD-5CDA411C49CC")
@@ -204,6 +214,11 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   var automaticReconnectActive = false
   var reconnectAttemptCount = 0
 
+  var bleConnectionTraceSummary: BLEConnectionTraceSummary {
+    Self.connectionTraceRecorder?.summary()
+      ?? BLEConnectionTraceSummary(recordCount: 0, fileCount: 0, byteCount: 0)
+  }
+
   var canonicalDisplayName: String {
     GatewayDisplayIdentity.obdName(
       advertisedName: discoveredName,
@@ -247,7 +262,12 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       Self.logger.info("BLE auto-scan requested by commissioning launch")
       trace("AUTO_SCAN_REQUESTED")
     }
-    trace("CLIENT_INITIALIZED restore_identifier=\(currentCentralRestoreIdentifier)")
+    let info = Bundle.main.infoDictionary
+    let appVersion = info?["CFBundleShortVersionString"] as? String ?? "unknown"
+    let appBuild = info?["CFBundleVersion"] as? String ?? "unknown"
+    trace(
+      "CLIENT_INITIALIZED restore_identifier=\(currentCentralRestoreIdentifier) app_version=\(appVersion) app_build=\(appBuild) os={\(ProcessInfo.processInfo.operatingSystemVersionString)}"
+    )
   }
 
   func startScan(source: String = "user", skipConnectedRetrieval: Bool = false) {
@@ -422,6 +442,15 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
 
   func captureLogExportURL() throws -> URL {
     try captureStore.exportURL()
+  }
+
+  func bleConnectionTraceExportURL() throws -> URL {
+    guard let recorder = Self.connectionTraceRecorder else {
+      throw BLEConnectionTraceError.applicationSupportUnavailable
+    }
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(
+      "VehicleHealthOS-Evidence", isDirectory: true)
+    return try recorder.export(to: directory)
   }
 
   func refreshCaptureLogIndex() {
@@ -2501,19 +2530,34 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   }
 
   private static func commissioningTrace(_ message: String) {
-    guard ProcessInfo.processInfo.environment[commissioningTraceEnvironmentKey] == "1" else {
-      return
-    }
     let formatter = ISO8601DateFormatter()
     formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
     let wallClock = formatter.string(from: Date())
     let monotonicMicroseconds = UInt64(ProcessInfo.processInfo.systemUptime * 1_000_000)
-    FileHandle.standardError.write(
-      Data(
-        "VHOS_COMMISSIONING timestamp=\(wallClock) monotonic_us=\(monotonicMicroseconds) \(message)\n"
-          .utf8
+    let processInstance = message.split(whereSeparator: { $0.isWhitespace }).first.flatMap {
+      token -> String? in
+      let value = String(token)
+      guard value.hasPrefix("client=") else { return nil }
+      return String(value.dropFirst("client=".count))
+    }
+    do {
+      try connectionTraceRecorder?.append(
+        recordedAt: wallClock,
+        monotonicMicroseconds: monotonicMicroseconds,
+        processInstance: processInstance,
+        message: message
       )
-    )
+    } catch {
+      logger.error("BLE flight-recorder append failed: \(error.localizedDescription, privacy: .public)")
+    }
+    if ProcessInfo.processInfo.environment[commissioningTraceEnvironmentKey] == "1" {
+      FileHandle.standardError.write(
+        Data(
+          "VHOS_COMMISSIONING timestamp=\(wallClock) monotonic_us=\(monotonicMicroseconds) \(message)\n"
+            .utf8
+        )
+      )
+    }
   }
 
   private func trace(_ message: String) {

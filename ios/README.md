@@ -11,6 +11,8 @@ Native SwiftUI control surface for the VHOS gateway contract. Minimum deployment
 - Gateway handshake, live health, bounded protocol-discovery results, and evidence export.
 - Automatic resumable download of the ESP32 current/previous passive CAN flight-recorder
   segments, CRC validation, durable iPhone NDJSON storage, Recent Logs, and share-sheet export.
+- Always-on, bounded CoreBluetooth connection flight recorder with structured NDJSON export for
+  scan, GATT, subscription, handshake, disconnect, and automatic-recovery diagnosis.
 - Live commissioning dashboard with distinct iPhone/BLE, ESP32 service/handshake, OBD-II,
   safety, capability, OTA, and evidence indicators.
 - Per-candidate status for all four passive CAN candidates and five allowlisted legacy OBD
@@ -31,6 +33,11 @@ on the gateway even when the phone is absent. After a handshake advertising
 `evidence.persistent-log`, the app downloads previous before current, resumes from the local
 record offset, and deduplicates by gateway/session/source sequence. See
 [`docs/development/PASSIVE-CAN-LOGGING-AND-REPLAY.md`](../docs/development/PASSIVE-CAN-LOGGING-AND-REPLAY.md).
+
+Bluetooth transport evidence is stored separately from vehicle observations. Open **Evidence →
+Bluetooth connection flight recorder** to export it without Xcode; retention, event fields,
+privacy boundaries, and deeper Apple/radio escalation paths are documented in the
+[iPhone BLE flight-recorder specification](../docs/development/IPHONE-BLE-CONNECTION-FLIGHT-RECORDER.md).
 
 ## Status semantics
 
