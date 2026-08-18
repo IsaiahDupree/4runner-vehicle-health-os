@@ -24,6 +24,10 @@ E0 plus the first native iOS control slice are implemented here:
   faulted live/history reconstruction, and production-decoder load tests in Python, Swift, and Kotlin;
 - self-resynchronizing mobile stream decoders that surface discarded/corrupt transport bytes and
   recover later valid frames without converting communication faults into vehicle-health claims;
+- a canonical 15-scenario real-evidence reliability matrix covering 20-cycle soak, MTU churn,
+  bursts, duplicates, loss, corruption, reordering, stale link epochs, reconnects, modeled
+  supervision timeout, queue overrun, bounded memory, and mixed interference, with aligned Swift
+  transport tests and a full Kotlin/on-head-unit implementation;
 - per-ECU SAE J1979 supported-PID enumeration, pinned standard read-only value decoding, and an
   iPhone/Android passive-response path that cannot substitute zero for unavailable evidence;
 - synchronized Techstream/reference capture plus a candidate-only analyzer for `0x2C4`, `0x025`,
@@ -66,6 +70,8 @@ python3 -m venv .venv
   --mode live --repeat 20 --fault clean
 .venv/bin/vhos replay-can-corpus test-replay/real-can-2026-08-18 \
   --mode history --fault drop-fragment --fault-interval 257
+.venv/bin/vhos test-link-reliability test-replay/real-can-2026-08-18 \
+  --soak-cycles 20 --output build/link-reliability-matrix.json
 .venv/bin/vhos decode-j1979 path/to/j1979-responses.ndjson \
   --supported-output build/j1979-supported.json \
   --samples-output build/j1979-standard-samples.ndjson
@@ -135,6 +141,9 @@ The current saved-vehicle evidence and strict UI interpretation boundary are rec
 The device-free sustained-load, corruption, fragmentation, disconnect, and Android historical
 replay workflow is recorded in
 [the real-CAN replay record](docs/development/REAL-CAN-REPLAY-AND-LOAD-TESTING-2026-08-18.md).
+The 15-condition cross-device impairment matrix, acceptance budgets, Android reliability UI, and
+remaining hardware-in-loop gates are recorded in
+[the cross-device reliability lab](docs/development/CROSS-DEVICE-RELIABILITY-LAB-2026-08-18.md).
 The supported-PID, synchronized Toyota-reference, and private-outbox implementation is recorded in
 [the August 18 J1979/evidence delivery](docs/development/J1979-REFERENCE-VALIDATION-AND-PRIVATE-OUTBOX-2026-08-18.md).
 The governing unknown-by-default whole-vehicle model, head-unit inventory contract, 2005 4Runner

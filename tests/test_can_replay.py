@@ -11,6 +11,7 @@ from vhos.can_replay import (
     build_can_replay_corpus,
     load_validated_can_replay_corpus,
     replay_can_corpus,
+    run_link_reliability_matrix,
 )
 from vhos.contracts import ContractCatalog
 
@@ -94,6 +95,47 @@ def test_real_can_corpus_rebuild_preserves_semantics_and_source_hashes(tmp_path:
     assert manifest["semantic_digest"] == expected["semantic_digest"]
     assert manifest["source_files"] == expected["source_files"]
     assert manifest["statistics"] == expected["statistics"]
+
+
+def test_real_can_link_reliability_matrix_covers_soak_and_degraded_recovery() -> None:
+    report = run_link_reliability_matrix(CORPUS, soak_cycles=3)
+    ContractCatalog.load().validate(report)
+
+    assert report["contract"] == "transport.link-reliability-matrix"
+    assert report["contract_version"] == "1.0.0"
+    assert report["acceptance_status"] == "PASS"
+    assert report["scenario_count"] == 15
+    assert report["healthy_scenarios"] == 5
+    assert report["degraded_scenarios"] == 10
+    assert report["total_wire_deliveries"] > 85_000
+    assert all(
+        scenario["acceptance_status"] == "PASS" for scenario in report["scenarios"]
+    )
+
+    scenarios = {scenario["name"]: scenario for scenario in report["scenarios"]}
+    clean = scenarios["clean-soak"]
+    assert clean["wire_deliveries"] == 15_528
+    assert clean["accepted_unique_records"] == 5_176
+    assert clean["duplicate_identity_rejections"] == 10_352
+    assert clean["decoder_recoveries"] == 0
+
+    duplicate = scenarios["duplicate-frame"]
+    assert duplicate["accepted_unique_records"] == 5_176
+    assert duplicate["duplicate_identity_rejections"] > 0
+
+    reconnect = scenarios["mid-frame-reconnect"]
+    assert reconnect["reconnects"] > 0
+    assert reconnect["stale_epoch_notification_rejections"] > 0
+    assert reconnect["exact_expected_survivor_order_and_payload"] is True
+
+    overrun = scenarios["bounded-queue-overrun"]
+    assert overrun["outer_sequence_gaps"] > 0
+    assert overrun["decoder_recoveries"] == 0
+    assert overrun["observed_quality"] == "DEGRADED"
+
+    assert max(
+        scenario["decoder_maximum_buffer_bytes"] for scenario in report["scenarios"]
+    ) <= report["budgets"]["maximum_decoder_buffer_bytes"]
 
 
 def test_real_can_corpus_rejects_one_byte_source_mutation(tmp_path: Path) -> None:

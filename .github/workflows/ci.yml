@@ -39,3 +39,4 @@ jobs:
           vhos replay-can-corpus test-replay/real-can-2026-08-18 --mode history --fault drop-fragment --fault-interval 257 --output build/ci-real-can-drop.json
           vhos replay-can-corpus test-replay/real-can-2026-08-18 --mode live --fault corrupt-payload --fault-interval 101 --output build/ci-real-can-corrupt.json
           vhos replay-can-corpus test-replay/real-can-2026-08-18 --mode history --fault disconnect-mid-frame --fault-interval 113 --output build/ci-real-can-disconnect.json
+          vhos test-link-reliability test-replay/real-can-2026-08-18 --soak-cycles 20 --output build/ci-link-reliability.json

@@ -14,6 +14,7 @@ from .can_replay import (
     build_can_replay_corpus,
     load_validated_can_replay_corpus,
     replay_can_corpus,
+    run_link_reliability_matrix,
     write_can_replay_fixture,
 )
 from .contracts import ContractCatalog, ContractError
@@ -101,6 +102,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     replay_can.add_argument("--fault-interval", type=int, default=257)
     replay_can.add_argument("--output", type=Path)
+
+    reliability = subcommands.add_parser(
+        "test-link-reliability",
+        help="Run deterministic degraded-link and soak tests against pinned real CAN evidence",
+    )
+    reliability.add_argument("corpus", type=Path)
+    reliability.add_argument("--soak-cycles", type=int, default=20)
+    reliability.add_argument("--output", type=Path)
 
     replay_fixture = subcommands.add_parser(
         "export-can-replay-fixture",
@@ -303,6 +312,15 @@ def main(argv: list[str] | None = None) -> int:
                 repeat=args.repeat,
                 fault=args.fault,
                 fault_interval=args.fault_interval,
+            )
+            if args.output:
+                _write_new_json(args.output, report)
+            _print_json(report)
+            return 0
+        if args.command == "test-link-reliability":
+            report = run_link_reliability_matrix(
+                args.corpus,
+                soak_cycles=args.soak_cycles,
             )
             if args.output:
                 _write_new_json(args.output, report)

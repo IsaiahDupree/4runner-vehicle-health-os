@@ -7,7 +7,7 @@ import shutil
 import struct
 import time
 import uuid
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 from typing import Any, Iterable, Iterator, Sequence
 
@@ -44,6 +44,88 @@ class DecodedGatewayFrame:
     sequence: int
     monotonic_microseconds: int
     payload: bytes
+
+
+@dataclass(frozen=True)
+class LinkReliabilityScenario:
+    """Deterministic impairment profile for the offline real-evidence link lab."""
+
+    name: str
+    impairment: str
+    expected_quality: str
+    fragment_sizes: tuple[int, ...]
+    interval: int = 0
+    burst_frames: int = 1
+    stall_milliseconds: int = 0
+
+
+LINK_RELIABILITY_CONTRACT = "transport.link-reliability-matrix"
+LINK_RELIABILITY_VERSION = "1.0.0"
+LINK_RELIABILITY_MAXIMUM_BUFFER_BYTES = 262_144
+LINK_RELIABILITY_SUPERVISION_BUDGET_MILLISECONDS = 18_000
+
+
+def _link_reliability_scenarios(soak_cycles: int) -> tuple[LinkReliabilityScenario, ...]:
+    hostile = (1, 3, 20, 244, 5, 509, 64, 17, 1_024)
+    return (
+        LinkReliabilityScenario(
+            "clean-soak", "clean", "HEALTHY", hostile, interval=soak_cycles
+        ),
+        LinkReliabilityScenario("att-mtu-23", "clean", "HEALTHY", (20,)),
+        LinkReliabilityScenario(
+            "mtu-churn", "clean", "HEALTHY", (20, 61, 97, 185, 244)
+        ),
+        LinkReliabilityScenario(
+            "burst-delivery", "clean", "HEALTHY", (1_048_576,), burst_frames=64
+        ),
+        LinkReliabilityScenario(
+            "jitter-and-short-stall",
+            "short-stall",
+            "HEALTHY",
+            hostile,
+            interval=101,
+            stall_milliseconds=2_500,
+        ),
+        LinkReliabilityScenario(
+            "duplicate-frame", "duplicate-frame", "DEGRADED", hostile, interval=37
+        ),
+        LinkReliabilityScenario(
+            "duplicate-notification",
+            "duplicate-notification",
+            "DEGRADED",
+            (20,),
+            interval=43,
+        ),
+        LinkReliabilityScenario(
+            "notification-loss", "notification-loss", "DEGRADED", (20,), interval=41
+        ),
+        LinkReliabilityScenario(
+            "payload-corruption", "payload-corruption", "DEGRADED", hostile, interval=43
+        ),
+        LinkReliabilityScenario(
+            "notification-reorder", "notification-reorder", "DEGRADED", (20,), interval=47
+        ),
+        LinkReliabilityScenario(
+            "mid-frame-reconnect", "mid-frame-reconnect", "DEGRADED", (20,), interval=53
+        ),
+        LinkReliabilityScenario(
+            "stale-prior-epoch", "stale-prior-epoch", "DEGRADED", hostile, interval=59
+        ),
+        LinkReliabilityScenario(
+            "supervision-timeout-recovery",
+            "supervision-timeout",
+            "DEGRADED",
+            hostile,
+            interval=211,
+            stall_milliseconds=20_000,
+        ),
+        LinkReliabilityScenario(
+            "bounded-queue-overrun", "whole-frame-loss", "DEGRADED", hostile, interval=97
+        ),
+        LinkReliabilityScenario(
+            "mixed-interference", "mixed", "DEGRADED", (20, 61, 185, 244), interval=0
+        ),
+    )
 
 
 class GatewayFrameStreamDecoder:
@@ -406,6 +488,350 @@ def replay_can_corpus(
             "Replay changed, reordered, duplicated, or unexpectedly lost real CAN observations."
         )
     return result
+
+
+class _ReliableCANReceiver:
+    """Application-side epoch, ordering, and evidence-identity boundary used by the lab."""
+
+    def __init__(
+        self,
+        source_by_wire_identity: dict[tuple[int, int], str],
+    ) -> None:
+        self.source_by_wire_identity = source_by_wire_identity
+        self.decoder = GatewayFrameStreamDecoder()
+        self.active_epoch = 1
+        self.last_outer_sequence: int | None = None
+        self.seen_identities: set[tuple[str, int, int]] = set()
+        self.accepted: list[PassiveCANRecord] = []
+        self.notification_count = 0
+        self.decoded_wire_frames = 0
+        self.duplicate_rejections = 0
+        self.stale_epoch_notification_rejections = 0
+        self.outer_sequence_regression_rejections = 0
+        self.outer_sequence_gaps = 0
+        self.reconnects = 0
+
+    def receive(self, chunk: bytes, *, epoch: int | None = None) -> None:
+        delivery_epoch = self.active_epoch if epoch is None else epoch
+        self.notification_count += 1
+        if delivery_epoch != self.active_epoch:
+            self.stale_epoch_notification_rejections += 1
+            return
+        for frame in self.decoder.append(chunk):
+            self.decoded_wire_frames += 1
+            observations = _decode_wire_observations(frame, "wire-source-unresolved")
+            for observation in observations:
+                source_key = (observation.session_id, observation.source_sequence)
+                gateway_id = self.source_by_wire_identity.get(source_key)
+                if gateway_id is None:
+                    raise CANReplayError(
+                        "Decoded reliability-lab record has no immutable source identity."
+                    )
+                resolved = replace(observation, gateway_id=gateway_id)
+                if resolved.identity in self.seen_identities:
+                    self.duplicate_rejections += 1
+                    continue
+                if (
+                    self.last_outer_sequence is not None
+                    and frame.sequence <= self.last_outer_sequence
+                ):
+                    self.outer_sequence_regression_rejections += 1
+                    continue
+                if self.last_outer_sequence is not None:
+                    self.outer_sequence_gaps += max(
+                        0, frame.sequence - self.last_outer_sequence - 1
+                    )
+                self.last_outer_sequence = frame.sequence
+                self.seen_identities.add(resolved.identity)
+                self.accepted.append(resolved)
+
+    def reconnect(self) -> int:
+        prior_epoch = self.active_epoch
+        self.decoder.reset_buffer()
+        self.active_epoch += 1
+        self.last_outer_sequence = None
+        self.reconnects += 1
+        return prior_epoch
+
+
+def run_link_reliability_matrix(
+    root: Path,
+    *,
+    soak_cycles: int = 20,
+) -> dict[str, Any]:
+    """Run deterministic degraded-link tests against immutable real CAN evidence.
+
+    This is an offline application/framing/storage-boundary lab. It deliberately does not claim
+    that a host process can reproduce RF interference, controller buffers, or mobile OS scheduling.
+    """
+    if not 1 <= soak_cycles <= 1_000:
+        raise CANReplayError("soak_cycles must be between 1 and 1,000.")
+    corpus = load_validated_can_replay_corpus(root)
+    source_by_wire_identity: dict[tuple[int, int], str] = {}
+    for record in corpus.records:
+        key = (record.session_id, record.source_sequence)
+        prior = source_by_wire_identity.setdefault(key, record.gateway_id)
+        if prior != record.gateway_id:
+            raise CANReplayError(
+                "Reliability lab cannot resolve one wire identity to multiple gateways."
+            )
+
+    results = [
+        _run_link_reliability_scenario(
+            corpus,
+            scenario,
+            source_by_wire_identity=source_by_wire_identity,
+            soak_cycles=soak_cycles,
+        )
+        for scenario in _link_reliability_scenarios(soak_cycles)
+    ]
+    passed = all(result["acceptance_status"] == "PASS" for result in results)
+    return {
+        "contract": LINK_RELIABILITY_CONTRACT,
+        "contract_version": LINK_RELIABILITY_VERSION,
+        "corpus_id": corpus.manifest["corpus_id"],
+        "source_classification": SOURCE_CLASSIFICATION,
+        "required_display_label": REQUIRED_DISPLAY_LABEL,
+        "scenario_count": len(results),
+        "soak_cycles": soak_cycles,
+        "total_wire_deliveries": sum(result["wire_deliveries"] for result in results),
+        "total_accepted_unique_records": sum(
+            result["accepted_unique_records"] for result in results
+        ),
+        "healthy_scenarios": sum(result["observed_quality"] == "HEALTHY" for result in results),
+        "degraded_scenarios": sum(
+            result["observed_quality"] == "DEGRADED" for result in results
+        ),
+        "acceptance_status": "PASS" if passed else "FAIL",
+        "scenarios": results,
+        "budgets": {
+            "maximum_decoder_buffer_bytes": LINK_RELIABILITY_MAXIMUM_BUFFER_BYTES,
+            "connection_supervision_milliseconds": (
+                LINK_RELIABILITY_SUPERVISION_BUDGET_MILLISECONDS
+            ),
+            "clean_unexpected_loss": 0,
+            "clean_duplicates_accepted": 0,
+            "clean_stale_epochs_accepted": 0,
+            "recovery_boundary": "next CRC-valid frame or clean connection epoch",
+        },
+        "authority": (
+            "Offline deterministic impairment evidence only. PASS proves framing recovery, "
+            "epoch rejection, identity deduplication, bounded buffering, and exact survivor "
+            "semantics for the pinned capture. Actual BLE RF coexistence, ESP32 controller "
+            "buffers, iOS/Android lifecycle behavior, and vehicle CAN load require hardware-in-loop."
+        ),
+    }
+
+
+def _run_link_reliability_scenario(
+    corpus: ValidatedCANReplayCorpus,
+    scenario: LinkReliabilityScenario,
+    *,
+    source_by_wire_identity: dict[tuple[int, int], str],
+    soak_cycles: int,
+) -> dict[str, Any]:
+    cycles = soak_cycles if scenario.name == "clean-soak" else 1
+    units = _wire_units(corpus.records, mode="live", repeat=cycles)
+    total_units = len(corpus.records) * cycles
+    wire_deliveries = 0
+    receiver = _ReliableCANReceiver(source_by_wire_identity)
+    expected: list[PassiveCANRecord] = []
+    expected_identities: set[tuple[str, int, int]] = set()
+    induced_lost_wire_frames = 0
+    injected_duplicate_frames = 0
+    injected_duplicate_notifications = 0
+    injected_stale_notifications = 0
+    injected_short_stalls = 0
+    maximum_stall_milliseconds = 0
+
+    def expect(records: Sequence[PassiveCANRecord]) -> None:
+        for record in records:
+            if record.identity not in expected_identities:
+                expected_identities.add(record.identity)
+                expected.append(record)
+
+    if scenario.burst_frames > 1:
+        group: list[tuple[bytes, list[PassiveCANRecord]]] = []
+        for unit in units:
+            group.append(unit)
+            wire_deliveries += 1
+            if len(group) < scenario.burst_frames:
+                continue
+            expect([record for _, records in group for record in records])
+            receiver.receive(b"".join(wire for wire, _ in group))
+            group.clear()
+        if group:
+            expect([record for _, records in group for record in records])
+            receiver.receive(b"".join(wire for wire, _ in group))
+    else:
+        for unit_index, (wire, records) in enumerate(units, start=1):
+            wire_deliveries += 1
+            fault = _scenario_fault_for_unit(scenario, unit_index, total_units)
+            fragments = list(_fragments(wire, scenario.fragment_sizes))
+
+            if fault == "clean":
+                expect(records)
+                for fragment in fragments:
+                    receiver.receive(fragment)
+            elif fault == "short-stall":
+                expect(records)
+                injected_short_stalls += 1
+                maximum_stall_milliseconds = max(
+                    maximum_stall_milliseconds, scenario.stall_milliseconds
+                )
+                for fragment in fragments:
+                    receiver.receive(fragment)
+            elif fault == "duplicate-frame":
+                expect(records)
+                for fragment in fragments:
+                    receiver.receive(fragment)
+                for fragment in fragments:
+                    receiver.receive(fragment)
+                injected_duplicate_frames += 1
+            elif fault == "duplicate-notification":
+                induced_lost_wire_frames += 1
+                duplicate_index = min(max(2, len(fragments) // 2), len(fragments) - 1)
+                for index, fragment in enumerate(fragments):
+                    receiver.receive(fragment)
+                    if index == duplicate_index:
+                        receiver.receive(fragment)
+                        injected_duplicate_notifications += 1
+            elif fault == "notification-loss":
+                induced_lost_wire_frames += 1
+                missing = min(max(2, len(fragments) // 2), len(fragments) - 1)
+                for index, fragment in enumerate(fragments):
+                    if index != missing:
+                        receiver.receive(fragment)
+            elif fault == "payload-corruption":
+                induced_lost_wire_frames += 1
+                damaged = bytearray(wire)
+                damaged[min(VHOS_HEADER_BYTES + 4, len(damaged) - 1)] ^= 0x80
+                for fragment in _fragments(bytes(damaged), scenario.fragment_sizes):
+                    receiver.receive(fragment)
+            elif fault == "notification-reorder":
+                induced_lost_wire_frames += 1
+                left = min(2, len(fragments) - 2)
+                fragments[left], fragments[left + 1] = fragments[left + 1], fragments[left]
+                for fragment in fragments:
+                    receiver.receive(fragment)
+            elif fault == "mid-frame-reconnect":
+                induced_lost_wire_frames += 1
+                split = max(1, len(fragments) // 2)
+                for fragment in fragments[:split]:
+                    receiver.receive(fragment)
+                prior_epoch = receiver.reconnect()
+                for fragment in fragments[split:]:
+                    receiver.receive(fragment, epoch=prior_epoch)
+                    injected_stale_notifications += 1
+            elif fault == "stale-prior-epoch":
+                expect(records)
+                prior_epoch = receiver.reconnect()
+                receiver.receive(wire, epoch=prior_epoch)
+                injected_stale_notifications += 1
+                for fragment in fragments:
+                    receiver.receive(fragment)
+            elif fault == "supervision-timeout":
+                expect(records)
+                maximum_stall_milliseconds = max(
+                    maximum_stall_milliseconds, scenario.stall_milliseconds
+                )
+                receiver.reconnect()
+                for fragment in fragments:
+                    receiver.receive(fragment)
+            elif fault == "whole-frame-loss":
+                induced_lost_wire_frames += 1
+                # A bounded downstream queue can lose a complete delivery without producing
+                # decoder corruption. The outer sequence gap must still expose the outage.
+            else:
+                raise CANReplayError(f"Unsupported reliability impairment: {fault}")
+
+    actual_semantics = [_record_semantic_tuple(record) for record in receiver.accepted]
+    expected_semantics = [_record_semantic_tuple(record) for record in expected]
+    exact_survivors = actual_semantics == expected_semantics
+    buffered = len(receiver.decoder.buffer)
+    bounded = receiver.decoder.maximum_buffer_bytes <= LINK_RELIABILITY_MAXIMUM_BUFFER_BYTES
+    duplicate_degradation = (
+        receiver.duplicate_rejections if scenario.name != "clean-soak" else 0
+    )
+    degraded_evidence = any(
+        (
+            induced_lost_wire_frames,
+            duplicate_degradation,
+            receiver.stale_epoch_notification_rejections,
+            receiver.outer_sequence_regression_rejections,
+            receiver.outer_sequence_gaps,
+            receiver.reconnects,
+            receiver.decoder.recoveries,
+            maximum_stall_milliseconds
+            >= LINK_RELIABILITY_SUPERVISION_BUDGET_MILLISECONDS,
+        )
+    )
+    observed_quality = "DEGRADED" if degraded_evidence else "HEALTHY"
+    acceptance = (
+        exact_survivors
+        and buffered == 0
+        and bounded
+        and observed_quality == scenario.expected_quality
+    )
+    return {
+        "name": scenario.name,
+        "impairment": scenario.impairment,
+        "expected_quality": scenario.expected_quality,
+        "observed_quality": observed_quality,
+        "cycles": cycles,
+        "wire_deliveries": wire_deliveries,
+        "unique_input_records": len(corpus.records),
+        "expected_unique_records": len(expected),
+        "accepted_unique_records": len(receiver.accepted),
+        "induced_lost_wire_frames": induced_lost_wire_frames,
+        "injected_duplicate_frames": injected_duplicate_frames,
+        "injected_duplicate_notifications": injected_duplicate_notifications,
+        "injected_stale_notifications": injected_stale_notifications,
+        "duplicate_identity_rejections": receiver.duplicate_rejections,
+        "stale_epoch_notification_rejections": (
+            receiver.stale_epoch_notification_rejections
+        ),
+        "outer_sequence_regression_rejections": (
+            receiver.outer_sequence_regression_rejections
+        ),
+        "outer_sequence_gaps": receiver.outer_sequence_gaps,
+        "reconnects": receiver.reconnects,
+        "short_stalls": injected_short_stalls,
+        "maximum_stall_milliseconds": maximum_stall_milliseconds,
+        "notification_fragments": receiver.notification_count,
+        "decoded_wire_frames": receiver.decoded_wire_frames,
+        "decoder_recoveries": receiver.decoder.recoveries,
+        "decoder_corrupt_candidates": receiver.decoder.corrupt_candidates,
+        "decoder_discarded_bytes": receiver.decoder.discarded_bytes,
+        "decoder_buffered_bytes": buffered,
+        "decoder_maximum_buffer_bytes": receiver.decoder.maximum_buffer_bytes,
+        "exact_expected_survivor_order_and_payload": exact_survivors,
+        "acceptance_status": "PASS" if acceptance else "FAIL",
+    }
+
+
+def _scenario_fault_for_unit(
+    scenario: LinkReliabilityScenario, unit_index: int, total_units: int
+) -> str:
+    if unit_index >= total_units:
+        return "clean"
+    if scenario.impairment == "clean":
+        return "clean"
+    if scenario.impairment == "mixed":
+        if unit_index % 211 == 0:
+            return "mid-frame-reconnect"
+        if unit_index % 113 == 0:
+            return "notification-loss"
+        if unit_index % 107 == 0:
+            return "payload-corruption"
+        if unit_index % 103 == 0:
+            return "notification-reorder"
+        if unit_index % 101 == 0:
+            return "duplicate-frame"
+        return "clean"
+    if scenario.interval > 0 and unit_index % scenario.interval == 0:
+        return scenario.impairment
+    return "clean"
 
 
 def write_can_replay_fixture(

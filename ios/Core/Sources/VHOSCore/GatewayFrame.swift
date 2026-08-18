@@ -545,6 +545,10 @@ public struct GatewayFrameStreamDecoder: Sendable {
   /// Number of complete-looking frame candidates rejected by a contract or CRC check.
   public private(set) var corruptCandidateCount = 0
 
+  /// Largest incremental buffer observed in this decoder lifetime.
+  /// This is communication-load evidence, not vehicle-health evidence.
+  public private(set) var maximumBufferedByteCount = 0
+
   public var bufferedByteCount: Int { buffer.count }
 
   public init(maximumPayloadBytes: Int = GatewayFrame.defaultMaximumPayloadBytes) {
@@ -553,6 +557,7 @@ public struct GatewayFrameStreamDecoder: Sendable {
 
   public mutating func append(_ data: Data) throws -> [GatewayFrame] {
     buffer.append(data)
+    maximumBufferedByteCount = max(maximumBufferedByteCount, buffer.count)
     var frames: [GatewayFrame] = []
 
     while true {
@@ -612,6 +617,15 @@ public struct GatewayFrameStreamDecoder: Sendable {
     discardedByteCount = 0
     recoveryCount = 0
     corruptCandidateCount = 0
+    maximumBufferedByteCount = 0
+  }
+
+  /// Clears bytes owned by a dead physical link while preserving its quality counters.
+  public mutating func resetBufferPreservingDiagnostics() {
+    guard !buffer.isEmpty else { return }
+    discardedByteCount += buffer.count
+    recoveryCount += 1
+    buffer.removeAll(keepingCapacity: true)
   }
 
   private mutating func alignToMagic() -> Bool {
