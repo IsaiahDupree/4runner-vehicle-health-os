@@ -3,76 +3,76 @@
     "bitrates_bps": [
       500000
     ],
-    "capture_duration_seconds": 68.986,
-    "estimated_observed_frames": 37419,
-    "estimated_observed_rate_fps": 542.342,
+    "capture_duration_seconds": 86.441,
+    "estimated_observed_frames": 46722,
+    "estimated_observed_rate_fps": 540.426,
     "extended_identifier_records": 0,
     "gateways": 1,
-    "listen_only_records": 2544,
-    "records": 2544,
+    "listen_only_records": 3192,
+    "records": 3192,
     "remote_request_records": 0,
-    "retained_record_rate_fps": 36.877,
-    "sequence_coverage": 0.067987,
-    "sessions": 5,
-    "standard_identifier_records": 2544,
+    "retained_record_rate_fps": 36.927,
+    "sequence_coverage": 0.068319,
+    "sessions": 7,
+    "standard_identifier_records": 3192,
     "unique_identifiers": 17
   },
-  "authority": "Acquisition facts and raw statistics only. No CAN identifier, field, unit, scale, vehicle subsystem, or health meaning is accepted by this report.",
+  "authority": "Acquisition facts and raw statistics only. No CAN identifier, field, unit, scale, vehicle subsystem, or health meaning is accepted by this report. Source-sequence coverage describes retained evidence density; it is not a dropped-frame counter. Gateway TWAI, observer-queue, and persistence counters are required to attribute loss.",
   "checksum_candidates": [
     {
-      "checked": 308,
+      "checked": 387,
       "identifier": "0x2C1",
       "match_rate": 1.0,
-      "matches": 308,
+      "matches": 387,
       "status": "DISCOVERY_CANDIDATE"
     },
     {
-      "checked": 327,
+      "checked": 410,
       "identifier": "0x025",
       "match_rate": 1.0,
-      "matches": 327,
+      "matches": 410,
       "status": "DISCOVERY_CANDIDATE"
     },
     {
-      "checked": 323,
+      "checked": 405,
       "identifier": "0x2C4",
       "match_rate": 1.0,
-      "matches": 323,
+      "matches": 405,
       "status": "DISCOVERY_CANDIDATE"
     },
     {
-      "checked": 333,
+      "checked": 419,
       "identifier": "0x023",
       "match_rate": 1.0,
-      "matches": 333,
+      "matches": 419,
       "status": "DISCOVERY_CANDIDATE"
     },
     {
-      "checked": 314,
+      "checked": 395,
       "identifier": "0x022",
       "match_rate": 1.0,
-      "matches": 314,
+      "matches": 395,
       "status": "DISCOVERY_CANDIDATE"
     },
     {
-      "checked": 305,
+      "checked": 384,
       "identifier": "0x2D0",
       "match_rate": 1.0,
-      "matches": 305,
+      "matches": 384,
       "status": "DISCOVERY_CANDIDATE"
     },
     {
-      "checked": 67,
+      "checked": 83,
       "identifier": "0x420",
       "match_rate": 1.0,
-      "matches": 67,
+      "matches": 83,
       "status": "DISCOVERY_CANDIDATE"
     },
     {
-      "checked": 71,
+      "checked": 88,
       "identifier": "0x223",
       "match_rate": 1.0,
-      "matches": 71,
+      "matches": 88,
       "status": "DISCOVERY_CANDIDATE"
     }
   ],
@@ -87,13 +87,15 @@
       "checksum family matches",
       "raw word correlations and ratios",
       "repeated-channel agreement",
-      "counter, signedness, scale, offset, and vehicle-signal hypotheses"
+      "counter, signedness, scale, offset, and vehicle-signal hypotheses",
+      "receive-loss attribution when gateway health counters are absent from the input"
     ],
     "proven_now": [
       "capture/session/source identity",
       "listen-only, identifier-format, RTR, bitrate, and DLC evidence",
       "retained records, identifier population, raw payloads, and raw byte ranges",
-      "sequence-derived observed-rate estimate and explicit retained coverage"
+      "sequence-derived observed-rate estimate and explicit retained coverage",
+      "retained coverage is intentional sampling density, not proof of receive loss"
     ]
   },
   "identifier_activity": [
@@ -143,9 +145,9 @@
       "checksum_candidate": {
         "algorithm": "toyota-additive-id-dlc-payload-v0",
         "candidate": true,
-        "checked": 308,
+        "checked": 387,
         "match_rate": 1.0,
-        "matches": 308,
+        "matches": 387,
         "status": "DISCOVERY_CANDIDATE"
       },
       "data_lengths": [
@@ -166,18 +168,18 @@
         "bit_range": "0:16",
         "byte_order": "BIG_ENDIAN",
         "maximum": 2067,
-        "mean": 2029.581,
+        "mean": 2035.186,
         "minimum": 0,
-        "standard_deviation": 232.818,
+        "standard_deviation": 207.997,
         "status": "DISCOVERY_CANDIDATE"
       },
       "identifier": "0x2C1",
       "identifier_value": 705,
       "payload_change_rate": 1.0,
-      "records": 308,
-      "sessions": 5,
+      "records": 387,
+      "sessions": 7,
       "status": "DISCOVERY_CANDIDATE",
-      "unique_payloads": 302
+      "unique_payloads": 380
     },
     {
       "byte_ranges": [
@@ -225,9 +227,9 @@
       "checksum_candidate": {
         "algorithm": "toyota-additive-id-dlc-payload-v0",
         "candidate": true,
-        "checked": 327,
+        "checked": 410,
         "match_rate": 1.0,
-        "matches": 327,
+        "matches": 410,
         "status": "DISCOVERY_CANDIDATE"
       },
       "data_lengths": [
@@ -247,16 +249,16 @@
         "bit_range": "0:16",
         "byte_order": "BIG_ENDIAN",
         "maximum": 4084,
-        "mean": 566.572,
+        "mean": 459.568,
         "minimum": 11,
-        "standard_deviation": 1368.702,
+        "standard_deviation": 1240.652,
         "status": "DISCOVERY_CANDIDATE"
       },
       "identifier": "0x025",
       "identifier_value": 37,
-      "payload_change_rate": 1.0,
-      "records": 327,
-      "sessions": 5,
+      "payload_change_rate": 0.997519,
+      "records": 410,
+      "sessions": 7,
       "status": "DISCOVERY_CANDIDATE",
       "unique_payloads": 42
     },
@@ -306,9 +308,9 @@
       "checksum_candidate": {
         "algorithm": "toyota-additive-id-dlc-payload-v0",
         "candidate": true,
-        "checked": 323,
+        "checked": 405,
         "match_rate": 1.0,
-        "matches": 323,
+        "matches": 405,
         "status": "DISCOVERY_CANDIDATE"
       },
       "data_lengths": [
@@ -327,18 +329,18 @@
         "bit_range": "0:16",
         "byte_order": "BIG_ENDIAN",
         "maximum": 1867,
-        "mean": 1273.201,
+        "mean": 1280.696,
         "minimum": 0,
-        "standard_deviation": 329.453,
+        "standard_deviation": 313.654,
         "status": "DISCOVERY_CANDIDATE"
       },
       "identifier": "0x2C4",
       "identifier_value": 708,
       "payload_change_rate": 1.0,
-      "records": 323,
-      "sessions": 5,
+      "records": 405,
+      "sessions": 7,
       "status": "DISCOVERY_CANDIDATE",
-      "unique_payloads": 299
+      "unique_payloads": 359
     },
     {
       "byte_ranges": [
@@ -381,9 +383,9 @@
       "checksum_candidate": {
         "algorithm": "toyota-additive-id-dlc-payload-v0",
         "candidate": true,
-        "checked": 333,
+        "checked": 419,
         "match_rate": 1.0,
-        "matches": 333,
+        "matches": 419,
         "status": "DISCOVERY_CANDIDATE"
       },
       "data_lengths": [
@@ -402,16 +404,16 @@
         "bit_range": "0:16",
         "byte_order": "BIG_ENDIAN",
         "maximum": 529,
-        "mean": 511.003,
+        "mean": 511.193,
         "minimum": 505,
-        "standard_deviation": 1.913,
+        "standard_deviation": 1.809,
         "status": "DISCOVERY_CANDIDATE"
       },
       "identifier": "0x023",
       "identifier_value": 35,
       "payload_change_rate": 1.0,
-      "records": 333,
-      "sessions": 5,
+      "records": 419,
+      "sessions": 7,
       "status": "DISCOVERY_CANDIDATE",
       "unique_payloads": 65
     },
@@ -461,9 +463,9 @@
       "checksum_candidate": {
         "algorithm": "toyota-additive-id-dlc-payload-v0",
         "candidate": true,
-        "checked": 314,
+        "checked": 395,
         "match_rate": 1.0,
-        "matches": 314,
+        "matches": 395,
         "status": "DISCOVERY_CANDIDATE"
       },
       "data_lengths": [
@@ -482,16 +484,16 @@
         "bit_range": "0:16",
         "byte_order": "BIG_ENDIAN",
         "maximum": 510,
-        "mean": 507.229,
+        "mean": 507.577,
         "minimum": 359,
-        "standard_deviation": 16.592,
+        "standard_deviation": 14.81,
         "status": "DISCOVERY_CANDIDATE"
       },
       "identifier": "0x022",
       "identifier_value": 34,
       "payload_change_rate": 1.0,
-      "records": 314,
-      "sessions": 5,
+      "records": 395,
+      "sessions": 7,
       "status": "DISCOVERY_CANDIDATE",
       "unique_payloads": 24
     },
@@ -535,15 +537,15 @@
         {
           "byte": 7,
           "maximum": 255,
-          "minimum": 1
+          "minimum": 0
         }
       ],
       "checksum_candidate": {
         "algorithm": "toyota-additive-id-dlc-payload-v0",
         "candidate": true,
-        "checked": 305,
+        "checked": 384,
         "match_rate": 1.0,
-        "matches": 305,
+        "matches": 384,
         "status": "DISCOVERY_CANDIDATE"
       },
       "data_lengths": [
@@ -561,18 +563,18 @@
         "bit_range": "0:16",
         "byte_order": "BIG_ENDIAN",
         "maximum": 3775,
-        "mean": 2532.121,
+        "mean": 2544.122,
         "minimum": 0,
-        "standard_deviation": 674.805,
+        "standard_deviation": 638.777,
         "status": "DISCOVERY_CANDIDATE"
       },
       "identifier": "0x2D0",
       "identifier_value": 720,
       "payload_change_rate": 1.0,
-      "records": 305,
-      "sessions": 5,
+      "records": 384,
+      "sessions": 7,
       "status": "DISCOVERY_CANDIDATE",
-      "unique_payloads": 270
+      "unique_payloads": 329
     },
     {
       "byte_ranges": [
@@ -620,9 +622,9 @@
       "checksum_candidate": {
         "algorithm": "toyota-additive-id-dlc-payload-v0",
         "candidate": true,
-        "checked": 67,
+        "checked": 83,
         "match_rate": 1.0,
-        "matches": 67,
+        "matches": 83,
         "status": "DISCOVERY_CANDIDATE"
       },
       "data_lengths": [
@@ -647,9 +649,9 @@
       },
       "identifier": "0x420",
       "identifier_value": 1056,
-      "payload_change_rate": 0.064516,
-      "records": 67,
-      "sessions": 5,
+      "payload_change_rate": 0.052632,
+      "records": 83,
+      "sessions": 7,
       "status": "DISCOVERY_CANDIDATE",
       "unique_payloads": 2
     },
@@ -699,9 +701,9 @@
       "checksum_candidate": {
         "algorithm": "toyota-additive-id-dlc-payload-v0",
         "candidate": true,
-        "checked": 71,
+        "checked": 88,
         "match_rate": 1.0,
-        "matches": 71,
+        "matches": 88,
         "status": "DISCOVERY_CANDIDATE"
       },
       "data_lengths": [
@@ -717,16 +719,16 @@
         "bit_range": "0:16",
         "byte_order": "BIG_ENDIAN",
         "maximum": 40,
-        "mean": 32.451,
+        "mean": 32.364,
         "minimum": 32,
-        "standard_deviation": 1.845,
+        "standard_deviation": 1.666,
         "status": "DISCOVERY_CANDIDATE"
       },
       "identifier": "0x223",
       "identifier_value": 547,
-      "payload_change_rate": 0.060606,
-      "records": 71,
-      "sessions": 5,
+      "payload_change_rate": 0.049383,
+      "records": 88,
+      "sessions": 7,
       "status": "DISCOVERY_CANDIDATE",
       "unique_payloads": 2
     },
@@ -751,7 +753,7 @@
       "checksum_candidate": {
         "algorithm": "toyota-additive-id-dlc-payload-v0",
         "candidate": false,
-        "checked": 72,
+        "checked": 90,
         "match_rate": 0.0,
         "matches": 0,
         "status": "DISCOVERY_CANDIDATE"
@@ -774,8 +776,8 @@
       "identifier": "0x020",
       "identifier_value": 32,
       "payload_change_rate": 0.0,
-      "records": 72,
-      "sessions": 5,
+      "records": 90,
+      "sessions": 7,
       "status": "DISCOVERY_CANDIDATE",
       "unique_payloads": 1
     },
@@ -825,7 +827,7 @@
       "checksum_candidate": {
         "algorithm": "toyota-additive-id-dlc-payload-v0",
         "candidate": false,
-        "checked": 71,
+        "checked": 89,
         "match_rate": 0.0,
         "matches": 0,
         "status": "DISCOVERY_CANDIDATE"
@@ -848,8 +850,8 @@
       "identifier": "0x224",
       "identifier_value": 548,
       "payload_change_rate": 0.0,
-      "records": 71,
-      "sessions": 5,
+      "records": 89,
+      "sessions": 7,
       "status": "DISCOVERY_CANDIDATE",
       "unique_payloads": 1
     },
@@ -864,7 +866,7 @@
       "checksum_candidate": {
         "algorithm": "toyota-additive-id-dlc-payload-v0",
         "candidate": false,
-        "checked": 71,
+        "checked": 89,
         "match_rate": 0.0,
         "matches": 0,
         "status": "DISCOVERY_CANDIDATE"
@@ -879,8 +881,8 @@
       "identifier": "0x2D2",
       "identifier_value": 722,
       "payload_change_rate": 0.0,
-      "records": 71,
-      "sessions": 5,
+      "records": 89,
+      "sessions": 7,
       "status": "DISCOVERY_CANDIDATE",
       "unique_payloads": 1
     },
@@ -895,7 +897,7 @@
       "checksum_candidate": {
         "algorithm": "toyota-additive-id-dlc-payload-v0",
         "candidate": false,
-        "checked": 69,
+        "checked": 86,
         "match_rate": 0.0,
         "matches": 0,
         "status": "DISCOVERY_CANDIDATE"
@@ -910,8 +912,8 @@
       "identifier": "0x423",
       "identifier_value": 1059,
       "payload_change_rate": 0.0,
-      "records": 69,
-      "sessions": 5,
+      "records": 86,
+      "sessions": 7,
       "status": "DISCOVERY_CANDIDATE",
       "unique_payloads": 1
     },
@@ -926,7 +928,7 @@
       "checksum_candidate": {
         "algorithm": "toyota-additive-id-dlc-payload-v0",
         "candidate": false,
-        "checked": 58,
+        "checked": 72,
         "match_rate": 0.0,
         "matches": 0,
         "status": "DISCOVERY_CANDIDATE"
@@ -941,8 +943,8 @@
       "identifier": "0x3D0",
       "identifier_value": 976,
       "payload_change_rate": 0.0,
-      "records": 58,
-      "sessions": 5,
+      "records": 72,
+      "sessions": 7,
       "status": "DISCOVERY_CANDIDATE",
       "unique_payloads": 1
     },
@@ -992,7 +994,7 @@
       "checksum_candidate": {
         "algorithm": "toyota-additive-id-dlc-payload-v0",
         "candidate": false,
-        "checked": 39,
+        "checked": 50,
         "match_rate": 0.0,
         "matches": 0,
         "status": "DISCOVERY_CANDIDATE"
@@ -1015,8 +1017,8 @@
       "identifier": "0x4C1",
       "identifier_value": 1217,
       "payload_change_rate": 0.0,
-      "records": 39,
-      "sessions": 5,
+      "records": 50,
+      "sessions": 7,
       "status": "DISCOVERY_CANDIDATE",
       "unique_payloads": 1
     },
@@ -1066,7 +1068,7 @@
       "checksum_candidate": {
         "algorithm": "toyota-additive-id-dlc-payload-v0",
         "candidate": false,
-        "checked": 39,
+        "checked": 49,
         "match_rate": 0.0,
         "matches": 0,
         "status": "DISCOVERY_CANDIDATE"
@@ -1089,8 +1091,8 @@
       "identifier": "0x4C3",
       "identifier_value": 1219,
       "payload_change_rate": 0.0,
-      "records": 39,
-      "sessions": 5,
+      "records": 49,
+      "sessions": 7,
       "status": "DISCOVERY_CANDIDATE",
       "unique_payloads": 1
     },
@@ -1140,7 +1142,7 @@
       "checksum_candidate": {
         "algorithm": "toyota-additive-id-dlc-payload-v0",
         "candidate": false,
-        "checked": 39,
+        "checked": 48,
         "match_rate": 0.0,
         "matches": 0,
         "status": "DISCOVERY_CANDIDATE"
@@ -1163,8 +1165,8 @@
       "identifier": "0x4C6",
       "identifier_value": 1222,
       "payload_change_rate": 0.0,
-      "records": 39,
-      "sessions": 5,
+      "records": 48,
+      "sessions": 7,
       "status": "DISCOVERY_CANDIDATE",
       "unique_payloads": 1
     },
@@ -1214,7 +1216,7 @@
       "checksum_candidate": {
         "algorithm": "toyota-additive-id-dlc-payload-v0",
         "candidate": false,
-        "checked": 38,
+        "checked": 48,
         "match_rate": 0.0,
         "matches": 0,
         "status": "DISCOVERY_CANDIDATE"
@@ -1237,8 +1239,8 @@
       "identifier": "0x4C7",
       "identifier_value": 1223,
       "payload_change_rate": 0.0,
-      "records": 38,
-      "sessions": 5,
+      "records": 48,
+      "sessions": 7,
       "status": "DISCOVERY_CANDIDATE",
       "unique_payloads": 1
     }
@@ -1246,28 +1248,28 @@
   "raw_word_relationship_candidates": [
     {
       "left": "0x223[0:16]",
-      "maximum_pairing_delta_us": 250000,
-      "median_right_to_left_ratio": 64.25,
-      "paired_samples": 71,
-      "pearson_correlation": -0.999984,
+      "maximum_pairing_delta_us": 156239,
+      "median_right_to_left_ratio": 64.28125,
+      "paired_samples": 88,
+      "pearson_correlation": -0.999982,
       "right": "0x2C1[0:16]",
       "status": "DISCOVERY_CANDIDATE"
     },
     {
       "left": "0x022[0:16]",
-      "maximum_pairing_delta_us": 250000,
+      "maximum_pairing_delta_us": 141281,
       "median_right_to_left_ratio": 0.062868,
-      "paired_samples": 162,
-      "pearson_correlation": -0.999561,
+      "paired_samples": 88,
+      "pearson_correlation": -0.999653,
       "right": "0x223[0:16]",
       "status": "DISCOVERY_CANDIDATE"
     },
     {
       "left": "0x2C4[0:16]",
-      "maximum_pairing_delta_us": 250000,
-      "median_right_to_left_ratio": 1.985061,
-      "paired_samples": 323,
-      "pearson_correlation": 0.964242,
+      "maximum_pairing_delta_us": 105384,
+      "median_right_to_left_ratio": 1.982738,
+      "paired_samples": 384,
+      "pearson_correlation": 0.962991,
       "right": "0x2D0[0:16]",
       "status": "DISCOVERY_CANDIDATE"
     }
@@ -1283,11 +1285,24 @@
       "maximum": 255,
       "maximum_disagreement": 0,
       "minimum": 115,
-      "records_compared": 327,
+      "records_compared": 410,
       "status": "DISCOVERY_CANDIDATE"
     }
   ],
   "sessions": [
+    {
+      "duration_seconds": 10.99,
+      "estimated_observed_rate_fps": 533.559,
+      "first_source_sequence": 1,
+      "gateway_id": "esp32-9454c5b08d14",
+      "last_source_sequence": 5865,
+      "records": 408,
+      "retained_record_rate_fps": 37.123,
+      "sequence_coverage": 0.069565,
+      "sequence_span": 5865,
+      "session_id": 628897492,
+      "unique_identifiers": 17
+    },
     {
       "duration_seconds": 23.533,
       "estimated_observed_rate_fps": 538.103,
@@ -1341,6 +1356,19 @@
       "unique_identifiers": 17
     },
     {
+      "duration_seconds": 6.465,
+      "estimated_observed_rate_fps": 531.672,
+      "first_source_sequence": 179384,
+      "gateway_id": "esp32-9454c5b08d14",
+      "last_source_sequence": 182821,
+      "records": 240,
+      "retained_record_rate_fps": 37.126,
+      "sequence_coverage": 0.069808,
+      "sequence_span": 3438,
+      "session_id": 2175731012,
+      "unique_identifiers": 17
+    },
+    {
       "duration_seconds": 9.1,
       "estimated_observed_rate_fps": 537.811,
       "first_source_sequence": 1,
@@ -1374,10 +1402,22 @@
       "sha256": "38f0a0048be7333ab2046b9399c2807f95efe34d10dd18368b285fb7961b594f"
     },
     {
+      "byte_count": 97326,
+      "name": "2175731012.ndjson",
+      "record_count": 240,
+      "sha256": "b5a7296633145f3175f39a9691030550c3ec9ce3aad503d37f4d62cee3c85c7f"
+    },
+    {
       "byte_count": 134952,
       "name": "4020849719.ndjson",
       "record_count": 336,
       "sha256": "da57d792c53399349a9b4ced66da233eca0b4e34b946d1612b5762d3651d003e"
+    },
+    {
+      "byte_count": 163559,
+      "name": "628897492.ndjson",
+      "record_count": 408,
+      "sha256": "7f1286627b3b000c4d4698f327af3f088ac0a73c0ea1e6818fd7adeaf9782981"
     },
     {
       "byte_count": 346930,

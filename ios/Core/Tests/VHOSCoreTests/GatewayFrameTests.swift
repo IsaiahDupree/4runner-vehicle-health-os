@@ -81,6 +81,14 @@ import Testing
       "can_frames_250k": 12,
       "can_frames_500k": 0,
       "can_passive_lock": true,
+      "can_twai_receive_missed_frames": 7,
+      "can_twai_receive_overrun_frames": 2,
+      "can_twai_receive_queue_depth": 11,
+      "can_twai_receive_queue_capacity": 512,
+      "can_observer_queue_dropped_frames": 3,
+      "can_observer_queue_depth": 5,
+      "can_observer_queue_high_water": 29,
+      "can_observer_queue_capacity": 256,
       "can_scan_cycles": 1,
       "can_scan_state": "LOCKED_250K",
       "can_standard_frames": 12,
@@ -106,6 +114,14 @@ import Testing
   #expect(health.canScanState == .locked250K)
   #expect(health.canBitrateBps == 250_000)
   #expect(health.canPassiveLock == true)
+  #expect(health.canTwaiReceiveMissedFrames == 7)
+  #expect(health.canTwaiReceiveOverrunFrames == 2)
+  #expect(health.canTwaiReceiveQueueDepth == 11)
+  #expect(health.canTwaiReceiveQueueCapacity == 512)
+  #expect(health.canObserverQueueDroppedFrames == 3)
+  #expect(health.canObserverQueueDepth == 5)
+  #expect(health.canObserverQueueHighWater == 29)
+  #expect(health.canObserverQueueCapacity == 256)
   #expect(health.canStandardFrames == 12)
   #expect(health.passiveCanCandidate == "CAN_11_250")
   #expect(health.receivedFrames == health.canStandardFrames! + health.canExtendedFrames!)

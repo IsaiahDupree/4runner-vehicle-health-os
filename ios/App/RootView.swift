@@ -277,6 +277,15 @@ private struct EvidenceView: View {
         if let index = model.gateway.captureLogIndex {
           LabeledContent("Observed frames", value: index.observedFrames.formatted())
           LabeledContent("Retained records", value: index.retainedRecords.formatted())
+          if index.observedFrames > 0 {
+            LabeledContent(
+              "Retained coverage",
+              value: (Double(index.retainedRecords) / Double(index.observedFrames)).formatted(
+                .percent.precision(.fractionLength(1))))
+          }
+          LabeledContent("Intentionally sampled", value: index.sampledFrames.formatted())
+          LabeledContent(
+            "Sampling suppressions", value: index.sampleSuppressedFrames.formatted())
           LabeledContent(
             "On-device logs",
             value: "\(index.previousRecords + index.currentRecords) records")
@@ -298,9 +307,26 @@ private struct EvidenceView: View {
         Button("Refresh gateway log inventory") {
           model.gateway.refreshCaptureLogIndex()
         }
-        .disabled(model.gateway.state != .vhosConnected)
+        .disabled(
+          model.gateway.state != .vhosConnected || model.gateway.captureHistoryTransferActive)
+        if model.gateway.captureHistoryTransferActive {
+          HStack {
+            ProgressView()
+            Text("Downloading retained history…")
+          }
+        } else if model.gateway.captureLogIndex?.logging == false {
+          Button("Resume passive recording") {
+            model.resumeGatewayCapture()
+          }
+          .disabled(model.gateway.state != .vhosConnected)
+        } else {
+          Button("Pause, download, and resume") {
+            model.pauseDownloadAndResumeGatewayHistory()
+          }
+          .disabled(model.gateway.state != .vhosConnected)
+        }
         Text(
-          "To protect the CAN receive path, this build does not bulk-download history while the gateway recorder is actively writing. Existing on-device logs are retained."
+          "Retained coverage is the deliberate flash sampling rate, not CAN loss. Bulk transfer pauses the recorder, downloads both retained segments, and resumes recording automatically to protect the receive path."
         )
         .font(.footnote)
         .foregroundStyle(.secondary)

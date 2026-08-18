@@ -66,6 +66,18 @@ message GatewayHealth {
   uint64 storage_free_bytes = 9;
   uint32 queue_depth = 10;
   bool listen_only = 11;
+  // Receive-path counters are deliberately separate from retention sampling.
+  // They attribute loss to the TWAI controller/driver or to the bounded
+  // observer-dispatch queue without treating intentionally unsaved frames as
+  // dropped vehicle traffic.
+  uint64 can_twai_receive_missed_frames = 12;
+  uint64 can_twai_receive_overrun_frames = 13;
+  uint32 can_twai_receive_queue_depth = 14;
+  uint32 can_twai_receive_queue_capacity = 15;
+  uint64 can_observer_queue_dropped_frames = 16;
+  uint32 can_observer_queue_depth = 17;
+  uint32 can_observer_queue_high_water = 18;
+  uint32 can_observer_queue_capacity = 19;
 }
 
 message CaptureMarker {

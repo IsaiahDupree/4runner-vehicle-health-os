@@ -8,6 +8,7 @@ import pytest
 from vhos.can_discovery import (
     CANDiscoveryError,
     ANALYSIS_VERSION,
+    _nearest_pairs,
     analyze_passive_can,
     load_passive_can_ndjson,
 )
@@ -93,6 +94,11 @@ def test_discovery_reports_acquisition_facts_and_candidate_boundaries(tmp_path: 
     assert report["acquisition"]["unique_identifiers"] == 3
     assert report["acquisition"]["listen_only_records"] == 36
     assert report["acquisition"]["bitrates_bps"] == [500_000]
+    assert "not a dropped-frame counter" in report["authority"]
+    assert any(
+        "intentional sampling density" in item
+        for item in report["display_policy"]["proven_now"]
+    )
     assert {item["identifier"] for item in report["checksum_candidates"]} == {
         "0x025",
         "0x2C4",
@@ -105,6 +111,7 @@ def test_discovery_reports_acquisition_facts_and_candidate_boundaries(tmp_path: 
     )
     assert relation["pearson_correlation"] == 1.0
     assert relation["median_right_to_left_ratio"] == 2.0
+    assert relation["maximum_pairing_delta_us"] == 10_000
     repeated = next(
         item for item in report["repeated_channel_candidates"] if item["identifier"] == "0x025"
     )
@@ -141,3 +148,13 @@ def test_loader_rejects_duplicate_source_identity(tmp_path: Path) -> None:
 
     with pytest.raises(CANDiscoveryError, match="duplicate observation identity"):
         load_passive_can_ndjson([path])
+
+
+def test_time_pairing_never_reuses_a_sparse_sample() -> None:
+    left = [(0, 10.0), (10, 11.0), (20, 12.0), (30, 13.0)]
+    right = [(9, 20.0), (29, 22.0)]
+
+    assert _nearest_pairs(left, right) == [
+        (11.0, 20.0, 1),
+        (13.0, 22.0, 1),
+    ]

@@ -157,6 +157,8 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   private var j1979Accumulator = J1979Accumulator()
   private var captureSyncTargets: [CaptureSyncTarget] = []
   private var captureSyncSuspendedForOTA = false
+  private var captureAutoResumeAfterHistoryTransfer = false
+  private var captureResumeConfirmationPending = false
   private var captureSyncTask: Task<Void, Never>?
   private var captureChunkResponseTask: Task<Void, Never>?
   private var lastCaptureSyncFingerprint: String?
@@ -205,6 +207,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   var recentCANObservations: [PassiveCANObservation] = []
   var captureSessions: [CaptureSessionSummary] = []
   var captureSyncMessage = "Waiting for a gateway capture index."
+  var captureHistoryTransferActive = false
   var captureDownloadedRecords: UInt64 = 0
   var captureSyncCompletionGeneration: UInt64 = 0
   var portableFrameCount = 0
@@ -469,6 +472,9 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
 
   func setCaptureLogging(_ enabled: Bool) throws {
     captureSyncSuspendedForOTA = !enabled
+    captureAutoResumeAfterHistoryTransfer = false
+    captureResumeConfirmationPending = false
+    captureHistoryTransferActive = false
     if !enabled {
       captureSyncTask?.cancel()
       captureSyncTask = nil
@@ -478,11 +484,47 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     }
     try writeFrame(
       type: .captureLogRequest,
-      payload: CaptureLogRequest(operation: enabled ? .resume : .pause).encoded()
+      payload: CaptureLogRequest(
+        operation: enabled ? .resume : .pause,
+        slot: enabled ? 0 : 1
+      ).encoded()
     )
     captureSyncMessage = enabled
       ? "Resuming the passive flight recorder…"
       : "Pausing and flushing the passive flight recorder for OTA…"
+  }
+
+  func pauseCaptureAndDownloadHistory() throws {
+    captureSyncSuspendedForOTA = false
+    captureSyncTask?.cancel()
+    captureSyncTask = nil
+    captureChunkResponseTask?.cancel()
+    captureChunkResponseTask = nil
+    captureSyncTargets.removeAll()
+    try writeFrame(
+      type: .captureLogRequest,
+      payload: CaptureLogRequest(operation: .pause, slot: 2).encoded()
+    )
+    captureAutoResumeAfterHistoryTransfer = true
+    captureResumeConfirmationPending = false
+    captureHistoryTransferActive = true
+    captureSyncMessage =
+      "Pausing and flushing the recorder; history will download and recording will resume automatically."
+    Self.commissioningTrace(
+      "CAPTURE_TRANSFER_REQUESTED mode=pause-download-auto-resume link_session=\(linkSession)"
+    )
+  }
+
+  func resumeCaptureLogging() throws {
+    captureSyncSuspendedForOTA = false
+    captureAutoResumeAfterHistoryTransfer = false
+    captureResumeConfirmationPending = false
+    captureHistoryTransferActive = false
+    try writeFrame(
+      type: .captureLogRequest,
+      payload: CaptureLogRequest(operation: .resume).encoded()
+    )
+    captureSyncMessage = "Resuming the passive flight recorder…"
   }
 
   func activateTemporaryOTANetwork(for package: VerifiedFirmwarePackage) throws {
@@ -1337,6 +1379,10 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         Self.commissioningTrace(
           "CAPTURE_SYNC_PAUSED reason=write-error link_session=\(linkSession) error={\(Self.errorEvidence(error))}"
         )
+        requestCaptureResumeAfterHistoryTransfer(
+          completionMessage:
+            "History download paused after a BLE write error; resuming passive recording to avoid an evidence gap…"
+        )
         return
       }
       if isSecurityNegotiationError(error),
@@ -1619,7 +1665,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       health = value
       lastHealthReceivedAt = Date()
       Self.commissioningTrace(
-        "HEALTH_DECODED scan=\(value.canScanState?.rawValue ?? "unavailable") bitrate=\(value.canBitrateBps.map(String.init) ?? "unavailable") cycles=\(value.canScanCycles.map(String.init) ?? "unavailable") controller=\(value.canControllerRunning.map(String.init) ?? "unavailable") lock=\(value.canPassiveLock.map(String.init) ?? "unavailable") frames=\(value.receivedFrames) standard=\(value.canStandardFrames.map(String.init) ?? "unavailable") extended=\(value.canExtendedFrames.map(String.init) ?? "unavailable") dropped=\(value.droppedFrames) errors=\(value.busErrorCount) bus_off=\(value.busOffCount) candidate=\(value.passiveCanCandidate ?? "none")"
+        "HEALTH_DECODED scan=\(value.canScanState?.rawValue ?? "unavailable") bitrate=\(value.canBitrateBps.map(String.init) ?? "unavailable") cycles=\(value.canScanCycles.map(String.init) ?? "unavailable") controller=\(value.canControllerRunning.map(String.init) ?? "unavailable") lock=\(value.canPassiveLock.map(String.init) ?? "unavailable") frames=\(value.receivedFrames) standard=\(value.canStandardFrames.map(String.init) ?? "unavailable") extended=\(value.canExtendedFrames.map(String.init) ?? "unavailable") dropped=\(value.droppedFrames) twai_missed=\(value.canTwaiReceiveMissedFrames.map(String.init) ?? "unavailable") twai_overrun=\(value.canTwaiReceiveOverrunFrames.map(String.init) ?? "unavailable") observer_drops=\(value.canObserverQueueDroppedFrames.map(String.init) ?? "unavailable") observer_high_water=\(value.canObserverQueueHighWater.map(String.init) ?? "unavailable") capture_observed=\(value.captureObservedFrames.map(String.init) ?? "unavailable") capture_retained=\(value.captureRetainedRecords.map(String.init) ?? "unavailable") capture_suppressed=\(value.captureSampleSuppressedFrames.map(String.init) ?? "unavailable") errors=\(value.busErrorCount) bus_off=\(value.busOffCount) candidate=\(value.passiveCanCandidate ?? "none")"
       )
     case .experimentResult:
       let result = try VHOSJSON.decoder().decode(ProtocolExperimentResult.self, from: frame.payload)
@@ -1670,8 +1716,18 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         captureChunkResponseTask?.cancel()
         captureChunkResponseTask = nil
         captureSyncTargets.removeAll()
-        captureSyncMessage =
-          "Gateway inventory refreshed. History download is deferred while CAN recording is active to protect live capture and BLE stability."
+        if captureResumeConfirmationPending {
+          captureResumeConfirmationPending = false
+          captureHistoryTransferActive = false
+          captureSyncMessage =
+            "Gateway history is synchronized on this iPhone and passive recording has resumed."
+          Self.commissioningTrace(
+            "CAPTURE_TRANSFER_COMPLETE recorder=resumed local_sessions=\(captureSessions.count)"
+          )
+        } else {
+          captureSyncMessage =
+            "Gateway inventory refreshed. History download is deferred while CAN recording is active to protect live capture and BLE stability."
+        }
         Self.commissioningTrace(
           "CAPTURE_SYNC_DEFERRED reason=recorder-active policy=inventory-only current_session=\(index.currentSessionID) current_records=\(index.currentRecords) previous_session=\(index.previousSessionID) previous_records=\(index.previousRecords)"
         )
@@ -1806,6 +1862,9 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       Self.commissioningTrace(
         "CAPTURE_SYNC_COMPLETE downloaded=\(captureDownloadedRecords) local_sessions=\(captureSessions.count) outbox_generation=\(captureSyncCompletionGeneration)"
       )
+      requestCaptureResumeAfterHistoryTransfer(
+        completionMessage: "History download complete; resuming passive recording…"
+      )
       return
     }
     do {
@@ -1845,6 +1904,34 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         "Recent-log sync paused at record \(requestOffset); the live vehicle session remains connected."
       Self.commissioningTrace(
         "CAPTURE_SYNC_PAUSED reason=chunk-timeout link_session=\(requestSession) slot=\(requestSlot) session=\(requestSessionID) offset=\(requestOffset) timeout_seconds=8"
+      )
+      self.requestCaptureResumeAfterHistoryTransfer(
+        completionMessage:
+          "History download paused after a timeout; resuming passive recording to avoid an evidence gap…"
+      )
+    }
+  }
+
+  private func requestCaptureResumeAfterHistoryTransfer(completionMessage: String) {
+    guard captureAutoResumeAfterHistoryTransfer else { return }
+    captureAutoResumeAfterHistoryTransfer = false
+    captureResumeConfirmationPending = true
+    do {
+      try writeFrame(
+        type: .captureLogRequest,
+        payload: CaptureLogRequest(operation: .resume).encoded()
+      )
+      captureSyncMessage = completionMessage
+      Self.commissioningTrace(
+        "CAPTURE_AUTO_RESUME_REQUESTED link_session=\(linkSession)"
+      )
+    } catch {
+      captureResumeConfirmationPending = false
+      captureHistoryTransferActive = false
+      captureSyncMessage =
+        "History transfer stopped and recorder resume was not confirmed: \(error.localizedDescription)"
+      Self.commissioningTrace(
+        "CAPTURE_AUTO_RESUME_FAILED link_session=\(linkSession) error={\(Self.errorEvidence(error))}"
       )
     }
   }

@@ -213,6 +213,33 @@ final class AppModel {
     }
   }
 
+  func pauseDownloadAndResumeGatewayHistory() {
+    do {
+      guard gateway.state == .vhosConnected else {
+        throw AppModelError.gatewayHealthRequired
+      }
+      try gateway.pauseCaptureAndDownloadHistory()
+      noticeMessage =
+        "The recorder will pause briefly, download retained history, and resume automatically."
+      errorMessage = nil
+    } catch {
+      errorMessage = error.localizedDescription
+    }
+  }
+
+  func resumeGatewayCapture() {
+    do {
+      guard gateway.state == .vhosConnected else {
+        throw AppModelError.gatewayHealthRequired
+      }
+      try gateway.resumeCaptureLogging()
+      noticeMessage = "Passive CAN recording resume requested."
+      errorMessage = nil
+    } catch {
+      errorMessage = error.localizedDescription
+    }
+  }
+
   func synchronizedReferenceExportURL() throws -> URL {
     try synchronizedReferenceStore.exportURL()
   }

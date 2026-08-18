@@ -447,9 +447,19 @@ struct SystemStatusView: View {
       counterIndicator(
         id: "gateway.received", title: "Vehicle-bus frames", count: health?.receivedFrames,
         zeroLevel: .pending, nonzeroLevel: .pass),
-      counterIndicator(
-        id: "gateway.dropped", title: "Dropped frames", count: health?.droppedFrames,
-        zeroLevel: .pass, nonzeroLevel: .warning),
+      StatusIndicator(
+        "gateway.dropped", title: "Receive-path loss", value: health?.droppedFrames.formatted() ?? "UNAVAILABLE",
+        detail: canReceiveLossDetail,
+        level: health.map { $0.droppedFrames == 0 ? .pass : .warning } ?? .pending),
+      StatusIndicator(
+        "gateway.can-queues", title: "CAN queue pressure", value: canQueuePressureValue,
+        detail: canQueuePressureDetail,
+        level: canQueuePressureLevel),
+      StatusIndicator(
+        "gateway.capture-retention", title: "Flash retention coverage",
+        value: captureRetentionValue,
+        detail: captureRetentionDetail,
+        level: captureRetentionLevel),
       counterIndicator(
         id: "gateway.errors", title: "Bus errors", count: health?.busErrorCount,
         zeroLevel: .pass, nonzeroLevel: .warning),
@@ -823,6 +833,71 @@ struct SystemStatusView: View {
       let frames250k = health.canFrames250k
     else { return "UNAVAILABLE" }
     return "\(frames500k) / \(frames250k)"
+  }
+
+  private var canReceiveLossDetail: String {
+    guard let health = gateway.health else { return "Awaiting gateway health" }
+    guard health.canTwaiReceiveMissedFrames != nil
+      || health.canTwaiReceiveOverrunFrames != nil
+      || health.canObserverQueueDroppedFrames != nil
+    else {
+      return "Legacy aggregate; update firmware for TWAI missed, overrun, and software-dispatch attribution"
+    }
+    return "TWAI missed \((health.canTwaiReceiveMissedFrames ?? 0).formatted()) • "
+      + "TWAI overrun \((health.canTwaiReceiveOverrunFrames ?? 0).formatted()) • "
+      + "observer queue \((health.canObserverQueueDroppedFrames ?? 0).formatted())"
+  }
+
+  private var canQueuePressureValue: String {
+    guard let health = gateway.health,
+      let observerHighWater = health.canObserverQueueHighWater,
+      let observerCapacity = health.canObserverQueueCapacity
+    else { return "UNAVAILABLE" }
+    return "\(observerHighWater) / \(observerCapacity)"
+  }
+
+  private var canQueuePressureDetail: String {
+    guard let health = gateway.health else { return "Awaiting gateway health" }
+    guard let twaiCapacity = health.canTwaiReceiveQueueCapacity,
+      let observerCapacity = health.canObserverQueueCapacity
+    else { return "Update firmware for receive and observer queue telemetry" }
+    return "TWAI now \(health.canTwaiReceiveQueueDepth ?? 0)/\(twaiCapacity) • "
+      + "observer now \(health.canObserverQueueDepth ?? 0)/\(observerCapacity) • "
+      + "observer high-water \(health.canObserverQueueHighWater ?? 0)/\(observerCapacity)"
+  }
+
+  private var canQueuePressureLevel: IndicatorLevel {
+    guard let health = gateway.health,
+      let highWater = health.canObserverQueueHighWater,
+      let capacity = health.canObserverQueueCapacity, capacity > 0
+    else { return .pending }
+    if health.canObserverQueueDroppedFrames ?? 0 > 0 { return .warning }
+    return Double(highWater) / Double(capacity) >= 0.8 ? .warning : .pass
+  }
+
+  private var captureRetentionValue: String {
+    guard let observed = gateway.health?.captureObservedFrames, observed > 0,
+      let retained = gateway.health?.captureRetainedRecords
+    else { return "UNAVAILABLE" }
+    return (Double(retained) / Double(observed)).formatted(
+      .percent.precision(.fractionLength(1)))
+  }
+
+  private var captureRetentionDetail: String {
+    guard let health = gateway.health else { return "Awaiting gateway health" }
+    guard health.captureObservedFrames != nil else {
+      return "Update firmware for intentional sampling and persistence-loss attribution"
+    }
+    return "Observed \((health.captureObservedFrames ?? 0).formatted()) • "
+      + "sampled \((health.captureSampledFrames ?? 0).formatted()) • "
+      + "policy suppressions \((health.captureSampleSuppressedFrames ?? 0).formatted()) • "
+      + "persistence drops \((health.captureQueueDroppedRecords ?? 0).formatted())"
+  }
+
+  private var captureRetentionLevel: IndicatorLevel {
+    guard let health = gateway.health, health.captureObservedFrames != nil else { return .pending }
+    return (health.captureQueueDroppedRecords ?? 0) == 0
+      && (health.captureStorageWriteFailures ?? 0) == 0 ? .pass : .warning
   }
 
   private var bluetoothUnavailableLevel: IndicatorLevel {

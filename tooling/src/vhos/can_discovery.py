@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import bisect
 import hashlib
 import json
 import math
@@ -20,6 +19,7 @@ OBSERVATION_VERSION = "1.0.0"
 VALID_BITRATES = {250_000, 500_000}
 MAX_RECORDS = 1_000_000
 PAIRING_WINDOW_MICROSECONDS = 250_000
+MIN_ABSOLUTE_RELATIONSHIP_CORRELATION = 0.80
 
 
 class CANDiscoveryError(ValueError):
@@ -248,7 +248,9 @@ def analyze_passive_can(
         "status": "DISCOVERY_CANDIDATE",
         "authority": (
             "Acquisition facts and raw statistics only. No CAN identifier, field, unit, scale, "
-            "vehicle subsystem, or health meaning is accepted by this report."
+            "vehicle subsystem, or health meaning is accepted by this report. Source-sequence "
+            "coverage describes retained evidence density; it is not a dropped-frame counter. "
+            "Gateway TWAI, observer-queue, and persistence counters are required to attribute loss."
         ),
         "source_files": list(sources),
         "acquisition": acquisition,
@@ -263,12 +265,14 @@ def analyze_passive_can(
                 "listen-only, identifier-format, RTR, bitrate, and DLC evidence",
                 "retained records, identifier population, raw payloads, and raw byte ranges",
                 "sequence-derived observed-rate estimate and explicit retained coverage",
+                "retained coverage is intentional sampling density, not proof of receive loss",
             ],
             "candidate_only": [
                 "checksum family matches",
                 "raw word correlations and ratios",
                 "repeated-channel agreement",
                 "counter, signedness, scale, offset, and vehicle-signal hypotheses",
+                "receive-loss attribution when gateway health counters are absent from the input",
             ],
             "blocked_until_correlated": [
                 "RPM, speed, gear, throttle, steering, brake, temperature, or pressure labels",
@@ -405,6 +409,7 @@ def _correlation_candidates(
         for right_key in identifier_keys[left_index + 1 :]:
             left_values: list[float] = []
             right_values: list[float] = []
+            pairing_deltas: list[int] = []
             for session_records in by_session.values():
                 left = [
                     (item.monotonic_microseconds, float((item.data[0] << 8) | item.data[1]))
@@ -419,10 +424,14 @@ def _correlation_candidates(
                 paired = _nearest_pairs(left, right)
                 left_values.extend(item[0] for item in paired)
                 right_values.extend(item[1] for item in paired)
+                pairing_deltas.extend(item[2] for item in paired)
             if len(left_values) < 10:
                 continue
             correlation = _pearson(left_values, right_values)
-            if correlation is None or abs(correlation) < 0.95:
+            if (
+                correlation is None
+                or abs(correlation) < MIN_ABSOLUTE_RELATIONSHIP_CORRELATION
+            ):
                 continue
             ratios = [right / left for left, right in zip(left_values, right_values) if left != 0]
             pairs.append(
@@ -430,7 +439,7 @@ def _correlation_candidates(
                     "left": f"0x{left_key[0]:03X}[0:16]",
                     "right": f"0x{right_key[0]:03X}[0:16]",
                     "paired_samples": len(left_values),
-                    "maximum_pairing_delta_us": PAIRING_WINDOW_MICROSECONDS,
+                    "maximum_pairing_delta_us": max(pairing_deltas),
                     "pearson_correlation": _round(correlation, digits=6),
                     "median_right_to_left_ratio": (
                         _round(statistics.median(ratios), digits=6) if ratios else None
@@ -446,20 +455,47 @@ def _correlation_candidates(
 
 def _nearest_pairs(
     left: list[tuple[int, float]], right: list[tuple[int, float]]
-) -> list[tuple[float, float]]:
+) -> list[tuple[float, float, int]]:
+    """Return monotonic one-to-one nearest pairs within the evidence window.
+
+    A sparse retained sample must not be reused for several observations; doing
+    so can materially inflate a correlation candidate.
+    """
     if not left or not right:
         return []
+    left = sorted(left)
     right = sorted(right)
-    times = [item[0] for item in right]
-    paired: list[tuple[float, float]] = []
-    for timestamp, value in sorted(left):
-        insertion = bisect.bisect_left(times, timestamp)
-        candidates = [index for index in (insertion - 1, insertion) if 0 <= index < len(right)]
-        if not candidates:
+    paired: list[tuple[float, float, int]] = []
+    left_index = 0
+    right_index = 0
+    while left_index < len(left) and right_index < len(right):
+        left_time, left_value = left[left_index]
+        right_time, right_value = right[right_index]
+        signed_delta = right_time - left_time
+        if signed_delta < -PAIRING_WINDOW_MICROSECONDS:
+            right_index += 1
             continue
-        nearest = min(candidates, key=lambda index: abs(times[index] - timestamp))
-        if abs(times[nearest] - timestamp) <= PAIRING_WINDOW_MICROSECONDS:
-            paired.append((value, right[nearest][1]))
+        if signed_delta > PAIRING_WINDOW_MICROSECONDS:
+            left_index += 1
+            continue
+
+        delta = abs(signed_delta)
+        if (
+            left_index + 1 < len(left)
+            and abs(right_time - left[left_index + 1][0]) < delta
+        ):
+            left_index += 1
+            continue
+        if (
+            right_index + 1 < len(right)
+            and abs(right[right_index + 1][0] - left_time) < delta
+        ):
+            right_index += 1
+            continue
+
+        paired.append((left_value, right_value, delta))
+        left_index += 1
+        right_index += 1
     return paired
 
 

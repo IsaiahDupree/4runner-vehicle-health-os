@@ -128,6 +128,14 @@ public struct GatewayHealth: Codable, Equatable, Sendable {
   public let canScanCycles: UInt32?
   public let canScanState: PassiveCANScanState?
   public let canStandardFrames: UInt64?
+  public let canTwaiReceiveMissedFrames: UInt64?
+  public let canTwaiReceiveOverrunFrames: UInt64?
+  public let canTwaiReceiveQueueDepth: UInt32?
+  public let canTwaiReceiveQueueCapacity: UInt32?
+  public let canObserverQueueDroppedFrames: UInt64?
+  public let canObserverQueueDepth: UInt32?
+  public let canObserverQueueHighWater: UInt32?
+  public let canObserverQueueCapacity: UInt32?
   public let passiveCanCandidate: String?
   public let captureCurrentRecords: UInt32?
   public let captureObservedFrames: UInt64?
@@ -161,6 +169,14 @@ public struct GatewayHealth: Codable, Equatable, Sendable {
     canScanCycles: UInt32? = nil,
     canScanState: PassiveCANScanState? = nil,
     canStandardFrames: UInt64? = nil,
+    canTwaiReceiveMissedFrames: UInt64? = nil,
+    canTwaiReceiveOverrunFrames: UInt64? = nil,
+    canTwaiReceiveQueueDepth: UInt32? = nil,
+    canTwaiReceiveQueueCapacity: UInt32? = nil,
+    canObserverQueueDroppedFrames: UInt64? = nil,
+    canObserverQueueDepth: UInt32? = nil,
+    canObserverQueueHighWater: UInt32? = nil,
+    canObserverQueueCapacity: UInt32? = nil,
     passiveCanCandidate: String? = nil,
     captureCurrentRecords: UInt32? = nil,
     captureObservedFrames: UInt64? = nil,
@@ -193,6 +209,14 @@ public struct GatewayHealth: Codable, Equatable, Sendable {
     self.canScanCycles = canScanCycles
     self.canScanState = canScanState
     self.canStandardFrames = canStandardFrames
+    self.canTwaiReceiveMissedFrames = canTwaiReceiveMissedFrames
+    self.canTwaiReceiveOverrunFrames = canTwaiReceiveOverrunFrames
+    self.canTwaiReceiveQueueDepth = canTwaiReceiveQueueDepth
+    self.canTwaiReceiveQueueCapacity = canTwaiReceiveQueueCapacity
+    self.canObserverQueueDroppedFrames = canObserverQueueDroppedFrames
+    self.canObserverQueueDepth = canObserverQueueDepth
+    self.canObserverQueueHighWater = canObserverQueueHighWater
+    self.canObserverQueueCapacity = canObserverQueueCapacity
     self.passiveCanCandidate = passiveCanCandidate
     self.captureCurrentRecords = captureCurrentRecords
     self.captureObservedFrames = captureObservedFrames
