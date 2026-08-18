@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/evidence-outbox-envelope.schema.json",
+  "title": "VHOS private evidence outbox envelope v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract", "contract_version", "package_id", "created_at", "content_type", "byte_count", "sha256", "authority", "redaction_policy"],
+  "properties": {
+    "contract": {"const": "evidence.outbox-envelope"},
+    "contract_version": {"const": "1.0.0"},
+    "package_id": {"type": "string", "format": "uuid"},
+    "created_at": {"$ref": "common.schema.json#/$defs/wallTime"},
+    "content_type": {"type": "string", "enum": ["application/vnd.vhos.evidence-sync+zip", "application/vnd.vhos.agent-evidence+json"]},
+    "byte_count": {"type": "integer", "minimum": 1, "maximum": 134217728},
+    "sha256": {"$ref": "common.schema.json#/$defs/sha256"},
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["may_interpret", "may_propose_experiment", "may_activate_experiment", "may_emit_vehicle_frames"],
+      "properties": {
+        "may_interpret": {"const": true},
+        "may_propose_experiment": {"const": true},
+        "may_activate_experiment": {"const": false},
+        "may_emit_vehicle_frames": {"const": false}
+      }
+    },
+    "redaction_policy": {"type": "string", "enum": ["OWNER_PRIVATE_V1"]}
+  }
+}

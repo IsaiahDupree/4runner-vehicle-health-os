@@ -154,10 +154,12 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   private var candidateWasPreviouslyValidated = false
   private let captureStore = CaptureLogStore()
   private let portableFrameStore = PortableFrameStore()
+  private var j1979Accumulator = J1979Accumulator()
   private var captureSyncTargets: [CaptureSyncTarget] = []
   private var captureSyncSuspendedForOTA = false
   private var captureSyncTask: Task<Void, Never>?
   private var captureChunkResponseTask: Task<Void, Never>?
+  private var lastCaptureSyncFingerprint: String?
 
   var bluetoothStateDescription = "Initializing"
   var bluetoothReady = false
@@ -204,8 +206,11 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   var captureSessions: [CaptureSessionSummary] = []
   var captureSyncMessage = "Waiting for a gateway capture index."
   var captureDownloadedRecords: UInt64 = 0
+  var captureSyncCompletionGeneration: UInt64 = 0
   var portableFrameCount = 0
   var lastEvidenceSyncMessage = "No Android/iPhone evidence sync has run."
+  var j1979Availability: [J1979ECUAvailability] = []
+  var standardOBDSamples: [J1979StandardSample] = []
   var transportMessage: String?
   var lastTransportFailureAt: Date?
   var lastTransportFailureEvidence: String?
@@ -1595,6 +1600,21 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       let result = try VHOSJSON.decoder().decode(ProtocolExperimentResult.self, from: frame.payload)
       experimentResults.append(result)
       lastExperimentResultAt = Date()
+    case .diagnosticResponse:
+      guard let gatewayID = handshake?.gatewayID else { return }
+      let response =
+        if frame.payload.count == 36, frame.payload.first == 1 {
+          try J1979ResponseEvidence.decodePassiveWire(
+            frame.payload, gatewayID: gatewayID, observedAt: Self.timestamp())
+        } else {
+          try VHOSJSON.decoder().decode(J1979ResponseEvidence.self, from: frame.payload)
+        }
+      _ = try j1979Accumulator.ingest(response)
+      j1979Availability = j1979Accumulator.availability
+      standardOBDSamples = j1979Accumulator.standardSamples
+      Self.commissioningTrace(
+        "J1979_RESPONSE ecu=\(response.ecuAddress) pid=0x\(String(format: "%02X", response.requestPID)) complete=\(j1979Availability.first(where: { $0.ecuAddress == response.ecuAddress })?.enumerationComplete ?? false) decoded_samples=\(standardOBDSamples.count)"
+      )
     case .rawCANFrame:
       guard let gatewayID = handshake?.gatewayID else { return }
       let observation = try PassiveCANObservation.decodeLive(
@@ -1736,8 +1756,15 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     guard let target = captureSyncTargets.first else {
       captureSessions = captureStore.summaries()
       captureSyncMessage = "Recent gateway logs are synchronized on this iPhone."
+      let fingerprint = captureSessions
+        .map { "\($0.gatewayID):\($0.sessionID):\($0.recordCount):\($0.byteCount)" }
+        .joined(separator: "|")
+      if !fingerprint.isEmpty, fingerprint != lastCaptureSyncFingerprint {
+        lastCaptureSyncFingerprint = fingerprint
+        captureSyncCompletionGeneration &+= 1
+      }
       Self.commissioningTrace(
-        "CAPTURE_SYNC_COMPLETE downloaded=\(captureDownloadedRecords) local_sessions=\(captureSessions.count)"
+        "CAPTURE_SYNC_COMPLETE downloaded=\(captureDownloadedRecords) local_sessions=\(captureSessions.count) outbox_generation=\(captureSyncCompletionGeneration)"
       )
       return
     }
@@ -2644,6 +2671,9 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     factoryBanner = nil
     handshake = nil
     health = nil
+    j1979Accumulator = J1979Accumulator()
+    j1979Availability = []
+    standardOBDSamples = []
     captureLogIndex = nil
     captureSyncTargets.removeAll()
     captureSyncMessage = "Waiting for a gateway capture index."

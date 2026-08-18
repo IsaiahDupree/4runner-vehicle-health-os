@@ -21,6 +21,13 @@ final class AppModel {
   private let experimentSigner: ExperimentSigner
   private let otaUploader = WiFiOTAUploader()
   private let temporaryGatewayNetwork = TemporaryGatewayNetwork()
+  private let evidenceOutboxStore = EvidenceOutboxStore()
+  private let evidenceOutboxUploader = EvidenceOutboxUploader()
+  private let synchronizedReferenceStore = SynchronizedReferenceStore()
+  private var evidenceAutomationTask: Task<Void, Never>?
+  private var lastQueuedCaptureSyncGeneration: UInt64 = 0
+  private static let evidenceEndpointDefaultsKey = "vhos.evidence-outbox.endpoint.v1"
+  private static let evidenceAutomaticDefaultsKey = "vhos.evidence-outbox.automatic.v1"
 
   var errorMessage: String?
   var noticeMessage: String?
@@ -33,6 +40,15 @@ final class AppModel {
   var lastSubmittedExperimentAt: Date?
   var updateInProgress = false
   var uploadProgressDescription: String?
+  var evidenceOutboxEndpoint = ""
+  var automaticEvidenceUpload = true
+  var evidenceOutboxPendingCount = 0
+  var evidenceOutboxUploadedCount = 0
+  var evidenceOutboxMessage = "Private evidence outbox is initializing."
+  var evidenceOutboxUploadInProgress = false
+  var evidenceOutboxTokenConfigured = false
+  var synchronizedReferenceCount = 0
+  var synchronizedReferenceMessage = "No synchronized reference samples recorded."
 
   private init() {
     let store = KeyStore(service: "com.isaiahdupree.VehicleHealthOS")
@@ -50,6 +66,198 @@ final class AppModel {
     releasePublicKeyConfigured = (try? store.data(for: .firmwareReleasePublicKey)) != nil
     experimentSigningKeyConfigured =
       (try? store.data(for: .experimentSigningPrivateKey)) != nil
+    evidenceOutboxEndpoint = UserDefaults.standard.string(
+      forKey: Self.evidenceEndpointDefaultsKey) ?? ""
+    if UserDefaults.standard.object(forKey: Self.evidenceAutomaticDefaultsKey) != nil {
+      automaticEvidenceUpload = UserDefaults.standard.bool(
+        forKey: Self.evidenceAutomaticDefaultsKey)
+    }
+    evidenceOutboxTokenConfigured =
+      (try? store.data(for: .evidenceOutboxBearerToken)) != nil
+    refreshEvidenceOutboxStatus()
+    refreshSynchronizedReferenceStatus()
+  }
+
+  func startEvidenceAutomation() {
+    guard evidenceAutomationTask == nil else { return }
+    evidenceAutomationTask = Task { [weak self] in
+      while !Task.isCancelled {
+        guard let self else { return }
+        await self.runEvidenceAutomationCycle()
+        try? await Task.sleep(for: .seconds(5))
+      }
+    }
+  }
+
+  func configureEvidenceOutbox(endpointText: String, bearerToken: String) {
+    do {
+      let trimmed = endpointText.trimmingCharacters(in: .whitespacesAndNewlines)
+      guard let endpoint = URL(string: trimmed), endpoint.scheme?.lowercased() == "https",
+        endpoint.host != nil
+      else { throw EvidenceOutboxStoreError.httpsEndpointRequired }
+      let token = bearerToken.trimmingCharacters(in: .whitespacesAndNewlines)
+      if !token.isEmpty {
+        guard token.count >= 32 else { throw AppModelError.evidenceTokenTooShort }
+        try keyStore.set(Data(token.utf8), for: .evidenceOutboxBearerToken)
+      }
+      guard (try keyStore.data(for: .evidenceOutboxBearerToken)) != nil else {
+        throw AppModelError.evidenceTokenRequired
+      }
+      evidenceOutboxEndpoint = endpoint.absoluteString
+      evidenceOutboxTokenConfigured = true
+      UserDefaults.standard.set(endpoint.absoluteString, forKey: Self.evidenceEndpointDefaultsKey)
+      evidenceOutboxMessage = "Private HTTPS inbox configured; queued packages can upload automatically."
+      errorMessage = nil
+    } catch {
+      errorMessage = error.localizedDescription
+    }
+  }
+
+  func setAutomaticEvidenceUpload(_ enabled: Bool) {
+    automaticEvidenceUpload = enabled
+    UserDefaults.standard.set(enabled, forKey: Self.evidenceAutomaticDefaultsKey)
+    if enabled { Task { await processEvidenceOutbox() } }
+  }
+
+  func queueCurrentEvidenceForAI() {
+    do {
+      let url = try evidenceSyncExportURL()
+      let payload = try Data(contentsOf: url, options: [.mappedIfSafe])
+      let (_, inserted) = try evidenceOutboxStore.enqueue(
+        payload: payload,
+        contentType: "application/vnd.vhos.evidence-sync+zip"
+      )
+      refreshEvidenceOutboxStatus()
+      evidenceOutboxMessage = inserted
+        ? "Checksummed evidence queued in the private outbox."
+        : "This exact evidence hash is already present in the private outbox."
+      if automaticEvidenceUpload { Task { await processEvidenceOutbox() } }
+      errorMessage = nil
+    } catch {
+      errorMessage = error.localizedDescription
+    }
+  }
+
+  func processEvidenceOutbox() async {
+    guard !evidenceOutboxUploadInProgress else { return }
+    guard automaticEvidenceUpload || evidenceOutboxPendingCount > 0 else { return }
+    guard let endpoint = URL(string: evidenceOutboxEndpoint),
+      let tokenData = try? keyStore.data(for: .evidenceOutboxBearerToken),
+      let token = String(data: tokenData, encoding: .utf8), !token.isEmpty
+    else {
+      refreshEvidenceOutboxStatus()
+      evidenceOutboxMessage = evidenceOutboxPendingCount == 0
+        ? "No evidence is queued. Configure a private HTTPS inbox for automatic AI pickup."
+        : "Evidence is safely queued locally; configure a private HTTPS inbox to upload it."
+      return
+    }
+    evidenceOutboxUploadInProgress = true
+    defer { evidenceOutboxUploadInProgress = false; refreshEvidenceOutboxStatus() }
+    do {
+      for record in try evidenceOutboxStore.records().filter({ $0.uploadedAt == nil }).prefix(8) {
+        do {
+          try await evidenceOutboxUploader.upload(
+            record,
+            payloadURL: try evidenceOutboxStore.payloadURL(for: record),
+            endpoint: endpoint,
+            bearerToken: token
+          )
+          try evidenceOutboxStore.markUploaded(record)
+          evidenceOutboxMessage = "Uploaded evidence package \(record.id.uuidString)."
+        } catch {
+          try? evidenceOutboxStore.markAttempt(record, error: error.localizedDescription)
+          evidenceOutboxMessage = "Private upload paused: \(error.localizedDescription)"
+          return
+        }
+      }
+    } catch {
+      evidenceOutboxMessage = error.localizedDescription
+    }
+  }
+
+  private func runEvidenceAutomationCycle() async {
+    retainStandardOBDReferences()
+    let generation = gateway.captureSyncCompletionGeneration
+    if generation > lastQueuedCaptureSyncGeneration {
+      lastQueuedCaptureSyncGeneration = generation
+      queueCurrentEvidenceForAI()
+    }
+    if automaticEvidenceUpload { await processEvidenceOutbox() }
+  }
+
+  func recordTechstreamReference(signalID: String, valueText: String, unit: String) {
+    do {
+      guard let observation = gateway.latestCANObservation else {
+        throw AppModelError.currentCANReferenceRequired
+      }
+      guard let value = Double(valueText.trimmingCharacters(in: .whitespacesAndNewlines)),
+        value.isFinite
+      else { throw AppModelError.referenceValueInvalid }
+      let sample = try SynchronizedReferenceSample(
+        gatewayMonotonicMicroseconds: observation.monotonicMicroseconds,
+        signalID: signalID,
+        value: value,
+        unit: unit,
+        source: "TECHSTREAM",
+        recordedAt: Self.timestamp(),
+        nearestCANSequence: observation.sourceSequence,
+        evidenceNote: "Owner-entered Toyota Techstream Data List value aligned to the latest gateway CAN observation."
+      )
+      _ = try synchronizedReferenceStore.append(sample)
+      refreshSynchronizedReferenceStatus()
+      synchronizedReferenceMessage =
+        "Recorded \(signalID) at gateway monotonic \(observation.monotonicMicroseconds) µs."
+      errorMessage = nil
+    } catch {
+      errorMessage = error.localizedDescription
+    }
+  }
+
+  func synchronizedReferenceExportURL() throws -> URL {
+    try synchronizedReferenceStore.exportURL()
+  }
+
+  private func retainStandardOBDReferences() {
+    do {
+      var inserted = 0
+      for sample in gateway.standardOBDSamples {
+        let reference = try SynchronizedReferenceSample(
+          gatewayMonotonicMicroseconds: sample.gatewayMonotonicMicroseconds,
+          signalID: "reference.\(sample.signalID)",
+          value: sample.value,
+          unit: sample.unit,
+          source: "SAE_J1979",
+          recordedAt: sample.observedAt,
+          nearestCANSequence: sample.sourceSequence,
+          evidenceNote:
+            "Standard read-only Mode 01 PID 0x\(String(format: "%02X", sample.pid)); definition revision \(sample.definitionRevision)."
+        )
+        if try synchronizedReferenceStore.append(reference) { inserted += 1 }
+      }
+      if inserted > 0 {
+        refreshSynchronizedReferenceStatus()
+        synchronizedReferenceMessage = "Retained \(inserted) new standard OBD reference sample(s)."
+      }
+    } catch {
+      synchronizedReferenceMessage = "Reference retention paused: \(error.localizedDescription)"
+    }
+  }
+
+  private func refreshSynchronizedReferenceStatus() {
+    synchronizedReferenceCount = ((try? synchronizedReferenceStore.samples()) ?? []).count
+    if synchronizedReferenceCount > 0 {
+      synchronizedReferenceMessage =
+        "\(synchronizedReferenceCount) append-only synchronized reference sample(s) retained."
+    }
+  }
+
+  private func refreshEvidenceOutboxStatus() {
+    let records = (try? evidenceOutboxStore.records()) ?? []
+    evidenceOutboxPendingCount = records.filter { $0.uploadedAt == nil }.count
+    evidenceOutboxUploadedCount = records.filter { $0.uploadedAt != nil }.count
+    if records.isEmpty {
+      evidenceOutboxMessage = "No evidence is queued."
+    }
   }
 
   func importReleasePublicKey(_ text: String) {
@@ -288,6 +496,10 @@ enum AppModelError: Error, LocalizedError {
   case otaSessionTimedOut
   case otaSessionRejected(String)
   case otaGatewayIdentityMismatch
+  case evidenceTokenRequired
+  case evidenceTokenTooShort
+  case currentCANReferenceRequired
+  case referenceValueInvalid
 
   var errorDescription: String? {
     switch self {
@@ -307,6 +519,14 @@ enum AppModelError: Error, LocalizedError {
     case .otaSessionRejected(let detail): "The gateway rejected the OTA session: \(detail)"
     case .otaGatewayIdentityMismatch:
       "The temporary OTA session came from a different gateway identity than the BLE handshake."
+    case .evidenceTokenRequired:
+      "Enter a private evidence inbox bearer token before enabling uploads."
+    case .evidenceTokenTooShort:
+      "The private evidence inbox bearer token must contain at least 32 characters."
+    case .currentCANReferenceRequired:
+      "A current gateway CAN observation is required to timestamp a Techstream reference value."
+    case .referenceValueInvalid:
+      "Enter a finite numeric Techstream reference value."
     }
   }
 }

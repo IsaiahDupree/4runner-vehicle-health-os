@@ -20,6 +20,11 @@ E0 plus the first native iOS control slice are implemented here:
 - offline replay with integrity, sequence, timestamp, and schema validation;
 - a versioned passive-CAN discovery analyzer that reports acquisition facts, sampling coverage,
   raw activity, checksum candidates, and correlations without assigning unverified vehicle meanings;
+- per-ECU SAE J1979 supported-PID enumeration, pinned standard read-only value decoding, and an
+  iPhone/Android passive-response path that cannot substitute zero for unavailable evidence;
+- synchronized Techstream/reference capture plus a candidate-only analyzer for `0x2C4`, `0x025`,
+  and `0x2C1` raw fields;
+- a durable iPhone private-evidence outbox and authenticated append-only receiver/agent claim queue;
 - CI checks for schema validity and deterministic replay;
 - a Swift 6 core with CRC32C framing, guarded discovery plans, signed firmware verification, OTA preflight, and AI evidence handoff;
 - a buildable native SwiftUI app with handshake-verified CoreBluetooth restoration,
@@ -52,6 +57,13 @@ python3 -m venv .venv
 .venv/bin/vhos calculate-ac build/captures/ac-bench-sweep
 .venv/bin/vhos discover-can path/to/passive-can-recent-logs.ndjson \
   --output build/can-discovery.report.json
+.venv/bin/vhos decode-j1979 path/to/j1979-responses.ndjson \
+  --supported-output build/j1979-supported.json \
+  --samples-output build/j1979-standard-samples.ndjson
+.venv/bin/vhos correlate-can-reference \
+  --can path/to/passive-can.ndjson \
+  --reference path/to/synchronized-reference-samples.csv \
+  --output build/can-reference-candidates.json
 .venv/bin/python -m pytest
 ```
 
@@ -110,6 +122,8 @@ signed catalog/portal [`4runner-vhos-release-hub`](https://github.com/IsaiahDupr
 See [E0 implementation record](docs/delivery/E0-IMPLEMENTATION.md) for the exact backlog and acceptance mapping.
 The current saved-vehicle evidence and strict UI interpretation boundary are recorded in the
 [CAN discovery display baseline](docs/development/CAN-DISCOVERY-DISPLAY-BASELINE-2026-08-18.md).
+The supported-PID, synchronized Toyota-reference, and private-outbox implementation is recorded in
+[the August 18 J1979/evidence delivery](docs/development/J1979-REFERENCE-VALIDATION-AND-PRIVATE-OUTBOX-2026-08-18.md).
 
 ## Safety boundary
 

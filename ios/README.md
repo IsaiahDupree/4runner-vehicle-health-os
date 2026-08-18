@@ -25,6 +25,13 @@ Native SwiftUI control surface for the VHOS gateway contract. Minimum deployment
 - A signed public Release Hub that stages Android, OBD ESP32, and A/C recovery artifacts from one
   target-aware catalog; iOS shares Android builds but does not claim authority to install an APK.
 - Provider-neutral JSON evidence handoff whose authority contract excludes vehicle activation and raw frame emission.
+- Passive dev30 J1979 response ingestion with per-ECU supported-PID continuation tracking and
+  pinned standard values that remain unavailable until support is proven.
+- Append-only, gateway-time-aligned Techstream/standard-OBD reference capture and CSV export for
+  candidate-only `0x2C4`, `0x025`, and `0x2C1` analysis.
+- A durable private evidence outbox that automatically queues completed capture sync bundles,
+  verifies SHA-256 before HTTPS upload, stores its token in Keychain, and retries without losing
+  undelivered evidence.
 
 The app contains no arbitrary CAN/K-line/J1850 transmit console. Factory WiCAN compatibility mode is observation-only; experiments require the VHOS firmware fork and its capability handshake.
 
@@ -38,6 +45,12 @@ Bluetooth transport evidence is stored separately from vehicle observations. Ope
 Bluetooth connection flight recorder** to export it without Xcode; retention, event fields,
 privacy boundaries, and deeper Apple/radio escalation paths are documented in the
 [iPhone BLE flight-recorder specification](../docs/development/IPHONE-BLE-CONNECTION-FLIGHT-RECORDER.md).
+
+Open **Evidence → Standard read-only OBD** for per-ECU availability and proven supported values,
+**Synchronized Techstream / OBD reference** to record independent values on the gateway monotonic
+timeline, and **Private AI evidence outbox** to configure the owner-controlled HTTPS receiver. The
+complete contracts, receiver commands, safety boundary, and physical validation procedure are in
+the [J1979/reference/outbox implementation record](../docs/development/J1979-REFERENCE-VALIDATION-AND-PRIVATE-OUTBOX-2026-08-18.md).
 
 ## Status semantics
 

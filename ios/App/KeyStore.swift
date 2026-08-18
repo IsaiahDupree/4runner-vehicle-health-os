@@ -6,6 +6,7 @@ import VHOSCore
 enum KeyStoreKey: String {
   case firmwareReleasePublicKey
   case experimentSigningPrivateKey
+  case evidenceOutboxBearerToken
 }
 
 struct KeyStore {

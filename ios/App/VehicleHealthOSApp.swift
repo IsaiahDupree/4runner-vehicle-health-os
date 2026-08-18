@@ -8,6 +8,7 @@ struct VehicleHealthOSApp: App {
     WindowGroup {
       RootView()
         .environment(model)
+        .task { model.startEvidenceAutomation() }
     }
   }
 }

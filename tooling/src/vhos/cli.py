@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -9,8 +10,16 @@ from .ac_metrics import SIMULATOR_AC_SIGNALS, calculate_ac_metrics
 from .bundles import BundleError, load_validated_bundle, write_simulator_bundle
 from .can_discovery import CANDiscoveryError, analyze_passive_can, load_passive_can_ndjson
 from .contracts import ContractCatalog, ContractError
+from .evidence_inbox import EvidenceInboxError, EvidenceInboxStore, serve_evidence_inbox
 from .firmware_package import build_firmware_package, verify_firmware_package
+from .j1979 import (
+    J1979Error,
+    decode_standard_samples,
+    enumerate_supported_pids,
+    load_j1979_ndjson,
+)
 from .replay import replay_bundle
+from .reference_correlation import ReferenceCorrelationError, correlate_can_with_reference
 from .simulator import generate_ac_bench_sweep, generate_cold_start_idle
 
 
@@ -56,6 +65,52 @@ def build_parser() -> argparse.ArgumentParser:
         help="One or more passive CAN NDJSON files or directories",
     )
     discover_can.add_argument("--output", type=Path)
+
+    decode_j1979 = subcommands.add_parser(
+        "decode-j1979",
+        help="Enumerate supported Mode 01 PIDs per ECU and decode only pinned, supported values",
+    )
+    decode_j1979.add_argument(
+        "input", type=Path, nargs="+", help="One or more obd.j1979-response NDJSON files"
+    )
+    decode_j1979.add_argument("--supported-output", type=Path, required=True)
+    decode_j1979.add_argument("--samples-output", type=Path, required=True)
+
+    correlate_reference = subcommands.add_parser(
+        "correlate-can-reference",
+        help="Rank raw fields from 0x2C4, 0x025, and 0x2C1 against synchronized reference samples",
+    )
+    correlate_reference.add_argument("--can", type=Path, action="append", required=True)
+    correlate_reference.add_argument("--reference", type=Path, action="append", required=True)
+    correlate_reference.add_argument(
+        "--identifier",
+        action="append",
+        type=lambda value: int(value, 0),
+        help="11-bit CAN identifier; defaults to 0x2C4, 0x025, and 0x2C1",
+    )
+    correlate_reference.add_argument("--maximum-pairing-delta-us", type=int, default=250_000)
+    correlate_reference.add_argument("--output", type=Path, required=True)
+
+    evidence_inbox = subcommands.add_parser(
+        "evidence-inbox", help="Run or inspect the authenticated private evidence receiver"
+    )
+    inbox_commands = evidence_inbox.add_subparsers(dest="inbox_command", required=True)
+    inbox_serve = inbox_commands.add_parser("serve", help="Serve the append-only evidence inbox")
+    inbox_serve.add_argument("--root", type=Path, required=True)
+    inbox_serve.add_argument("--bind", default="127.0.0.1")
+    inbox_serve.add_argument("--port", type=int, default=8765)
+    inbox_serve.add_argument("--token-env", default="VHOS_EVIDENCE_INBOX_TOKEN")
+    inbox_serve.add_argument("--tls-certificate", type=Path)
+    inbox_serve.add_argument("--tls-private-key", type=Path)
+    inbox_list = inbox_commands.add_parser("list", help="List accepted evidence packages")
+    inbox_list.add_argument("--root", type=Path, required=True)
+    inbox_list.add_argument("--pending-only", action="store_true")
+    inbox_claim = inbox_commands.add_parser(
+        "claim", help="Atomically claim one package for an evidence-analysis agent"
+    )
+    inbox_claim.add_argument("--root", type=Path, required=True)
+    inbox_claim.add_argument("--package-id", required=True)
+    inbox_claim.add_argument("--agent-id", required=True)
 
     package_firmware = subcommands.add_parser(
         "package-firmware", help="Create a signed .vhosota distribution package"
@@ -168,6 +223,69 @@ def main(argv: list[str] | None = None) -> int:
                 )
             _print_json(report)
             return 0
+        if args.command == "decode-j1979":
+            responses, sources = load_j1979_ndjson(args.input)
+            supported = enumerate_supported_pids(responses)
+            samples = decode_standard_samples(responses, supported)
+            _write_new_json(args.supported_output, supported)
+            _write_new_ndjson(args.samples_output, samples)
+            _print_json(
+                {
+                    "supported_output": str(args.supported_output.resolve()),
+                    "samples_output": str(args.samples_output.resolve()),
+                    "source_files": sources,
+                    "ecu_count": len(supported["ecu_results"]),
+                    "complete_ecu_count": sum(
+                        item["enumeration_complete"] for item in supported["ecu_results"]
+                    ),
+                    "decoded_samples": len(samples),
+                }
+            )
+            return 0
+        if args.command == "correlate-can-reference":
+            keyword: dict[str, object] = {
+                "maximum_pairing_delta_us": args.maximum_pairing_delta_us
+            }
+            if args.identifier:
+                keyword["identifiers"] = args.identifier
+            report = correlate_can_with_reference(
+                args.can,
+                args.reference,
+                **keyword,
+            )
+            _write_new_json(args.output, report)
+            _print_json(
+                {
+                    "output": str(args.output.resolve()),
+                    "reference_signals": report["reference_signals"],
+                    "ranked_candidates": len(report["ranked_candidates"]),
+                    "promotion_allowed": report["promotion_allowed"],
+                }
+            )
+            return 0
+        if args.command == "evidence-inbox":
+            store = EvidenceInboxStore(args.root)
+            if args.inbox_command == "list":
+                _print_json({"packages": store.list_packages(pending_only=args.pending_only)})
+                return 0
+            if args.inbox_command == "claim":
+                _print_json(store.claim(args.package_id, args.agent_id))
+                return 0
+            if args.inbox_command == "serve":
+                token = os.environ.get(args.token_env, "")
+                if not token:
+                    raise EvidenceInboxError(
+                        f"Evidence inbox token environment variable is not set: {args.token_env}"
+                    )
+                serve_evidence_inbox(
+                    root=args.root,
+                    bind=args.bind,
+                    port=args.port,
+                    bearer_token=token,
+                    tls_certificate=args.tls_certificate,
+                    tls_private_key=args.tls_private_key,
+                )
+                return 0
         if args.command == "validate-bundle":
             manifest, observations = load_validated_bundle(args.bundle)
             _print_json(
@@ -202,7 +320,16 @@ def main(argv: list[str] | None = None) -> int:
                 }
             )
             return 0
-    except (BundleError, CANDiscoveryError, ContractError, OSError, ValueError) as exc:
+    except (
+        BundleError,
+        CANDiscoveryError,
+        ContractError,
+        EvidenceInboxError,
+        J1979Error,
+        ReferenceCorrelationError,
+        OSError,
+        ValueError,
+    ) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
     parser.error("Unhandled command")
@@ -219,6 +346,23 @@ def _contracts(args: argparse.Namespace) -> int:
 
 def _print_json(document: dict[str, object]) -> None:
     print(json.dumps(document, indent=2, sort_keys=True))
+
+
+def _write_new_json(path: Path, document: dict[str, object]) -> None:
+    if path.exists():
+        raise ValueError(f"Output already exists: {path}")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(document, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _write_new_ndjson(path: Path, documents: list[dict[str, object]]) -> None:
+    if path.exists():
+        raise ValueError(f"Output already exists: {path}")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        "".join(json.dumps(item, sort_keys=True, separators=(",", ":")) + "\n" for item in documents),
+        encoding="utf-8",
+    )
 
 
 if __name__ == "__main__":

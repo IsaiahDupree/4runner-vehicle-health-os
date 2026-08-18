@@ -261,6 +261,11 @@ private struct EvidenceView: View {
   @State private var bleTraceExportURL: URL?
   @State private var syncExportURL: URL?
   @State private var importingSync = false
+  @State private var outboxEndpoint = ""
+  @State private var outboxToken = ""
+  @State private var referencePreset: TechstreamReferencePreset = .engineSpeed
+  @State private var referenceValue = ""
+  @State private var referenceExportURL: URL?
 
   var body: some View {
     List {
@@ -365,6 +370,79 @@ private struct EvidenceView: View {
             .foregroundStyle(.secondary)
         }
       }
+      Section("Standard read-only OBD") {
+        if model.gateway.j1979Availability.isEmpty {
+          ContentUnavailableView(
+            "No supported-PID evidence",
+            systemImage: "car.front.waves.up",
+            description: Text(
+              "The production gateway remains default-deny until PARKED and signed-plan safety gates are available."
+            ))
+        } else {
+          ForEach(model.gateway.j1979Availability) { ecu in
+            VStack(alignment: .leading, spacing: 4) {
+              Text("ECU \(ecu.ecuAddress)").font(.headline)
+              Text(
+                ecu.enumerationComplete
+                  ? "\(ecu.supportedPIDs.count) supported Mode 01 PIDs; enumeration complete"
+                  : ecu.incompleteReason ?? "Enumeration incomplete"
+              )
+              .font(.caption)
+              .foregroundStyle(ecu.enumerationComplete ? .green : .orange)
+            }
+          }
+          ForEach(latestStandardOBDSamples) { sample in
+            LabeledContent(sample.name) {
+              Text("\(sample.value.formatted(.number.precision(.fractionLength(0...3)))) \(sample.unit)")
+            }
+          }
+          Text(
+            "Values appear only after the same ECU completes its supported-PID bitmap chain. Raw response evidence and the pinned definition revision are retained."
+          )
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+        }
+      }
+      Section("Synchronized Techstream / OBD reference") {
+        LabeledContent("Retained samples", value: model.synchronizedReferenceCount.formatted())
+        Text(model.synchronizedReferenceMessage)
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+        Picker("Reference signal", selection: $referencePreset) {
+          ForEach(TechstreamReferencePreset.allCases) { preset in
+            Text(preset.label).tag(preset)
+          }
+        }
+        TextField("Techstream value (\(referencePreset.unit))", text: $referenceValue)
+          .keyboardType(.numbersAndPunctuation)
+        Button("Record at current gateway CAN time") {
+          model.recordTechstreamReference(
+            signalID: referencePreset.signalID,
+            valueText: referenceValue,
+            unit: referencePreset.unit
+          )
+          if model.errorMessage == nil { referenceValue = "" }
+        }
+        .disabled(
+          model.gateway.latestCANObservation == nil
+            || referenceValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        Button("Prepare synchronized reference CSV") {
+          do { referenceExportURL = try model.synchronizedReferenceExportURL() } catch {
+            model.errorMessage = error.localizedDescription
+          }
+        }
+        .disabled(model.synchronizedReferenceCount == 0)
+        if let referenceExportURL {
+          ShareLink(item: referenceExportURL) {
+            Label("Share synchronized-reference-samples.csv", systemImage: "square.and.arrow.up")
+          }
+        }
+        Text(
+          "For one validation run, keep passive capture active, vary one input at a time, and record at least five Techstream values for engine speed, steering angle, and accelerator position. Standard J1979 values are retained here automatically. The analyzer only produces candidates; it never promotes Toyota CAN meanings by correlation alone."
+        )
+        .font(.footnote)
+        .foregroundStyle(.secondary)
+      }
       Section("Experiment results") {
         if model.gateway.experimentResults.isEmpty {
           ContentUnavailableView(
@@ -395,6 +473,41 @@ private struct EvidenceView: View {
             Label("Share agent-evidence-handoff.json", systemImage: "square.and.arrow.up")
           }
         }
+      }
+      Section("Private AI evidence outbox") {
+        LabeledContent("Queued", value: model.evidenceOutboxPendingCount.formatted())
+        LabeledContent("Uploaded", value: model.evidenceOutboxUploadedCount.formatted())
+        Text(model.evidenceOutboxMessage)
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+        TextField("https://private-inbox.example/v1/evidence/packages", text: $outboxEndpoint)
+          .textInputAutocapitalization(.never)
+          .autocorrectionDisabled()
+          .keyboardType(.URL)
+        SecureField(
+          model.evidenceOutboxTokenConfigured ? "Bearer token saved in Keychain" : "Bearer token",
+          text: $outboxToken)
+        Button("Save private inbox") {
+          model.configureEvidenceOutbox(endpointText: outboxEndpoint, bearerToken: outboxToken)
+          outboxToken = ""
+        }
+        .disabled(outboxEndpoint.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        Toggle(
+          "Upload automatically",
+          isOn: Binding(
+            get: { model.automaticEvidenceUpload },
+            set: { model.setAutomaticEvidenceUpload($0) }
+          ))
+        Button("Queue current checksummed evidence") { model.queueCurrentEvidenceForAI() }
+          .disabled(model.gateway.portableFrameCount == 0)
+        Button("Send queued packages now") { Task { await model.processEvidenceOutbox() } }
+          .disabled(
+            model.evidenceOutboxPendingCount == 0 || model.evidenceOutboxUploadInProgress)
+        Text(
+          "Packages remain private and append-only. The receiver gets a SHA-256-bound envelope and interpretation/proposal authority only; it cannot activate experiments or emit vehicle frames."
+        )
+        .font(.footnote)
+        .foregroundStyle(.secondary)
       }
       Section("Android / iPhone evidence sync") {
         LabeledContent("Validated logical frames", value: model.gateway.portableFrameCount.formatted())
@@ -431,6 +544,44 @@ private struct EvidenceView: View {
       case .failure(let error):
         model.errorMessage = error.localizedDescription
       }
+    }
+    .onAppear { outboxEndpoint = model.evidenceOutboxEndpoint }
+  }
+
+  private var latestStandardOBDSamples: [J1979StandardSample] {
+    var latest: [String: J1979StandardSample] = [:]
+    for sample in model.gateway.standardOBDSamples {
+      latest["\(sample.ecuAddress):\(sample.signalID)"] = sample
+    }
+    return latest.values.sorted { $0.name < $1.name }
+  }
+}
+
+private enum TechstreamReferencePreset: String, CaseIterable, Identifiable {
+  case engineSpeed
+  case steeringAngle
+  case acceleratorPosition
+
+  var id: String { rawValue }
+  var label: String {
+    switch self {
+    case .engineSpeed: "Engine speed → test 0x2C4"
+    case .steeringAngle: "Steering angle → test 0x025"
+    case .acceleratorPosition: "Accelerator position → test 0x2C1"
+    }
+  }
+  var signalID: String {
+    switch self {
+    case .engineSpeed: "reference.engine.speed"
+    case .steeringAngle: "reference.steering.angle"
+    case .acceleratorPosition: "reference.accelerator.position"
+    }
+  }
+  var unit: String {
+    switch self {
+    case .engineSpeed: "rpm"
+    case .steeringAngle: "deg"
+    case .acceleratorPosition: "%"
     }
   }
 }
