@@ -44,7 +44,9 @@
         {
           "source_ids": [
             "realdash-fj-cruiser-cedfdf49",
-            "aim-community-dbc-6e2f88f"
+            "aim-community-dbc-6e2f88f",
+            "aim-community-auris-6e2f88f",
+            "aim-community-lexus-is-f-6e2f88f"
           ],
           "summary": {
             "count": 659,
@@ -71,7 +73,7 @@
       "hypothesis_status": "CROSS_MODEL_CANDIDATE",
       "identifier": 708,
       "identifier_hex": "0x2C4",
-      "limitations": "Only one related-platform community source supplies this byte mapping, so the apparently plausible target range is not semantic proof.",
+      "limitations": "Two related-platform community sources associate the candidate byte with intake-air temperature but disagree on scale and offset. The apparently plausible target range is not semantic proof.",
       "production_value_display_allowed": false,
       "records": 659,
       "sessions": 8,
@@ -90,6 +92,20 @@
           },
           "transform_id": "fj-intake-air-temperature-raw-degc",
           "unit": "degC"
+        },
+        {
+          "source_ids": [
+            "aim-community-lexus-is-f-6e2f88f"
+          ],
+          "summary": {
+            "count": 659,
+            "maximum": 85.0,
+            "mean": 46.578149,
+            "minimum": 35.0,
+            "standard_deviation": 12.543323
+          },
+          "transform_id": "lexus-is-f-intake-air-temperature-x2p5-minus40-degc",
+          "unit": "degC"
         }
       ]
     },
@@ -106,7 +122,7 @@
       "hypothesis_status": "CROSS_MODEL_CANDIDATE",
       "identifier": 720,
       "identifier_hex": "0x2D0",
-      "limitations": "CSU left this identifier unknown on a 2010 Camry; the turbine interpretation and scale come from one later related-platform community mapping.",
+      "limitations": "CSU left this identifier unknown on a 2010 Camry. The NFI Lexus study found RPM-related data in 0x2D0 but did not establish the FJ turbine interpretation or scale, which still come from one later related-platform community mapping.",
       "production_value_display_allowed": false,
       "records": 626,
       "sessions": 8,
@@ -141,7 +157,7 @@
       "hypothesis_status": "CROSS_MODEL_CANDIDATE",
       "identifier": 720,
       "identifier_hex": "0x2D0",
-      "limitations": "The target capture contains only a small unlabeled code set and cannot establish which state any code represents.",
+      "limitations": "The target capture contains only a small unlabeled code set and cannot establish which state any code represents. The NFI Lexus paper places current gear in its fifth byte position, while the FJ artifact places a selector candidate in its third byte position; the conflict blocks cross-model field promotion.",
       "production_value_display_allowed": false,
       "records": 626,
       "sessions": 8,
@@ -176,7 +192,7 @@
       "hypothesis_status": "HIGH_PRIORITY_CROSS_MODEL_CANDIDATE",
       "identifier": 705,
       "identifier_hex": "0x2C1",
-      "limitations": "The current retained captures are unlabeled, so range and activity cannot prove that driver pedal movement caused this field.",
+      "limitations": "The CSU Camry and NFI Lexus experiments independently support pedal-related behavior at this byte position, but the current target captures are unlabeled, so range and activity cannot prove that driver pedal movement caused the field or that the cross-model scale applies.",
       "production_value_display_allowed": false,
       "records": 631,
       "sessions": 8,
@@ -184,7 +200,10 @@
       "transform_evaluations": [
         {
           "source_ids": [
-            "realdash-fj-cruiser-cedfdf49"
+            "realdash-fj-cruiser-cedfdf49",
+            "comma-opendbc-b4ef5e1",
+            "aim-community-auris-6e2f88f",
+            "aim-community-lexus-is-f-6e2f88f"
           ],
           "summary": {
             "count": 631,
@@ -211,7 +230,7 @@
       "hypothesis_status": "HIGH_PRIORITY_CROSS_MODEL_CANDIDATE",
       "identifier": 37,
       "identifier_hex": "0x025",
-      "limitations": "Sources agree strongly on identifier and signed 12-bit placement but disagree on scale and direction. No degree value is currently accepted.",
+      "limitations": "Sources agree strongly on the steering semantic family but not a universal layout: the pinned 2009 iQ definition is signed 11-bit at 1 degree/count, Prius and generated Toyota definitions are signed 12-bit at 1.5 degrees/count, and the FJ formula uses a very different scale and direction. No target degree value is accepted.",
       "production_value_display_allowed": false,
       "records": 667,
       "sessions": 8,
@@ -229,20 +248,6 @@
             "standard_deviation": 20.388205
           },
           "transform_id": "opendbc-toyota-signed12-x1p5-deg",
-          "unit": "deg"
-        },
-        {
-          "source_ids": [
-            "comma-opendbc-b4ef5e1"
-          ],
-          "summary": {
-            "count": 667,
-            "maximum": 39.0,
-            "mean": 33.46027,
-            "minimum": -12.0,
-            "standard_deviation": 13.592136
-          },
-          "transform_id": "opendbc-iq-signed12-x1-deg",
           "unit": "deg"
         },
         {
@@ -274,7 +279,7 @@
       "hypothesis_status": "CROSS_MODEL_CANDIDATE",
       "identifier": 548,
       "identifier_hex": "0x224",
-      "limitations": "Every retained target frame is zero in the candidate field, so current evidence confirms the identifier only and cannot test pressure response.",
+      "limitations": "Every retained target frame is zero in the candidate field, so current evidence cannot test pressure response. Cross-model DBCs also disagree materially on field placement and scale; no pressure unit is accepted.",
       "production_value_display_allowed": false,
       "records": 143,
       "sessions": 8,
@@ -304,7 +309,7 @@
       "hypothesis_status": "CROSS_MODEL_CANDIDATE",
       "identifier": 547,
       "identifier_hex": "0x223",
-      "limitations": "The target payload has two observed states, but the related-platform bit numbering does not yet map unambiguously to the changing target bit.",
+      "limitations": "The target payload has two observed states, but the related-platform bit numbering does not yet map unambiguously to the changing target bit. CSU left the identifier unknown; the USENIX study proves only that 0x223 and 0x224 shared a transmitter on its Camry.",
       "production_value_display_allowed": false,
       "records": 142,
       "sessions": 8,
@@ -356,8 +361,8 @@
   ],
   "pack": {
     "pack_id": "toyota.4runner.2005.passive-can-hypotheses",
-    "pack_version": "0.1.0",
-    "sha256": "26ee38983183b0616e5ae81a92406052d14b7cd15e1fda5a9bff25149f9f5357"
+    "pack_version": "0.3.0",
+    "sha256": "cd1467986138a11c8554d15252ffe8586ae48fdc8d507acbb846ae2fac204c7b"
   },
   "promotion_allowed": false,
   "relationship_evaluations": [

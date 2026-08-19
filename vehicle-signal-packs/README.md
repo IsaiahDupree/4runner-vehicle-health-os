@@ -9,6 +9,13 @@ Internet and reference research is tracked in
 [`2005-4RUNNER-CAN-SOURCE-AUDIT-2026-08-18.md`](../docs/development/2005-4RUNNER-CAN-SOURCE-AUDIT-2026-08-18.md).
 Those records are AI-readable discovery inputs, not accepted signal definitions.
 
+The cross-platform evidence graph is preserved separately in
+[`toyota-can-cross-platform-lineage.v1.json`](toyota-can-cross-platform-lineage.v1.json) and
+[`TOYOTA-LEXUS-CAN-CROSS-PLATFORM-LINEAGE-2026-08-18.md`](../docs/development/TOYOTA-LEXUS-CAN-CROSS-PLATFORM-LINEAGE-2026-08-18.md).
+It records 21 Toyota, Lexus, SAE, university, forensic-research, and version-pinned community sources across exact-target,
+same-generation SUV, primary experiment, passenger-car, and later-platform cohorts. Conflicting
+layouts remain explicit rather than being merged into a guessed decoder.
+
 The versioned discovery pack is
 [`toyota-4runner-2005-passive-can-hypotheses.v1.json`](toyota-4runner-2005-passive-can-hypotheses.v1.json).
 It records exact byte-field hypotheses, source revisions, competing transforms, limitations, and

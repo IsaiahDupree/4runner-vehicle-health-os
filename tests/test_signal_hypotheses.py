@@ -77,8 +77,11 @@ def test_conflicting_steering_scales_and_static_brake_capture_remain_unresolved(
         item["transform_id"] for item in steering["transform_evaluations"]
     } == {
         "opendbc-toyota-signed12-x1p5-deg",
-        "opendbc-iq-signed12-x1-deg",
         "fj-signed12-xneg0p087890625-deg",
+    }
+    assert "signed 11-bit" in steering["limitations"]
+    assert "opendbc-iq-signed12-x1-deg" not in {
+        item["transform_id"] for item in steering["transform_evaluations"]
     }
 
     brake = _evaluation(report, "toyota.224.brake-pressure.be16-low9")

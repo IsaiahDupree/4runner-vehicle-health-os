@@ -3,6 +3,8 @@
 > Follow-up: the source-pinned, executable hypothesis pack and its evaluation against all 5,176
 > retained observations are documented in
 > [`CAN-SIGNAL-INTERPRETATION-2026-08-18.md`](CAN-SIGNAL-INTERPRETATION-2026-08-18.md).
+> The expanded 21-source, whole-line evidence graph is documented in
+> [`TOYOTA-LEXUS-CAN-CROSS-PLATFORM-LINEAGE-2026-08-18.md`](TOYOTA-LEXUS-CAN-CROSS-PLATFORM-LINEAGE-2026-08-18.md).
 > This earlier audit preserves the capture and research boundary as it existed at the time.
 
 Date: 2026-08-18
@@ -36,7 +38,7 @@ vehicle.
 | A | [SAE J1979](https://saemobilus.sae.org/standards/j1979_201009-e-e-diagnostic-test-modes) | Standard emissions-diagnostic request/response behavior and the existence of versioned PID definitions | Supported data remains vehicle/model-year/region dependent; the applicable historical revision and Digital Annex must be licensed and pinned |
 | A | [Toyota Technical Information System](https://www.techinfo.toyota.com/techInfoPortal/appmanager/t3/ti?_nfpb=true&_pageLabel=ti_whats_tis) | VIN/model/year-specific repair information, wiring information, and Toyota diagnostic tooling | TIS/Techstream is subscription content and does not imply a publishable raw broadcast-CAN DBC |
 | B | [Colorado State University Toyota CAN interpretation](https://www.engr.colostate.edu/~jdaily/tucrrc/ToyotaCAN.html) | Independent measurement and CAN correlation on a documented 2010 Toyota Camry, including exact identifiers and cadence | Different model, model year, ECUs, calibration, and options; discovery candidates only |
-| B | [comma.ai opendbc](https://github.com/commaai/opendbc) | Open DBC parsing, replay, comparison, and reverse-engineering workflow | The reviewed repository does not provide an accepted exact 2005 4Runner definition for this project |
+| C | [comma.ai opendbc](https://github.com/commaai/opendbc) | Version-pinned community DBC definitions plus parsing, replay, comparison, and reverse-engineering workflow | The reviewed repository does not provide an accepted exact 2005 4Runner definition for this project |
 | C | [Toyota/Lexus DBC artifact](https://github.com/billyjack2/CAN-DBC-Collection/blob/6e2f88fd6cd9c1f47d0db7bd022711b106f27027/TOYOTA/LEXUS/can1v3.dbc) | Candidate field layouts for a named Toyota/Lexus AiM protocol | Community collection, no exact 4Runner applicability proof, and no license shown for copying it into this project |
 | C | [AiM production-ECU documentation catalog](https://www.aim-sportline.com/it/documentazione-connessioni-ecu-serie.htm) | Vendor-published list of supported vehicle protocols and connection documents | No exact 2005 4Runner entry was established in this review |
 
@@ -46,8 +48,9 @@ definitions should be committed.
 
 ## Cross-reference against retained 4Runner evidence
 
-The following table compares identifiers present in our five-session, 2,544-record retained
-capture with the CSU 2010 Camry research and the third-party DBC artifact. `CROSS_MODEL_CANDIDATE`
+The following table preserves this audit's historical five-session, 2,544-record retained-capture
+boundary; the later executable evaluation covers eight sessions and 5,176 records. This table
+compares the historical subset with the CSU 2010 Camry research and the third-party DBC artifact. `CROSS_MODEL_CANDIDATE`
 means "worth testing first," not "decoded."
 
 | Identifier | Current 4Runner acquisition fact | Internet research | Status |
@@ -56,9 +59,9 @@ means "worth testing first," not "decoded."
 | `0x023` | Present; DLC 7; change-rich; candidate checksum matches | CSU also records DLC 7 but leaves the meaning unknown | `CORROBORATED_ID_ONLY` |
 | `0x025` | Present; bytes 4/5/6 agree in retained samples; candidate checksum matches | CSU identifies steering data; the DBC artifact labels a steering-angle field | `CROSS_MODEL_CANDIDATE` |
 | `0x223` | Present; candidate checksum matches | CSU observed it and left it unknown | `CORROBORATED_ID_ONLY` |
-| `0x2C1` | Present; change-rich; candidate checksum matches | CSU identifies throttle-pedal behavior; the DBC artifact labels a pedal-position field | `CROSS_MODEL_CANDIDATE` |
-| `0x2C4` | Present; change-rich; correlated with `0x2D0`; candidate checksum matches | CSU identifies engine speed in the first two payload bytes; the DBC artifact labels an RPM field | `HIGH_PRIORITY_CROSS_MODEL_CANDIDATE` |
-| `0x2D0` | Present; first-word relationship with `0x2C4`; candidate checksum matches | CSU observed the ID but found no time trend in its test | `CORROBORATED_ID_ONLY` |
+| `0x2C1` | Present; change-rich; candidate checksum matches | Independent Camry and Lexus physical studies identify pedal behavior at byte 6; pinned mappings propose `0.5 percent/count` | `HIGH_PRIORITY_CROSS_MODEL_CANDIDATE` |
+| `0x2C4` | Present; change-rich; correlated with `0x2D0`; candidate checksum matches | Independent Camry and Lexus physical studies identify RPM-related data; pinned mappings propose `0.78125 rpm/count` | `HIGH_PRIORITY_CROSS_MODEL_CANDIDATE` |
+| `0x2D0` | Present; first-word relationship with `0x2C4`; candidate checksum matches | Lexus physical research finds RPM- and gear-related data; the FJ mapping proposes turbine speed, but the two sources conflict on gear-field placement | `CROSS_MODEL_CANDIDATE` |
 | `0x420` | Present; candidate checksum matches | No mapping was found in the reviewed sources | `UNMAPPED` |
 
 Additional cross-model identifiers worth watching, without asserting they must be present, include
