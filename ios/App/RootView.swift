@@ -1,4 +1,3 @@
-import Charts
 import SwiftUI
 import VHOSCore
 
@@ -384,31 +383,13 @@ private struct EvidenceView: View {
           LabeledContent(
             "Research pack",
             value: "\(report.packID)@\(report.packVersion)")
-          Picker("Candidate field", selection: $selectedCANResearchSeries) {
-            ForEach(report.series) { series in
-              Text("\(series.identifierHex) · \(series.label)").tag(series.id)
-            }
-          }
-          .pickerStyle(.menu)
+          PassiveCANPlaybackLab(
+            report: report,
+            selectedSeriesID: $selectedCANResearchSeries
+          )
           if let series = report.series.first(where: { $0.id == selectedCANResearchSeries })
             ?? report.series.first
           {
-            Chart(series.points) { point in
-              LineMark(
-                x: .value("Capture timeline (s)", point.elapsedSeconds),
-                y: .value(series.displayUnit, point.displayValue)
-              )
-              .foregroundStyle(by: .value("Capture", point.sessionLabel))
-              .interpolationMethod(.linear)
-            }
-            .chartXAxisLabel("Retained capture timeline (seconds)")
-            .chartYAxisLabel(
-              series.usesCandidateTransform
-                ? "Candidate \(series.displayUnit) — unverified" : series.displayUnit
-            )
-            .chartLegend(position: .bottom, spacing: 4)
-            .frame(minHeight: 240)
-
             LabeledContent("Candidate semantic", value: series.candidateSemantic)
             LabeledContent(
               "Evidence",

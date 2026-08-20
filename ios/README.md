@@ -67,6 +67,10 @@ capture logs. Candidate physical-unit axes appear only where the pinned pack has
 cross-model transform, and remain visibly unverified. Conflicting transforms stay in raw counts.
 The archive/relaunch tests, exact seven fields, display authority, and validation workflow are in
 the [retained CAN research implementation record](../docs/development/IOS-RETAINED-CAN-RESEARCH-GRAPHS-2026-08-20.md).
+The same section now provides deterministic historical playback with a progressive trace, exact
+retained-point cursor, play/pause, scrub, 0.25×–20× speed, restart, optional looping, and explicit
+session boundaries. The playback implementation and its real-capture tests are in the
+[retained CAN playback lab record](../docs/development/IOS-RETAINED-CAN-PLAYBACK-LAB-2026-08-20.md).
 
 ## Status semantics
 

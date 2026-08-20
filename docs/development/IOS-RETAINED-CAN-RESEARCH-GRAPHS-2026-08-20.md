@@ -1,6 +1,6 @@
 # iOS retained CAN research graphs and session-safe evidence reload
 
-Status: implemented in iOS `0.3.18 (25)`
+Status: implemented in iOS `0.3.18 (25)`; interactive historical playback added in `0.3.19 (26)`
 
 ## Outcome
 
@@ -34,6 +34,10 @@ The app reads every retained capture file through that validator. Files are merg
 deduplicated by stable observation identity, and bounded to the newest 50,000 records for the live
 research surface. The underlying capture files remain the durable truth and are not rewritten by
 analysis.
+
+The charts now include an interactive, deterministic playback transport. Its controls, exact-point
+semantics, session behavior, accessibility contract, and real-evidence acceptance suite are recorded
+in the [retained CAN playback lab](IOS-RETAINED-CAN-PLAYBACK-LAB-2026-08-20.md).
 
 ## Current research series
 

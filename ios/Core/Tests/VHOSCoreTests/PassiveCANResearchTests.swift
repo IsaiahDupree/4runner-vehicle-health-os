@@ -18,6 +18,10 @@ private let researchFixtureName = "real-can-2026-08-18-627753796-256"
   let duplicateImport = try PassiveCANEvidenceArchive.merge(
     existing: firstImport.records, incoming: reloaded)
   let after = try PassiveCANResearchAnalyzer.analyze(firstImport.records)
+  let beforePlayback = try PassiveCANPlaybackTimeline(
+    series: #require(before.series.first { $0.id == "toyota.2c4.engine-speed.be16" }))
+  let afterPlayback = try PassiveCANPlaybackTimeline(
+    series: #require(after.series.first { $0.id == "toyota.2c4.engine-speed.be16" }))
 
   #expect(firstImport.appendedRecords == 256)
   #expect(firstImport.records.count == 256)
@@ -25,6 +29,7 @@ private let researchFixtureName = "real-can-2026-08-18-627753796-256"
   #expect(duplicateImport.records == firstImport.records)
   #expect(try PassiveCANEvidenceArchive.semanticSHA256(firstImport.records) == offloadSHA)
   #expect(after == before)
+  #expect(afterPlayback == beforePlayback)
 }
 
 @Test func realRetainedCANProducesTraceableFailClosedResearchSeries() throws {

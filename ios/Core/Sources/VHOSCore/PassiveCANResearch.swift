@@ -235,6 +235,19 @@ public struct PassiveCANResearchPoint: Identifiable, Equatable, Sendable {
   public var sessionLabel: String { "Session \(sessionOrdinal)" }
 }
 
+public struct PassiveCANResearchSessionBounds: Identifiable, Equatable, Sendable {
+  public let gatewayID: String
+  public let sessionID: UInt32
+  public let sessionOrdinal: Int
+  public let captureStartSeconds: Double
+  public let captureEndSeconds: Double
+  public let firstPointSeconds: Double
+  public let lastPointSeconds: Double
+  public let pointCount: Int
+
+  public var id: String { "\(gatewayID):\(sessionID):\(sessionOrdinal)" }
+}
+
 public struct PassiveCANResearchSeries: Identifiable, Equatable, Sendable {
   public let id: String
   public let label: String
@@ -252,6 +265,7 @@ public struct PassiveCANResearchSeries: Identifiable, Equatable, Sendable {
   public let candidateTransformID: String?
   public let sourceCount: Int
   public let validationGate: String
+  public let sessionBounds: [PassiveCANResearchSessionBounds]
   public let points: [PassiveCANResearchPoint]
 
   public var usesCandidateTransform: Bool { candidateTransformID != nil }
@@ -278,12 +292,12 @@ public enum PassiveCANResearchAnalyzer {
     try observations.forEach(PassiveCANEvidenceArchive.validate)
     let timeline = buildTimeline(observations)
     let sessionCount = Set(observations.map { "\($0.gatewayID):\($0.sessionID)" }).count
-    let series: [PassiveCANResearchSeries] = PassiveCANResearchCatalog.definitions.compactMap {
+    let series: [PassiveCANResearchSeries] = try PassiveCANResearchCatalog.definitions.compactMap {
       definition -> PassiveCANResearchSeries? in
-      let values = observations.compactMap { observation -> PassiveCANResearchPoint? in
+      let extracted = observations.compactMap { observation -> PassiveCANResearchPoint? in
         guard observation.identifier == definition.identifier, !observation.extended,
           !observation.remoteRequest,
-          let time = timeline[observation.id],
+          let time = timeline.values[observation.id],
           let raw = extract(definition, from: observation)
         else { return nil }
         let display = definition.candidateTransform.map { raw * $0.scale + $0.offset } ?? raw
@@ -297,9 +311,26 @@ public enum PassiveCANResearchAnalyzer {
           displayValue: display
         )
       }
+      let values = extracted.sorted(by: pointOrder)
       guard !values.isEmpty else { return nil }
       let rawValues = values.map(\.rawValue)
       let displayValues = values.map(\.displayValue)
+      let sessionBounds = Dictionary(grouping: values, by: pointSessionKey).compactMap {
+        key, sessionPoints -> PassiveCANResearchSessionBounds? in
+        guard let capture = timeline.sessions[key], let first = sessionPoints.first,
+          let last = sessionPoints.last
+        else { return nil }
+        return PassiveCANResearchSessionBounds(
+          gatewayID: key.gatewayID,
+          sessionID: key.sessionID,
+          sessionOrdinal: capture.ordinal,
+          captureStartSeconds: capture.startSeconds,
+          captureEndSeconds: capture.endSeconds,
+          firstPointSeconds: first.elapsedSeconds,
+          lastPointSeconds: last.elapsedSeconds,
+          pointCount: sessionPoints.count
+        )
+      }.sorted(by: sessionBoundsOrder)
       return PassiveCANResearchSeries(
         id: definition.id,
         label: definition.label,
@@ -307,7 +338,7 @@ public enum PassiveCANResearchAnalyzer {
         identifierHex: definition.identifierHex,
         status: definition.status,
         recordCount: values.count,
-        sessionCount: Set(values.map { "\($0.gatewayID):\($0.sessionID)" }).count,
+        sessionCount: sessionBounds.count,
         distinctRawValues: Set(rawValues).count,
         rawMinimum: rawValues.min()!,
         rawMaximum: rawValues.max()!,
@@ -317,7 +348,8 @@ public enum PassiveCANResearchAnalyzer {
         candidateTransformID: definition.candidateTransform?.transformID,
         sourceCount: definition.sourceIDs.count,
         validationGate: definition.validationGate,
-        points: downsample(values, maximumPoints: maximumPointsPerSeries)
+        sessionBounds: sessionBounds,
+        points: try downsample(values, maximumPoints: maximumPointsPerSeries)
       )
     }
     return PassiveCANResearchReport(
@@ -338,30 +370,57 @@ public enum PassiveCANResearchAnalyzer {
     let ordinal: Int
   }
 
+  private struct SessionKey: Hashable {
+    let gatewayID: String
+    let sessionID: UInt32
+  }
+
+  private struct TimelineSession {
+    let ordinal: Int
+    let startSeconds: Double
+    let endSeconds: Double
+  }
+
+  private struct ResearchTimeline {
+    let values: [String: TimelineValue]
+    let sessions: [SessionKey: TimelineSession]
+  }
+
   private static func buildTimeline(
     _ observations: [PassiveCANObservation]
-  ) -> [String: TimelineValue] {
-    let grouped = Dictionary(grouping: observations) { "\($0.gatewayID):\($0.sessionID)" }
+  ) -> ResearchTimeline {
+    let grouped = Dictionary(grouping: observations) {
+      SessionKey(gatewayID: $0.gatewayID, sessionID: $0.sessionID)
+    }
     let ordered = grouped.sorted { left, right in
       let leftDate = left.value.map(\.ingestedAt).min() ?? ""
       let rightDate = right.value.map(\.ingestedAt).min() ?? ""
       if leftDate != rightDate { return leftDate < rightDate }
-      return left.key < right.key
+      if left.key.gatewayID != right.key.gatewayID {
+        return left.key.gatewayID < right.key.gatewayID
+      }
+      return left.key.sessionID < right.key.sessionID
     }
     var result: [String: TimelineValue] = [:]
+    var sessions: [SessionKey: TimelineSession] = [:]
     var cursor = 0.0
     for (index, entry) in ordered.enumerated() {
       let minimum = entry.value.map(\.monotonicMicroseconds).min() ?? 0
       let maximum = entry.value.map(\.monotonicMicroseconds).max() ?? minimum
+      let duration = Double(maximum - minimum) / 1_000_000
+      sessions[entry.key] = TimelineSession(
+        ordinal: index + 1,
+        startSeconds: cursor,
+        endSeconds: cursor + duration)
       for observation in entry.value {
         result[observation.id] = TimelineValue(
           elapsed: cursor + Double(observation.monotonicMicroseconds - minimum) / 1_000_000,
           ordinal: index + 1
         )
       }
-      cursor += Double(maximum - minimum) / 1_000_000 + 1
+      cursor += duration + 1
     }
-    return result
+    return ResearchTimeline(values: result, sessions: sessions)
   }
 
   private static func extract(
@@ -389,25 +448,105 @@ public enum PassiveCANResearchAnalyzer {
   private static func downsample(
     _ values: [PassiveCANResearchPoint],
     maximumPoints: Int
-  ) -> [PassiveCANResearchPoint] {
+  ) throws -> [PassiveCANResearchPoint] {
     guard values.count > maximumPoints else { return values }
-    let bucketCount = max(1, maximumPoints / 2)
+
+    let grouped = Dictionary(grouping: values, by: pointSessionKey)
+    let mandatoryIDs = Set(
+      grouped.values.flatMap { points in
+        [points.first, points.last].compactMap { $0?.id }
+      })
+    guard mandatoryIDs.count <= maximumPoints else {
+      throw PassiveCANArchiveError.insufficientPointBudget(required: mandatoryIDs.count)
+    }
+
+    var selectedIDs = mandatoryIDs
+    let remainingCapacity = maximumPoints - selectedIDs.count
+    guard remainingCapacity > 0 else { return values.filter { selectedIDs.contains($0.id) } }
+
+    let bucketCount = max(1, Int(ceil(Double(remainingCapacity) / 2)))
     let bucketSize = Int(ceil(Double(values.count) / Double(bucketCount)))
-    var selected: [PassiveCANResearchPoint] = []
+    var shapeCandidateIDs = Set<String>()
     for start in stride(from: 0, to: values.count, by: bucketSize) {
-      let bucket = Array(values[start..<min(start + bucketSize, values.count)])
-      guard let minimum = bucket.min(by: { $0.displayValue < $1.displayValue }),
-        let maximum = bucket.max(by: { $0.displayValue < $1.displayValue })
+      let bucket = values[start..<min(start + bucketSize, values.count)].filter {
+        !selectedIDs.contains($0.id)
+      }
+      guard let minimum = bucket.min(by: minimumDisplayOrder),
+        let maximum = bucket.max(by: maximumDisplayOrder)
       else { continue }
-      for point in [minimum, maximum].sorted(by: { $0.elapsedSeconds < $1.elapsedSeconds })
-      where selected.last?.id != point.id {
-        selected.append(point)
+      shapeCandidateIDs.insert(minimum.id)
+      shapeCandidateIDs.insert(maximum.id)
+    }
+
+    let shapeCandidates = values.filter { shapeCandidateIDs.contains($0.id) }
+    for point in evenlySelected(shapeCandidates, count: remainingCapacity) {
+      selectedIDs.insert(point.id)
+    }
+    let stillAvailable = maximumPoints - selectedIDs.count
+    if stillAvailable > 0 {
+      let remaining = values.filter { !selectedIDs.contains($0.id) }
+      for point in evenlySelected(remaining, count: stillAvailable) {
+        selectedIDs.insert(point.id)
       }
     }
-    if selected.first?.id != values.first?.id { selected.insert(values[0], at: 0) }
-    if selected.last?.id != values.last?.id { selected.append(values[values.count - 1]) }
-    if selected.count <= maximumPoints { return selected }
-    return Array(selected.prefix(maximumPoints - 1)) + [selected[selected.count - 1]]
+    return values.filter { selectedIDs.contains($0.id) }
+  }
+
+  private static func pointSessionKey(_ point: PassiveCANResearchPoint) -> SessionKey {
+    SessionKey(gatewayID: point.gatewayID, sessionID: point.sessionID)
+  }
+
+  private static func pointOrder(
+    _ left: PassiveCANResearchPoint,
+    _ right: PassiveCANResearchPoint
+  ) -> Bool {
+    if left.elapsedSeconds != right.elapsedSeconds {
+      return left.elapsedSeconds < right.elapsedSeconds
+    }
+    if left.sessionOrdinal != right.sessionOrdinal {
+      return left.sessionOrdinal < right.sessionOrdinal
+    }
+    if left.gatewayID != right.gatewayID { return left.gatewayID < right.gatewayID }
+    if left.sessionID != right.sessionID { return left.sessionID < right.sessionID }
+    return left.sourceSequence < right.sourceSequence
+  }
+
+  private static func sessionBoundsOrder(
+    _ left: PassiveCANResearchSessionBounds,
+    _ right: PassiveCANResearchSessionBounds
+  ) -> Bool {
+    if left.captureStartSeconds != right.captureStartSeconds {
+      return left.captureStartSeconds < right.captureStartSeconds
+    }
+    if left.gatewayID != right.gatewayID { return left.gatewayID < right.gatewayID }
+    return left.sessionID < right.sessionID
+  }
+
+  private static func minimumDisplayOrder(
+    _ left: PassiveCANResearchPoint,
+    _ right: PassiveCANResearchPoint
+  ) -> Bool {
+    if left.displayValue != right.displayValue { return left.displayValue < right.displayValue }
+    return pointOrder(left, right)
+  }
+
+  private static func maximumDisplayOrder(
+    _ left: PassiveCANResearchPoint,
+    _ right: PassiveCANResearchPoint
+  ) -> Bool {
+    if left.displayValue != right.displayValue { return left.displayValue < right.displayValue }
+    return pointOrder(left, right)
+  }
+
+  private static func evenlySelected(
+    _ values: [PassiveCANResearchPoint],
+    count: Int
+  ) -> [PassiveCANResearchPoint] {
+    guard count > 0, !values.isEmpty else { return [] }
+    guard values.count > count else { return values }
+    return (0..<count).map { index in
+      values[index * values.count / count]
+    }
   }
 }
 
@@ -516,6 +655,7 @@ public enum PassiveCANArchiveError: Error, Equatable, LocalizedError {
   case duplicateIdentity(String)
   case identityCollision(String)
   case invalidPointBudget
+  case insufficientPointBudget(required: Int)
 
   public var errorDescription: String? {
     switch self {
@@ -528,6 +668,8 @@ public enum PassiveCANArchiveError: Error, Equatable, LocalizedError {
     case .identityCollision(let identity):
       "Passive CAN identity \(identity) has conflicting evidence bytes."
     case .invalidPointBudget: "A CAN research chart requires at least 16 retained points."
+    case .insufficientPointBudget(let required):
+      "A CAN research chart requires at least \(required) points to preserve every session boundary."
     }
   }
 }
