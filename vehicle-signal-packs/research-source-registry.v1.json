@@ -20,13 +20,13 @@
   },
   "hypothesis_artifacts": {
     "pack": "vehicle-signal-packs/toyota-4runner-2005-passive-can-hypotheses.v1.json",
-    "evaluation": "docs/evidence/can-signal-hypotheses-2026-08-18-5176.report.json",
+    "evaluation": "docs/evidence/can-signal-hypotheses-2026-08-20-5176.report.json",
     "accepted_signal_definitions": 0
   },
   "lineage_artifact": {
     "path": "vehicle-signal-packs/toyota-can-cross-platform-lineage.v1.json",
     "documentation": "docs/development/TOYOTA-LEXUS-CAN-CROSS-PLATFORM-LINEAGE-2026-08-18.md",
-    "source_count": 21,
+    "source_count": 22,
     "vehicle_cohorts": 5,
     "signal_lineages": 9,
     "accepted_signal_definitions": 0
@@ -88,6 +88,15 @@
       "url": "https://www.engr.colostate.edu/~jdaily/tucrrc/ToyotaCAN.html",
       "scope": "Independent physical-measurement correlation of 11-bit, 500 kbit/s CAN on a 2010 Toyota Camry.",
       "limitations": "Cross-model research only; no 2005 4Runner byte-layout, scale, unit, or applicability guarantee."
+    },
+    {
+      "id": "sae-ruth-bartlett-daily-camry-2012",
+      "authority_level": "B",
+      "publisher": "SAE International / Ruth, Bartlett, and Daily",
+      "url": "https://doi.org/10.4271/2012-01-0999",
+      "revision": "2012-01-0999",
+      "scope": "Peer-reviewed synchronized Camry testing that identifies 0x2C1 accelerator-pedal traffic and 0x2C4 engine-speed traffic on an 11-bit, 500 kbit/s CAN network and reports their update behavior.",
+      "limitations": "One Camry family only; no exact 2005 4Runner byte-layout, scale, unit, ECU-calibration, or applicability guarantee."
     },
     {
       "id": "comma-opendbc-b4ef5e1",
@@ -212,6 +221,7 @@
       "capture_present": true,
       "reference_source_ids": [
         "csu-toyota-can-2010-camry",
+        "sae-ruth-bartlett-daily-camry-2012",
         "comma-opendbc-b4ef5e1",
         "aim-community-dbc-6e2f88f",
         "aim-community-lexus-is-f-6e2f88f"
@@ -250,6 +260,7 @@
       "capture_present": true,
       "reference_source_ids": [
         "csu-toyota-can-2010-camry",
+        "sae-ruth-bartlett-daily-camry-2012",
         "aim-community-dbc-6e2f88f",
         "aim-community-auris-6e2f88f",
         "aim-community-lexus-is-f-6e2f88f",

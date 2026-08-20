@@ -155,6 +155,9 @@ The supported-PID, synchronized Toyota-reference, and private-outbox implementat
 The current source-pinned Toyota signal candidates, corpus results, interpretation boundaries, and
 minimum validation session are recorded in
 [the CAN signal interpretation record](docs/development/CAN-SIGNAL-INTERPRETATION-2026-08-18.md).
+The latest iPhone-export verification, primary-source research update, candidate ranking, Android
+display boundary, and next labeled-capture procedure are recorded in
+[the 2026-08-20 CAN evidence and research update](docs/development/CAN-EVIDENCE-RESEARCH-UPDATE-2026-08-20.md).
 The governing unknown-by-default whole-vehicle model, head-unit inventory contract, 2005 4Runner
 configuration guard, and evidence-basis separation are recorded in
 [the whole-vehicle digital-twin foundation](docs/development/WHOLE-VEHICLE-DIGITAL-TWIN-FOUNDATION-2026-08-18.md).

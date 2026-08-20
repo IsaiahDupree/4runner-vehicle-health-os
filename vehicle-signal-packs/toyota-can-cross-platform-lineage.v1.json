@@ -204,6 +204,20 @@
       ]
     },
     {
+      "source_id": "sae-ruth-bartlett-daily-camry-2012",
+      "evidence_class": "B",
+      "publisher": "SAE International / Ruth, Bartlett, and Daily",
+      "url": "https://doi.org/10.4271/2012-01-0999",
+      "scope": "Peer-reviewed synchronized 2010 and 2011 Camry testing using independent reference acquisition and CAN logging.",
+      "proves": [
+        "0x2C1 carried accelerator-pedal-position data and 0x2C4 carried engine-speed data on the tested Camry family.",
+        "0x2C1 updated every 512 ms, 0x2C4 updated every 24 ms, and the tested Toyota network used standard 11-bit identifiers at 500 kbit/s."
+      ],
+      "does_not_prove": [
+        "Exact 2005 4Runner layout, scaling, ECU calibration, or applicability."
+      ]
+    },
+    {
       "source_id": "umich-cids-camry-2010",
       "evidence_class": "B",
       "publisher": "University of Michigan / USENIX Security 2016",
@@ -363,6 +377,7 @@
       "vehicles": ["2010 Toyota Camry", "2010 Lexus IS250", "Toyota Prius test vehicle"],
       "source_ids": [
         "csu-toyota-can-2010-camry",
+        "sae-ruth-bartlett-daily-camry-2012",
         "umich-cids-camry-2010",
         "nfi-lexus-is250-evu-2016",
         "hbirdj-prius-translator-4674872"
@@ -416,6 +431,7 @@
       "candidate": "engine speed in the first 16 payload bits",
       "supporting_source_ids": [
         "csu-toyota-can-2010-camry",
+        "sae-ruth-bartlett-daily-camry-2012",
         "realdash-fj-cruiser-cedfdf49",
         "aim-community-dbc-6e2f88f",
         "aim-community-auris-6e2f88f",
@@ -423,7 +439,7 @@
         "yaris-listen-only-ddd7a2b",
         "nfi-lexus-is250-evu-2016"
       ],
-      "agreement": "All seven cross-model artifacts associate 0x2C4 with engine-speed behavior; the FJ and three pinned AiM-derived files use 0.78125 rpm/count, while the physical Lexus study independently confirms the RPM-related identifier and first byte position.",
+      "agreement": "Eight cross-model artifacts associate 0x2C4 with engine-speed behavior; the peer-reviewed SAE Camry study independently identifies the message and its 24 ms update period, the FJ and three pinned AiM-derived files use 0.78125 rpm/count, and the physical Lexus study independently confirms the RPM-related identifier and first byte position.",
       "conflicts": [
         "An IS F community definition applies a 2.5*raw-40 intake-air-temperature transform where the FJ community file labels the same candidate byte as raw degrees Celsius.",
         "No authoritative source establishes the exact target scale or target byte semantics."
@@ -436,13 +452,14 @@
       "candidate": "accelerator-pedal position at byte 6",
       "supporting_source_ids": [
         "csu-toyota-can-2010-camry",
+        "sae-ruth-bartlett-daily-camry-2012",
         "realdash-fj-cruiser-cedfdf49",
         "comma-opendbc-b4ef5e1",
         "aim-community-auris-6e2f88f",
         "aim-community-lexus-is-f-6e2f88f",
         "nfi-lexus-is250-evu-2016"
       ],
-      "agreement": "The Camry experiment identifies pedal behavior; the physical Lexus experiment independently identifies one-indexed byte 7; FJ, generated Toyota, Auris, and IS F artifacts place a 0.5 percent/count candidate at zero-indexed byte 6.",
+      "agreement": "The Camry experiments identify accelerator-pedal behavior, with the peer-reviewed SAE study reporting a 512 ms update period; the physical Lexus experiment independently identifies one-indexed byte 7; FJ, generated Toyota, Auris, and IS F artifacts place a 0.5 percent/count candidate at zero-indexed byte 6.",
       "conflicts": [
         "The generic Toyota/Lexus community DBC places a seven-bit pedal field elsewhere at 1 percent/count.",
         "Other Toyota generations use different accelerator messages and normalized units."
