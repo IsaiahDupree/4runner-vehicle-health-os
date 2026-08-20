@@ -35,6 +35,9 @@ Native SwiftUI control surface for the VHOS gateway contract. Minimum deployment
   pinned standard values that remain unavailable until support is proven.
 - Append-only, gateway-time-aligned Techstream/standard-OBD reference capture and CSV export for
   candidate-only `0x2C4`, `0x025`, and `0x2C1` analysis.
+- A retained-evidence CAN research dashboard that rebuilds multi-session timelines after an app
+  restart, plots only stored listen-only observations, pins every candidate to signal-pack
+  `0.4.0`, and keeps conflicting or unvalidated fields in raw counts.
 - A durable private evidence outbox that automatically queues completed capture sync bundles,
   verifies SHA-256 before HTTPS upload, stores its token in Keychain, and retries without losing
   undelivered evidence.
@@ -58,6 +61,12 @@ Open **Evidence → Standard read-only OBD** for per-ECU availability and proven
 timeline, and **Private AI evidence outbox** to configure the owner-controlled HTTPS receiver. The
 complete contracts, receiver commands, safety boundary, and physical validation procedure are in
 the [J1979/reference/outbox implementation record](../docs/development/J1979-REFERENCE-VALIDATION-AND-PRIVATE-OUTBOX-2026-08-18.md).
+
+Open **Evidence → Retained CAN signal research** to rebuild graphs from the iPhone's durable
+capture logs. Candidate physical-unit axes appear only where the pinned pack has one non-conflicting
+cross-model transform, and remain visibly unverified. Conflicting transforms stay in raw counts.
+The archive/relaunch tests, exact seven fields, display authority, and validation workflow are in
+the [retained CAN research implementation record](../docs/development/IOS-RETAINED-CAN-RESEARCH-GRAPHS-2026-08-20.md).
 
 ## Status semantics
 

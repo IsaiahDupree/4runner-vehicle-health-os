@@ -1,3 +1,4 @@
+import Charts
 import SwiftUI
 import VHOSCore
 
@@ -266,6 +267,7 @@ private struct EvidenceView: View {
   @State private var referencePreset: TechstreamReferencePreset = .engineSpeed
   @State private var referenceValue = ""
   @State private var referenceExportURL: URL?
+  @State private var selectedCANResearchSeries = "toyota.2c4.engine-speed.be16"
 
   var body: some View {
     List {
@@ -368,6 +370,93 @@ private struct EvidenceView: View {
               Label("Share passive-can-recent-logs.ndjson", systemImage: "square.and.arrow.up")
             }
           }
+        }
+      }
+      Section("Retained CAN signal research") {
+        Text(PassiveCANResearchCatalog.badge)
+          .font(.caption.weight(.semibold))
+          .foregroundStyle(.orange)
+        Text(model.canResearchMessage)
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+        if let report = model.canResearchReport, !report.series.isEmpty {
+          LabeledContent("Evidence SHA-256", value: "\(report.generatedFromSHA256.prefix(12))…")
+          LabeledContent(
+            "Research pack",
+            value: "\(report.packID)@\(report.packVersion)")
+          Picker("Candidate field", selection: $selectedCANResearchSeries) {
+            ForEach(report.series) { series in
+              Text("\(series.identifierHex) · \(series.label)").tag(series.id)
+            }
+          }
+          .pickerStyle(.menu)
+          if let series = report.series.first(where: { $0.id == selectedCANResearchSeries })
+            ?? report.series.first
+          {
+            Chart(series.points) { point in
+              LineMark(
+                x: .value("Capture timeline (s)", point.elapsedSeconds),
+                y: .value(series.displayUnit, point.displayValue)
+              )
+              .foregroundStyle(by: .value("Capture", point.sessionLabel))
+              .interpolationMethod(.linear)
+            }
+            .chartXAxisLabel("Retained capture timeline (seconds)")
+            .chartYAxisLabel(
+              series.usesCandidateTransform
+                ? "Candidate \(series.displayUnit) — unverified" : series.displayUnit
+            )
+            .chartLegend(position: .bottom, spacing: 4)
+            .frame(minHeight: 240)
+
+            LabeledContent("Candidate semantic", value: series.candidateSemantic)
+            LabeledContent(
+              "Evidence",
+              value:
+                "\(series.recordCount) records · \(series.sessionCount) sessions · \(series.distinctRawValues) distinct")
+            LabeledContent(
+              "Raw field range",
+              value:
+                "\(series.rawMinimum.formatted(.number.precision(.fractionLength(0...3))))–\(series.rawMaximum.formatted(.number.precision(.fractionLength(0...3)))) counts")
+            if let transformID = series.candidateTransformID {
+              LabeledContent("Candidate transform", value: transformID)
+              LabeledContent(
+                "Candidate range",
+                value:
+                  "\(series.displayMinimum.formatted(.number.precision(.fractionLength(0...3))))–\(series.displayMaximum.formatted(.number.precision(.fractionLength(0...3)))) \(series.displayUnit)")
+              Text(
+                "The engineering-unit axis is a pinned related-Toyota transform, not a validated 2005 4Runner value."
+              )
+              .font(.footnote.weight(.semibold))
+              .foregroundStyle(.orange)
+            } else {
+              Text(
+                "The graph intentionally remains in raw counts because the available cross-model transforms conflict or no physical-unit scale is established."
+              )
+              .font(.footnote)
+              .foregroundStyle(.secondary)
+            }
+            LabeledContent("Research status", value: series.status)
+            LabeledContent("Pinned source references", value: series.sourceCount.formatted())
+            Text("Validation gate: \(series.validationGate)")
+              .font(.footnote)
+              .foregroundStyle(.secondary)
+          }
+          Text(
+            "Pack SHA-256 \(report.packSHA256). These charts are an engineering research surface only and cannot update owner health, findings, maintenance, or recommendations."
+          )
+          .font(.caption)
+          .foregroundStyle(.secondary)
+        } else {
+          ContentUnavailableView(
+            "No retained signal series",
+            systemImage: "chart.xyaxis.line",
+            description: Text(
+              "Pause, download, and resume a gateway capture; the chart will rebuild from the stored evidence on this iPhone."
+            ))
+        }
+        Button("Rebuild research charts from retained logs") {
+          model.refreshCANResearch()
         }
       }
       Section("Bluetooth connection flight recorder") {
@@ -584,7 +673,10 @@ private struct EvidenceView: View {
         model.errorMessage = error.localizedDescription
       }
     }
-    .onAppear { outboxEndpoint = model.evidenceOutboxEndpoint }
+    .onAppear {
+      outboxEndpoint = model.evidenceOutboxEndpoint
+      model.refreshCANResearch()
+    }
   }
 
   private var latestStandardOBDSamples: [J1979StandardSample] {

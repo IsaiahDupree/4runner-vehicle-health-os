@@ -49,6 +49,8 @@ final class AppModel {
   var evidenceOutboxTokenConfigured = false
   var synchronizedReferenceCount = 0
   var synchronizedReferenceMessage = "No synchronized reference samples recorded."
+  var canResearchReport: PassiveCANResearchReport?
+  var canResearchMessage = "No retained CAN evidence has been analyzed on this iPhone."
 
   private init() {
     let store = KeyStore(service: "com.isaiahdupree.VehicleHealthOS")
@@ -76,6 +78,7 @@ final class AppModel {
       (try? store.data(for: .evidenceOutboxBearerToken)) != nil
     refreshEvidenceOutboxStatus()
     refreshSynchronizedReferenceStatus()
+    refreshCANResearch()
   }
 
   func startEvidenceAutomation() {
@@ -180,6 +183,7 @@ final class AppModel {
     let generation = gateway.captureSyncCompletionGeneration
     if generation > lastQueuedCaptureSyncGeneration {
       lastQueuedCaptureSyncGeneration = generation
+      refreshCANResearch()
       queueCurrentEvidenceForAI()
     }
     if automaticEvidenceUpload { await processEvidenceOutbox() }
@@ -462,6 +466,25 @@ final class AppModel {
 
   func passiveCANExportURL() throws -> URL {
     try gateway.captureLogExportURL()
+  }
+
+  func refreshCANResearch() {
+    do {
+      let observations = try gateway.storedPassiveCANObservations()
+      guard !observations.isEmpty else {
+        canResearchReport = nil
+        canResearchMessage =
+          "No retained CAN evidence is stored. Synchronize a gateway capture to create research graphs."
+        return
+      }
+      let report = try PassiveCANResearchAnalyzer.analyze(observations)
+      canResearchReport = report
+      canResearchMessage =
+        "Analyzed \(report.recordCount.formatted()) retained records across \(report.sessionCount) sessions; owner health remains blocked."
+    } catch {
+      canResearchReport = nil
+      canResearchMessage = "Retained CAN analysis failed closed: \(error.localizedDescription)"
+    }
   }
 
   func bleConnectionTraceExportURL() throws -> URL {

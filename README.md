@@ -35,6 +35,8 @@ E0 plus the first native iOS control slice are implemented here:
   iPhone/Android passive-response path that cannot substitute zero for unavailable evidence;
 - synchronized Techstream/reference capture plus a candidate-only analyzer for `0x2C4`, `0x025`,
   and `0x2C1` raw fields;
+- deterministic passive-CAN archive offload/reload plus an iOS multi-session research chart that
+  plots retained evidence, pins pack/hash/validation lineage, and fails closed across app restarts;
 - a durable iPhone private-evidence outbox and authenticated append-only receiver/agent claim queue;
 - CI checks for schema validity and deterministic replay;
 - a Swift 6 core with CRC32C framing, guarded discovery plans, signed firmware verification, OTA preflight, and AI evidence handoff;
@@ -158,6 +160,9 @@ minimum validation session are recorded in
 The latest iPhone-export verification, primary-source research update, candidate ranking, Android
 display boundary, and next labeled-capture procedure are recorded in
 [the 2026-08-20 CAN evidence and research update](docs/development/CAN-EVIDENCE-RESEARCH-UPDATE-2026-08-20.md).
+The real-evidence iPhone chart, fresh-session archive reload gate, exact candidate fields, and
+owner-health authority lock are recorded in
+[the iOS retained CAN research implementation](docs/development/IOS-RETAINED-CAN-RESEARCH-GRAPHS-2026-08-20.md).
 The governing unknown-by-default whole-vehicle model, head-unit inventory contract, 2005 4Runner
 configuration guard, and evidence-basis separation are recorded in
 [the whole-vehicle digital-twin foundation](docs/development/WHOLE-VEHICLE-DIGITAL-TWIN-FOUNDATION-2026-08-18.md).

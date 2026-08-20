@@ -507,6 +507,10 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     try captureStore.exportURL()
   }
 
+  func storedPassiveCANObservations(limit: Int = 50_000) throws -> [PassiveCANObservation] {
+    try captureStore.observations(limit: limit)
+  }
+
   func bleConnectionTraceExportURL() throws -> URL {
     guard let recorder = Self.connectionTraceRecorder else {
       throw BLEConnectionTraceError.applicationSupportUnavailable
@@ -3293,11 +3297,7 @@ private final class CaptureLogStore {
     var known = sequences(gatewayID: gatewayID, sessionID: sessionID)
     let fresh = observations.filter { known.insert($0.sourceSequence).inserted }
     guard !fresh.isEmpty else { return 0 }
-    var bytes = Data()
-    for observation in fresh {
-      bytes.append(try VHOSJSON.encoder().encode(observation))
-      bytes.append(0x0A)
-    }
+    let bytes = try PassiveCANEvidenceArchive.encodeNDJSON(fresh)
     if !fileManager.fileExists(atPath: url.path) {
       try Data().write(to: url, options: .atomic)
     }
@@ -3355,6 +3355,24 @@ private final class CaptureLogStore {
     }
     try combined.write(to: output, options: .atomic)
     return output
+  }
+
+  func observations(limit: Int) throws -> [PassiveCANObservation] {
+    guard limit > 0 else { return [] }
+    var retained: [PassiveCANObservation] = []
+    // Oldest files are merged first so a bounded read keeps the newest evidence.
+    for session in summaries().reversed() {
+      let decoded = try PassiveCANEvidenceArchive.decodeNDJSON(
+        Data(contentsOf: session.url, options: [.mappedIfSafe]))
+      retained = try PassiveCANEvidenceArchive.merge(
+        existing: retained,
+        incoming: decoded
+      ).records
+      if retained.count > limit {
+        retained = Array(retained.suffix(limit))
+      }
+    }
+    return retained
   }
 
   private func sequences(gatewayID: String, sessionID: UInt32) -> Set<UInt64> {
