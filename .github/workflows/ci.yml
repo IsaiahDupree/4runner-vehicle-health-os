@@ -28,3 +28,16 @@ jobs:
           vhos simulate --scenario cold-start-idle --output build/ci-capture
           vhos validate-bundle build/ci-capture
           vhos replay build/ci-capture --output build/ci-replay.ndjson
+          vhos simulate --scenario ac-bench-sweep --output build/ci-ac-capture
+          vhos validate-bundle build/ci-ac-capture
+          vhos replay build/ci-ac-capture --output build/ci-ac-replay.ndjson
+          vhos calculate-ac build/ci-ac-capture --output build/ci-ac-calculations.json
+      - name: Exercise immutable real-CAN replay and recovery
+        run: |
+          vhos validate-can-replay-corpus test-replay/real-can-2026-08-18
+          vhos evaluate-can-hypotheses test-replay/real-can-2026-08-18/sessions --output build/ci-can-signal-hypotheses.json
+          vhos replay-can-corpus test-replay/real-can-2026-08-18 --mode live --repeat 5 --fault clean --output build/ci-real-can-live.json
+          vhos replay-can-corpus test-replay/real-can-2026-08-18 --mode history --fault drop-fragment --fault-interval 257 --output build/ci-real-can-drop.json
+          vhos replay-can-corpus test-replay/real-can-2026-08-18 --mode live --fault corrupt-payload --fault-interval 101 --output build/ci-real-can-corrupt.json
+          vhos replay-can-corpus test-replay/real-can-2026-08-18 --mode history --fault disconnect-mid-frame --fault-interval 113 --output build/ci-real-can-disconnect.json
+          vhos test-link-reliability test-replay/real-can-2026-08-18 --soak-cycles 20 --output build/ci-link-reliability.json

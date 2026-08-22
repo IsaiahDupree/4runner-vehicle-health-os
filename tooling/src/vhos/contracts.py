@@ -15,11 +15,39 @@ class ContractError(ValueError):
 
 SCHEMA_BY_CONTRACT = {
     "ai.claim": "ai-claim.schema.json",
+    "can.discovery.report": "can-discovery-report.schema.json",
+    "can.signal-hypothesis-evaluation": "can-signal-hypothesis-evaluation.schema.json",
+    "can.signal-hypothesis-pack": "can-signal-hypothesis-pack.schema.json",
+    "can.replay.corpus": "can-replay-corpus.schema.json",
+    "transport.link-reliability-matrix": "transport-link-reliability-matrix.schema.json",
     "calculation.run": "calculation-run.schema.json",
+    "can.reference-correlation-report": "can-reference-correlation-report.schema.json",
     "capture.bundle.manifest": "capture-bundle-manifest.schema.json",
+    "vhos.discovery.capture-session": "discovery-capture-session.schema.json",
+    "vhos.discovery.evidence-summary": "discovery-evidence-summary.schema.json",
+    "vhos.discovery.boolean-candidate-evaluation": "discovery-boolean-candidate-evaluation.schema.json",
+    "vhos.discovery.test-template": "discovery-test-template.schema.json",
+    "vhos.discovery.event-marker": "discovery-event-marker.schema.json",
+    "vhos.discovery.physical-measurement": "discovery-physical-measurement.schema.json",
+    "vhos.discovery.vehicle-capability-snapshot": "discovery-vehicle-capability-snapshot.schema.json",
+    "vhos.discovery.candidate-signal": "discovery-candidate-signal.schema.json",
+    "vhos.discovery.signal-validation-checklist": "discovery-signal-validation-checklist.schema.json",
+    "vhos.discovery.signal-promotion-decision": "discovery-signal-promotion-decision.schema.json",
+    "vhos.discovery.recommended-test": "discovery-recommended-test.schema.json",
+    "evidence.outbox-envelope": "evidence-outbox-envelope.schema.json",
+    "equation.definition": "equation-definition.schema.json",
+    "platform.head-unit-inventory": "head-unit-inventory.schema.json",
     "raw.observation": "raw-observation.schema.json",
+    "obd.j1979-response": "j1979-response.schema.json",
+    "obd.j1979-standard-sample": "j1979-standard-sample.schema.json",
+    "obd.j1979-supported-pids": "j1979-supported-pids.schema.json",
+    "sensor.node.post": "sensor-node-post.schema.json",
+    "sensor.node.telemetry": "sensor-node-telemetry.schema.json",
     "signal.definition": "signal-definition.schema.json",
     "signal.sample": "signal-sample.schema.json",
+    "vehicle.configuration-profile": "vehicle-profile.schema.json",
+    "vehicle.digital-twin.snapshot": "vehicle-digital-twin-snapshot.schema.json",
+    "vehicle.health-assessment": "vehicle-health-assessment.schema.json",
 }
 
 
@@ -91,6 +119,51 @@ class ContractCatalog:
         if errors:
             details = "; ".join(_format_error(error.path, error.message) for error in errors)
             raise ContractError(f"{contract} validation failed: {details}")
+        _validate_contract_semantics(contract, document)
+
+
+def _validate_contract_semantics(contract: str, document: dict[str, Any]) -> None:
+    if contract != "vhos.discovery.capture-session":
+        return
+
+    capture_id = document["id"]
+    start = document["start_monotonic_microseconds"]
+    end = document["end_monotonic_microseconds"]
+    first_sequence = document["first_source_sequence"]
+    last_sequence = document["last_source_sequence"]
+    gateway_sessions = set(document["gateway_session_ids"])
+    if start > end:
+        raise ContractError(f"{contract} semantic validation failed: capture time is reversed")
+    if first_sequence > last_sequence:
+        raise ContractError(f"{contract} semantic validation failed: source sequence is reversed")
+
+    for collection_name in ("event_markers", "physical_measurements"):
+        records = document[collection_name]
+        identities = [record["id"] for record in records]
+        if len(identities) != len(set(identities)):
+            raise ContractError(
+                f"{contract} semantic validation failed: duplicate {collection_name} identity"
+            )
+        for record in records:
+            if record["capture_id"] != capture_id:
+                raise ContractError(
+                    f"{contract} semantic validation failed: {collection_name} capture mismatch"
+                )
+            monotonic = record["gateway_monotonic_microseconds"]
+            if monotonic < start or monotonic > end:
+                raise ContractError(
+                    f"{contract} semantic validation failed: {collection_name} time outside capture"
+                )
+            gateway_session_id = record.get("gateway_session_id")
+            if gateway_session_id is not None and gateway_session_id not in gateway_sessions:
+                raise ContractError(
+                    f"{contract} semantic validation failed: {collection_name} session mismatch"
+                )
+            nearest_sequence = record.get("nearest_can_sequence")
+            if nearest_sequence is not None and not first_sequence <= nearest_sequence <= last_sequence:
+                raise ContractError(
+                    f"{contract} semantic validation failed: {collection_name} sequence outside capture"
+                )
 
 
 def _format_error(path: Iterable[Any], message: str) -> str:

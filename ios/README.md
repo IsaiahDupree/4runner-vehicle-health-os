@@ -4,20 +4,73 @@ Native SwiftUI control surface for the VHOS gateway contract. Minimum deployment
 
 ## Implemented
 
-- CoreBluetooth discovery and state restoration.
+- CoreBluetooth discovery, handshake-verified state restoration, encrypted-bond reuse, and
+  app-managed reconnection.
 - Read-only recognition of factory WiCAN BLE service `FEE0` / characteristic `FEE1`.
 - Versioned VHOS BLE service and framed message transport with CRC32C.
 - Gateway handshake, live health, bounded protocol-discovery results, and evidence export.
+- Resumable download of the ESP32 current/previous passive CAN flight-recorder segments, CRC
+  validation, durable iPhone NDJSON storage, Recent Logs, and share-sheet export. iOS 0.3.8 uses
+  inventory-only refresh while the recorder reports `logging=true`; bulk history transfer is
+  deferred until recording stops so it cannot destabilize live acquisition or BLE recovery. It
+  also persists the optional ESP-IDF reset reason reported by dev31+ in the BLE flight recorder.
+- After one saved-identifier attempt, an encryption timeout falls back to service scanning.
+  Fringe-range advertisements below -84 dBm remain visible but do not trigger repeated encrypted
+  connection attempts; scanning continues until the verified gateway is in reliable range.
+- Always-on, bounded CoreBluetooth connection flight recorder with structured NDJSON export for
+  scan, GATT, subscription, handshake, disconnect, and automatic-recovery diagnosis.
 - Live commissioning dashboard with distinct iPhone/BLE, ESP32 service/handshake, OBD-II,
   safety, capability, OTA, and evidence indicators.
 - Per-candidate status for all four passive CAN candidates and five allowlisted legacy OBD
   candidates. Passive network detection is shown separately from a confirmed OBD response.
 - Keychain-backed Ed25519 signing of semantic experiment approvals.
 - Safety validation requiring a current `PARKED` report, idle capture, listen-only mode, and gateway capabilities.
-- `.vhosota` parsing, Ed25519 signature/hash verification, compatibility/voltage/capability preflight, and local Wi-Fi upload.
+- `.vhosota` parsing, Ed25519 signature/hash verification, compatibility/voltage/capability
+  preflight, encrypted-BLE temporary-network activation, one-shot iOS hotspot join, authenticated
+  local upload, cleanup, and rollback-status decoding.
+- A signed public Release Hub that stages Android, OBD ESP32, and A/C recovery artifacts from one
+  target-aware catalog; iOS shares Android builds but does not claim authority to install an APK.
 - Provider-neutral JSON evidence handoff whose authority contract excludes vehicle activation and raw frame emission.
+- Passive dev30 J1979 response ingestion with per-ECU supported-PID continuation tracking and
+  pinned standard values that remain unavailable until support is proven.
+- Append-only, gateway-time-aligned Techstream/standard-OBD reference capture and CSV export for
+  candidate-only `0x2C4`, `0x025`, and `0x2C1` analysis.
+- A retained-evidence CAN research dashboard that rebuilds multi-session timelines after an app
+  restart, plots only stored listen-only observations, pins every candidate to signal-pack
+  `0.4.0`, and keeps conflicting or unvalidated fields in raw counts.
+- A durable private evidence outbox that automatically queues completed capture sync bundles,
+  verifies SHA-256 before HTTPS upload, stores its token in Keychain, and retries without losing
+  undelivered evidence.
 
 The app contains no arbitrary CAN/K-line/J1850 transmit console. Factory WiCAN compatibility mode is observation-only; experiments require the VHOS firmware fork and its capability handshake.
+
+The passive flight recorder is independent from signed active experiments. It runs listen-only
+on the gateway even when the phone is absent. After a handshake advertising
+`evidence.persistent-log`, the app inventories current and previous segments. It downloads them
+only when the recorder is stopped, resumes from the local record offset, and deduplicates by
+gateway/session/source sequence. See
+[`docs/development/PASSIVE-CAN-LOGGING-AND-REPLAY.md`](../docs/development/PASSIVE-CAN-LOGGING-AND-REPLAY.md).
+
+Bluetooth transport evidence is stored separately from vehicle observations. Open **Evidence →
+Bluetooth connection flight recorder** to export it without Xcode; retention, event fields,
+privacy boundaries, and deeper Apple/radio escalation paths are documented in the
+[iPhone BLE flight-recorder specification](../docs/development/IPHONE-BLE-CONNECTION-FLIGHT-RECORDER.md).
+
+Open **Evidence → Standard read-only OBD** for per-ECU availability and proven supported values,
+**Synchronized Techstream / OBD reference** to record independent values on the gateway monotonic
+timeline, and **Private AI evidence outbox** to configure the owner-controlled HTTPS receiver. The
+complete contracts, receiver commands, safety boundary, and physical validation procedure are in
+the [J1979/reference/outbox implementation record](../docs/development/J1979-REFERENCE-VALIDATION-AND-PRIVATE-OUTBOX-2026-08-18.md).
+
+Open **Evidence → Retained CAN signal research** to rebuild graphs from the iPhone's durable
+capture logs. Candidate physical-unit axes appear only where the pinned pack has one non-conflicting
+cross-model transform, and remain visibly unverified. Conflicting transforms stay in raw counts.
+The archive/relaunch tests, exact seven fields, display authority, and validation workflow are in
+the [retained CAN research implementation record](../docs/development/IOS-RETAINED-CAN-RESEARCH-GRAPHS-2026-08-20.md).
+The same section now provides deterministic historical playback with a progressive trace, exact
+retained-point cursor, play/pause, scrub, 0.25×–20× speed, restart, optional looping, and explicit
+session boundaries. The playback implementation and its real-capture tests are in the
+[retained CAN playback lab record](../docs/development/IOS-RETAINED-CAN-PLAYBACK-LAB-2026-08-20.md).
 
 ## Status semantics
 
@@ -31,31 +84,135 @@ The OBD-II summary becomes `CONFIRMED` only after a `READ_CONFIRMED` experiment 
 `PASSIVE_LOCK` result is labeled `NETWORK ONLY`, because observed vehicle-bus traffic does not by
 itself prove that a standards-based diagnostic request succeeded.
 
-Discovery RSSI at or below -80 dBm is shown as `CHECK`, not `PASS`; at or below -90 dBm the app
-directs the operator to place the iPhone beside the gateway before pairing. CoreBluetooth error 15
-(`encryptionTimedOut`) is translated into a visible stale-bond recovery instruction instead of an
-opaque transport failure.
+Advertisement or connected-link RSSI at or below -80 dBm is shown as `CHECK`, not `PASS`; at or
+below -90 dBm the app directs the operator to place the iPhone beside the gateway before pairing.
+The app reads RSSI again from each exact physical-link epoch and exposes it as `LINK_RSSI` in the
+commissioning trace, so automated acceptance cannot rely on an old scan value. A connection timeout
+while the encrypted notification subscription is pending is reported as CoreBluetooth error 6
+(`connectionTimeout`); error 15 is reported as `encryptionTimedOut`. Both retain their exact domain,
+numeric code, symbolic name, message, wall-clock timestamp, and monotonic commissioning timestamp.
 
 If CoreBluetooth reports `peerRemovedPairingInformation`, the app discards the restored central
 session once and immediately scans again with a clean, non-restored central. This prevents an old
 restoration object from repeatedly terminating an otherwise valid post-forget connection.
 
-Connections use CoreBluetooth state restoration plus one app-managed reconnect policy. The app
+Connections reuse the iOS-managed encrypted bond plus one app-managed reconnect policy. The app
 retries the saved peripheral at 1, 2, 4, 8, 15, and then 30-second intervals until the user
 explicitly disconnects. The CoreBluetooth system auto-reconnect option is intentionally disabled:
 physical testing showed that it could reconnect immediately while the app's bounded retry was
 pending, creating overlapping connect attempts and a rapid timeout cycle. Ordinary radio loss,
 app backgrounding, and gateway restarts still do not require removing the saved BLE bond.
+An explicit reconnect intent survives a temporary Bluetooth powered-off/reset state: when the radio
+returns, the app retrieves the handshake-verified UUID first and only then falls back to a VHOS
+service scan. `Disconnect` is the only control that clears that intent.
 
-State restoration treats `.connected` and `.connecting` peripherals as live transport state. The
-app resumes service discovery directly instead of issuing a duplicate connect request or scanning
-for a gateway that cannot advertise while connected. Before scanning, it also checks for a
-system-connected peripheral exposing either supported service. A six-second GATT discovery
-watchdog cancels an unresponsive restored link and reconnects with the existing bond. Reconnect
-backoff resets only after the versioned VHOS handshake succeeds, not after a transient radio link.
+CoreBluetooth state restoration remains enabled under a versioned restoration identifier, but a
+service match alone is not enough to resume a restored object. The app promotes only the peripheral
+identifier that delivered a decoded, CRC-valid VHOS handshake. On a later launch, a connected or
+connecting object inherited from the previous app process is always cancelled before reuse. Its
+disconnect callback is drained, while the verified identifier and iOS bond are retained; the app
+then opens one fresh physical link with a current-process delegate, CCCD, and contract. Unverified,
+older, or additional restored objects use the same bounded cleanup boundary. The first
+`Connect` after a restoration-identifier epoch change starts from a fresh app selection while
+retaining the iOS-managed bond. If CoreBluetooth supplies an incomplete object in the current
+epoch, the app automatically retires it before scanning, without requiring Settings → Forget This
+Device. During retirement the control reads `Finishing…` and cannot start a duplicate session. A
+four-second cleanup watchdog either observes the exact object become disconnected or rebuilds the
+central only after cancelling that stale object; the saved bond and verified identifier remain.
 
-The August 16, 2026 commissioning incident and physical validation record are documented in
-[`docs/development/BLE-RESTORATION-INCIDENT-2026-08-16.md`](../docs/development/BLE-RESTORATION-INCIDENT-2026-08-16.md).
+Before a normal scan, the app may also adopt one coherent system-connected peripheral exposing the
+VHOS service. Every callback is accepted only from the exact selected `CBPeripheral` object, so an
+older restored wrapper cannot overwrite the active connection. Each physical adoption also receives
+a link-scoped delegate epoch; service, characteristic, notification, value, and write callbacks must
+match both that epoch and the currently connected object. Central callbacks must come from the exact
+current manager, and replacement managers rotate and persist a unique restoration identifier before
+they become active. A GATT discovery watchdog retires an unresponsive link and starts a fresh
+service-filtered scan only after disconnection is confirmed. Reconnect backoff resets only after the
+versioned VHOS handshake succeeds, not after a transient radio link.
+
+Each physical link issues one encrypted CCCD request for the framed evidence stream. Pairing-pending
+state suppresses duplicate requests on that link; health and OTA status remain logical frame types
+multiplexed over the same stream. A failed secure subscription closes the link before a later
+physical connection may make its own single request. Cached `isNotifying` state never proves the
+current link: a current-epoch CCCD callback is required, and a 15-second enable watchdog retires a
+link whose callback never arrives. A later notification-disabled callback also closes that exact
+session instead of leaving a physically connected but unusable transport.
+
+After the encrypted stream is ready, the app allows three link-session-bound, idempotent handshake
+requests. Each request first has a two-second write-progress/final-ACK deadline. Its separate
+two-second response deadline begins only after the final `.withResponse` write callback succeeds,
+so attempt N+1 can never queue behind unfinished chunks from attempt N. A missing write ACK closes
+that exact stale link without queuing another request. A decoded handshake cancels both phases. If
+all three acknowledged requests receive no response—even if health frames continue to arrive—the
+app marks the contract `DEGRADED`, closes that physical link, and waits for an explicit `Reconnect`;
+it does not create a second session beside the unresponsive one.
+
+The connection controls reflect that lifecycle. `Connect` appears only when no handshake-verified
+gateway has been saved. `Reconnect` first retrieves that known CoreBluetooth UUID and connects it,
+then falls back to the VHOS service scan if retrieval returns nothing. `Cancel` stops scanning,
+physical-link negotiation, contract validation, or automatic reconnect. `Connected` is disabled
+until a CRC-valid handshake has made the application session healthy. A separate `Disconnect`
+tears down that healthy link and disables automatic reconnect while preserving both the iOS bond
+and the handshake-verified peripheral identifier. The commissioning trace records that user intent
+before any connection state is cleared.
+
+## Physical acceptance: iOS `0.3.2 (8)` with gateway `0.1.0-dev.26`
+
+The August 18 attached-device run in `/tmp/vhos-dev24-acceptance.IbXL3W/` exercised the saved
+identity and automatic-loss paths without a Pair sheet or **Forget This Device**:
+
+| UTC time | Evidence | Product state |
+| --- | --- | --- |
+| `00:18:17.027` | `KNOWN_GATEWAY_RECONNECT` and direct `CONNECT_REQUEST` | The verified saved UUID was retrieved before service-scan fallback |
+| `00:18:17.536` | `LINK_CONNECTED link_session=1` | Physical BLE became active; this alone was still not application verification |
+| `00:18:17.822` | `SUBSCRIBE_READY ... link_session=1` | The current physical epoch confirmed its encrypted stream CCCD |
+| `00:18:17.992` | `HANDSHAKE_VERIFIED firmware=0.1.0-dev.26` | The UI could truthfully converge from Verifying to Connected |
+| `00:18:18.188` onward | recurring `HEALTH_DECODED` | Live framed application data remained continuous until the forced reset/loss |
+| `00:20:34.188` | exact `CBError.connectionTimeout` | The lost gateway was recorded as transport loss, not app crash or OBD failure |
+| `00:20:34.194` | `RECONNECT_SCHEDULED attempt=1` | Automatic reconnect intent remained active |
+| `00:21:25.797` | `LINK_CONNECTED link_session=2` after the gateway returned | Recovery created a distinct physical-link epoch on the saved identity |
+| `00:21:26.026` | `SUBSCRIBE_READY ... link_session=2` | The recovered link proved its own CCCD rather than trusting cached state |
+| `00:21:26.215` | `HANDSHAKE_VERIFIED firmware=0.1.0-dev.26` | The recovered application contract verified on attempt 1 |
+| `00:21:26.365` onward | recurring health and capture-index traffic | Live application data and evidence synchronization resumed |
+
+This run physically accepts known-UUID direct connect and one forced-reset automatic recovery. It
+does not convert every documented control into a new physical pass. In particular, explicit
+`Disconnect` was not tapped again on the final `0.3.2 (8)` build. Source review confirms that it
+disables reconnect while retaining the saved identifier and iOS-managed bond, and an earlier
+`dev.23` physical run observed that behavior followed by a no-Pair saved-ID `Reconnect`. Repeating
+that manual sequence on `0.3.2 (8)` remains a regression check.
+
+## Fault-injection acceptance: iOS `0.3.3 (9)` with gateway `0.1.0-dev.29`
+
+The real-device harness now alternates ESP32 hard resets and iPhone app process death, then requires
+a new physical link, CRC-valid handshake, and a configurable number of live health frames inside
+one recovery budget. It does not use simulator data as its oracle.
+
+The strict six-cycle run completed three gateway resets and three connected app relaunches. All six
+cycles verified firmware dev29 and produced five subsequent health frames inside 55 seconds. The
+run also exercised an incidental -96 dBm scan, existing-bond encryption, CoreBluetooth inherited-
+link retirement, controller reason 531 cleanup, and supervision-timeout recovery. It required no
+Pair sheet, Settings removal, NVS erase, or manual Connect.
+
+The subsequent one-command pre-car run exposed why an incidental weak-RF pass must not define a
+release condition: one mixed cycle timed out, and a focused rerun measured the gateway at -90 dBm.
+The app and harness now measure the exact connected-link epoch and require -80 dBm by default. With
+the bench restored to -62 through -68 dBm, the RSSI-qualified quick profile passed its ten-frame
+soak, ESP reset, and app-process-death recovery, with exact dev29 handshakes and all required health
+frames. The test plan retains both the failed discovery and stopped passing evidence hashes.
+
+See the [fault-injection test plan](../docs/development/BLE-FAULT-INJECTION-TEST-PLAN.md) for the
+command, exact recovery latencies, stopped-log hashes, failure found by the first strict run, true
+power-cut hardware boundary, and the remaining vehicle/OTA/soak matrix. The capture-export incident
+and dev28/dev29 corrections are recorded in the
+[capture-sync incident](../docs/development/BLE-CAPTURE-SYNC-DISCONNECT-INCIDENT-2026-08-18.md).
+
+The original August 16 commissioning record is documented in
+[`BLE-RESTORATION-INCIDENT-2026-08-16.md`](../docs/development/BLE-RESTORATION-INCIDENT-2026-08-16.md).
+The exact `dev.20` security timeout, disconnect-reason decoding, `dev.22` pre-`CONNECT` restore
+ordering, `dev.23` restored-state correction, and final `0.3.2 (8)` / `dev.26` recovery evidence are
+documented in
+[`BLE-PAIRING-RESET-INCIDENT-2026-08-17.md`](../docs/development/BLE-PAIRING-RESET-INCIDENT-2026-08-17.md).
 
 ## Build
 
@@ -71,12 +228,52 @@ xcodebuild \
   build
 ```
 
-Bluetooth requires a physical iPhone for gateway testing; iOS Simulator reports Bluetooth as unsupported. Code signing, an Apple developer team, release keys, provisioned experiment trust, and real hardware validation are deployment inputs—not repository defaults.
+Bluetooth and temporary-network joining require a physical iPhone. The Debug configuration uses
+`VehicleHealthOSCommissioning.entitlements`, an empty entitlement set that permits BLE commissioning,
+capture, export, and GATT recovery to be installed with the local wildcard development profile. It
+does not authorize automatic temporary-network joining. Release builds use
+`VehicleHealthOS.entitlements` and must be signed by a profile that includes Apple's Hotspot
+Configuration entitlement before iPhone-managed Wi-Fi OTA can pass. Release private keys remain
+external inputs. The complete workflow and remaining physical gates are in
+[`docs/development/IPHONE-TO-ESP32-WIFI-OTA.md`](../docs/development/IPHONE-TO-ESP32-WIFI-OTA.md).
 
 For an attached development iPhone, the commissioning harness can launch the app with
 `--vhos-auto-scan` or `VHOS_AUTO_SCAN=1`. Either input starts the same CoreBluetooth scan exposed
 by the on-screen control; neither bypasses Bluetooth permission, pairing approval, firmware trust,
 or vehicle-safety gates.
+
+The fault-injection harness is separate and exits nonzero unless every selected fault reaches a
+fresh verified contract plus live health:
+
+```bash
+uv run --script ios/tools/vhos_ble_fault_injection.py \
+  --iphone <CoreDevice-ID> \
+  --serial /dev/cu.usbserial-0001 \
+  --cycles 6 \
+  --faults esp-reset,app-relaunch \
+  --timeout 55 \
+  --health-frames 5 \
+  --minimum-rssi -80
+```
+
+The normal pre-car gate wraps contracts, corruption/replay tests, Swift tests, an ESP-IDF build,
+a signed iPhone build/install, stream soak, reset storms, app-death storms, and mixed recovery into
+one evidence summary:
+
+```bash
+python3 ios/tools/vhos_precar_acceptance.py \
+  --profile standard \
+  --iphone <CoreDevice-ID> \
+  --serial /dev/cu.usbserial-0001 \
+  --minimum-rssi -80
+```
+
+Use `quick` while iterating and `endurance` for release-candidate stress. Optional true USB rail
+cuts require `--include-power --usb-hub <location> --usb-port <port>` and compatible per-port
+switching hardware. The default RF floor fails a marginal bench before its timeouts can be mistaken
+for firmware defects; lower it only for a separately labeled range/recovery experiment. See the
+[fault-injection test plan](../docs/development/BLE-FAULT-INJECTION-TEST-PLAN.md)
+for exact profile counts, failure oracles, evidence layout, and claims that remain car-only.
 
 ## Gateway contract UUIDs
 

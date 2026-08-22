@@ -84,20 +84,26 @@ struct SystemStatusView: View {
 
       Section("Connection controls") {
         HStack {
-          Button {
-            gateway.startScan()
+          Button(role: primaryConnectionControlRole) {
+            if connectionFlowInProgress {
+              gateway.disconnect()
+            } else {
+              gateway.startScan(
+                source: gateway.hasVerifiedSavedGateway ? "user-reconnect" : "user-connect")
+            }
           } label: {
             Label(
-              gateway.scanActive ? "Scanning…" : "Scan for gateway",
-              systemImage: "antenna.radiowaves.left.and.right")
+              primaryConnectionControlTitle,
+              systemImage: primaryConnectionControlIcon)
           }
-          .disabled(
-            gateway.scanActive || gateway.peripheralConnected || gateway.state == .connecting)
+          .disabled(gateway.applicationSessionHealthy || gateway.connectionCleanupActive)
 
           Spacer()
 
-          Button("Disconnect", role: .destructive) { gateway.disconnect() }
-            .disabled(!gateway.peripheralConnected && gateway.state == .disconnected)
+          Button("Disconnect", role: .destructive) {
+            gateway.disconnect()
+          }
+          .disabled(!gateway.applicationSessionHealthy || gateway.connectionCleanupActive)
         }
         if let message = gateway.transportMessage {
           Text(message)
@@ -138,25 +144,46 @@ struct SystemStatusView: View {
   }
 
   private var esp32Summary: StatusIndicator {
-    if gateway.handshake != nil {
+    if gateway.applicationSessionHealthy {
       return StatusIndicator(
         "summary.esp32", title: "ESP32", value: "VHOS ONLINE",
-        detail: gateway.discoveredName ?? "Gateway connected", level: .pass)
+        detail: gateway.canonicalDisplayName, level: .pass)
     }
     if gateway.peripheralConnected, gateway.factoryServiceDiscovered {
       return StatusIndicator(
         "summary.esp32", title: "ESP32", value: "FACTORY MODE",
         detail: "BLE connected; VHOS firmware required", level: .warning)
     }
+    if gateway.connectionCleanupActive {
+      return StatusIndicator(
+        "summary.esp32", title: "ESP32", value: "FINISHING…",
+        detail: gateway.transportMessage ?? "Closing the previous physical BLE link",
+        level: .active)
+    }
     if gateway.state == .failed || gateway.state == .degraded {
       return StatusIndicator(
         "summary.esp32", title: "ESP32", value: "LINK ERROR",
         detail: gateway.transportMessage ?? "Gateway link failed", level: .blocked)
     }
-    if gateway.peripheralConnected || gateway.state == .connecting || gateway.scanActive {
+    if gateway.peripheralConnected {
+      return StatusIndicator(
+        "summary.esp32", title: "ESP32", value: "VERIFYING…",
+        detail: gateway.lastHealthReceivedAt == nil
+          ? "Physical BLE connected; awaiting VHOS handshake"
+          : "Health data is arriving; awaiting VHOS handshake",
+        level: .active)
+    }
+    if gateway.state == .connecting || gateway.state == .scanning || gateway.scanActive
+      || gateway.automaticReconnectActive
+    {
       return StatusIndicator(
         "summary.esp32", title: "ESP32", value: "CONNECTING",
         detail: gateway.transportMessage ?? "Negotiating", level: .active)
+    }
+    if gateway.hasVerifiedSavedGateway {
+      return StatusIndicator(
+        "summary.esp32", title: "ESP32", value: "OFFLINE",
+        detail: "Verified saved gateway available for Reconnect", level: .pending)
     }
     return StatusIndicator(
       "summary.esp32", title: "ESP32", value: "NOT CONNECTED",
@@ -221,22 +248,36 @@ struct SystemStatusView: View {
         level: gateway.bluetoothReady ? .pass : bluetoothUnavailableLevel),
       StatusIndicator(
         "transport.scan", title: "Gateway scan",
-        value: gateway.scanActive ? "SCANNING" : (gateway.discoveredName == nil ? "IDLE" : "FOUND"),
-        detail: gateway.discoveredName
+        value: gateway.scanActive
+          ? "SCANNING"
+          : (gateway.discoveredName == nil
+            ? "IDLE" : (gateway.gatewayIdentityValidated ? "FOUND" : "CANDIDATE")),
+        detail: gateway.discoveredName.map { _ in gateway.canonicalDisplayName }
           ?? gateway.lastObservedAdvertisement.map {
             "Observed \(gateway.scanObservationCount) advertisements; latest: \($0)"
           }
           ?? "No BLE advertisements observed yet (\(gateway.scanMode))",
-        level: gateway.scanActive ? .active : (gateway.discoveredName == nil ? .pending : .pass)),
+        level: gateway.scanActive
+          ? .active
+          : (gateway.gatewayIdentityValidated
+            ? .pass : (gateway.discoveredName == nil ? .pending : .active))),
       StatusIndicator(
-        "transport.peripheral", title: "ESP32 BLE link",
-        value: gateway.peripheralConnected
-          ? "CONNECTED" : (gateway.automaticReconnectActive ? "RECONNECTING" : "DISCONNECTED"),
-        detail: peripheralDetail,
-        level: gateway.peripheralConnected
-          ? .pass : (gateway.automaticReconnectActive ? .active : connectionFailureLevel)),
+        "transport.peripheral", title: "Gateway BLE link",
+        value: gateway.connectionCleanupActive
+          ? "DISCONNECTING"
+          : (gateway.peripheralConnected
+            ? (gateway.applicationSessionHealthy ? "CONNECTED" : "PHYSICAL LINK")
+            : (gateway.automaticReconnectActive ? "RECONNECTING" : "DISCONNECTED")),
+        detail: gateway.peripheralConnected && !gateway.applicationSessionHealthy
+          ? "Physical BLE link established; VHOS application contract pending"
+          : peripheralDetail,
+        level: gateway.applicationSessionHealthy
+          ? .pass
+          : (gateway.peripheralConnected || gateway.automaticReconnectActive
+              || gateway.connectionCleanupActive
+            ? .active : connectionFailureLevel)),
       StatusIndicator(
-        "transport.rssi", title: "Discovery signal",
+        "transport.rssi", title: "Radio signal",
         value: gateway.discoveredRSSI.map { "\($0) dBm" } ?? "UNAVAILABLE",
         detail: discoverySignalDetail,
         level: discoverySignalLevel),
@@ -325,10 +366,12 @@ struct SystemStatusView: View {
         level: handshake == nil ? .pending : .pass),
       StatusIndicator(
         "gateway.health", title: "Live health report",
-        value: health == nil ? "NOT RECEIVED" : "RECEIVED",
-        detail: health.map { "Gateway observed at \($0.observedAt)" }
-          ?? "No current-session gateway health evidence",
-        level: health == nil ? .pending : .pass),
+        value: gateway.hasCurrentGatewayHealth ? "CURRENT" : health == nil ? "NOT RECEIVED" : "STALE",
+        detail: gateway.hasCurrentGatewayHealth
+          ? health.map { "Gateway observed at \($0.observedAt)" }
+            ?? "No current-session gateway health evidence"
+          : "No health frame received within the five-second authority window",
+        level: gateway.hasCurrentGatewayHealth ? .pass : health == nil ? .pending : .warning),
       StatusIndicator(
         "gateway.health-arrival", title: "Health stream arrival",
         value: gateway.lastHealthReceivedAt.map(clockTime) ?? "UNAVAILABLE",
@@ -359,18 +402,66 @@ struct SystemStatusView: View {
           ? .pending : (listenOnlySatisfied ? .pass : .blocked)),
       StatusIndicator(
         "gateway.storage", title: "Capture storage",
-        value: health.map {
-          ByteCountFormatter.string(fromByteCount: Int64($0.storageFreeBytes), countStyle: .file)
+        value: health.flatMap(\.storageFreeBytes).map {
+          ByteCountFormatter.string(fromByteCount: Int64($0), countStyle: .file)
         }
           ?? "UNAVAILABLE",
         detail: "Gateway-reported free storage",
-        level: health.map { $0.storageFreeBytes > 0 ? .pass : .warning } ?? .pending),
+        level: health.flatMap(\.storageFreeBytes).map { $0 > 0 ? .pass : .warning } ?? .pending),
+      StatusIndicator(
+        "gateway.can-controller", title: "CAN observer",
+        value: health?.canControllerRunning == true
+          ? "RUNNING" : (health?.canControllerRunning == false ? "STOPPED" : "UNAVAILABLE"),
+        detail: "ESP32 TWAI controller; listen-only policy is evaluated separately",
+        level: health?.canControllerRunning == true
+          ? .pass : (health?.canControllerRunning == false ? .blocked : .pending)),
+      StatusIndicator(
+        "gateway.can-probe", title: "Passive CAN probe",
+        value: health?.canScanState?.rawValue.replacingOccurrences(of: "_", with: " ")
+          ?? "UNAVAILABLE",
+        detail: passiveCANProbeDetail,
+        level: passiveCANProbeLevel),
+      StatusIndicator(
+        "gateway.can-bitrate", title: "Observed CAN bitrate",
+        value: health?.canBitrateBps.map { "\($0 / 1_000) kbit/s" } ?? "UNAVAILABLE",
+        detail: health?.canPassiveLock == true
+          ? "Locked after repeatable valid frames"
+          : "Current bounded listen-only observation window",
+        level: health?.canPassiveLock == true
+          ? .pass : (health?.canBitrateBps == nil ? .pending : .active)),
+      StatusIndicator(
+        "gateway.can-candidate", title: "Passive CAN candidate",
+        value: health?.passiveCanCandidate ?? "UNVERIFIED",
+        detail: health?.passiveCanCandidate == nil
+          ? "No multi-frame passive lock yet"
+          : "Valid CAN traffic observed; this does not confirm OBD-II",
+        level: health?.passiveCanCandidate == nil ? .pending : .pass),
+      StatusIndicator(
+        "gateway.can-formats", title: "CAN identifier formats",
+        value: canIdentifierFormatValue,
+        detail: "Valid standard (11-bit) / extended (29-bit) frames since boot",
+        level: canObservedFrameCount > 0 ? .pass : .pending),
+      StatusIndicator(
+        "gateway.can-rate-counts", title: "Frames by bitrate",
+        value: canBitrateFrameValue,
+        detail: "Valid 500 kbit/s / 250 kbit/s frames since boot",
+        level: canObservedFrameCount > 0 ? .pass : .pending),
       counterIndicator(
         id: "gateway.received", title: "Vehicle-bus frames", count: health?.receivedFrames,
         zeroLevel: .pending, nonzeroLevel: .pass),
-      counterIndicator(
-        id: "gateway.dropped", title: "Dropped frames", count: health?.droppedFrames,
-        zeroLevel: .pass, nonzeroLevel: .warning),
+      StatusIndicator(
+        "gateway.dropped", title: "Receive-path loss", value: health?.droppedFrames.formatted() ?? "UNAVAILABLE",
+        detail: canReceiveLossDetail,
+        level: health.map { $0.droppedFrames == 0 ? .pass : .warning } ?? .pending),
+      StatusIndicator(
+        "gateway.can-queues", title: "CAN queue pressure", value: canQueuePressureValue,
+        detail: canQueuePressureDetail,
+        level: canQueuePressureLevel),
+      StatusIndicator(
+        "gateway.capture-retention", title: "Flash retention coverage",
+        value: captureRetentionValue,
+        detail: captureRetentionDetail,
+        level: captureRetentionLevel),
       counterIndicator(
         id: "gateway.errors", title: "Bus errors", count: health?.busErrorCount,
         zeroLevel: .pass, nonzeroLevel: .warning),
@@ -427,9 +518,9 @@ struct SystemStatusView: View {
         level: health == nil ? .blocked : .pass),
       StatusIndicator(
         "safety.parked", title: "Motion deterministically PARKED",
-        value: health?.vehicleMotion.rawValue ?? "UNKNOWN",
-        detail: "There is no manual motion override",
-        level: health?.vehicleMotion == .parked ? .pass : .blocked),
+        value: model.gateway.hasCurrentParkedAuthority ? "PARKED" : "UNVERIFIED",
+        detail: "A fresh gateway health frame is required; there is no manual override",
+        level: model.gateway.hasCurrentParkedAuthority ? .pass : .blocked),
       StatusIndicator(
         "safety.capture", title: "Capture idle",
         value: health.map { $0.captureActive ? "ACTIVE" : "IDLE" } ?? "UNKNOWN",
@@ -497,8 +588,17 @@ struct SystemStatusView: View {
       StatusIndicator(
         "firmware.endpoint", title: "Private Wi-Fi OTA endpoint",
         value: handshake?.otaUploadURL == nil ? "NOT ADVERTISED" : "ADVERTISED",
-        detail: handshake?.otaUploadURL ?? "Awaiting gateway handshake",
+        detail: handshake?.otaUploadURL.map {
+          "\($0) • network remains off until encrypted BLE approval"
+        } ?? "Awaiting gateway handshake",
         level: handshake?.otaUploadURL == nil ? .pending : .pass),
+      StatusIndicator(
+        "firmware.session", title: "Temporary OTA network",
+        value: gateway.otaStatus?.state ?? "OFF",
+        detail: gateway.otaStatus?.detail
+          ?? "Hidden, one-client Wi-Fi starts only for an approved signed update",
+        level: gateway.otaStatus?.networkReady == true
+          ? .active : (gateway.otaStatus?.state == "POST_PASSED" ? .pass : .pending)),
       StatusIndicator(
         "firmware.preflight", title: "OTA preflight",
         value: firmwarePreflight.value,
@@ -649,7 +749,7 @@ struct SystemStatusView: View {
     guard let handshake = gateway.handshake, let health = gateway.health else { return false }
     return gateway.state == .vhosConnected
       && gateway.commandChannelReady
-      && health.vehicleMotion == .parked
+      && gateway.hasCurrentParkedAuthority
       && !health.captureActive
       && handshake.listenOnly
       && health.listenOnly
@@ -675,11 +775,13 @@ struct SystemStatusView: View {
   }
 
   private var listenOnlySatisfied: Bool {
-    gateway.handshake?.listenOnly == true && gateway.health?.listenOnly == true
+    gateway.hasCurrentGatewayHealth && gateway.handshake?.listenOnly == true
+      && gateway.health?.listenOnly == true
   }
 
   private var motionLevel: IndicatorLevel {
-    switch gateway.health?.vehicleMotion {
+    guard gateway.hasCurrentGatewayHealth else { return .pending }
+    return switch gateway.health?.vehicleMotion {
     case .parked: .pass
     case .moving: .warning
     case .unknown, nil: .pending
@@ -687,11 +789,122 @@ struct SystemStatusView: View {
   }
 
   private var motionDetail: String {
-    switch gateway.health?.vehicleMotion {
+    guard gateway.hasCurrentGatewayHealth else {
+      return "Current motion authority is unavailable because gateway health is stale"
+    }
+    return switch gateway.health?.vehicleMotion {
     case .parked: "Gateway reports PARKED; other gates still apply"
     case .moving: "Vehicle tests and OTA are blocked while moving"
     case .unknown, nil: "Motion must be deterministically PARKED before tests or OTA"
     }
+  }
+
+  private var passiveCANProbeLevel: IndicatorLevel {
+    switch gateway.health?.canScanState {
+    case .locked500K, .locked250K: .pass
+    case .probing500K, .probing250K: .active
+    case .error: .blocked
+    case nil: .pending
+    }
+  }
+
+  private var passiveCANProbeDetail: String {
+    guard let health = gateway.health else { return "Awaiting gateway health" }
+    switch health.canScanState {
+    case .locked500K, .locked250K:
+      return "Multi-frame passive lock; OBD-II remains independently unverified"
+    case .probing500K, .probing250K:
+      return "Cycle \(health.canScanCycles ?? 0); alternates after a bounded silent window"
+    case .error:
+      return "TWAI bitrate reconfiguration failed; inspect gateway evidence"
+    case nil:
+      return "Installed firmware does not report passive probe state"
+    }
+  }
+
+  private var canObservedFrameCount: UInt64 {
+    (gateway.health?.canStandardFrames ?? 0) + (gateway.health?.canExtendedFrames ?? 0)
+  }
+
+  private var canIdentifierFormatValue: String {
+    guard let health = gateway.health,
+      let standard = health.canStandardFrames,
+      let extended = health.canExtendedFrames
+    else { return "UNAVAILABLE" }
+    return "\(standard) / \(extended)"
+  }
+
+  private var canBitrateFrameValue: String {
+    guard let health = gateway.health,
+      let frames500k = health.canFrames500k,
+      let frames250k = health.canFrames250k
+    else { return "UNAVAILABLE" }
+    return "\(frames500k) / \(frames250k)"
+  }
+
+  private var canReceiveLossDetail: String {
+    guard let health = gateway.health else { return "Awaiting gateway health" }
+    guard health.canTwaiReceiveMissedFrames != nil
+      || health.canTwaiReceiveOverrunFrames != nil
+      || health.canObserverQueueDroppedFrames != nil
+    else {
+      return "Legacy aggregate; update firmware for TWAI missed, overrun, and software-dispatch attribution"
+    }
+    return "TWAI missed \((health.canTwaiReceiveMissedFrames ?? 0).formatted()) • "
+      + "TWAI overrun \((health.canTwaiReceiveOverrunFrames ?? 0).formatted()) • "
+      + "observer queue \((health.canObserverQueueDroppedFrames ?? 0).formatted())"
+  }
+
+  private var canQueuePressureValue: String {
+    guard let health = gateway.health,
+      let observerHighWater = health.canObserverQueueHighWater,
+      let observerCapacity = health.canObserverQueueCapacity
+    else { return "UNAVAILABLE" }
+    return "\(observerHighWater) / \(observerCapacity)"
+  }
+
+  private var canQueuePressureDetail: String {
+    guard let health = gateway.health else { return "Awaiting gateway health" }
+    guard let twaiCapacity = health.canTwaiReceiveQueueCapacity,
+      let observerCapacity = health.canObserverQueueCapacity
+    else { return "Update firmware for receive and observer queue telemetry" }
+    return "TWAI now \(health.canTwaiReceiveQueueDepth ?? 0)/\(twaiCapacity) • "
+      + "observer now \(health.canObserverQueueDepth ?? 0)/\(observerCapacity) • "
+      + "observer high-water \(health.canObserverQueueHighWater ?? 0)/\(observerCapacity)"
+  }
+
+  private var canQueuePressureLevel: IndicatorLevel {
+    guard let health = gateway.health,
+      let highWater = health.canObserverQueueHighWater,
+      let capacity = health.canObserverQueueCapacity, capacity > 0
+    else { return .pending }
+    if health.canObserverQueueDroppedFrames ?? 0 > 0 { return .warning }
+    return Double(highWater) / Double(capacity) >= 0.8 ? .warning : .pass
+  }
+
+  private var captureRetentionValue: String {
+    guard let observed = gateway.health?.captureObservedFrames, observed > 0,
+      let retained = gateway.health?.captureRetainedRecords
+    else { return "UNAVAILABLE" }
+    return (Double(retained) / Double(observed)).formatted(
+      .percent.precision(.fractionLength(1)))
+  }
+
+  private var captureRetentionDetail: String {
+    guard let health = gateway.health else { return "Awaiting gateway health" }
+    guard health.captureObservedFrames != nil else {
+      return "Update firmware for intentional sampling and persistence-loss attribution"
+    }
+    return "Observed \((health.captureObservedFrames ?? 0).formatted()) • "
+      + "sampled \((health.captureSampledFrames ?? 0).formatted()) • "
+      + "policy suppressions \((health.captureSampleSuppressedFrames ?? 0).formatted()) • "
+      + "persistence drops \((health.captureQueueDroppedRecords ?? 0).formatted())"
+  }
+
+  private var captureRetentionLevel: IndicatorLevel {
+    guard let health = gateway.health, health.captureObservedFrames != nil else { return .pending }
+    return (health.captureQueueDroppedRecords ?? 0) == 0
+      && (health.captureStorageWriteFailures ?? 0) == 0 ? .pass : .warning
   }
 
   private var bluetoothUnavailableLevel: IndicatorLevel {
@@ -703,20 +916,22 @@ struct SystemStatusView: View {
 
   private var discoverySignalLevel: IndicatorLevel {
     guard let rssi = gateway.discoveredRSSI else { return .pending }
-    return rssi <= -80 ? .warning : .pass
+    return rssi < GatewayBLEIdentityPolicy.minimumReliableConnectionRSSI ? .warning : .pass
   }
 
   private var discoverySignalDetail: String {
     guard let rssi = gateway.discoveredRSSI else {
-      return "RSSI is available after a supported gateway advertisement is selected"
-    }
-    if rssi <= -90 {
-      return "Very weak commissioning signal; place the iPhone beside the ESP32 before pairing"
+      return "RSSI is available after a gateway advertisement or physical link is measured"
     }
     if rssi <= -80 {
-      return "Weak signal; move closer before pairing, evidence transfer, or OTA"
+      return "Very weak signal; move the iPhone beside the ESP32 before evidence transfer or OTA"
     }
-    return "RSSI from the selected gateway advertisement; no vehicle-health inference is applied"
+    if rssi < GatewayBLEIdentityPolicy.minimumReliableConnectionRSSI {
+      return "Signal is below the reliable reconnect threshold; move the iPhone closer while the app waits without disturbing the saved bond"
+    }
+    return gateway.peripheralConnected
+      ? "Live RSSI from the selected physical BLE link; no vehicle-health inference is applied"
+      : "RSSI from the selected gateway advertisement; no vehicle-health inference is applied"
   }
 
   private var connectionFailureLevel: IndicatorLevel {
@@ -729,12 +944,44 @@ struct SystemStatusView: View {
 
   private var peripheralDetail: String {
     if gateway.automaticReconnectActive {
-      return "Automatic reconnect attempt \(gateway.reconnectAttemptCount) • \(gateway.discoveredName ?? "saved gateway")"
+      return
+        "Automatic reconnect attempt \(gateway.reconnectAttemptCount) • \(gateway.canonicalDisplayName)"
     }
-    if let name = gateway.discoveredName, let identifier = gateway.discoveredIdentifier {
-      return "\(name) • \(identifier)"
+    if !gateway.peripheralConnected, let evidence = gateway.lastTransportFailureEvidence,
+      let date = gateway.lastTransportFailureAt
+    {
+      return "Last failure at \(clockTime(date)) • \(evidence)"
+    }
+    if gateway.discoveredName != nil || gateway.discoveredIdentifier != nil {
+      return gateway.canonicalDisplayName
     }
     return "No ESP32 gateway BLE connection"
+  }
+
+  private var connectionFlowInProgress: Bool {
+    !gateway.applicationSessionHealthy
+      && (gateway.connectionCleanupActive || gateway.peripheralConnected || gateway.scanActive
+        || gateway.automaticReconnectActive || gateway.state == .scanning
+        || gateway.state == .connecting)
+  }
+
+  private var primaryConnectionControlTitle: String {
+    if gateway.applicationSessionHealthy { return "Connected" }
+    if gateway.connectionCleanupActive { return "Finishing…" }
+    if connectionFlowInProgress { return "Cancel" }
+    return gateway.hasVerifiedSavedGateway ? "Reconnect" : "Connect"
+  }
+
+  private var primaryConnectionControlIcon: String {
+    if gateway.applicationSessionHealthy { return "checkmark.circle.fill" }
+    if gateway.connectionCleanupActive { return "hourglass" }
+    if connectionFlowInProgress { return "xmark.circle" }
+    return gateway.hasVerifiedSavedGateway
+      ? "arrow.clockwise" : "antenna.radiowaves.left.and.right"
+  }
+
+  private var primaryConnectionControlRole: ButtonRole? {
+    connectionFlowInProgress && !gateway.connectionCleanupActive ? .cancel : nil
   }
 
   private var lastFrameDetail: String {
@@ -915,6 +1162,7 @@ extension GatewayCapability {
     case .otaSignedImage: "Signed OTA images"
     case .otaRollbackSelfTest: "Rollback self-test"
     case .evidenceExport: "Evidence export"
+    case .persistentEvidenceLog: "Persistent CAN log"
     }
   }
 }

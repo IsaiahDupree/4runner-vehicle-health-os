@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/discovery-test-template.schema.json",
+  "title": "VHOS Discovery test template v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract", "contract_version", "id", "template_version", "title", "category", "hypothesis", "required_vehicle_motion", "safety_instructions", "required_gateway_capabilities", "targeted_validation_requirements", "steps", "authority"],
+  "properties": {
+    "contract": {"const": "vhos.discovery.test-template"},
+    "contract_version": {"const": "1.0.0"},
+    "id": {"$ref": "common.schema.json#/$defs/semanticId"},
+    "template_version": {"$ref": "common.schema.json#/$defs/semanticVersion"},
+    "title": {"type": "string", "minLength": 1, "maxLength": 160},
+    "category": {"type": "string", "enum": ["ENGINE", "BRAKES", "STEERING", "TRANSMISSION", "HVAC_AC", "SUSPENSION", "TIRES", "ELECTRICAL", "FOUR_WHEEL_DRIVE", "LIGHTING", "CUSTOM"]},
+    "hypothesis": {"type": "string", "minLength": 1, "maxLength": 1000},
+    "required_vehicle_motion": {"type": "string", "enum": ["UNKNOWN", "PARKED", "MOVING"]},
+    "safety_instructions": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1, "maxLength": 500}},
+    "required_gateway_capabilities": {"type": "array", "uniqueItems": true, "items": {"type": "string", "enum": ["capture.passive", "experiment.signed-plan", "diagnostic.allowlisted-read", "ota.ab", "ota.signed-image", "ota.rollback-self-test", "evidence.export", "evidence.persistent-log"]}},
+    "targeted_validation_requirements": {"type": "array", "uniqueItems": true, "items": {"$ref": "discovery-common.schema.json#/$defs/validationRequirement"}},
+    "steps": {"type": "array", "minItems": 1, "items": {"$ref": "discovery-common.schema.json#/$defs/testStep"}},
+    "authority": {"const": "DEFINITION_VALIDATED"}
+  }
+}

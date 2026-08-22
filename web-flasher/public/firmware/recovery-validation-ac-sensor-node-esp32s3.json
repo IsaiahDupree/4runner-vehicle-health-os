@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0.0",
+  "release": "v0.1.0-dev.1",
+  "generatedAt": "2026-08-17T02:21:05Z",
+  "firmwareCommit": "08ba6cc53b8a369cf69058d28ff0ebddfd0841f7",
+  "expectedFlashBytes": 16777216,
+  "checks": {
+    "chipTarget": "passed:ESP32-S3",
+    "emptyRecoverySourceBoundary": "passed",
+    "runtimeRadioInitialization": "passed:none",
+    "linkedRadioNetworkComponents": "passed:none",
+    "destructiveNvsRecovery": "passed:absent",
+    "nvsPreservingInstallPlan": "passed",
+    "mergedSegmentsByteExact": "passed",
+    "otaABPartitionTopology": "passed",
+    "rollbackConfiguration": "passed",
+    "applicationFitsBothSlots": "passed",
+    "physicalFlashAndBoot": "not-run-by-release-builder"
+  },
+  "artifactSha256": "5d451fa38dd5b03c45a0a15f5208539ab43720bdc282662f8b673706e07b7c17",
+  "partitions": {
+    "nvs": {
+      "type": "data",
+      "subtype": "nvs",
+      "offset": 36864,
+      "size": 16384
+    },
+    "otadata": {
+      "type": "data",
+      "subtype": "ota",
+      "offset": 53248,
+      "size": 8192
+    },
+    "phy_init": {
+      "type": "data",
+      "subtype": "phy",
+      "offset": 61440,
+      "size": 4096
+    },
+    "ota_0": {
+      "type": "app",
+      "subtype": "ota_0",
+      "offset": 65536,
+      "size": 3145728
+    },
+    "ota_1": {
+      "type": "app",
+      "subtype": "ota_1",
+      "offset": 3211264,
+      "size": 3145728
+    },
+    "storage": {
+      "type": "data",
+      "subtype": "spiffs",
+      "offset": 6356992,
+      "size": 10420224
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/portable-logical-frame.schema.json",
+  "title": "Portable VHOS Logical Frame v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "contract_version",
+    "source_role",
+    "source_id",
+    "source_sequence",
+    "source_monotonic_microseconds",
+    "protocol_major",
+    "protocol_minor",
+    "message_type",
+    "flags",
+    "ingested_at",
+    "envelope_sha256",
+    "envelope_base64"
+  ],
+  "properties": {
+    "contract": {"const": "vhos.portable-logical-frame"},
+    "contract_version": {"const": "1.0.0"},
+    "source_role": {"type": "string", "enum": ["OBD_CAN", "AC_SENSOR"]},
+    "source_id": {"type": "string", "minLength": 1, "maxLength": 160},
+    "source_sequence": {"type": "string", "pattern": "^(0|[1-9][0-9]*)$", "maxLength": 20},
+    "source_monotonic_microseconds": {"type": "string", "pattern": "^(0|[1-9][0-9]*)$", "maxLength": 20},
+    "protocol_major": {"type": "integer", "minimum": 0, "maximum": 255},
+    "protocol_minor": {"type": "integer", "minimum": 0, "maximum": 255},
+    "message_type": {"type": "integer", "minimum": 1, "maximum": 255},
+    "flags": {"type": "integer", "minimum": 0, "maximum": 255},
+    "ingested_at": {"$ref": "common.schema.json#/$defs/wallTime"},
+    "envelope_sha256": {"$ref": "common.schema.json#/$defs/sha256"},
+    "envelope_base64": {"type": "string", "contentEncoding": "base64", "maxLength": 2097152}
+  }
+}

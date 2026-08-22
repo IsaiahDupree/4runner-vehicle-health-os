@@ -1,0 +1,316 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/can-discovery-report.schema.json",
+  "title": "VHOS CAN Discovery Report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "contract_version",
+    "status",
+    "authority",
+    "source_files",
+    "acquisition",
+    "sessions",
+    "identifier_activity",
+    "checksum_candidates",
+    "raw_word_relationship_candidates",
+    "repeated_channel_candidates",
+    "display_policy"
+  ],
+  "properties": {
+    "contract": {"const": "can.discovery.report"},
+    "contract_version": {"const": "1.0.0"},
+    "status": {"$ref": "#/$defs/candidateStatus"},
+    "authority": {"type": "string", "minLength": 1, "maxLength": 1000},
+    "source_files": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "byte_count", "record_count", "sha256"],
+        "properties": {
+          "name": {"type": "string", "minLength": 1, "maxLength": 256},
+          "byte_count": {"type": "integer", "minimum": 0},
+          "record_count": {"type": "integer", "minimum": 0, "maximum": 1000000},
+          "sha256": {"$ref": "common.schema.json#/$defs/sha256"}
+        }
+      }
+    },
+    "acquisition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "records",
+        "gateways",
+        "sessions",
+        "unique_identifiers",
+        "bitrates_bps",
+        "listen_only_records",
+        "standard_identifier_records",
+        "extended_identifier_records",
+        "remote_request_records",
+        "capture_duration_seconds",
+        "estimated_observed_frames",
+        "estimated_observed_rate_fps",
+        "retained_record_rate_fps",
+        "sequence_coverage"
+      ],
+      "properties": {
+        "records": {"type": "integer", "minimum": 1, "maximum": 1000000},
+        "gateways": {"type": "integer", "minimum": 1, "maximum": 10000},
+        "sessions": {"type": "integer", "minimum": 1, "maximum": 1000000},
+        "unique_identifiers": {"type": "integer", "minimum": 1, "maximum": 536870912},
+        "bitrates_bps": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "integer", "enum": [250000, 500000]}
+        },
+        "listen_only_records": {"type": "integer", "minimum": 0, "maximum": 1000000},
+        "standard_identifier_records": {"type": "integer", "minimum": 0, "maximum": 1000000},
+        "extended_identifier_records": {"type": "integer", "minimum": 0, "maximum": 1000000},
+        "remote_request_records": {"type": "integer", "minimum": 0, "maximum": 1000000},
+        "capture_duration_seconds": {"type": "number", "minimum": 0},
+        "estimated_observed_frames": {"type": "integer", "minimum": 1},
+        "estimated_observed_rate_fps": {"type": "number", "minimum": 0},
+        "retained_record_rate_fps": {"type": "number", "minimum": 0},
+        "sequence_coverage": {"type": "number", "minimum": 0, "maximum": 1}
+      }
+    },
+    "sessions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1000000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "gateway_id",
+          "session_id",
+          "records",
+          "duration_seconds",
+          "first_source_sequence",
+          "last_source_sequence",
+          "sequence_span",
+          "estimated_observed_rate_fps",
+          "retained_record_rate_fps",
+          "sequence_coverage",
+          "unique_identifiers"
+        ],
+        "properties": {
+          "gateway_id": {"type": "string", "pattern": "^[A-Za-z0-9._-]{1,128}$"},
+          "session_id": {"type": "integer", "minimum": 0, "maximum": 4294967295},
+          "records": {"type": "integer", "minimum": 1, "maximum": 1000000},
+          "duration_seconds": {"type": "number", "minimum": 0},
+          "first_source_sequence": {"type": "integer", "minimum": 0},
+          "last_source_sequence": {"type": "integer", "minimum": 0},
+          "sequence_span": {"type": "integer", "minimum": 1},
+          "estimated_observed_rate_fps": {"type": "number", "minimum": 0},
+          "retained_record_rate_fps": {"type": "number", "minimum": 0},
+          "sequence_coverage": {"type": "number", "minimum": 0, "maximum": 1},
+          "unique_identifiers": {"type": "integer", "minimum": 1, "maximum": 536870912}
+        }
+      }
+    },
+    "identifier_activity": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 536870912,
+      "items": {"$ref": "#/$defs/identifierActivity"}
+    },
+    "checksum_candidates": {
+      "type": "array",
+      "maxItems": 536870912,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["identifier", "checked", "matches", "match_rate", "status"],
+        "properties": {
+          "identifier": {"$ref": "#/$defs/identifierHex"},
+          "checked": {"type": "integer", "minimum": 5},
+          "matches": {"type": "integer", "minimum": 0},
+          "match_rate": {"type": "number", "minimum": 0.95, "maximum": 1},
+          "status": {"$ref": "#/$defs/candidateStatus"}
+        }
+      }
+    },
+    "raw_word_relationship_candidates": {
+      "type": "array",
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "left",
+          "right",
+          "paired_samples",
+          "maximum_pairing_delta_us",
+          "pearson_correlation",
+          "median_right_to_left_ratio",
+          "status"
+        ],
+        "properties": {
+          "left": {"type": "string", "pattern": "^0x[0-9A-F]{3}\\[0:16\\]$"},
+          "right": {"type": "string", "pattern": "^0x[0-9A-F]{3}\\[0:16\\]$"},
+          "paired_samples": {"type": "integer", "minimum": 10},
+          "maximum_pairing_delta_us": {"type": "integer", "minimum": 0},
+          "pearson_correlation": {"type": "number", "minimum": -1, "maximum": 1},
+          "median_right_to_left_ratio": {"type": ["number", "null"]},
+          "status": {"$ref": "#/$defs/candidateStatus"}
+        }
+      }
+    },
+    "repeated_channel_candidates": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "identifier",
+          "byte_positions",
+          "records_compared",
+          "minimum",
+          "maximum",
+          "maximum_disagreement",
+          "status"
+        ],
+        "properties": {
+          "identifier": {"$ref": "#/$defs/identifierHex"},
+          "byte_positions": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 8,
+            "uniqueItems": true,
+            "items": {"type": "integer", "minimum": 0, "maximum": 7}
+          },
+          "records_compared": {"type": "integer", "minimum": 5},
+          "minimum": {"type": "integer", "minimum": 0, "maximum": 255},
+          "maximum": {"type": "integer", "minimum": 0, "maximum": 255},
+          "maximum_disagreement": {"const": 0},
+          "status": {"$ref": "#/$defs/candidateStatus"}
+        }
+      }
+    },
+    "display_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["proven_now", "candidate_only", "blocked_until_correlated"],
+      "properties": {
+        "proven_now": {"$ref": "#/$defs/nonEmptyStringArray"},
+        "candidate_only": {"$ref": "#/$defs/nonEmptyStringArray"},
+        "blocked_until_correlated": {"$ref": "#/$defs/nonEmptyStringArray"}
+      }
+    }
+  },
+  "$defs": {
+    "candidateStatus": {"const": "DISCOVERY_CANDIDATE"},
+    "identifierHex": {"type": "string", "pattern": "^0x(?:[0-9A-F]{3}|[0-9A-F]{8})$"},
+    "nonEmptyStringArray": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1, "maxLength": 500}
+    },
+    "numericSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "byte_order",
+        "bit_range",
+        "minimum",
+        "maximum",
+        "mean",
+        "standard_deviation",
+        "status"
+      ],
+      "properties": {
+        "byte_order": {"const": "BIG_ENDIAN"},
+        "bit_range": {"const": "0:16"},
+        "minimum": {"type": "integer", "minimum": 0, "maximum": 65535},
+        "maximum": {"type": "integer", "minimum": 0, "maximum": 65535},
+        "mean": {"type": "number", "minimum": 0, "maximum": 65535},
+        "standard_deviation": {"type": "number", "minimum": 0},
+        "status": {"$ref": "#/$defs/candidateStatus"}
+      }
+    },
+    "identifierActivity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "identifier",
+        "identifier_value",
+        "extended",
+        "records",
+        "sessions",
+        "data_lengths",
+        "unique_payloads",
+        "payload_change_rate",
+        "dynamic_byte_count",
+        "dynamic_byte_positions",
+        "byte_ranges",
+        "first_big_endian_word",
+        "checksum_candidate",
+        "status"
+      ],
+      "properties": {
+        "identifier": {"$ref": "#/$defs/identifierHex"},
+        "identifier_value": {"type": "integer", "minimum": 0, "maximum": 536870911},
+        "extended": {"type": "boolean"},
+        "records": {"type": "integer", "minimum": 1, "maximum": 1000000},
+        "sessions": {"type": "integer", "minimum": 1, "maximum": 1000000},
+        "data_lengths": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 9,
+          "uniqueItems": true,
+          "items": {"type": "integer", "minimum": 0, "maximum": 8}
+        },
+        "unique_payloads": {"type": "integer", "minimum": 1, "maximum": 1000000},
+        "payload_change_rate": {"type": "number", "minimum": 0, "maximum": 1},
+        "dynamic_byte_count": {"type": "integer", "minimum": 0, "maximum": 8},
+        "dynamic_byte_positions": {
+          "type": "array",
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": {"type": "integer", "minimum": 0, "maximum": 7}
+        },
+        "byte_ranges": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["byte", "minimum", "maximum"],
+            "properties": {
+              "byte": {"type": "integer", "minimum": 0, "maximum": 7},
+              "minimum": {"type": "integer", "minimum": 0, "maximum": 255},
+              "maximum": {"type": "integer", "minimum": 0, "maximum": 255}
+            }
+          }
+        },
+        "first_big_endian_word": {
+          "anyOf": [
+            {"$ref": "#/$defs/numericSummary"},
+            {"type": "null"}
+          ]
+        },
+        "checksum_candidate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["algorithm", "checked", "matches", "match_rate", "candidate", "status"],
+          "properties": {
+            "algorithm": {"const": "toyota-additive-id-dlc-payload-v0"},
+            "checked": {"type": "integer", "minimum": 0, "maximum": 1000000},
+            "matches": {"type": "integer", "minimum": 0, "maximum": 1000000},
+            "match_rate": {"type": "number", "minimum": 0, "maximum": 1},
+            "candidate": {"type": "boolean"},
+            "status": {"$ref": "#/$defs/candidateStatus"}
+          }
+        },
+        "status": {"$ref": "#/$defs/candidateStatus"}
+      }
+    }
+  }
+}

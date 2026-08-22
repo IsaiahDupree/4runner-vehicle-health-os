@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/can-replay-corpus.schema.json",
+  "title": "VHOS real CAN replay corpus v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "contract_version",
+    "corpus_id",
+    "source_classification",
+    "vehicle_claims_authorized",
+    "assembled_from_capture_at",
+    "gateway_ids",
+    "source_files",
+    "statistics",
+    "semantic_digest",
+    "display_policy"
+  ],
+  "properties": {
+    "contract": {"const": "can.replay.corpus"},
+    "contract_version": {"const": "1.0.0"},
+    "corpus_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,127}$"},
+    "source_classification": {"const": "REAL_CAPTURE_REPLAY"},
+    "vehicle_claims_authorized": {"const": false},
+    "assembled_from_capture_at": {"type": "string", "format": "date-time"},
+    "gateway_ids": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[A-Za-z0-9._-]{1,128}$"}
+    },
+    "source_files": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256", "byte_count", "record_count", "session_id"],
+        "properties": {
+          "path": {"type": "string", "pattern": "^sessions/[A-Za-z0-9._-]+\\.ndjson$"},
+          "sha256": {"$ref": "common.schema.json#/$defs/sha256"},
+          "byte_count": {"type": "integer", "minimum": 1},
+          "record_count": {"type": "integer", "minimum": 1, "maximum": 1000000},
+          "session_id": {"type": "integer", "minimum": 0, "maximum": 4294967295}
+        }
+      }
+    },
+    "statistics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "records",
+        "sessions",
+        "unique_identifiers",
+        "total_source_bytes",
+        "listen_only_records",
+        "bitrates_bps"
+      ],
+      "properties": {
+        "records": {"type": "integer", "minimum": 1, "maximum": 1000000},
+        "sessions": {"type": "integer", "minimum": 1, "maximum": 1000000},
+        "unique_identifiers": {"type": "integer", "minimum": 1, "maximum": 536870912},
+        "total_source_bytes": {"type": "integer", "minimum": 1},
+        "listen_only_records": {"type": "integer", "minimum": 1, "maximum": 1000000},
+        "bitrates_bps": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "integer", "enum": [250000, 500000]}
+        }
+      }
+    },
+    "semantic_digest": {"$ref": "common.schema.json#/$defs/sha256"},
+    "display_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required_label", "provenance", "prohibited_claims"],
+      "properties": {
+        "required_label": {"const": "HISTORICAL REPLAY • NOT LIVE"},
+        "provenance": {"type": "string", "minLength": 1, "maxLength": 500},
+        "prohibited_claims": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1, "maxLength": 200}
+        }
+      }
+    }
+  }
+}

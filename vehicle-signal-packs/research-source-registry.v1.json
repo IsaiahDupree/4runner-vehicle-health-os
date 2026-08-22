@@ -1,0 +1,321 @@
+{
+  "contract": "can.research-source-registry",
+  "contract_version": "1.0.0",
+  "generated_at": "2026-08-18",
+  "authority": "Research inputs and cross-model hypotheses only. Nothing in this registry is an accepted vehicle signal definition.",
+  "target": {
+    "make": "Toyota",
+    "model": "4Runner",
+    "model_year": 2005,
+    "engine": null,
+    "drivetrain": null,
+    "emissions_region": null,
+    "vin_resolved": false
+  },
+  "automatic_ingestion": {
+    "repository_registry": "AVAILABLE",
+    "iphone_can_evidence": "LOCAL_EXPORT_AND_PRIVATE_OUTBOX_IMPLEMENTED_CONFIGURATION_REQUIRED",
+    "iphone_ble_flight_recorder": "LOCAL_EXPORT_IMPLEMENTED",
+    "remote_agent_inbox": "IMPLEMENTED_CONFIGURATION_REQUIRED"
+  },
+  "hypothesis_artifacts": {
+    "pack": "vehicle-signal-packs/toyota-4runner-2005-passive-can-hypotheses.v1.json",
+    "evaluation": "docs/evidence/can-signal-hypotheses-2026-08-20-5176.report.json",
+    "accepted_signal_definitions": 0
+  },
+  "lineage_artifact": {
+    "path": "vehicle-signal-packs/toyota-can-cross-platform-lineage.v1.json",
+    "documentation": "docs/development/TOYOTA-LEXUS-CAN-CROSS-PLATFORM-LINEAGE-2026-08-18.md",
+    "source_count": 22,
+    "vehicle_cohorts": 5,
+    "signal_lineages": 9,
+    "accepted_signal_definitions": 0
+  },
+  "sources": [
+    {
+      "id": "toyota-2005-4runner-owner-manual-om35860u",
+      "authority_level": "A",
+      "publisher": "Toyota Motor Sales, U.S.A.",
+      "url": "https://assets.sia.toyota.com/publications/en/om-s/OM35860U/pdf/OM35860U.pdf",
+      "scope": "Exact-model-year Toyota owner manual identifying 1GR-FE and 2UZ-FE 2005 4Runner configurations.",
+      "limitations": "Configuration applicability only; it does not disclose raw CAN identifiers, payload definitions, or diagnostic PID support."
+    },
+    {
+      "id": "toyota-general-2005-features-can-archive",
+      "authority_level": "A",
+      "publisher": "Toyota General 2005 Features content; archived on Scribd",
+      "url": "https://www.scribd.com/document/391265361/51-Power-Steering",
+      "scope": "Exact-model-year Toyota manual section documenting a 500 kbit/s 2005 4Runner/Tundra CAN topology and a contrasting Sequoia topology.",
+      "limitations": "Toyota-authored content on an unversioned third-party mirror; topology only, with no raw CAN identifier or payload definition."
+    },
+    {
+      "id": "toyota-2006-4runner-rm00t1u-729e248",
+      "authority_level": "A",
+      "publisher": "Toyota GSIC manual content; archived by ToyotaManuals on GitLab",
+      "url": "https://toyotamanuals.gitlab.io/rm00t1u/",
+      "revision": "729e2480c90ffd3525595400ddd69024077f487b",
+      "scope": "Adjacent-model-year 4Runner GRN210/215 and UZN210/215 repair/new-features manual with CAN VIM/BUS CHECK and independent accelerator-channel references.",
+      "limitations": "Toyota-authored content is served by a third-party archive; it establishes service-tool observables and topology, not raw broadcast-CAN layouts."
+    },
+    {
+      "id": "toyota-prado-ncf-276e",
+      "authority_level": "A",
+      "publisher": "Toyota New Features manual content; archived by ToyotaManuals",
+      "url": "https://toyotamanuals.gitlab.io/PZ471-Z00W0-CA/htmlweb/ncf/ncf276e/m_05_0242.pdf",
+      "scope": "Related Land Cruiser/Prado VSC CAN topology, participating nodes, and 500 kbit/s communication speed.",
+      "limitations": "Related-SUV topology only; no exact 2005 4Runner identifier, payload, scale, or ECU-software equivalence."
+    },
+    {
+      "id": "sae-j1979-2010-index",
+      "authority_level": "A",
+      "publisher": "SAE International",
+      "url": "https://saemobilus.sae.org/standards/j1979_201009-e-e-diagnostic-test-modes",
+      "scope": "Standard emissions-related diagnostic services, message behavior, timing, and reference to PID definitions in the Digital Annex.",
+      "limitations": "The exact historical revision and Digital Annex must be selected and licensed; applicability must be verified for the exact vehicle, engine, model year, and region."
+    },
+    {
+      "id": "toyota-tis",
+      "authority_level": "A",
+      "publisher": "Toyota Motor Sales, U.S.A.",
+      "url": "https://www.techinfo.toyota.com/techInfoPortal/appmanager/t3/ti?_nfpb=true&_pageLabel=ti_whats_tis",
+      "scope": "Toyota model/year service, repair, wiring, and diagnostic information.",
+      "limitations": "Subscription content; does not itself provide a redistributable exact raw CAN DBC."
+    },
+    {
+      "id": "csu-toyota-can-2010-camry",
+      "authority_level": "B",
+      "publisher": "Colorado State University",
+      "url": "https://www.engr.colostate.edu/~jdaily/tucrrc/ToyotaCAN.html",
+      "scope": "Independent physical-measurement correlation of 11-bit, 500 kbit/s CAN on a 2010 Toyota Camry.",
+      "limitations": "Cross-model research only; no 2005 4Runner byte-layout, scale, unit, or applicability guarantee."
+    },
+    {
+      "id": "sae-ruth-bartlett-daily-camry-2012",
+      "authority_level": "B",
+      "publisher": "SAE International / Ruth, Bartlett, and Daily",
+      "url": "https://doi.org/10.4271/2012-01-0999",
+      "revision": "2012-01-0999",
+      "scope": "Peer-reviewed synchronized Camry testing that identifies 0x2C1 accelerator-pedal traffic and 0x2C4 engine-speed traffic on an 11-bit, 500 kbit/s CAN network and reports their update behavior.",
+      "limitations": "One Camry family only; no exact 2005 4Runner byte-layout, scale, unit, ECU-calibration, or applicability guarantee."
+    },
+    {
+      "id": "comma-opendbc-b4ef5e1",
+      "authority_level": "C",
+      "publisher": "comma.ai",
+      "url": "https://github.com/commaai/opendbc/tree/b4ef5e1cf406ff143fa67bdbfb154739d43279c9/opendbc/dbc",
+      "revision": "b4ef5e1cf406ff143fa67bdbfb154739d43279c9",
+      "scope": "Open DBC parsing, replay, CAN comparison, and vehicle-port workflow.",
+      "limitations": "No accepted exact 2005 4Runner signal pack was established for this project during this review."
+    },
+    {
+      "id": "realdash-fj-cruiser-cedfdf49",
+      "authority_level": "C",
+      "publisher": "RealDash-extras contributor M. Main",
+      "url": "https://github.com/janimm/RealDash-extras/blob/cedfdf491b53d331625930909f949b657441f4a3/RealDash-CAN/XML-files/toyota/toyota_fj_can.xml",
+      "revision": "cedfdf491b53d331625930909f949b657441f4a3",
+      "scope": "Community mapping labeled for a 2012 Toyota FJ Cruiser and useful for related-platform field and scaling hypotheses.",
+      "limitations": "Later model year, community-maintained artifact, and no exact 2005 4Runner applicability proof."
+    },
+    {
+      "id": "aim-community-dbc-6e2f88f",
+      "authority_level": "C",
+      "publisher": "CAN-DBC-Collection",
+      "url": "https://github.com/billyjack2/CAN-DBC-Collection/blob/6e2f88fd6cd9c1f47d0db7bd022711b106f27027/TOYOTA/LEXUS/can1v3.dbc",
+      "scope": "Candidate layouts for identifiers 0x025, 0x0B4, 0x224, 0x2C1, 0x2C4, and 0x588.",
+      "limitations": "Community artifact with no exact 2005 4Runner applicability proof and no license shown for importing its definitions."
+    },
+    {
+      "id": "aim-community-auris-6e2f88f",
+      "authority_level": "C",
+      "publisher": "CAN-DBC-Collection",
+      "url": "https://github.com/billyjack2/CAN-DBC-Collection/blob/6e2f88fd6cd9c1f47d0db7bd022711b106f27027/TOYOTA/AURIS/can1v3.dbc",
+      "revision": "6e2f88fd6cd9c1f47d0db7bd022711b106f27027",
+      "scope": "Pinned Auris definitions for 0x0B0, 0x0B2, 0x224, 0x2C1, 0x2C4, and 0x620.",
+      "limitations": "Community artifact; model year and exact target applicability are not established."
+    },
+    {
+      "id": "aim-community-lexus-is-f-6e2f88f",
+      "authority_level": "C",
+      "publisher": "CAN-DBC-Collection",
+      "url": "https://github.com/billyjack2/CAN-DBC-Collection/blob/6e2f88fd6cd9c1f47d0db7bd022711b106f27027/LEXUS/IS_F/can1v3.dbc",
+      "revision": "6e2f88fd6cd9c1f47d0db7bd022711b106f27027",
+      "scope": "Pinned Lexus IS F definitions for 0x025, 0x0B0, 0x0B2, 0x0B4, 0x224, 0x2C1, and 0x2C4.",
+      "limitations": "Community artifact; model year and exact target applicability are not established. Its pressure and temperature transforms conflict with other sources."
+    },
+    {
+      "id": "umich-cids-camry-2010",
+      "authority_level": "B",
+      "publisher": "University of Michigan / USENIX Security",
+      "url": "https://rtcl.eecs.umich.edu/rtclweb/assets/publications/2016/sec16-final165_final.pdf",
+      "scope": "Peer-reviewed 2010 Camry transmitter-fingerprinting study with separate ground truth; groups 0x223 and 0x224 on one ECU and separates 0x2C1 and 0x2C4 transmitters.",
+      "limitations": "Transmitter grouping is not payload-semantic or target-applicability proof."
+    },
+    {
+      "id": "nfi-lexus-is250-evu-2016",
+      "authority_level": "B",
+      "publisher": "Netherlands Forensic Institute / 25th EVU Congress",
+      "url": "https://www.researchgate.net/publication/355445796_Evaluation_of_a_common_practice_-_to_calculate_speed_from_EDR-reported_RPM",
+      "scope": "Primary 2010 Lexus IS250 experiment correlating synchronized physical references and DLC CAN data; identifies RPM-related 0x2C4/0x2D0 behavior and one-indexed byte 7 of 0x2C1 as pedal-related.",
+      "limitations": "Cross-model evidence only. It does not establish target scaling, the FJ 0x2D0 turbine transform, or a universal selector/gear byte."
+    },
+    {
+      "id": "yaris-listen-only-ddd7a2b",
+      "authority_level": "C",
+      "publisher": "P1kachu talking-with-cars",
+      "url": "https://github.com/P1kachu/talking-with-cars/blob/ddd7a2b7137a67aeac84a0eb858b57bc08aee38c/notes/toyota-yaris.md",
+      "revision": "ddd7a2b7137a67aeac84a0eb858b57bc08aee38c",
+      "scope": "Listen-only Yaris notes identifying a 0x2C4 engine-revolution field and candidate wheel/brake identifiers.",
+      "limitations": "The author explicitly calls the fields guessed; model year, scale, and target applicability are not established."
+    },
+    {
+      "id": "toyota-tech-tip-tt0615-20",
+      "authority_level": "A",
+      "publisher": "Toyota Motor Sales, U.S.A.",
+      "url": "https://static.nhtsa.gov/odi/tsbs/2020/MC-10177575-9999.pdf",
+      "scope": "OEM Techstream snapshot procedure listing independent drivability values including engine, accelerator, temperature, output-axis, NT-speed, selector, and lockup data.",
+      "limitations": "Diagnostic-value availability does not establish raw broadcast-CAN identifiers or fields."
+    },
+    {
+      "id": "toyota-official-suv-relationship",
+      "authority_level": "A",
+      "publisher": "Toyota Motor Corporation",
+      "url": "https://global.toyota/en/newsroom/corporate/32615825.html",
+      "scope": "Official Toyota production grouping for 4Runner, Land Cruiser Prado, LC200, Lexus GX, and FJ Cruiser research cohorts.",
+      "limitations": "A production relationship does not prove common ECUs, calibrations, network topology, or CAN signal definitions."
+    },
+    {
+      "id": "aim-production-ecu-catalog",
+      "authority_level": "C",
+      "publisher": "AiM Sports",
+      "url": "https://www.aim-sportline.com/it/documentazione-connessioni-ecu-serie.htm",
+      "scope": "Vendor-published production-vehicle ECU protocol and connection catalog.",
+      "limitations": "No exact 2005 4Runner entry was established in this review."
+    }
+  ],
+  "capture_basis": {
+    "report": "docs/evidence/can-discovery-2026-08-18-5176.report.json",
+    "sessions": 8,
+    "retained_records": 5176,
+    "unique_identifiers": 17,
+    "identifier_format": "11-bit",
+    "bitrate_bps": 500000,
+    "sequence_coverage": 0.068196
+  },
+  "candidate_cross_references": [
+    {
+      "identifier": "0x022",
+      "capture_present": true,
+      "reference_source_ids": ["csu-toyota-can-2010-camry"],
+      "reported_cross_model_meaning": "steering-like signals",
+      "status": "CROSS_MODEL_CANDIDATE"
+    },
+    {
+      "identifier": "0x023",
+      "capture_present": true,
+      "reference_source_ids": ["csu-toyota-can-2010-camry"],
+      "reported_cross_model_meaning": null,
+      "status": "CORROBORATED_ID_ONLY"
+    },
+    {
+      "identifier": "0x025",
+      "capture_present": true,
+      "reference_source_ids": [
+        "csu-toyota-can-2010-camry",
+        "sae-ruth-bartlett-daily-camry-2012",
+        "comma-opendbc-b4ef5e1",
+        "aim-community-dbc-6e2f88f",
+        "aim-community-lexus-is-f-6e2f88f"
+      ],
+      "reported_cross_model_meaning": "steering data / steering-angle candidate",
+      "status": "CROSS_MODEL_CANDIDATE"
+    },
+    {
+      "identifier": "0x223",
+      "capture_present": true,
+      "reference_source_ids": [
+        "csu-toyota-can-2010-camry",
+        "realdash-fj-cruiser-cedfdf49",
+        "umich-cids-camry-2010"
+      ],
+      "reported_cross_model_meaning": "brake-state candidate; 0x223 and 0x224 shared a transmitter in primary 2010 Camry research",
+      "status": "CROSS_MODEL_CANDIDATE"
+    },
+    {
+      "identifier": "0x2C1",
+      "capture_present": true,
+      "reference_source_ids": [
+        "csu-toyota-can-2010-camry",
+        "comma-opendbc-b4ef5e1",
+        "aim-community-dbc-6e2f88f",
+        "aim-community-auris-6e2f88f",
+        "aim-community-lexus-is-f-6e2f88f",
+        "realdash-fj-cruiser-cedfdf49",
+        "nfi-lexus-is250-evu-2016"
+      ],
+      "reported_cross_model_meaning": "accelerator-pedal byte 6 candidate; related-platform scale 0.5 percent/count",
+      "status": "CROSS_MODEL_CANDIDATE"
+    },
+    {
+      "identifier": "0x2C4",
+      "capture_present": true,
+      "reference_source_ids": [
+        "csu-toyota-can-2010-camry",
+        "sae-ruth-bartlett-daily-camry-2012",
+        "aim-community-dbc-6e2f88f",
+        "aim-community-auris-6e2f88f",
+        "aim-community-lexus-is-f-6e2f88f",
+        "realdash-fj-cruiser-cedfdf49",
+        "yaris-listen-only-ddd7a2b",
+        "nfi-lexus-is250-evu-2016"
+      ],
+      "reported_cross_model_meaning": "engine-speed first-word candidate at 0.78125 rpm/count; byte 3 intake-air-temperature candidate",
+      "status": "HIGH_PRIORITY_CROSS_MODEL_CANDIDATE"
+    },
+    {
+      "identifier": "0x2D0",
+      "capture_present": true,
+      "reference_source_ids": [
+        "csu-toyota-can-2010-camry",
+        "realdash-fj-cruiser-cedfdf49",
+        "nfi-lexus-is250-evu-2016"
+      ],
+      "reported_cross_model_meaning": "RPM-related first-word and gear/selector family; the FJ 0.390625 rpm/count and byte-2 selector hypotheses conflict with the Lexus paper's independently observed gear field placement",
+      "status": "CROSS_MODEL_CANDIDATE"
+    },
+    {
+      "identifier": "0x224",
+      "capture_present": true,
+      "reference_source_ids": [
+        "csu-toyota-can-2010-camry",
+        "realdash-fj-cruiser-cedfdf49",
+        "aim-community-dbc-6e2f88f",
+        "aim-community-auris-6e2f88f",
+        "aim-community-lexus-is-f-6e2f88f",
+        "yaris-listen-only-ddd7a2b"
+      ],
+      "reported_cross_model_meaning": "brake-pressure field candidate; target evidence is static zero",
+      "status": "CROSS_MODEL_CANDIDATE_UNEXERCISED"
+    },
+    {
+      "identifier": "0x420",
+      "capture_present": true,
+      "reference_source_ids": [],
+      "reported_cross_model_meaning": null,
+      "status": "UNMAPPED"
+    }
+  ],
+  "standardized_read_path": {
+    "status": "IMPLEMENTED_AWAITING_IN_VEHICLE_RESPONSE_EVIDENCE",
+    "protocol_family": "SAE J1979 over the vehicle-supported legislated OBD transport",
+    "first_operation": "supported PID enumeration",
+    "authority": "Read-only allowlist only; no Active Tests, DTC clearing, coding, reprogramming, or arbitrary payloads.",
+    "independent_reference": "Toyota Techstream Data List or a trusted standard OBD scan tool"
+  },
+  "promotion_policy": {
+    "automatic_promotion": false,
+    "requires_exact_vehicle_applicability": true,
+    "requires_independent_reference": true,
+    "requires_golden_replay": true,
+    "requires_missing_stale_range_tests": true
+  }
+}

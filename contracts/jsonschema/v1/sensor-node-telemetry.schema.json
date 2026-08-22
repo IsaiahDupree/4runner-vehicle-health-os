@@ -1,0 +1,205 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/sensor-node-telemetry.schema.json",
+  "title": "A/C Sensor Node Telemetry v1",
+  "$defs": {
+    "calibrationIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["configured", "calibration_id", "revision", "validation_status"],
+      "properties": {
+        "configured": {"type": "boolean"},
+        "calibration_id": {
+          "type": ["string", "null"],
+          "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)+$",
+          "maxLength": 160
+        },
+        "revision": {
+          "type": ["string", "null"],
+          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
+        },
+        "validation_status": {
+          "type": ["string", "null"],
+          "enum": [null, "EXPERIMENTAL", "BENCH_VALIDATED", "VEHICLE_VALIDATED", "CALIBRATED"]
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"configured": {"const": true}}},
+          "then": {
+            "properties": {
+              "calibration_id": {"type": "string"},
+              "revision": {"type": "string"},
+              "validation_status": {"type": "string"}
+            }
+          },
+          "else": {
+            "properties": {
+              "calibration_id": {"type": "null"},
+              "revision": {"type": "null"},
+              "validation_status": {"type": "null"}
+            }
+          }
+        }
+      ]
+    },
+    "pressureChannel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "raw_adc_count",
+        "signal_voltage_mv",
+        "absolute_kpa",
+        "quality",
+        "sensor_powered",
+        "calibration"
+      ],
+      "properties": {
+        "raw_adc_count": {"type": ["integer", "null"], "minimum": -32768, "maximum": 32767},
+        "signal_voltage_mv": {"type": ["number", "null"], "minimum": 0},
+        "absolute_kpa": {"type": ["number", "null"], "minimum": 0},
+        "quality": {"$ref": "common.schema.json#/$defs/quality"},
+        "sensor_powered": {"type": "boolean"},
+        "calibration": {"$ref": "#/$defs/calibrationIdentity"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"absolute_kpa": {"type": "number"}}},
+          "then": {"properties": {"calibration": {"properties": {"configured": {"const": true}}}}}
+        }
+      ]
+    },
+    "temperatureChannel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value_c", "quality", "calibration"],
+      "properties": {
+        "value_c": {"type": ["number", "null"]},
+        "quality": {"$ref": "common.schema.json#/$defs/quality"},
+        "calibration": {"$ref": "#/$defs/calibrationIdentity"}
+      }
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "contract_version",
+    "telemetry_id",
+    "vehicle_id",
+    "capture_id",
+    "device_id",
+    "sample_counter",
+    "observed_at_monotonic_us",
+    "wall_time",
+    "identity",
+    "pressure",
+    "temperatures",
+    "atmospheric_pressure",
+    "power",
+    "health"
+  ],
+  "properties": {
+    "contract": {"const": "sensor.node.telemetry"},
+    "contract_version": {"const": "1.0.0"},
+    "telemetry_id": {"$ref": "common.schema.json#/$defs/domainId"},
+    "vehicle_id": {"$ref": "common.schema.json#/$defs/vehicleId"},
+    "capture_id": {"$ref": "common.schema.json#/$defs/captureId"},
+    "device_id": {"$ref": "common.schema.json#/$defs/domainId"},
+    "sample_counter": {"type": "integer", "minimum": 0},
+    "observed_at_monotonic_us": {"type": "integer", "minimum": 0},
+    "wall_time": {"$ref": "common.schema.json#/$defs/wallTime"},
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hardware_revision",
+        "firmware_version",
+        "firmware_build_id",
+        "device_config_revision",
+        "vehicle_profile_revision"
+      ],
+      "properties": {
+        "hardware_revision": {"type": "string", "minLength": 1, "maxLength": 128},
+        "firmware_version": {"$ref": "common.schema.json#/$defs/semanticVersion"},
+        "firmware_build_id": {"type": "string", "minLength": 1, "maxLength": 160},
+        "device_config_revision": {"$ref": "common.schema.json#/$defs/semanticVersion"},
+        "vehicle_profile_revision": {"$ref": "common.schema.json#/$defs/semanticVersion"}
+      }
+    },
+    "pressure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["high", "low"],
+      "properties": {
+        "high": {"$ref": "#/$defs/pressureChannel"},
+        "low": {"$ref": "#/$defs/pressureChannel"}
+      }
+    },
+    "temperatures": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["high_line", "low_line", "ambient", "cabin_return", "center_vent", "board"],
+      "properties": {
+        "high_line": {"$ref": "#/$defs/temperatureChannel"},
+        "low_line": {"$ref": "#/$defs/temperatureChannel"},
+        "ambient": {"$ref": "#/$defs/temperatureChannel"},
+        "cabin_return": {"$ref": "#/$defs/temperatureChannel"},
+        "center_vent": {"$ref": "#/$defs/temperatureChannel"},
+        "board": {"$ref": "#/$defs/temperatureChannel"}
+      }
+    },
+    "atmospheric_pressure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value_kpa", "quality", "source"],
+      "properties": {
+        "value_kpa": {"type": ["number", "null"], "minimum": 0},
+        "quality": {"$ref": "common.schema.json#/$defs/quality"},
+        "source": {
+          "type": "string",
+          "enum": ["LOCAL_SENSOR", "CONFIGURED_TEST_VALUE", "VALIDATED_EXTERNAL", "UNAVAILABLE"]
+        },
+        "evidence_ref": {"$ref": "common.schema.json#/$defs/evidenceRef"}
+      }
+    },
+    "power": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["vehicle_input_v", "nano_vin_v", "sensor_5v_v", "logic_3v3_v"],
+      "properties": {
+        "vehicle_input_v": {"type": ["number", "null"], "minimum": 0},
+        "nano_vin_v": {"type": ["number", "null"], "minimum": 0},
+        "sensor_5v_v": {"type": ["number", "null"], "minimum": 0},
+        "logic_3v3_v": {"type": ["number", "null"], "minimum": 0}
+      }
+    },
+    "health": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "high_sensor_ok",
+        "low_sensor_ok",
+        "adc_reference_ok",
+        "storage_ok",
+        "ble_clients",
+        "wifi_clients",
+        "fault_mask"
+      ],
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": ["PASS", "DEGRADED", "SENSOR_FAULT", "POWER_FAULT", "STORAGE_FAULT", "SAFE_MODE"]
+        },
+        "high_sensor_ok": {"type": "boolean"},
+        "low_sensor_ok": {"type": "boolean"},
+        "adc_reference_ok": {"type": "boolean"},
+        "storage_ok": {"type": "boolean"},
+        "ble_clients": {"type": "integer", "minimum": 0},
+        "wifi_clients": {"type": "integer", "minimum": 0},
+        "fault_mask": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}
