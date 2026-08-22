@@ -11,6 +11,15 @@ struct DiscoveryCaptureBinding: Codable, Equatable, Identifiable {
   let gatewaySessionID: UInt32
   let createdAt: String
 
+  // VHOSJSON converts wire keys from snake_case to lower camel case before CodingKeys lookup.
+  // Spell acronym-bearing names with `Id` so records emitted as `gateway_id` and
+  // `gateway_session_id` decode back into the Swift `ID` properties without changing bytes.
+  private enum CodingKeys: String, CodingKey {
+    case contract, contractVersion, id, createdAt
+    case gatewayID = "gatewayId"
+    case gatewaySessionID = "gatewaySessionId"
+  }
+
   init(
     id: String,
     gatewayID: String,
@@ -53,6 +62,14 @@ struct StoredDiscoveryMarker: Codable, Equatable, Identifiable {
   let gatewayID: String
   let gatewaySessionID: UInt32
   let marker: EventMarker
+
+  private enum CodingKeys: String, CodingKey {
+    case contract, contractVersion, marker
+    case templateID = "templateId"
+    case testRunID = "testRunId"
+    case gatewayID = "gatewayId"
+    case gatewaySessionID = "gatewaySessionId"
+  }
 
   var id: String { marker.id }
   var label: String { marker.label }
@@ -118,6 +135,16 @@ struct DiscoveryTestRunDraft: Codable, Equatable, Identifiable {
   let endedAt: String?
   let endMonotonicMicroseconds: UInt64?
   let lastSourceSequence: UInt64?
+
+  private enum CodingKeys: String, CodingKey {
+    case contract, contractVersion, id, templateVersion, startedAt
+    case startMonotonicMicroseconds, firstSourceSequence, state, endedAt
+    case endMonotonicMicroseconds, lastSourceSequence
+    case templateID = "templateId"
+    case captureID = "captureId"
+    case gatewayID = "gatewayId"
+    case gatewaySessionID = "gatewaySessionId"
+  }
 
   init(
     id: String,
@@ -207,12 +234,13 @@ final class DiscoveryEvidenceStore {
   private let maximumMarkers = 100_000
   private(set) var recoveryReports: [AppendOnlyNDJSONTailRecovery] = []
 
-  init(fileManager: FileManager = .default) {
+  init(fileManager: FileManager = .default, storageDirectory: URL? = nil) {
     self.fileManager = fileManager
     let support =
       fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
       ?? fileManager.temporaryDirectory
-    let directory = support.appendingPathComponent("VHOSDiscoveryEvidence/v1", isDirectory: true)
+    let directory = storageDirectory
+      ?? support.appendingPathComponent("VHOSDiscoveryEvidence/v1", isDirectory: true)
     try? fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
     bindingsURL = directory.appendingPathComponent("capture-bindings.ndjson")
     markersURL = directory.appendingPathComponent("event-markers.ndjson")

@@ -627,6 +627,7 @@ private struct DiscoveryTestRunnerView: View {
 
   private var evidenceReady: Bool {
     model.discoveryMutationAuthority(for: template.template) != nil
+      && model.discoveryMutationLedgersAvailable
       && template.iPhoneInteractiveSupported
   }
 
@@ -710,12 +711,32 @@ private struct DiscoveryTestRunnerView: View {
             pass: template.template.requiredGatewayCapabilities.allSatisfy {
               model.gateway.handshake?.capabilities.contains($0) == true
             })
+          SafetyRow(
+            label: "Append-only test-run ledger readable",
+            pass: model.discoveryTestRunLedgerReadState.isAvailable)
+          SafetyRow(
+            label: "Append-only marker ledger readable",
+            pass: model.discoveryMarkerLedgerReadState.isAvailable)
           if let observation = model.gateway.latestCANObservation {
             Text(
               "Markers will bind to gateway session \(observation.sessionID), sequence \(observation.sourceSequence), and monotonic time \(observation.monotonicMicroseconds) µs."
             )
             .font(.caption)
             .foregroundStyle(.secondary)
+          }
+          if let failure = model.discoveryLedgerFailureDetail {
+            VStack(alignment: .leading, spacing: 8) {
+              Text(failure)
+                .font(.caption)
+                .foregroundStyle(.red)
+              Text(
+                "Discovery mutations are locked. Committed records remain untouched; the app will not skip, delete, rewrite, or use an unreadable record for authority."
+              )
+              .font(.caption)
+              .foregroundStyle(.secondary)
+              Button("Retry ledger read") { model.retryDiscoveryEvidenceLoad() }
+                .buttonStyle(.bordered)
+            }
           }
         }
         .padding()
@@ -846,10 +867,19 @@ private struct DiscoveryMarkerLedgerView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 10) {
       Text("Markers retained on this iPhone").font(.headline)
-      let markers = model.discoveryMarkers.filter {
-        $0.templateID == templateID && (testRunID == nil || $0.testRunID == testRunID)
-      }.suffix(12)
-      if markers.isEmpty {
+      if !model.discoveryMarkerLedgerReadState.isAvailable {
+        Text(
+          model.discoveryMarkerLedgerReadState.failureDetail
+            ?? "The append-only marker ledger has not loaded."
+        )
+        .font(.footnote)
+        .foregroundStyle(.red)
+        Text("No retained marker is being treated as absent or used for authority.")
+          .font(.caption)
+          .foregroundStyle(.secondary)
+        Button("Retry ledger read") { model.retryDiscoveryEvidenceLoad() }
+          .buttonStyle(.bordered)
+      } else if markers.isEmpty {
         Text("No synchronized markers have been recorded for this test.")
           .font(.footnote)
           .foregroundStyle(.secondary)
@@ -875,6 +905,12 @@ private struct DiscoveryMarkerLedgerView: View {
     }
     .padding()
     .background(.background.secondary, in: RoundedRectangle(cornerRadius: 16))
+  }
+
+  private var markers: ArraySlice<StoredDiscoveryMarker> {
+    model.discoveryMarkers.filter {
+      $0.templateID == templateID && (testRunID == nil || $0.testRunID == testRunID)
+    }.suffix(12)
   }
 }
 
@@ -1073,8 +1109,32 @@ private struct DiscoveryCaptureReviewView: View {
         }
       }
 
+      Section("Discovery ledger integrity") {
+        LabeledContent(
+          "Test-run ledger", value: model.discoveryTestRunLedgerReadState.statusLabel)
+        LabeledContent(
+          "Marker ledger", value: model.discoveryMarkerLedgerReadState.statusLabel)
+        if let failure = model.discoveryLedgerFailureDetail {
+          Text(failure).font(.footnote).foregroundStyle(.red)
+          Text(
+            "Evidence reads and mutations fail closed. Retry only re-reads the existing files; it does not delete, rewrite, skip, or infer any committed record."
+          )
+          .font(.caption)
+          .foregroundStyle(.secondary)
+        } else {
+          Text(model.discoveryMarkerMessage).font(.footnote).foregroundStyle(.secondary)
+        }
+        Button("Retry ledger read") { model.retryDiscoveryEvidenceLoad() }
+      }
+
       Section("Discovery test run drafts") {
-        if model.discoveryTestRuns.isEmpty {
+        if !model.discoveryTestRunLedgerReadState.isAvailable {
+          Text(
+            model.discoveryTestRunLedgerReadState.failureDetail
+              ?? "The append-only test-run ledger has not loaded."
+          )
+          .foregroundStyle(.red)
+        } else if model.discoveryTestRuns.isEmpty {
           Text("No Discovery test run drafts are retained on this iPhone.")
             .foregroundStyle(.secondary)
         } else {
@@ -1091,7 +1151,9 @@ private struct DiscoveryCaptureReviewView: View {
                 .font(.caption2.weight(.bold))
                 .foregroundStyle(.orange)
               Text(
-                "Gateway session \(run.gatewaySessionID) · \(model.discoveryMarkers.count(where: { $0.testRunID == run.id })) markers"
+                model.discoveryMarkerLedgerReadState.isAvailable
+                  ? "Gateway session \(run.gatewaySessionID) · \(model.discoveryMarkers.count(where: { $0.testRunID == run.id })) markers"
+                  : "Gateway session \(run.gatewaySessionID) · marker ledger unavailable"
               )
               .font(.caption.monospacedDigit())
               .foregroundStyle(.secondary)
@@ -1110,6 +1172,7 @@ private struct DiscoveryCaptureReviewView: View {
             model.errorMessage = error.localizedDescription
           }
         }
+        .disabled(!model.discoveryMutationLedgersAvailable)
         if let draftExportURL {
           ShareLink(item: draftExportURL) {
             Label("Export drafts and canonical markers", systemImage: "square.and.arrow.up")

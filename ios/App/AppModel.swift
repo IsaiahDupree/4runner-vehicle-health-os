@@ -10,6 +10,30 @@ enum DiscoveryKind: String, CaseIterable, Identifiable {
   var id: String { rawValue }
 }
 
+enum DiscoveryLedgerReadState: Equatable, Sendable {
+  case notLoaded
+  case available
+  case unavailable(String)
+
+  var isAvailable: Bool {
+    if case .available = self { return true }
+    return false
+  }
+
+  var statusLabel: String {
+    switch self {
+    case .notLoaded: "NOT LOADED"
+    case .available: "AVAILABLE"
+    case .unavailable: "UNAVAILABLE"
+    }
+  }
+
+  var failureDetail: String? {
+    if case .unavailable(let detail) = self { return detail }
+    return nil
+  }
+}
+
 @MainActor
 @Observable
 final class AppModel {
@@ -55,6 +79,24 @@ final class AppModel {
   var discoveryMarkers: [StoredDiscoveryMarker] = []
   var discoveryMarkerMessage = "No synchronized Discovery markers are retained."
   var discoveryTestRuns: [DiscoveryTestRunDraft] = []
+  var discoveryTestRunLedgerReadState: DiscoveryLedgerReadState = .notLoaded
+  var discoveryMarkerLedgerReadState: DiscoveryLedgerReadState = .notLoaded
+
+  var discoveryMutationLedgersAvailable: Bool {
+    discoveryTestRunLedgerReadState.isAvailable
+      && discoveryMarkerLedgerReadState.isAvailable
+  }
+
+  var discoveryLedgerFailureDetail: String? {
+    var failures: [String] = []
+    if let detail = discoveryTestRunLedgerReadState.failureDetail {
+      failures.append("Test-run ledger: \(detail)")
+    }
+    if let detail = discoveryMarkerLedgerReadState.failureDetail {
+      failures.append("Marker ledger: \(detail)")
+    }
+    return failures.isEmpty ? nil : failures.joined(separator: " ")
+  }
 
   var activeDiscoveryTestRun: DiscoveryTestRunDraft? {
     discoveryTestRuns.last(where: { $0.state == .active })
@@ -260,6 +302,7 @@ final class AppModel {
     label: String
   ) {
     do {
+      try requireDiscoveryMutationLedgers()
       guard gateway.state == .vhosConnected, gateway.health != nil,
         gateway.handshake != nil
       else {
@@ -303,6 +346,7 @@ final class AppModel {
 
   func beginDiscoveryTestRun(template: TestTemplate) {
     do {
+      try requireDiscoveryMutationLedgers()
       guard gateway.state == .vhosConnected, gateway.health != nil,
         gateway.handshake != nil
       else {
@@ -335,6 +379,8 @@ final class AppModel {
 
   private func transitionDiscoveryTestRun(to state: DiscoveryTestRunDraftState) {
     do {
+      try requireDiscoveryTestRunLedger()
+      if state == .ended { try requireDiscoveryMutationLedgers() }
       guard let run = activeDiscoveryTestRun else {
         throw AppModelError.discoveryTestRunRequired
       }
@@ -389,31 +435,69 @@ final class AppModel {
 
   private func refreshDiscoveryEvidence() {
     do {
-      discoveryMarkers = try discoveryEvidenceStore.markers()
       discoveryTestRuns = try discoveryEvidenceStore.testRuns()
-      let retainedMessage =
-        discoveryMarkers.isEmpty
-        ? "No synchronized Discovery markers are retained."
-        : "\(discoveryMarkers.count) append-only Discovery marker(s) retained on this iPhone."
-      let recoveries = discoveryEvidenceStore.recoveryReports
-      if let latestRecovery = recoveries.last {
-        let recoveredFiles = Set(recoveries.map(\.sourceFileName)).sorted()
-          .joined(separator: ", ")
-        let quarantinedByteCount = recoveries.reduce(0) {
-          $0 + $1.quarantinedByteCount
-        }
-        discoveryMarkerMessage =
-          "\(retainedMessage) Recovered \(recoveries.count) interrupted ledger append(s) in "
-          + "\(recoveredFiles); quarantined \(quarantinedByteCount) uncommitted tail byte(s). "
-          + "Latest quarantine: \(latestRecovery.quarantineURL.lastPathComponent)."
-      } else {
-        discoveryMarkerMessage = retainedMessage
-      }
+      discoveryTestRunLedgerReadState = .available
+    } catch {
+      discoveryTestRuns = []
+      discoveryTestRunLedgerReadState = .unavailable(error.localizedDescription)
+    }
+
+    do {
+      discoveryMarkers = try discoveryEvidenceStore.markers()
+      discoveryMarkerLedgerReadState = .available
     } catch {
       discoveryMarkers = []
-      discoveryTestRuns = []
+      discoveryMarkerLedgerReadState = .unavailable(error.localizedDescription)
+    }
+
+    if let failure = discoveryLedgerFailureDetail {
       discoveryMarkerMessage =
-        "Discovery marker ledger failed closed: \(error.localizedDescription)"
+        "Discovery evidence read failed closed. \(failure) Committed ledger bytes remain untouched; no record was skipped, deleted, rewritten, or used for authority."
+      return
+    }
+
+    let retainedMessage =
+      discoveryMarkers.isEmpty
+      ? "No synchronized Discovery markers are retained."
+      : "\(discoveryMarkers.count) append-only Discovery marker(s) retained on this iPhone."
+    let recoveries = discoveryEvidenceStore.recoveryReports
+    if let latestRecovery = recoveries.last {
+      let recoveredFiles = Set(recoveries.map(\.sourceFileName)).sorted()
+        .joined(separator: ", ")
+      let quarantinedByteCount = recoveries.reduce(0) {
+        $0 + $1.quarantinedByteCount
+      }
+      discoveryMarkerMessage =
+        "\(retainedMessage) Recovered \(recoveries.count) interrupted ledger append(s) in "
+        + "\(recoveredFiles); quarantined \(quarantinedByteCount) uncommitted tail byte(s). "
+        + "Latest quarantine: \(latestRecovery.quarantineURL.lastPathComponent)."
+    } else {
+      discoveryMarkerMessage = retainedMessage
+    }
+  }
+
+  func retryDiscoveryEvidenceLoad() {
+    refreshDiscoveryEvidence()
+    if let failure = discoveryLedgerFailureDetail {
+      errorMessage = failure
+      noticeMessage = nil
+    } else {
+      errorMessage = nil
+      noticeMessage = "Discovery evidence ledgers were re-read without changing retained bytes."
+    }
+  }
+
+  private func requireDiscoveryTestRunLedger() throws {
+    guard discoveryTestRunLedgerReadState.isAvailable else {
+      throw AppModelError.discoveryLedgerUnavailable(
+        discoveryTestRunLedgerReadState.failureDetail ?? "The test-run ledger has not loaded.")
+    }
+  }
+
+  private func requireDiscoveryMutationLedgers() throws {
+    guard discoveryMutationLedgersAvailable else {
+      throw AppModelError.discoveryLedgerUnavailable(
+        discoveryLedgerFailureDetail ?? "The Discovery evidence ledgers have not loaded.")
     }
   }
 
@@ -810,6 +894,7 @@ enum AppModelError: Error, LocalizedError {
   case discoveryEvidenceAuthorityRequired
   case discoveryMarkerSequenceRequired
   case discoveryTestIncomplete
+  case discoveryLedgerUnavailable(String)
 
   var errorDescription: String? {
     switch self {
@@ -855,6 +940,8 @@ enum AppModelError: Error, LocalizedError {
       "The Park-selector bootstrap accepts one exact marker at a time in the required P/R/N/D/P sequence. Abort and restart if the retained sequence is not canonical."
     case .discoveryTestIncomplete:
       "Complete every ordered Park-selector bootstrap marker before ending this evidence session."
+    case .discoveryLedgerUnavailable(let detail):
+      "Discovery evidence remains fail-closed because a required append-only ledger is unavailable. \(detail) No committed record was skipped, deleted, or rewritten."
     }
   }
 }

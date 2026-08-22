@@ -34,8 +34,8 @@ targets:
       path: App/Info.plist
       properties:
         CFBundleDisplayName: Vehicle Health OS
-        CFBundleShortVersionString: "0.3.21"
-        CFBundleVersion: "28"
+        CFBundleShortVersionString: "0.3.22"
+        CFBundleVersion: "29"
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
@@ -52,6 +52,20 @@ targets:
           - bluetooth-central
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
+  VehicleHealthOSTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - AppTests
+    dependencies:
+      - target: VehicleHealthOS
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.isaiahdupree.VehicleHealthOSTests
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: 6.0
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Vehicle Health OS.app/Vehicle Health OS"
+        BUNDLE_LOADER: "$(TEST_HOST)"
 schemes:
   VehicleHealthOS:
     build:
@@ -59,5 +73,9 @@ schemes:
         VehicleHealthOS: all
     run:
       config: Debug
+    test:
+      config: Debug
+      targets:
+        - VehicleHealthOSTests
     archive:
       config: Release
