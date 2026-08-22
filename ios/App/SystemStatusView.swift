@@ -516,9 +516,9 @@ struct SystemStatusView: View {
         level: health == nil ? .blocked : .pass),
       StatusIndicator(
         "safety.parked", title: "Motion deterministically PARKED",
-        value: health?.vehicleMotion.rawValue ?? "UNKNOWN",
-        detail: "There is no manual motion override",
-        level: health?.vehicleMotion == .parked ? .pass : .blocked),
+        value: model.gateway.hasCurrentParkedAuthority ? "PARKED" : "UNVERIFIED",
+        detail: "A fresh gateway health frame is required; there is no manual override",
+        level: model.gateway.hasCurrentParkedAuthority ? .pass : .blocked),
       StatusIndicator(
         "safety.capture", title: "Capture idle",
         value: health.map { $0.captureActive ? "ACTIVE" : "IDLE" } ?? "UNKNOWN",
@@ -747,7 +747,7 @@ struct SystemStatusView: View {
     guard let handshake = gateway.handshake, let health = gateway.health else { return false }
     return gateway.state == .vhosConnected
       && gateway.commandChannelReady
-      && health.vehicleMotion == .parked
+      && gateway.hasCurrentParkedAuthority
       && !health.captureActive
       && handshake.listenOnly
       && health.listenOnly

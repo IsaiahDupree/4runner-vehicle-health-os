@@ -24,6 +24,7 @@ final class AppModel {
   private let evidenceOutboxStore = EvidenceOutboxStore()
   private let evidenceOutboxUploader = EvidenceOutboxUploader()
   private let synchronizedReferenceStore = SynchronizedReferenceStore()
+  private let discoveryEvidenceStore = DiscoveryEvidenceStore()
   private var evidenceAutomationTask: Task<Void, Never>?
   private var lastQueuedCaptureSyncGeneration: UInt64 = 0
   private static let evidenceEndpointDefaultsKey = "vhos.evidence-outbox.endpoint.v1"
@@ -51,6 +52,17 @@ final class AppModel {
   var synchronizedReferenceMessage = "No synchronized reference samples recorded."
   var canResearchReport: PassiveCANResearchReport?
   var canResearchMessage = "No retained CAN evidence has been analyzed on this iPhone."
+  var discoveryMarkers: [StoredDiscoveryMarker] = []
+  var discoveryMarkerMessage = "No synchronized Discovery markers are retained."
+  var discoveryTestRuns: [DiscoveryTestRunDraft] = []
+
+  var activeDiscoveryTestRun: DiscoveryTestRunDraft? {
+    discoveryTestRuns.last(where: { $0.state == .active })
+  }
+
+  var discoveryTimelineCurrent: Bool {
+    (try? currentDiscoveryObservation()) != nil
+  }
 
   private init() {
     let store = KeyStore(service: "com.isaiahdupree.VehicleHealthOS")
@@ -68,8 +80,9 @@ final class AppModel {
     releasePublicKeyConfigured = (try? store.data(for: .firmwareReleasePublicKey)) != nil
     experimentSigningKeyConfigured =
       (try? store.data(for: .experimentSigningPrivateKey)) != nil
-    evidenceOutboxEndpoint = UserDefaults.standard.string(
-      forKey: Self.evidenceEndpointDefaultsKey) ?? ""
+    evidenceOutboxEndpoint =
+      UserDefaults.standard.string(
+        forKey: Self.evidenceEndpointDefaultsKey) ?? ""
     if UserDefaults.standard.object(forKey: Self.evidenceAutomaticDefaultsKey) != nil {
       automaticEvidenceUpload = UserDefaults.standard.bool(
         forKey: Self.evidenceAutomaticDefaultsKey)
@@ -79,6 +92,7 @@ final class AppModel {
     refreshEvidenceOutboxStatus()
     refreshSynchronizedReferenceStatus()
     refreshCANResearch()
+    refreshDiscoveryEvidence()
   }
 
   func startEvidenceAutomation() {
@@ -109,7 +123,8 @@ final class AppModel {
       evidenceOutboxEndpoint = endpoint.absoluteString
       evidenceOutboxTokenConfigured = true
       UserDefaults.standard.set(endpoint.absoluteString, forKey: Self.evidenceEndpointDefaultsKey)
-      evidenceOutboxMessage = "Private HTTPS inbox configured; queued packages can upload automatically."
+      evidenceOutboxMessage =
+        "Private HTTPS inbox configured; queued packages can upload automatically."
       errorMessage = nil
     } catch {
       errorMessage = error.localizedDescription
@@ -131,7 +146,8 @@ final class AppModel {
         contentType: "application/vnd.vhos.evidence-sync+zip"
       )
       refreshEvidenceOutboxStatus()
-      evidenceOutboxMessage = inserted
+      evidenceOutboxMessage =
+        inserted
         ? "Checksummed evidence queued in the private outbox."
         : "This exact evidence hash is already present in the private outbox."
       if automaticEvidenceUpload { Task { await processEvidenceOutbox() } }
@@ -149,13 +165,17 @@ final class AppModel {
       let token = String(data: tokenData, encoding: .utf8), !token.isEmpty
     else {
       refreshEvidenceOutboxStatus()
-      evidenceOutboxMessage = evidenceOutboxPendingCount == 0
+      evidenceOutboxMessage =
+        evidenceOutboxPendingCount == 0
         ? "No evidence is queued. Configure a private HTTPS inbox for automatic AI pickup."
         : "Evidence is safely queued locally; configure a private HTTPS inbox to upload it."
       return
     }
     evidenceOutboxUploadInProgress = true
-    defer { evidenceOutboxUploadInProgress = false; refreshEvidenceOutboxStatus() }
+    defer {
+      evidenceOutboxUploadInProgress = false
+      refreshEvidenceOutboxStatus()
+    }
     do {
       for record in try evidenceOutboxStore.records().filter({ $0.uploadedAt == nil }).prefix(8) {
         do {
@@ -191,9 +211,7 @@ final class AppModel {
 
   func recordTechstreamReference(signalID: String, valueText: String, unit: String) {
     do {
-      guard let observation = gateway.latestCANObservation else {
-        throw AppModelError.currentCANReferenceRequired
-      }
+      let observation = try currentDiscoveryObservation()
       guard let value = Double(valueText.trimmingCharacters(in: .whitespacesAndNewlines)),
         value.isFinite
       else { throw AppModelError.referenceValueInvalid }
@@ -205,7 +223,8 @@ final class AppModel {
         source: "TECHSTREAM",
         recordedAt: Self.timestamp(),
         nearestCANSequence: observation.sourceSequence,
-        evidenceNote: "Owner-entered Toyota Techstream Data List value aligned to the latest gateway CAN observation."
+        evidenceNote:
+          "Owner-entered Toyota Techstream Data List value aligned to the latest gateway CAN observation."
       )
       _ = try synchronizedReferenceStore.append(sample)
       refreshSynchronizedReferenceStatus()
@@ -215,6 +234,160 @@ final class AppModel {
     } catch {
       errorMessage = error.localizedDescription
     }
+  }
+
+  func recordDiscoveryMarker(
+    template: TestTemplate,
+    kind: DiscoveryMarkerKind,
+    label: String
+  ) {
+    do {
+      guard gateway.state == .vhosConnected, let health = gateway.health,
+        let handshake = gateway.handshake
+      else {
+        throw AppModelError.gatewayHealthRequired
+      }
+      guard gateway.hasCurrentParkedAuthority else {
+        throw AppModelError.discoveryParkedStateRequired
+      }
+      guard template.requiredGatewayCapabilities.allSatisfy(handshake.capabilities.contains) else {
+        throw AppModelError.discoveryCapabilityRequired
+      }
+      guard health.captureActive else { throw AppModelError.discoveryCaptureRequired }
+      let observation = try currentDiscoveryObservation()
+      guard let run = activeDiscoveryTestRun, run.templateID == template.id else {
+        throw AppModelError.discoveryTestRunRequired
+      }
+      let stored = try discoveryEvidenceStore.append(
+        template: template,
+        testRun: run,
+        kind: kind,
+        label: label,
+        observation: observation,
+        recordedAt: Self.timestamp())
+      refreshDiscoveryEvidence()
+      discoveryMarkerMessage =
+        "Recorded \(stored.marker.kind.rawValue) at source sequence \(observation.sourceSequence)."
+      noticeMessage = discoveryMarkerMessage
+      errorMessage = nil
+    } catch {
+      errorMessage = error.localizedDescription
+    }
+  }
+
+  func beginDiscoveryTestRun(template: TestTemplate) {
+    do {
+      guard gateway.state == .vhosConnected, let health = gateway.health,
+        let handshake = gateway.handshake
+      else {
+        throw AppModelError.gatewayHealthRequired
+      }
+      guard template.requiredVehicleMotion == .parked else {
+        throw AppModelError.discoveryInteractiveTestUnavailable
+      }
+      guard template.requiredGatewayCapabilities.allSatisfy(handshake.capabilities.contains) else {
+        throw AppModelError.discoveryCapabilityRequired
+      }
+      guard gateway.hasCurrentParkedAuthority else {
+        throw AppModelError.discoveryParkedStateRequired
+      }
+      guard health.captureActive else { throw AppModelError.discoveryCaptureRequired }
+      let observation = try currentDiscoveryObservation()
+      let run = try discoveryEvidenceStore.beginTestRun(
+        template: template,
+        observation: observation,
+        recordedAt: Self.timestamp())
+      refreshDiscoveryEvidence()
+      noticeMessage =
+        "Test run draft \(run.id) began on gateway session \(run.gatewaySessionID)."
+      errorMessage = nil
+    } catch {
+      errorMessage = error.localizedDescription
+    }
+  }
+
+  func endDiscoveryTestRun() {
+    transitionDiscoveryTestRun(to: .ended)
+  }
+
+  func abortDiscoveryTestRun() {
+    transitionDiscoveryTestRun(to: .aborted)
+  }
+
+  private func transitionDiscoveryTestRun(to state: DiscoveryTestRunDraftState) {
+    do {
+      guard let run = activeDiscoveryTestRun else {
+        throw AppModelError.discoveryTestRunRequired
+      }
+      if state == .ended {
+        guard gateway.hasCurrentParkedAuthority else {
+          throw AppModelError.discoveryParkedStateRequired
+        }
+      }
+      let endObservation = state == .ended ? try currentDiscoveryObservation() : nil
+      let updated = try discoveryEvidenceStore.transitionTestRun(
+        run,
+        to: state,
+        observation: endObservation,
+        recordedAt: Self.timestamp())
+      refreshDiscoveryEvidence()
+      noticeMessage =
+        state == .ended
+        ? "Test run draft ended. Finalization waits for retained archive and manifest hashes."
+        : "Test run draft aborted; all previously recorded markers remain append-only evidence."
+      discoveryMarkerMessage = "Test run draft \(updated.id) is \(updated.state.rawValue)."
+      queueDiscoveryDraftEvidenceForAI()
+      errorMessage = nil
+    } catch {
+      errorMessage = error.localizedDescription
+    }
+  }
+
+  private func refreshDiscoveryEvidence() {
+    do {
+      discoveryMarkers = try discoveryEvidenceStore.markers()
+      discoveryTestRuns = try discoveryEvidenceStore.testRuns()
+      discoveryMarkerMessage =
+        discoveryMarkers.isEmpty
+        ? "No synchronized Discovery markers are retained."
+        : "\(discoveryMarkers.count) append-only Discovery marker(s) retained on this iPhone."
+    } catch {
+      discoveryMarkers = []
+      discoveryTestRuns = []
+      discoveryMarkerMessage =
+        "Discovery marker ledger failed closed: \(error.localizedDescription)"
+    }
+  }
+
+  private func queueDiscoveryDraftEvidenceForAI() {
+    do {
+      let url = try discoveryEvidenceStore.exportURL(generatedAt: Self.timestamp())
+      let payload = try Data(contentsOf: url, options: [.mappedIfSafe])
+      let (_, inserted) = try evidenceOutboxStore.enqueue(
+        payload: payload,
+        contentType: "application/vnd.vhos.discovery-draft-evidence+json")
+      refreshEvidenceOutboxStatus()
+      if inserted {
+        evidenceOutboxMessage =
+          "Checksummed Discovery draft evidence queued in the private outbox."
+      }
+      if automaticEvidenceUpload { Task { await processEvidenceOutbox() } }
+    } catch {
+      evidenceOutboxMessage =
+        "Discovery draft evidence remains local: \(error.localizedDescription)"
+    }
+  }
+
+  private func currentDiscoveryObservation() throws -> PassiveCANObservation {
+    guard gateway.state == .vhosConnected, let handshake = gateway.handshake,
+      let health = gateway.health, handshake.listenOnly, health.listenOnly,
+      let observation = gateway.latestCANObservation,
+      observation.gatewayID == handshake.gatewayID, observation.listenOnly,
+      let receivedAt = gateway.latestCANObservationReceivedAt
+    else { throw AppModelError.discoveryCurrentTimelineRequired }
+    let age = Date().timeIntervalSince(receivedAt)
+    guard age >= 0, age <= 5 else { throw AppModelError.discoveryCurrentTimelineRequired }
+    return observation
   }
 
   func pauseDownloadAndResumeGatewayHistory() {
@@ -246,6 +419,10 @@ final class AppModel {
 
   func synchronizedReferenceExportURL() throws -> URL {
     try synchronizedReferenceStore.exportURL()
+  }
+
+  func discoveryDraftEvidenceExportURL() throws -> URL {
+    try discoveryEvidenceStore.exportURL(generatedAt: Self.timestamp())
   }
 
   private func retainStandardOBDReferences() {
@@ -522,7 +699,8 @@ final class AppModel {
           noticeMessage = "Verified OBD firmware staged. Complete safety preflight in Firmware."
         }
       } else {
-        noticeMessage = "Verified \(artifact.artifactID) and prepared it for owner-approved handoff."
+        noticeMessage =
+          "Verified \(artifact.artifactID) and prepared it for owner-approved handoff."
         errorMessage = nil
       }
     } catch {
@@ -550,6 +728,12 @@ enum AppModelError: Error, LocalizedError {
   case evidenceTokenTooShort
   case currentCANReferenceRequired
   case referenceValueInvalid
+  case discoveryParkedStateRequired
+  case discoveryCaptureRequired
+  case discoveryTestRunRequired
+  case discoveryInteractiveTestUnavailable
+  case discoveryCurrentTimelineRequired
+  case discoveryCapabilityRequired
 
   var errorDescription: String? {
     switch self {
@@ -577,6 +761,18 @@ enum AppModelError: Error, LocalizedError {
       "A current gateway CAN observation is required to timestamp a Techstream reference value."
     case .referenceValueInvalid:
       "Enter a finite numeric Techstream reference value."
+    case .discoveryParkedStateRequired:
+      "Discovery engineering controls require a fresh verified gateway health report that deterministically says PARKED."
+    case .discoveryCaptureRequired:
+      "Start the passive recorder before adding synchronized Discovery event markers."
+    case .discoveryTestRunRequired:
+      "Begin the matching Discovery test run before recording event markers."
+    case .discoveryInteractiveTestUnavailable:
+      "This procedure is not available in iPhone driver-interaction mode. A passenger-supervised workflow is required."
+    case .discoveryCurrentTimelineRequired:
+      "A listen-only CAN observation from the verified gateway within the last five seconds is required for Discovery timeline evidence."
+    case .discoveryCapabilityRequired:
+      "The verified gateway does not advertise every capability required by this versioned Discovery test template."
     }
   }
 }

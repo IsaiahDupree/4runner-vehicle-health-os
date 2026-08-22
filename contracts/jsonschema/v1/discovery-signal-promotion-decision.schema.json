@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/discovery-signal-promotion-decision.schema.json",
+  "title": "VHOS Discovery signal promotion decision v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract", "contract_version", "candidate_id", "evaluated_at", "policy_id", "policy_version", "promotion_allowed", "blockers", "satisfied_evidence_references", "authority"],
+  "properties": {
+    "contract": {"const": "vhos.discovery.signal-promotion-decision"},
+    "contract_version": {"const": "1.0.0"},
+    "candidate_id": {"type": "string", "pattern": "^candidate_[0-9A-HJKMNP-TV-Z]{26}$"},
+    "evaluated_at": {"$ref": "common.schema.json#/$defs/wallTime"},
+    "policy_id": {"$ref": "common.schema.json#/$defs/semanticId"},
+    "policy_version": {"$ref": "common.schema.json#/$defs/semanticVersion"},
+    "promotion_allowed": {"type": "boolean"},
+    "blockers": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1, "maxLength": 240}},
+    "satisfied_evidence_references": {"type": "array", "uniqueItems": true, "items": {"$ref": "discovery-common.schema.json#/$defs/evidenceReference"}},
+    "authority": {"type": "string", "enum": ["EXPERIMENTAL_CANDIDATE", "PROMOTED"]}
+  },
+  "allOf": [
+    {"if": {"properties": {"promotion_allowed": {"const": true}}}, "then": {"properties": {"blockers": {"maxItems": 0}, "authority": {"const": "PROMOTED"}}}},
+    {"if": {"properties": {"promotion_allowed": {"const": false}}}, "then": {"properties": {"blockers": {"minItems": 1}, "authority": {"const": "EXPERIMENTAL_CANDIDATE"}}}}
+  ]
+}

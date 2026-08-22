@@ -169,6 +169,10 @@ and real multi-session acceptance suite are recorded in
 The governing unknown-by-default whole-vehicle model, head-unit inventory contract, 2005 4Runner
 configuration guard, and evidence-basis separation are recorded in
 [the whole-vehicle digital-twin foundation](docs/development/WHOLE-VEHICLE-DIGITAL-TWIN-FOUNDATION-2026-08-18.md).
+The cross-platform Connect → Discover → Test → Capture → Validate → Promote workflow, platform
+roles, authority states, session records, fail-closed promotion gate, and first production slice are
+defined in
+[the Discovery subsystem architecture](docs/development/DISCOVERY-SUBSYSTEM-ARCHITECTURE-2026-08-21.md).
 
 ## Safety boundary
 

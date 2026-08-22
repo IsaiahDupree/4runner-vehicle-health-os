@@ -1,0 +1,12 @@
+{
+  "contract": "vhos.discovery.signal-promotion-decision",
+  "contract_version": "1.0.0",
+  "candidate_id": "candidate_01K32Q6T000000000000000002",
+  "evaluated_at": "2026-08-18T17:41:00Z",
+  "policy_id": "discovery.signal-promotion.definition-of-done",
+  "policy_version": "1.0.0",
+  "promotion_allowed": false,
+  "blockers": ["MISSING_CHECK:INDEPENDENT_CORROBORATION", "MISSING_OR_NONAPPROVING_REVIEW"],
+  "satisfied_evidence_references": ["archive-sha256:af2305021c2d48d89c55d1739da407d78ee28baa39cce63125d0656672f58aed"],
+  "authority": "EXPERIMENTAL_CANDIDATE"
+}

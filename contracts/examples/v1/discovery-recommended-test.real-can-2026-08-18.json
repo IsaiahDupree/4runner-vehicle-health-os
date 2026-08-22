@@ -1,0 +1,16 @@
+{
+  "contract": "vhos.discovery.recommended-test",
+  "contract_version": "1.0.0",
+  "id": "recommendation_01K32Q6T000000000000000008",
+  "candidate_id": "candidate_01K32Q6T000000000000000002",
+  "template_id": "discovery.test.parked-corroboration",
+  "template_version": "1.0.0",
+  "generated_at": "2026-08-18T17:44:00Z",
+  "recommendation_algorithm_id": "discovery.unresolved-gate-coverage",
+  "recommendation_algorithm_version": "1.0.0",
+  "reason": "Addresses unresolved independent-corroboration and repeatability gates.",
+  "addressed_requirements": ["INDEPENDENT_CORROBORATION", "REPEATABILITY_ACROSS_CONTROLLED_TESTS"],
+  "competing_template_ids": [],
+  "source_evidence_references": ["archive-sha256:af2305021c2d48d89c55d1739da407d78ee28baa39cce63125d0656672f58aed"],
+  "authority": "EXPERIMENTAL_CANDIDATE"
+}

@@ -1,0 +1,14 @@
+{
+  "contract": "vhos.discovery.event-marker",
+  "contract_version": "1.0.0",
+  "id": "marker_01K32Q6T000000000000000006",
+  "capture_id": "capture_01K32Q6T000000000000000000",
+  "gateway_monotonic_microseconds": 2174564,
+  "recorded_at": "2026-08-18T17:20:27Z",
+  "kind": "MEASUREMENT_TAKEN",
+  "label": "Retained archive ingestion observed",
+  "source": "GATEWAY",
+  "nearest_can_sequence": 1,
+  "note": "Records an evidence-pipeline event, not a vehicle-state claim.",
+  "authority": "OBSERVED"
+}

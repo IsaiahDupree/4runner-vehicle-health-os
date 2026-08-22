@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/discovery-signal-validation-checklist.schema.json",
+  "title": "VHOS Discovery signal validation checklist v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract", "contract_version", "candidate_id", "evaluated_at", "items", "authority"],
+  "properties": {
+    "contract": {"const": "vhos.discovery.signal-validation-checklist"},
+    "contract_version": {"const": "1.0.0"},
+    "candidate_id": {"type": "string", "pattern": "^candidate_[0-9A-HJKMNP-TV-Z]{26}$"},
+    "evaluated_at": {"$ref": "common.schema.json#/$defs/wallTime"},
+    "items": {"type": "array", "minItems": 1, "maxItems": 17, "items": {"$ref": "discovery-common.schema.json#/$defs/validationItem"}},
+    "approval": {"$ref": "discovery-common.schema.json#/$defs/approval"},
+    "authority": {"type": "string", "enum": ["EXPERIMENTAL_CANDIDATE", "VEHICLE_VALIDATED"]}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"authority": {"const": "VEHICLE_VALIDATED"}}},
+      "then": {
+        "required": ["approval"],
+        "properties": {
+          "approval": {"properties": {"decision": {"const": "APPROVE"}}},
+          "items": {
+            "minItems": 17,
+            "maxItems": 17,
+            "allOf": [
+              {"contains": {"properties": {"requirement": {"const": "SIGNAL_DEFINITION"}, "status": {"const": "SATISFIED"}}, "required": ["requirement", "status"]}},
+              {"contains": {"properties": {"requirement": {"const": "SOURCE_DEFINED"}, "status": {"const": "SATISFIED"}}, "required": ["requirement", "status"]}},
+              {"contains": {"properties": {"requirement": {"const": "DECODER_DEFINED"}, "status": {"const": "SATISFIED"}}, "required": ["requirement", "status"]}},
+              {"contains": {"properties": {"requirement": {"const": "TYPE_AND_UNIT_DEFINED"}, "status": {"const": "SATISFIED"}}, "required": ["requirement", "status"]}},
+              {"contains": {"properties": {"requirement": {"const": "PLAUSIBLE_RANGE_DEFINED"}, "status": {"const": "SATISFIED"}}, "required": ["requirement", "status"]}},
+              {"contains": {"properties": {"requirement": {"const": "FRESHNESS_DEFINED"}, "status": {"const": "SATISFIED"}}, "required": ["requirement", "status"]}},
+              {"contains": {"properties": {"requirement": {"const": "VEHICLE_APPLICABILITY_RESOLVED"}, "status": {"const": "SATISFIED"}}, "required": ["requirement", "status"]}},
+              {"contains": {"properties": {"requirement": {"const": "TARGET_VEHICLE_CAPTURE"}, "status": {"const": "SATISFIED"}}, "required": ["requirement", "status"]}},
+              {"contains": {"properties": {"requirement": {"const": "REPEATABILITY_ACROSS_CONTROLLED_TESTS"}, "status": {"const": "SATISFIED"}}, "required": ["requirement", "status"]}},
+              {"contains": {"properties": {"requirement": {"const": "INDEPENDENT_CORROBORATION"}, "status": {"const": "SATISFIED"}}, "required": ["requirement", "status"]}},
+              {"contains": {"properties": {"requirement": {"const": "GOLDEN_REPLAY"}, "status": {"const": "SATISFIED"}}, "required": ["requirement", "status"]}},
+              {"contains": {"properties": {"requirement": {"const": "STALE_BEHAVIOR_DEFINED"}, "status": {"const": "SATISFIED"}}, "required": ["requirement", "status"]}},
+              {"contains": {"properties": {"requirement": {"const": "MISSING_BEHAVIOR_DEFINED"}, "status": {"const": "SATISFIED"}}, "required": ["requirement", "status"]}},
+              {"contains": {"properties": {"requirement": {"const": "OUT_OF_RANGE_BEHAVIOR_DEFINED"}, "status": {"const": "SATISFIED"}}, "required": ["requirement", "status"]}},
+              {"contains": {"properties": {"requirement": {"const": "PROVENANCE_PRESERVED"}, "status": {"const": "SATISFIED"}}, "required": ["requirement", "status"]}},
+              {"contains": {"properties": {"requirement": {"const": "CONTRADICTIONS_PRESERVED"}, "status": {"const": "SATISFIED"}}, "required": ["requirement", "status"]}},
+              {"contains": {"properties": {"requirement": {"const": "APPROVAL_REVIEWER_RECORDED"}, "status": {"const": "SATISFIED"}}, "required": ["requirement", "status"]}}
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

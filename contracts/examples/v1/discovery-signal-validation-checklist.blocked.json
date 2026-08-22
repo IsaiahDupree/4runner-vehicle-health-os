@@ -1,0 +1,10 @@
+{
+  "contract": "vhos.discovery.signal-validation-checklist",
+  "contract_version": "1.0.0",
+  "candidate_id": "candidate_01K32Q6T000000000000000002",
+  "evaluated_at": "2026-08-18T17:40:00Z",
+  "items": [
+    {"requirement": "INDEPENDENT_CORROBORATION", "status": "MISSING", "evidence_references": [], "rationale": "No synchronized independent reference is present in this retained capture."}
+  ],
+  "authority": "EXPERIMENTAL_CANDIDATE"
+}

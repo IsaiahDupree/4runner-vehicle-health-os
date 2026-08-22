@@ -16,21 +16,25 @@
 		4DC09285503568BD059B6630 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C904E627AC50298F57802AB7 /* Assets.xcassets */; };
 		50658F6BD96177F3C72D98A4 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ADD085CC4E0D7223092E39A /* AppModel.swift */; };
 		59F8B3E961C8C753425ACF9F /* VHOSCore in Frameworks */ = {isa = PBXBuildFile; productRef = 6616D2E0F2CEB55BF90E491B /* VHOSCore */; };
+		6038918354887A1A87E7D5D7 /* DiscoveryWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DFE18956FBB741182DC169A /* DiscoveryWorkspaceView.swift */; };
 		6138196E6016992AB5F476A7 /* EvidenceOutboxStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27355F648A0C53B4EC6CF848 /* EvidenceOutboxStore.swift */; };
 		9AF33FDA552C5A8253A86B99 /* KeyStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6A9AAE2238B7F973C0CEA46 /* KeyStore.swift */; };
 		AAC7CA136BA2228F0D634559 /* SynchronizedReferenceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5F07524DBD012E9F39B09DB /* SynchronizedReferenceStore.swift */; };
 		BBD00956AAD1B1F75DD26F8C /* PassiveCANPlaybackLab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33368A105329E710051228F4 /* PassiveCANPlaybackLab.swift */; };
 		E1E366592FD90918002B9210 /* catalog-development-p256-public.der.base64 in Resources */ = {isa = PBXBuildFile; fileRef = BC2698DA0773B98569959E80 /* catalog-development-p256-public.der.base64 */; };
 		E925A8B64D5731C2E092673A /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDE321369856AF54C6B7946E /* RootView.swift */; };
+		F1AF0F959A5BC7A5C2BEC8DB /* DiscoveryEvidenceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C4CB58385EA15D8DE39AA03 /* DiscoveryEvidenceStore.swift */; };
 		FEC9A6E487FA351CECDA2552 /* ReleaseHubClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21CE522109AE74B24C43B096 /* ReleaseHubClient.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		1C4CB58385EA15D8DE39AA03 /* DiscoveryEvidenceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoveryEvidenceStore.swift; sourceTree = "<group>"; };
 		21CE522109AE74B24C43B096 /* ReleaseHubClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReleaseHubClient.swift; sourceTree = "<group>"; };
 		27355F648A0C53B4EC6CF848 /* EvidenceOutboxStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceOutboxStore.swift; sourceTree = "<group>"; };
 		2E12062579AEB4902B49940D /* GatewayBLEClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayBLEClient.swift; sourceTree = "<group>"; };
 		33368A105329E710051228F4 /* PassiveCANPlaybackLab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PassiveCANPlaybackLab.swift; sourceTree = "<group>"; };
 		34806DF7108E5758613B6692 /* VehicleHealthOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = VehicleHealthOS.entitlements; sourceTree = "<group>"; };
+		3DFE18956FBB741182DC169A /* DiscoveryWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoveryWorkspaceView.swift; sourceTree = "<group>"; };
 		40D58B872E56EED4853D20F3 /* mrdiy-v13-development-release-ed25519.base64 */ = {isa = PBXFileReference; path = "mrdiy-v13-development-release-ed25519.base64"; sourceTree = "<group>"; };
 		435E1D682EF6B8A4DE0B86F7 /* WiFiOTAUploader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiOTAUploader.swift; sourceTree = "<group>"; };
 		46A437465A0DC4C5D9113216 /* PortableFrameStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortableFrameStore.swift; sourceTree = "<group>"; };
@@ -99,6 +103,8 @@
 			children = (
 				5ADD085CC4E0D7223092E39A /* AppModel.swift */,
 				C904E627AC50298F57802AB7 /* Assets.xcassets */,
+				1C4CB58385EA15D8DE39AA03 /* DiscoveryEvidenceStore.swift */,
+				3DFE18956FBB741182DC169A /* DiscoveryWorkspaceView.swift */,
 				27355F648A0C53B4EC6CF848 /* EvidenceOutboxStore.swift */,
 				2E12062579AEB4902B49940D /* GatewayBLEClient.swift */,
 				6B2F2160F66500ABD58B9A93 /* Info.plist */,
@@ -197,6 +203,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				50658F6BD96177F3C72D98A4 /* AppModel.swift in Sources */,
+				F1AF0F959A5BC7A5C2BEC8DB /* DiscoveryEvidenceStore.swift in Sources */,
+				6038918354887A1A87E7D5D7 /* DiscoveryWorkspaceView.swift in Sources */,
 				6138196E6016992AB5F476A7 /* EvidenceOutboxStore.swift in Sources */,
 				433AA4BFB3B8C40F2468E476 /* GatewayBLEClient.swift in Sources */,
 				9AF33FDA552C5A8253A86B99 /* KeyStore.swift in Sources */,
