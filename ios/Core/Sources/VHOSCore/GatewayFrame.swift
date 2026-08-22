@@ -215,6 +215,10 @@ public struct PassiveCANObservation: Codable, Equatable, Sendable, Identifiable 
     data.prefix(Int(dataLength)).map { String(format: "%02X", $0) }.joined(separator: " ")
   }
 
+  public func matchesRecorderContext(gatewayID: String, captureSessionID: UInt32) -> Bool {
+    self.gatewayID == gatewayID && sessionID == captureSessionID
+  }
+
   public init(
     gatewayID: String,
     sessionID: UInt32,
@@ -358,7 +362,8 @@ public struct CaptureLogChunk: Equatable, Sendable {
     let recordBytes = Int(payload.readUInt16LittleEndian(at: 10))
     guard recordBytes == 36 else { throw CaptureLogError.unsupportedRecordSize(recordBytes) }
     guard payload.count == 16 + count * recordBytes else {
-      throw CaptureLogError.invalidChunkLength(expected: 16 + count * recordBytes, actual: payload.count)
+      throw CaptureLogError.invalidChunkLength(
+        expected: 16 + count * recordBytes, actual: payload.count)
     }
     let sessionID = payload.readUInt32LittleEndian(at: 12)
     let records = try (0..<count).map { index in

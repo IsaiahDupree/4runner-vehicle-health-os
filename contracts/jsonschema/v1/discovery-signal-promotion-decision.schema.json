@@ -12,13 +12,9 @@
     "evaluated_at": {"$ref": "common.schema.json#/$defs/wallTime"},
     "policy_id": {"$ref": "common.schema.json#/$defs/semanticId"},
     "policy_version": {"$ref": "common.schema.json#/$defs/semanticVersion"},
-    "promotion_allowed": {"type": "boolean"},
-    "blockers": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1, "maxLength": 240}},
+    "promotion_allowed": {"const": false},
+    "blockers": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1, "maxLength": 240}},
     "satisfied_evidence_references": {"type": "array", "uniqueItems": true, "items": {"$ref": "discovery-common.schema.json#/$defs/evidenceReference"}},
-    "authority": {"type": "string", "enum": ["EXPERIMENTAL_CANDIDATE", "PROMOTED"]}
-  },
-  "allOf": [
-    {"if": {"properties": {"promotion_allowed": {"const": true}}}, "then": {"properties": {"blockers": {"maxItems": 0}, "authority": {"const": "PROMOTED"}}}},
-    {"if": {"properties": {"promotion_allowed": {"const": false}}}, "then": {"properties": {"blockers": {"minItems": 1}, "authority": {"const": "EXPERIMENTAL_CANDIDATE"}}}}
-  ]
+    "authority": {"const": "EXPERIMENTAL_CANDIDATE"}
+  }
 }

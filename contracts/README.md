@@ -22,13 +22,22 @@ cross-platform Discovery workflow without converting hypotheses into vehicle tru
   `vehicle-capability-snapshot` are `OBSERVED` evidence records.
 - `candidate-signal` and `recommended-test` are always
   `EXPERIMENTAL_CANDIDATE`.
-- a validation checklist becomes `VEHICLE_VALIDATED` only when every PRD gate is
-  satisfied and an explicit approving reviewer record is present.
-- only a successful, versioned promotion decision may carry `PROMOTED`; a blocked
-  decision must retain at least one machine-readable blocker.
+- validation checklists and promotion decisions remain `EXPERIMENTAL_CANDIDATE`
+  in v1. Caller-provided reference strings and an unsigned reviewer record cannot
+  grant vehicle authority.
+- v1 promotion is assessment-only and always blocked. A future contract version
+  must resolve and hash-verify exact evidence bytes and authenticate the approving
+  reviewer before `VEHICLE_VALIDATED` or `PROMOTED` can be emitted.
 - capture wall time declares whether it came from synchronized capture epoch time
   or later evidence-ingestion time. Gateway monotonic time remains the physical
   correlation clock.
+- every newly written marker and physical measurement binds to one exact gateway recorder
+  session; repeated monotonic or sequence counters across restarts cannot be joined. Older v1
+  records without that optional extension remain readable but are ineligible for correlation.
+- JSON Schema provides structural validation; `ContractCatalog.validate` also enforces semantic
+  capture invariants that JSON Schema cannot express, including unique marker/measurement IDs,
+  matching capture/session lineage, and declared time/sequence envelopes. Importers must run both
+  layers before accepting a capture.
 
 Interop examples in `examples/v1/discovery-*.json` are bound to the retained
 `real-can-2026-08-18-627753796-256.ndjson` fixture. They describe evidence and

@@ -141,12 +141,12 @@ struct DiscoveryTestRunDraft: Codable, Equatable, Identifiable {
       !templateID.isEmpty, templateID.count <= 160,
       !templateVersion.isEmpty, templateVersion.count <= 80,
       !gatewayID.isEmpty, gatewayID.count <= 160,
-      ISO8601DateFormatter().date(from: startedAt) != nil,
+      AppendOnlyEvidenceReplay.hasValidWallClockInterval(
+        startedAt: startedAt, endedAt: endedAt),
       !hasPartialGatewayEnd,
       (state == .active && endedAt == nil && !hasGatewayEnd)
         || (state == .ended && endedAt != nil && hasGatewayEnd)
         || (state == .aborted && endedAt != nil),
-      endedAt.map({ ISO8601DateFormatter().date(from: $0) != nil }) ?? true,
       endMonotonicMicroseconds.map({ $0 >= startMonotonicMicroseconds }) ?? true,
       lastSourceSequence.map({ $0 >= firstSourceSequence }) ?? true
     else { throw DiscoveryEvidenceStoreError.invalidTestRunDraft }
@@ -190,13 +190,22 @@ private struct DiscoveryDraftEvidenceExport: Codable {
   let authority: DiscoveryAuthorityStatus
 }
 
+private struct DiscoveryGatewaySessionIdentity: Hashable {
+  let gatewayID: String
+  let gatewaySessionID: UInt32
+
+  var evidenceDescription: String { "\(gatewayID):\(gatewaySessionID)" }
+}
+
 final class DiscoveryEvidenceStore {
   private let fileManager: FileManager
   private let bindingsURL: URL
   private let markersURL: URL
   private let testRunsURL: URL
+  private let quarantineDirectoryURL: URL
   private let maximumBindings = 10_000
   private let maximumMarkers = 100_000
+  private(set) var recoveryReports: [AppendOnlyNDJSONTailRecovery] = []
 
   init(fileManager: FileManager = .default) {
     self.fileManager = fileManager
@@ -208,17 +217,66 @@ final class DiscoveryEvidenceStore {
     bindingsURL = directory.appendingPathComponent("capture-bindings.ndjson")
     markersURL = directory.appendingPathComponent("event-markers.ndjson")
     testRunsURL = directory.appendingPathComponent("test-run-drafts.ndjson")
+    quarantineDirectoryURL = directory.appendingPathComponent("Quarantine", isDirectory: true)
   }
 
   func markers() throws -> [StoredDiscoveryMarker] {
-    try decodeLedger(at: markersURL, as: StoredDiscoveryMarker.self) { try $0.validate() }
+    let records = try decodeLedger(at: markersURL, as: StoredDiscoveryMarker.self) {
+      try $0.validate()
+    }
+    try AppendOnlyEvidenceReplay.requireUniqueIdentity(
+      in: records,
+      recordKind: "Discovery marker",
+      identity: \.id,
+      describeIdentity: { $0 })
+
+    let bindings = try captureBindings()
+    let runs = try testRuns()
+    for record in records {
+      let sessionIdentity = DiscoveryGatewaySessionIdentity(
+        gatewayID: record.gatewayID,
+        gatewaySessionID: record.gatewaySessionID)
+      guard
+        bindings.contains(where: {
+          $0.id == record.marker.captureID
+            && DiscoveryGatewaySessionIdentity(
+              gatewayID: $0.gatewayID,
+              gatewaySessionID: $0.gatewaySessionID) == sessionIdentity
+        }),
+        record.marker.gatewaySessionID.map({ $0 == record.gatewaySessionID }) ?? true
+      else {
+        throw DiscoveryEvidenceStoreError.markerLineageMismatch(record.id)
+      }
+
+      if let testRunID = record.testRunID {
+        guard let run = runs.first(where: { $0.id == testRunID }),
+          run.templateID == record.templateID,
+          run.captureID == record.marker.captureID,
+          run.gatewayID == record.gatewayID,
+          run.gatewaySessionID == record.gatewaySessionID
+        else {
+          throw DiscoveryEvidenceStoreError.markerLineageMismatch(record.id)
+        }
+        _ = try AppendOnlyEvidenceReplay.requireEvidenceWithinLifecycleBounds(
+          recordKind: "Discovery marker",
+          identity: record.id,
+          evidenceRecordedAt: record.marker.recordedAt,
+          evidenceMonotonicMicroseconds: record.marker.gatewayMonotonicMicroseconds,
+          evidenceSourceSequence: record.marker.nearestCANSequence,
+          startedAt: run.startedAt,
+          startMonotonicMicroseconds: run.startMonotonicMicroseconds,
+          firstSourceSequence: run.firstSourceSequence,
+          endedAt: run.endedAt,
+          endMonotonicMicroseconds: run.endMonotonicMicroseconds,
+          lastSourceSequence: run.lastSourceSequence)
+      }
+    }
+    return records
   }
 
   func testRuns() throws -> [DiscoveryTestRunDraft] {
     let snapshots = try testRunSnapshots()
-    var latest: [String: DiscoveryTestRunDraft] = [:]
-    for snapshot in snapshots { latest[snapshot.id] = snapshot }
-    return latest.values.sorted { $0.startedAt < $1.startedAt }
+    return try replayTestRuns(snapshots).sorted { $0.startedAt < $1.startedAt }
   }
 
   func exportURL(generatedAt: String) throws -> URL {
@@ -273,7 +331,9 @@ final class DiscoveryEvidenceStore {
     observation: PassiveCANObservation?,
     recordedAt: String
   ) throws -> DiscoveryTestRunDraft {
-    guard run.state == .active, state != .active else {
+    guard let current = try testRuns().first(where: { $0.id == run.id }), current == run,
+      current.state == .active, state != .active
+    else {
       throw DiscoveryEvidenceStoreError.invalidTestRunTransition
     }
     if state == .ended {
@@ -316,7 +376,8 @@ final class DiscoveryEvidenceStore {
   ) throws -> StoredDiscoveryMarker {
     try template.validateContract()
     try PassiveCANEvidenceArchive.validate(observation)
-    guard testRun.state == .active, testRun.templateID == template.id,
+    guard let current = try testRuns().first(where: { $0.id == testRun.id }), current == testRun,
+      current.state == .active, testRun.templateID == template.id,
       testRun.gatewayID == observation.gatewayID,
       testRun.gatewaySessionID == observation.sessionID
     else { throw DiscoveryEvidenceStoreError.testRunCaptureChanged }
@@ -332,6 +393,7 @@ final class DiscoveryEvidenceStore {
     let marker = try EventMarker(
       id: DiscoveryIDGenerator.make(prefix: "marker"),
       captureID: binding.id,
+      gatewaySessionID: observation.sessionID,
       gatewayMonotonicMicroseconds: observation.monotonicMicroseconds,
       recordedAt: recordedAt,
       kind: kind,
@@ -352,11 +414,71 @@ final class DiscoveryEvidenceStore {
   }
 
   private func captureBindings() throws -> [DiscoveryCaptureBinding] {
-    try decodeLedger(at: bindingsURL, as: DiscoveryCaptureBinding.self) { try $0.validate() }
+    let records = try decodeLedger(at: bindingsURL, as: DiscoveryCaptureBinding.self) {
+      try $0.validate()
+    }
+    try AppendOnlyEvidenceReplay.requireBijection(
+      in: records,
+      leftKind: "Discovery capture binding",
+      rightKind: "Discovery gateway-session binding",
+      left: \.id,
+      right: {
+        DiscoveryGatewaySessionIdentity(
+          gatewayID: $0.gatewayID,
+          gatewaySessionID: $0.gatewaySessionID)
+      },
+      describeLeft: { $0 },
+      describeRight: \.evidenceDescription)
+    return records
   }
 
   private func testRunSnapshots() throws -> [DiscoveryTestRunDraft] {
-    try decodeLedger(at: testRunsURL, as: DiscoveryTestRunDraft.self) { try $0.validate() }
+    let records = try decodeLedger(at: testRunsURL, as: DiscoveryTestRunDraft.self) {
+      try $0.validate()
+    }
+    _ = try replayTestRuns(records)
+
+    let bindings = try captureBindings()
+    for record in records {
+      guard
+        bindings.contains(where: {
+          $0.id == record.captureID && $0.gatewayID == record.gatewayID
+            && $0.gatewaySessionID == record.gatewaySessionID
+        })
+      else {
+        throw DiscoveryEvidenceStoreError.testRunLineageMismatch(record.id)
+      }
+    }
+    return records
+  }
+
+  private func replayTestRuns(
+    _ records: [DiscoveryTestRunDraft]
+  ) throws -> [DiscoveryTestRunDraft] {
+    let identity: (DiscoveryTestRunDraft) -> String = { $0.id }
+    let state: (DiscoveryTestRunDraft) -> DiscoveryTestRunDraftState = { $0.state }
+    let sameLineage: (DiscoveryTestRunDraft, DiscoveryTestRunDraft) -> Bool = {
+      $0.id == $1.id && $0.templateID == $1.templateID
+        && $0.templateVersion == $1.templateVersion && $0.captureID == $1.captureID
+        && $0.gatewayID == $1.gatewayID && $0.gatewaySessionID == $1.gatewaySessionID
+        && $0.startedAt == $1.startedAt
+        && $0.startMonotonicMicroseconds == $1.startMonotonicMicroseconds
+        && $0.firstSourceSequence == $1.firstSourceSequence
+    }
+    let transition: (DiscoveryTestRunDraftState, DiscoveryTestRunDraftState) -> Bool = {
+      $0 == .active && ($1 == .ended || $1 == .aborted)
+    }
+    return try AppendOnlyEvidenceReplay.reduceLifecycle(
+      records,
+      recordKind: "Discovery test run",
+      identity: identity,
+      describeIdentity: { $0 },
+      state: state,
+      describeState: { $0.rawValue },
+      isInitial: { $0 == .active },
+      isTerminal: { $0 != .active },
+      hasSameImmutableLineage: sameLineage,
+      canTransition: transition)
   }
 
   private func captureBinding(
@@ -386,17 +508,20 @@ final class DiscoveryEvidenceStore {
     as type: Record.Type,
     validate: (Record) throws -> Void
   ) throws -> [Record] {
-    guard fileManager.fileExists(atPath: url.path) else { return [] }
-    return try Data(contentsOf: url, options: [.mappedIfSafe]).split(separator: 0x0A)
-      .enumerated().map { index, line in
-        do {
-          let record = try VHOSJSON.decoder().decode(type, from: Data(line))
-          try validate(record)
-          return record
-        } catch {
-          throw DiscoveryEvidenceStoreError.invalidLedgerRecord(url.lastPathComponent, index + 1)
-        }
+    do {
+      let result = try AppendOnlyNDJSONLedger.load(
+        from: url,
+        quarantineDirectory: quarantineDirectoryURL,
+        fileManager: fileManager,
+        decoder: VHOSJSON.decoder(),
+        validate: validate)
+      if let recovery = result.recovery {
+        recoveryReports.append(recovery)
       }
+      return result.records
+    } catch AppendOnlyNDJSONLedgerError.invalidCommittedRecord(_, let line) {
+      throw DiscoveryEvidenceStoreError.invalidLedgerRecord(url.lastPathComponent, line)
+    }
   }
 
   private func appendLine<Record: Encodable>(_ record: Record, to url: URL) throws {
@@ -425,6 +550,8 @@ enum DiscoveryEvidenceStoreError: Error, LocalizedError {
   case testRunAlreadyActive
   case invalidTestRunTransition
   case testRunCaptureChanged
+  case markerLineageMismatch(String)
+  case testRunLineageMismatch(String)
   case noDiscoveryEvidence
 
   var errorDescription: String? {
@@ -449,6 +576,10 @@ enum DiscoveryEvidenceStoreError: Error, LocalizedError {
       "The Discovery test-run lifecycle transition is invalid."
     case .testRunCaptureChanged:
       "The gateway capture session changed during this test run. Abort it and begin a new run."
+    case .markerLineageMismatch(let id):
+      "Discovery marker \(id) does not resolve to its immutable capture, gateway session, and test-run lineage."
+    case .testRunLineageMismatch(let id):
+      "Discovery test run \(id) does not resolve to its immutable capture and gateway-session binding."
     case .noDiscoveryEvidence:
       "Begin a Discovery test run or record a synchronized marker before exporting draft evidence."
     }

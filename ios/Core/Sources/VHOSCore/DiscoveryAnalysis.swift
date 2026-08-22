@@ -87,15 +87,20 @@ public enum DiscoveryEvidenceAnalyzer {
     try session.validateContract()
     try observations.forEach(PassiveCANEvidenceArchive.validate)
     let ordered = observations.sorted(by: observationOrder)
+    guard Set(ordered.map(\.id)).count == ordered.count else {
+      throw DiscoveryContractError.evidenceDoesNotMatchCapture
+    }
     let archiveSHA = try PassiveCANEvidenceArchive.semanticSHA256(ordered)
     let sessions = Set(ordered.map(\.sessionID))
     let bitrates = Array(Set(ordered.map(\.bitrateBps))).sorted()
+    let startMonotonicMicroseconds = ordered.map(\.monotonicMicroseconds).min()!
+    let endMonotonicMicroseconds = ordered.map(\.monotonicMicroseconds).max()!
     guard ordered.count == session.retainedRecordCount,
       ordered.allSatisfy({ $0.gatewayID == session.gateway.gatewayID }),
       sessions == Set(session.gatewaySessionIDs), bitrates == session.busBitratesBps,
       ordered.allSatisfy(\.listenOnly),
-      ordered.first?.monotonicMicroseconds == session.startMonotonicMicroseconds,
-      ordered.last?.monotonicMicroseconds == session.endMonotonicMicroseconds,
+      startMonotonicMicroseconds == session.startMonotonicMicroseconds,
+      endMonotonicMicroseconds == session.endMonotonicMicroseconds,
       ordered.map(\.sourceSequence).min() == session.firstSourceSequence,
       ordered.map(\.sourceSequence).max() == session.lastSourceSequence,
       archiveSHA == session.archiveSHA256
@@ -109,8 +114,8 @@ public enum DiscoveryEvidenceAnalyzer {
       retainedRecordCount: ordered.count,
       uniqueIdentifierCount: Set(ordered.map { "\($0.extended):\($0.identifier)" }).count,
       gatewaySessionCount: sessions.count,
-      startMonotonicMicroseconds: ordered.first!.monotonicMicroseconds,
-      endMonotonicMicroseconds: ordered.last!.monotonicMicroseconds,
+      startMonotonicMicroseconds: startMonotonicMicroseconds,
+      endMonotonicMicroseconds: endMonotonicMicroseconds,
       firstSourceSequence: ordered.map(\.sourceSequence).min()!,
       lastSourceSequence: ordered.map(\.sourceSequence).max()!,
       unretainedSourceSequencePositionCount: unretainedSourceSequencePositionCount(ordered),
@@ -177,6 +182,7 @@ public enum DiscoveryEvidenceAnalyzer {
 
 public enum BooleanCandidateAnalyzer {
   public static func evaluate(
+    capture: CaptureSession,
     field: CandidateFieldDefinition,
     observations: [PassiveCANObservation],
     markers: [EventMarker],
@@ -186,11 +192,35 @@ public enum BooleanCandidateAnalyzer {
     guard !observations.isEmpty, !markers.isEmpty, !trueKinds.isEmpty, !falseKinds.isEmpty,
       trueKinds.isDisjoint(with: falseKinds)
     else { throw DiscoveryContractError.emptyEvidence }
-    for observation in observations { try PassiveCANEvidenceArchive.validate(observation) }
+    try capture.validateContract()
+    _ = try DiscoveryEvidenceAnalyzer.summarize(observations: observations, session: capture)
     for marker in markers { try marker.validateContract() }
-    guard Set(markers.map(\.captureID)).count == 1,
-      Set(observations.map(\.gatewayID)).count == 1,
-      Set(observations.map(\.sessionID)).count == 1
+    var retainedMarkers: [String: EventMarker] = [:]
+    for marker in capture.eventMarkers {
+      guard retainedMarkers.updateValue(marker, forKey: marker.id) == nil else {
+        throw DiscoveryContractError.evidenceDoesNotMatchCapture
+      }
+    }
+    let retainedSequenceIdentities = Set(
+      observations.map { "\($0.gatewayID):\($0.sessionID):\($0.sourceSequence)" })
+    let sessionMonotonicWindows = Dictionary(grouping: observations, by: \.sessionID).mapValues {
+      records in
+      (records.map(\.monotonicMicroseconds).min()!, records.map(\.monotonicMicroseconds).max()!)
+    }
+    guard Set(markers.map(\.id)).count == markers.count,
+      markers.allSatisfy({ marker in
+        guard let gatewaySessionID = marker.gatewaySessionID,
+          let sessionWindow = sessionMonotonicWindows[gatewaySessionID]
+        else { return false }
+        return marker.captureID == capture.id && retainedMarkers[marker.id] == marker
+          && capture.gatewaySessionIDs.contains(gatewaySessionID)
+          && (sessionWindow.0...sessionWindow.1).contains(
+            marker.gatewayMonotonicMicroseconds)
+          && marker.nearestCANSequence.map({ sequence in
+            retainedSequenceIdentities.contains(
+              "\(capture.gateway.gatewayID):\(gatewaySessionID):\(sequence)")
+          }) ?? true
+      })
     else { throw DiscoveryContractError.evidenceDoesNotMatchCapture }
 
     let relevantMarkers = markers.filter {
@@ -202,28 +232,41 @@ public enum BooleanCandidateAnalyzer {
     else { throw DiscoveryContractError.emptyEvidence }
 
     let filtered = observations.filter {
-      $0.identifier == field.identifier && $0.extended == field.extended && !$0.remoteRequest
+      $0.identifier == field.identifier && $0.extended == field.extended
+        && $0.bitrateBps == field.protocolID.canBitrateBps && !$0.remoteRequest
     }.sorted {
+      if $0.sessionID != $1.sessionID { return $0.sessionID < $1.sessionID }
       if $0.monotonicMicroseconds != $1.monotonicMicroseconds {
         return $0.monotonicMicroseconds < $1.monotonicMicroseconds
       }
       return $0.sourceSequence < $1.sourceSequence
     }
-    var markerIndex = 0
-    var currentTruth: Bool?
     var paired: [(observation: PassiveCANObservation, raw: UInt64, truth: Bool)] = []
-    for observation in filtered {
-      while markerIndex < relevantMarkers.count,
-        relevantMarkers[markerIndex].gatewayMonotonicMicroseconds
-          <= observation.monotonicMicroseconds
-      {
-        currentTruth = trueKinds.contains(relevantMarkers[markerIndex].kind)
-        markerIndex += 1
+    var markersBySession: [UInt32: [EventMarker]] = [:]
+    for marker in relevantMarkers {
+      guard let gatewaySessionID = marker.gatewaySessionID else {
+        throw DiscoveryContractError.evidenceDoesNotMatchCapture
       }
-      guard let truth = currentTruth,
-        let raw = extract(field: field, observation: observation)
-      else { continue }
-      paired.append((observation, raw, truth))
+      markersBySession[gatewaySessionID, default: []].append(marker)
+    }
+    let observationsBySession = Dictionary(grouping: filtered, by: \.sessionID)
+    for sessionID in observationsBySession.keys.sorted() {
+      let sessionMarkers = markersBySession[sessionID] ?? []
+      var markerIndex = 0
+      var currentTruth: Bool?
+      for observation in observationsBySession[sessionID] ?? [] {
+        while markerIndex < sessionMarkers.count,
+          sessionMarkers[markerIndex].gatewayMonotonicMicroseconds
+            <= observation.monotonicMicroseconds
+        {
+          currentTruth = trueKinds.contains(sessionMarkers[markerIndex].kind)
+          markerIndex += 1
+        }
+        guard let truth = currentTruth,
+          let raw = extract(field: field, observation: observation)
+        else { continue }
+        paired.append((observation, raw, truth))
+      }
     }
 
     let trueRaw = paired.filter(\.truth).map(\.raw)
@@ -350,7 +393,7 @@ public enum SignalPromotionGate {
     }
     guard let approval = checklist.approval, approval.decision == .approve else {
       blockers.append("MISSING_OR_NONAPPROVING_REVIEW")
-      return decision(
+      return try decision(
         candidate: candidate, policy: policy, evaluatedAt: evaluatedAt,
         blockers: blockers, evidence: evidence)
     }
@@ -358,7 +401,7 @@ public enum SignalPromotionGate {
     if let threshold = policy.minimumCorrelation {
       guard let correlation = candidate.metrics.correlation, abs(correlation) >= threshold else {
         blockers.append("CORRELATION_BELOW_POLICY")
-        return decision(
+        return try decision(
           candidate: candidate, policy: policy, evaluatedAt: evaluatedAt,
           blockers: blockers, evidence: evidence)
       }
@@ -366,12 +409,17 @@ public enum SignalPromotionGate {
     if let threshold = policy.minimumRepeatability {
       guard let repeatability = candidate.metrics.repeatability, repeatability >= threshold else {
         blockers.append("REPEATABILITY_BELOW_POLICY")
-        return decision(
+        return try decision(
           candidate: candidate, policy: policy, evaluatedAt: evaluatedAt,
           blockers: blockers, evidence: evidence)
       }
     }
-    return decision(
+    // Contract v1 has no artifact resolver or reviewer-signature contract. Never turn caller-
+    // supplied reference strings into vehicle authority. A future version must resolve exact
+    // evidence bytes and authenticate the approving reviewer before removing these blockers.
+    blockers.append("VERIFIED_EVIDENCE_RESOLVER_REQUIRED")
+    blockers.append("SIGNED_REVIEWER_APPROVAL_REQUIRED")
+    return try decision(
       candidate: candidate, policy: policy, evaluatedAt: evaluatedAt,
       blockers: blockers, evidence: evidence)
   }
@@ -382,18 +430,14 @@ public enum SignalPromotionGate {
     evaluatedAt: String,
     blockers: [String],
     evidence: [String]
-  ) -> SignalPromotionDecision {
-    SignalPromotionDecision(
-      contract: "vhos.discovery.signal-promotion-decision",
-      contractVersion: "1.0.0",
+  ) throws -> SignalPromotionDecision {
+    try SignalPromotionDecision(
       candidateID: candidate.id,
       evaluatedAt: evaluatedAt,
       policyID: policy.policyID,
       policyVersion: policy.policyVersion,
-      promotionAllowed: blockers.isEmpty,
       blockers: blockers.sorted(),
-      satisfiedEvidenceReferences: Array(Set(evidence)).sorted(),
-      authority: blockers.isEmpty ? .promoted : .candidate)
+      satisfiedEvidenceReferences: Array(Set(evidence)).sorted())
   }
 }
 

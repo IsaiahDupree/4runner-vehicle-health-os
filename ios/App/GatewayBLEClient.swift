@@ -180,6 +180,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   private var captureHistoryTransferPhase: CaptureHistoryTransferPhase?
   private var captureSyncTask: Task<Void, Never>?
   private var captureChunkResponseTask: Task<Void, Never>?
+  private var freshnessTask: Task<Void, Never>?
   private var lastCaptureSyncFingerprint: String?
 
   var bluetoothStateDescription = "Initializing"
@@ -238,9 +239,27 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   var lastTransportFailureAt: Date?
   var lastTransportFailureEvidence: String?
   var verifiedSavedGatewayIdentifier: String?
+  var freshnessNow = Date()
+
+  var hasCurrentGatewayHealth: Bool {
+    guard state == .vhosConnected, health != nil, let receivedAt = lastHealthReceivedAt else {
+      return false
+    }
+    let age = max(Date(), freshnessNow).timeIntervalSince(receivedAt)
+    return age >= 0 && age <= 5
+  }
+
+  func isCurrentStandardOBDSample(_ sample: J1979StandardSample) -> Bool {
+    guard hasCurrentGatewayHealth, sample.gatewayID == handshake?.gatewayID,
+      sample.captureID == health?.captureSessionID.map({ "capture-\($0)" }),
+      let observedAt = ISO8601DateFormatter().date(from: sample.observedAt)
+    else { return false }
+    let age = max(Date(), freshnessNow).timeIntervalSince(observedAt)
+    return age >= 0 && age <= 5
+  }
 
   var hasCurrentParkedAuthority: Bool {
-    guard state == .vhosConnected, handshake?.listenOnly == true, health?.listenOnly == true,
+    guard hasCurrentGatewayHealth, handshake?.listenOnly == true, health?.listenOnly == true,
       health?.vehicleMotion == .parked, let receivedAt = lastHealthReceivedAt
     else { return false }
     let age = Date().timeIntervalSince(receivedAt)
@@ -314,6 +333,16 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       queue: .main,
       options: [CBCentralManagerOptionRestoreIdentifierKey: currentCentralRestoreIdentifier]
     )
+    freshnessTask = Task { @MainActor [weak self] in
+      while !Task.isCancelled {
+        do {
+          try await Task.sleep(for: .seconds(1))
+        } catch {
+          return
+        }
+        self?.freshnessNow = Date()
+      }
+    }
     portableFrameCount = portableFrameStore.count()
     if captureTransferReconnectRequested {
       Self.logger.info("BLE reconnect requested by interrupted capture transfer")
@@ -512,6 +541,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
 
   func sendSignedExperimentPlan(_ envelope: SignedExperimentPlanEnvelope) throws {
     guard state == .vhosConnected else { throw GatewayBLEError.vhosFirmwareRequired }
+    guard hasCurrentParkedAuthority else { throw GatewayBLEError.currentParkedAuthorityRequired }
     try writeFrame(type: .experimentPlan, payload: envelope.encoded())
   }
 
@@ -1883,6 +1913,9 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       }
     case .gatewayHealth:
       let value = try VHOSJSON.decoder().decode(GatewayHealth.self, from: frame.payload)
+      if health?.captureSessionID != value.captureSessionID {
+        resetRecorderScopedVehicleEvidence()
+      }
       health = value
       lastHealthReceivedAt = Date()
       Self.commissioningTrace(
@@ -1901,6 +1934,15 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         } else {
           try VHOSJSON.decoder().decode(J1979ResponseEvidence.self, from: frame.payload)
         }
+      guard hasCurrentGatewayHealth, let captureSessionID = health?.captureSessionID,
+        response.matchesRecorderContext(
+          gatewayID: gatewayID, captureSessionID: captureSessionID)
+      else {
+        Self.commissioningTrace(
+          "J1979_RESPONSE_IGNORED reason=stale-or-mismatched-recorder-context response_gateway=\(response.gatewayID) response_capture=\(response.captureID)"
+        )
+        return
+      }
       _ = try j1979Accumulator.ingest(response)
       j1979Availability = j1979Accumulator.availability
       standardOBDSamples = j1979Accumulator.standardSamples
@@ -1914,6 +1956,15 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         gatewayID: gatewayID,
         ingestedAt: Self.timestamp()
       )
+      guard hasCurrentGatewayHealth, let captureSessionID = health?.captureSessionID,
+        observation.matchesRecorderContext(
+          gatewayID: gatewayID, captureSessionID: captureSessionID)
+      else {
+        Self.commissioningTrace(
+          "RAW_CAN_IGNORED reason=stale-or-mismatched-recorder-context observation_gateway=\(observation.gatewayID) observation_session=\(observation.sessionID)"
+        )
+        return
+      }
       latestCANObservation = observation
       latestCANObservationReceivedAt = Date()
       recentCANObservations.append(observation)
@@ -3187,6 +3238,15 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     Self.commissioningTrace("client=\(instanceID) \(message)")
   }
 
+  private func resetRecorderScopedVehicleEvidence() {
+    j1979Accumulator = J1979Accumulator()
+    j1979Availability = []
+    standardOBDSamples = []
+    latestCANObservation = nil
+    latestCANObservationReceivedAt = nil
+    recentCANObservations.removeAll(keepingCapacity: true)
+  }
+
   private func resetConnection() {
     reconnectTask?.cancel()
     automaticReconnectActive = false
@@ -3270,13 +3330,8 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     factoryBanner = nil
     handshake = nil
     health = nil
-    j1979Accumulator = J1979Accumulator()
-    j1979Availability = []
-    standardOBDSamples = []
+    resetRecorderScopedVehicleEvidence()
     captureLogIndex = nil
-    latestCANObservation = nil
-    latestCANObservationReceivedAt = nil
-    recentCANObservations.removeAll(keepingCapacity: true)
     captureSyncTargets.removeAll()
     if captureHistoryTransferActive {
       captureSyncMessage =
@@ -3497,6 +3552,7 @@ enum GatewayBLEError: Error, LocalizedError {
   case commandChannelUnavailable
   case vhosFirmwareRequired
   case reliableWriteRequired
+  case currentParkedAuthorityRequired
 
   var errorDescription: String? {
     switch self {
@@ -3504,6 +3560,8 @@ enum GatewayBLEError: Error, LocalizedError {
     case .vhosFirmwareRequired:
       "Signed experiments require the VHOS gateway firmware, not factory compatibility mode."
     case .reliableWriteRequired: "The VHOS command characteristic must support reliable writes."
+    case .currentParkedAuthorityRequired:
+      "Signed experiments require a fresh gateway-health frame that reports PARKED."
     }
   }
 }

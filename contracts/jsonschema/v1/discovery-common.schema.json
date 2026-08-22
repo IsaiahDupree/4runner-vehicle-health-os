@@ -43,6 +43,7 @@
         "contract_version": {"const": "1.0.0"},
         "id": {"type": "string", "pattern": "^marker_[0-9A-HJKMNP-TV-Z]{26}$"},
         "capture_id": {"$ref": "common.schema.json#/$defs/captureId"},
+        "gateway_session_id": {"type": "integer", "minimum": 0, "maximum": 4294967295},
         "gateway_monotonic_microseconds": {"type": "integer", "minimum": 0},
         "recorded_at": {"$ref": "common.schema.json#/$defs/wallTime"},
         "kind": {"$ref": "#/$defs/markerKind"},
@@ -63,6 +64,7 @@
         "contract_version": {"const": "1.0.0"},
         "id": {"type": "string", "pattern": "^measurement_[0-9A-HJKMNP-TV-Z]{26}$"},
         "capture_id": {"$ref": "common.schema.json#/$defs/captureId"},
+        "gateway_session_id": {"type": "integer", "minimum": 0, "maximum": 4294967295},
         "gateway_monotonic_microseconds": {"type": "integer", "minimum": 0},
         "recorded_at": {"$ref": "common.schema.json#/$defs/wallTime"},
         "signal_id": {"$ref": "common.schema.json#/$defs/semanticId"},
@@ -105,7 +107,17 @@
         "bit_length": {"type": "integer", "minimum": 1, "maximum": 64},
         "byte_order": {"type": "string", "enum": ["BIG_ENDIAN", "LITTLE_ENDIAN"]},
         "signed": {"type": "boolean"}
-      }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"protocol_id": {"enum": ["CAN_11_500", "CAN_11_250"]}}, "required": ["protocol_id"]},
+          "then": {"properties": {"extended": {"const": false}}}
+        },
+        {
+          "if": {"properties": {"protocol_id": {"enum": ["CAN_29_500", "CAN_29_250"]}}, "required": ["protocol_id"]},
+          "then": {"properties": {"extended": {"const": true}}}
+        }
+      ]
     },
     "candidateMetrics": {
       "type": "object",

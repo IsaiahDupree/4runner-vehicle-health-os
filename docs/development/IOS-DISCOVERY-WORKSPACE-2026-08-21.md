@@ -14,7 +14,8 @@ The screen does not claim that a cross-model CAN hypothesis is a validated 2005 
 1. `OBSERVED` — directly reported by the gateway or decoded through a pinned SAE J1979 definition.
 2. `EXPERIMENTAL CANDIDATE` — a retained field selected by the versioned research pack, still requiring target-vehicle evidence.
 3. `VEHICLE VALIDATED` — reserved for independent target-vehicle corroboration. The first slice shows this as unavailable because no validation registry is installed.
-4. `PROMOTED` — reserved for an immutable signal-registry release. The first slice shows this as unavailable.
+4. `PROMOTED` — reserved for an immutable signal-registry release. Discovery v1 always blocks this
+   state because it cannot yet resolve exact evidence bytes or authenticate a reviewer signature.
 
 Unknown state is displayed as `UNAVAILABLE`; zero is not substituted for missing evidence.
 
@@ -50,6 +51,18 @@ The runner exposes large ground-truth controls appropriate for use while moving 
 The lifecycle is explicit: `Begin Session` creates an append-only local **test run draft**, marker controls become active only for that matching run, and `End Session` or `Abort` appends the terminal state. The app does not mislabel the draft as a finalized `CaptureSession`; finalization waits for the retained archive and manifest hashes required by the canonical contract.
 
 Each accepted marker is a canonical `VHOSCore.EventMarker` appended to the local Discovery evidence ledger and binds to that exact gateway timeline location. A durable capture ULID maps the gateway's numeric recorder session into the domain contract. The app-local index adds the template and test-run reference without replacing the canonical marker. Both marker and run ledgers reload on launch. A marker cannot be created from wall-clock time alone and the app never creates a simulated CAN observation to make a button appear usable.
+
+The canonical marker also carries the numeric gateway recorder-session ID. Analysis groups markers
+and observations by that identity before applying monotonic time or sequence order, so a gateway
+restart cannot cause one session's ground-truth event to label another session's frames.
+The field is an optional additive extension to the existing v1 wire contract: older committed v1
+records remain readable, but an unbound legacy marker is never eligible for correlation analysis.
+
+Each NDJSON line is committed only by its trailing line-feed byte. On launch, an interrupted final
+append is copied into a quarantine artifact and the ledger is restored to its exact committed byte
+prefix before any record is exposed. A malformed committed line—including a malformed interior
+line—fails closed and leaves the source ledger unchanged; recovery never guesses or silently drops
+committed evidence.
 
 The marker timeline must also be fresh: the observation has to come from the verified gateway, prove listen-only mode, and have arrived within five seconds. A stale observation retained across a disconnect cannot become new ground-truth evidence. Capture review can export the append-only test-run snapshots, capture bindings, and canonical markers as an explicitly draft evidence artifact. Ending or aborting a run also queues that checksummed draft artifact in the existing private evidence outbox; it remains local when no authenticated HTTPS inbox is configured. An abort retains its wall-clock transition even when no current gateway observation exists; it does not claim a finalized capture boundary.
 

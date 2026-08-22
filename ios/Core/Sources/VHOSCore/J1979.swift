@@ -63,6 +63,10 @@ public struct J1979ResponseEvidence: Codable, Equatable, Sendable {
     return payload
   }
 
+  public func matchesRecorderContext(gatewayID: String, captureSessionID: UInt32) -> Bool {
+    self.gatewayID == gatewayID && captureID == "capture-\(captureSessionID)"
+  }
+
   public static func decodePassiveWire(
     _ bytes: Data,
     gatewayID: String,
@@ -178,7 +182,8 @@ public struct J1979Accumulator: Sendable {
     let relevant = Data(data.prefix(definition.byteCount))
     let raw = relevant.reduce(UInt64(0)) { ($0 << 8) | UInt64($1) }
     let value = Double(raw) * definition.multiplier / definition.divisor + definition.offset
-    let identity = "\(response.gatewayID):\(response.captureID):\(response.ecuAddress):\(response.gatewayMonotonicMicroseconds):\(response.sourceSequence):\(response.requestPID)"
+    let identity =
+      "\(response.gatewayID):\(response.captureID):\(response.ecuAddress):\(response.gatewayMonotonicMicroseconds):\(response.sourceSequence):\(response.requestPID)"
     let sample = J1979StandardSample(
       id: identity,
       gatewayID: response.gatewayID,
@@ -221,7 +226,9 @@ public struct J1979Accumulator: Sendable {
       let continuation = base + 32
       guard supported.contains(UInt8(continuation)) else { return (true, nil) }
       guard bitmaps[UInt8(continuation)] != nil else {
-        return (false, String(format: "PID 0x%02X availability response is required.", continuation))
+        return (
+          false, String(format: "PID 0x%02X availability response is required.", continuation)
+        )
       }
       base = continuation
     }
@@ -240,21 +247,51 @@ public struct J1979Accumulator: Sendable {
 
   public static let definitionRevision = "d3259214a9e0340c4a6cff9ec5f8ff5953eee6f2"
   private static let definitions: [UInt8: Definition] = [
-    0x04: Definition(signalID: "obd.engine.calculated_load", name: "Calculated engine load", byteCount: 1, multiplier: 100, divisor: 255, offset: 0, unit: "%"),
-    0x05: Definition(signalID: "obd.engine.coolant_temperature", name: "Engine coolant temperature", byteCount: 1, multiplier: 1, divisor: 1, offset: -40, unit: "degC"),
-    0x06: Definition(signalID: "obd.engine.short_fuel_trim_bank1", name: "Short-term fuel trim bank 1", byteCount: 1, multiplier: 100, divisor: 128, offset: -100, unit: "%"),
-    0x07: Definition(signalID: "obd.engine.long_fuel_trim_bank1", name: "Long-term fuel trim bank 1", byteCount: 1, multiplier: 100, divisor: 128, offset: -100, unit: "%"),
-    0x08: Definition(signalID: "obd.engine.short_fuel_trim_bank2", name: "Short-term fuel trim bank 2", byteCount: 1, multiplier: 100, divisor: 128, offset: -100, unit: "%"),
-    0x09: Definition(signalID: "obd.engine.long_fuel_trim_bank2", name: "Long-term fuel trim bank 2", byteCount: 1, multiplier: 100, divisor: 128, offset: -100, unit: "%"),
-    0x0A: Definition(signalID: "obd.engine.fuel_pressure", name: "Fuel pressure", byteCount: 1, multiplier: 3, divisor: 1, offset: 0, unit: "kPa"),
-    0x0B: Definition(signalID: "obd.engine.intake_manifold_pressure", name: "Intake manifold absolute pressure", byteCount: 1, multiplier: 1, divisor: 1, offset: 0, unit: "kPa"),
-    0x0C: Definition(signalID: "obd.engine.speed", name: "Engine speed", byteCount: 2, multiplier: 1, divisor: 4, offset: 0, unit: "rpm"),
-    0x0D: Definition(signalID: "obd.vehicle.speed", name: "Vehicle speed", byteCount: 1, multiplier: 1, divisor: 1, offset: 0, unit: "km/h"),
-    0x0E: Definition(signalID: "obd.engine.timing_advance", name: "Timing advance", byteCount: 1, multiplier: 1, divisor: 2, offset: -64, unit: "deg"),
-    0x0F: Definition(signalID: "obd.engine.intake_air_temperature", name: "Intake air temperature", byteCount: 1, multiplier: 1, divisor: 1, offset: -40, unit: "degC"),
-    0x10: Definition(signalID: "obd.engine.mass_air_flow", name: "Mass air flow", byteCount: 2, multiplier: 1, divisor: 100, offset: 0, unit: "g/s"),
-    0x11: Definition(signalID: "obd.engine.throttle_position", name: "Absolute throttle position", byteCount: 1, multiplier: 100, divisor: 255, offset: 0, unit: "%"),
-    0x1F: Definition(signalID: "obd.engine.run_time", name: "Time since engine start", byteCount: 2, multiplier: 1, divisor: 1, offset: 0, unit: "s"),
+    0x04: Definition(
+      signalID: "obd.engine.calculated_load", name: "Calculated engine load", byteCount: 1,
+      multiplier: 100, divisor: 255, offset: 0, unit: "%"),
+    0x05: Definition(
+      signalID: "obd.engine.coolant_temperature", name: "Engine coolant temperature", byteCount: 1,
+      multiplier: 1, divisor: 1, offset: -40, unit: "degC"),
+    0x06: Definition(
+      signalID: "obd.engine.short_fuel_trim_bank1", name: "Short-term fuel trim bank 1",
+      byteCount: 1, multiplier: 100, divisor: 128, offset: -100, unit: "%"),
+    0x07: Definition(
+      signalID: "obd.engine.long_fuel_trim_bank1", name: "Long-term fuel trim bank 1", byteCount: 1,
+      multiplier: 100, divisor: 128, offset: -100, unit: "%"),
+    0x08: Definition(
+      signalID: "obd.engine.short_fuel_trim_bank2", name: "Short-term fuel trim bank 2",
+      byteCount: 1, multiplier: 100, divisor: 128, offset: -100, unit: "%"),
+    0x09: Definition(
+      signalID: "obd.engine.long_fuel_trim_bank2", name: "Long-term fuel trim bank 2", byteCount: 1,
+      multiplier: 100, divisor: 128, offset: -100, unit: "%"),
+    0x0A: Definition(
+      signalID: "obd.engine.fuel_pressure", name: "Fuel pressure", byteCount: 1, multiplier: 3,
+      divisor: 1, offset: 0, unit: "kPa"),
+    0x0B: Definition(
+      signalID: "obd.engine.intake_manifold_pressure", name: "Intake manifold absolute pressure",
+      byteCount: 1, multiplier: 1, divisor: 1, offset: 0, unit: "kPa"),
+    0x0C: Definition(
+      signalID: "obd.engine.speed", name: "Engine speed", byteCount: 2, multiplier: 1, divisor: 4,
+      offset: 0, unit: "rpm"),
+    0x0D: Definition(
+      signalID: "obd.vehicle.speed", name: "Vehicle speed", byteCount: 1, multiplier: 1, divisor: 1,
+      offset: 0, unit: "km/h"),
+    0x0E: Definition(
+      signalID: "obd.engine.timing_advance", name: "Timing advance", byteCount: 1, multiplier: 1,
+      divisor: 2, offset: -64, unit: "deg"),
+    0x0F: Definition(
+      signalID: "obd.engine.intake_air_temperature", name: "Intake air temperature", byteCount: 1,
+      multiplier: 1, divisor: 1, offset: -40, unit: "degC"),
+    0x10: Definition(
+      signalID: "obd.engine.mass_air_flow", name: "Mass air flow", byteCount: 2, multiplier: 1,
+      divisor: 100, offset: 0, unit: "g/s"),
+    0x11: Definition(
+      signalID: "obd.engine.throttle_position", name: "Absolute throttle position", byteCount: 1,
+      multiplier: 100, divisor: 255, offset: 0, unit: "%"),
+    0x1F: Definition(
+      signalID: "obd.engine.run_time", name: "Time since engine start", byteCount: 2, multiplier: 1,
+      divisor: 1, offset: 0, unit: "s"),
   ]
 }
 
@@ -266,10 +303,12 @@ public enum J1979DecodeError: Error, Equatable, LocalizedError {
 
   public var errorDescription: String? {
     switch self {
-    case .invalidResponse: "The J1979 response did not contain a matching positive Mode 01 response."
+    case .invalidResponse:
+      "The J1979 response did not contain a matching positive Mode 01 response."
     case .invalidWireResponse: "The passive J1979 wire response is malformed or unsupported."
     case .invalidSupportedPIDBitmap: "The supported-PID response must contain a four-byte bitmap."
-    case .insufficientData: "The J1979 response did not contain enough bytes for its pinned definition."
+    case .insufficientData:
+      "The J1979 response did not contain enough bytes for its pinned definition."
     }
   }
 }

@@ -83,11 +83,17 @@ A session binds immutable evidence and experimental context:
 Raw observations are immutable. Re-analysis creates new versioned outputs; it does not rewrite the
 capture.
 
+Recorder monotonic clocks and source sequences are session-local. Multi-session captures retain an
+explicit window for each gateway session; event correlation requires both the marker time and its
+nearest sequence to resolve inside that exact session. A recorder-session change immediately clears
+live CAN and J1979 projections, and late frames from the previous session are ignored rather than
+shown as current vehicle state.
+
 ### Event Marker
 
 An event marker records:
 
-- a stable marker ID and session ID;
+- a stable marker ID, canonical capture ID, and exact gateway recorder-session ID for new evidence;
 - gateway-aligned monotonic time when available;
 - wall time and phone ingestion time;
 - event type, asserted state, observer, and optional note;
@@ -95,6 +101,8 @@ An event marker records:
 - optional independent measurement references.
 
 Markers are append-only evidence. Editing a label creates a superseding record with lineage.
+Legacy v1 markers that predate recorder-session binding remain decodable, but analysis excludes
+them rather than guessing which rebooted monotonic clock they belong to.
 
 ### Physical Measurement
 
@@ -135,6 +143,12 @@ Promotion fails closed until every required item passes:
 
 AI may rank candidates, explain correlations, and recommend the next test. AI cannot satisfy an
 independent corroboration gate or sign a promotion on the owner's behalf.
+
+Discovery contract v1 is deliberately assessment-only. It records checklist assertions and
+machine-readable blockers, but it cannot emit `VEHICLE_VALIDATED` or `PROMOTED`: the current
+contract has no resolver that proves a reference names the exact expected evidence bytes and no
+signed reviewer-identity envelope. Those authority states require a future contract version with
+both mechanisms and migration/replay tests.
 
 ## Navigation
 
@@ -245,7 +259,8 @@ truthfully showing where independent target-vehicle evidence is still missing.
 - Neither platform fabricates a live value, coverage percentage, test result, or validated signal.
 - A capture/session restart does not mix identities or overwrite prior evidence.
 - Marker time can be related to gateway monotonic time or is explicitly marked unaligned.
-- A candidate cannot be promoted with any required validation item missing.
+- A candidate cannot be promoted by Discovery v1, including when every checklist item is marked
+  satisfied; exact evidence resolution and authenticated reviewer approval remain mandatory.
 - The same stored session can drive iPhone playback and Android replay deterministically.
 - Corrupt, stale, missing, reordered, duplicated, and interrupted input is visible and bounded.
 - Driver mode cannot invoke raw engineering controls.

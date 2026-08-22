@@ -13,7 +13,11 @@ struct DiscoveryView: View {
   }
 
   private var standardSignalCount: Int {
-    Set(model.gateway.standardOBDSamples.map(\.signalID)).count
+    Set(
+      model.gateway.standardOBDSamples.filter(model.gateway.isCurrentStandardOBDSample).map(
+        \.signalID)
+    )
+    .count
   }
 
   var body: some View {
@@ -36,7 +40,7 @@ struct DiscoveryView: View {
           DiscoveryMetricRow(
             label: "OBD ECUs",
             value: obdECUDescription,
-            state: model.gateway.j1979Availability.isEmpty ? .unavailable : .observed)
+            state: currentOBDAvailability.isEmpty ? .unavailable : .observed)
           DiscoveryMetricRow(
             label: "Bus frames",
             value: vehicleBusObserved
@@ -46,9 +50,11 @@ struct DiscoveryView: View {
             detail: "Gateway cumulative counter")
           DiscoveryMetricRow(
             label: "Visible CAN IDs",
-            value: recentIdentifierCount > 0 ? recentIdentifierCount.formatted() : "Unavailable",
-            state: recentIdentifierCount > 0 ? .observed : .unavailable,
-            detail: recentIdentifierCount > 0 ? "Recent in-memory window" : nil)
+            value: vehicleBusObserved && recentIdentifierCount > 0
+              ? recentIdentifierCount.formatted() : "Unavailable",
+            state: vehicleBusObserved && recentIdentifierCount > 0 ? .observed : .unavailable,
+            detail: vehicleBusObserved && recentIdentifierCount > 0
+              ? "Recent in-memory window" : nil)
           DiscoveryMetricRow(
             label: "Standard OBD signals",
             value: standardSignalCount > 0 ? standardSignalCount.formatted() : "Unavailable",
@@ -65,7 +71,9 @@ struct DiscoveryView: View {
           DiscoveryMetricRow(
             label: "Current capture",
             value: captureDescription,
-            state: model.gateway.health?.captureActive == true ? .observed : .unavailable)
+            state: model.gateway.hasCurrentGatewayHealth
+              && model.gateway.health?.captureActive == true
+              ? .observed : .unavailable)
           DiscoveryMetricRow(
             label: "Gateway storage",
             value: storageDescription,
@@ -169,17 +177,23 @@ struct DiscoveryView: View {
   }
 
   private var obdECUDescription: String {
-    let values = model.gateway.j1979Availability
-    guard !values.isEmpty else { return "Not observed" }
+    let values = currentOBDAvailability
+    guard !values.isEmpty else { return "Unavailable" }
     let complete = values.filter(\.enumerationComplete).count
     return complete == values.count
       ? "\(values.count) · PID scan complete" : "\(values.count) · scan incomplete"
   }
 
   private var captureDescription: String {
-    if model.gateway.health?.captureActive == true { return "Recording" }
+    if model.gateway.hasCurrentGatewayHealth, model.gateway.health?.captureActive == true {
+      return "Recording"
+    }
     if model.gateway.captureHistoryTransferActive { return "Synchronizing history" }
-    return "Not recording"
+    return model.gateway.hasCurrentGatewayHealth ? "Not recording" : "Unavailable"
+  }
+
+  private var currentOBDAvailability: [J1979ECUAvailability] {
+    model.gateway.hasCurrentGatewayHealth ? model.gateway.j1979Availability : []
   }
 
   private var storageDescription: String {
@@ -805,7 +819,10 @@ private struct DiscoverySignalExplorerView: View {
   }
 
   private var latestStandardSamples: [J1979StandardSample] {
-    Dictionary(grouping: model.gateway.standardOBDSamples, by: \.signalID).values.compactMap {
+    Dictionary(
+      grouping: model.gateway.standardOBDSamples.filter(model.gateway.isCurrentStandardOBDSample),
+      by: \.signalID
+    ).values.compactMap {
       $0.max { $0.gatewayMonotonicMicroseconds < $1.gatewayMonotonicMicroseconds }
     }.sorted { $0.name < $1.name }
   }
@@ -951,7 +968,9 @@ private struct DiscoveryCaptureReviewView: View {
       Section("Gateway recorder") {
         LabeledContent(
           "State",
-          value: model.gateway.health?.captureActive == true ? "Recording" : "Not recording")
+          value: !model.gateway.hasCurrentGatewayHealth
+            ? "Unavailable"
+            : model.gateway.health?.captureActive == true ? "Recording" : "Not recording")
         Text(model.gateway.captureSyncMessage).font(.footnote).foregroundStyle(.secondary)
         Button("Refresh capture inventory") { model.gateway.refreshCaptureLogIndex() }
           .disabled(model.gateway.state != .vhosConnected)
@@ -1094,7 +1113,12 @@ private struct DiscoveryProgressView: View {
   @Environment(AppModel.self) private var model
 
   private var supportedPIDCount: Int {
-    Set(model.gateway.j1979Availability.flatMap(\.supportedPIDs)).count
+    guard model.gateway.hasCurrentGatewayHealth else { return 0 }
+    return Set(model.gateway.j1979Availability.flatMap(\.supportedPIDs)).count
+  }
+
+  private var currentStandardSamples: [J1979StandardSample] {
+    model.gateway.standardOBDSamples.filter(model.gateway.isCurrentStandardOBDSample)
   }
 
   var body: some View {
@@ -1102,16 +1126,18 @@ private struct DiscoveryProgressView: View {
       Section("Current evidence coverage") {
         DiscoveryProgressRow(
           label: "Gateway observations",
-          value: model.gateway.health?.receivedFrames.formatted() ?? "Unavailable",
-          state: model.gateway.health == nil ? .unavailable : .observed)
+          value: model.gateway.hasCurrentGatewayHealth
+            ? model.gateway.health?.receivedFrames.formatted() ?? "Unavailable" : "Unavailable",
+          state: model.gateway.hasCurrentGatewayHealth ? .observed : .unavailable)
         DiscoveryProgressRow(
           label: "Supported standard PIDs",
           value: supportedPIDCount > 0 ? supportedPIDCount.formatted() : "Unavailable",
           state: supportedPIDCount > 0 ? .observed : .unavailable)
         DiscoveryProgressRow(
           label: "Decoded standard signals",
-          value: Set(model.gateway.standardOBDSamples.map(\.signalID)).count.formatted(),
-          state: model.gateway.standardOBDSamples.isEmpty ? .unavailable : .observed)
+          value: currentStandardSamples.isEmpty
+            ? "Unavailable" : Set(currentStandardSamples.map(\.signalID)).count.formatted(),
+          state: currentStandardSamples.isEmpty ? .unavailable : .observed)
         DiscoveryProgressRow(
           label: "Experimental candidates",
           value: model.canResearchReport.map { $0.series.count.formatted() } ?? "Unavailable",

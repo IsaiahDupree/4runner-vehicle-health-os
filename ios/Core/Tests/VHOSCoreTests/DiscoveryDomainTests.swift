@@ -75,6 +75,65 @@ private let discoveryReviewerID = "reviewer_01K32Q6T000000000000000003"
   }
 }
 
+@Test func discoverySummaryRejectsDuplicateObservationIdentity() throws {
+  let observations = try loadDiscoveryFixture()
+  let duplicated = observations + [try #require(observations.first)]
+  let session = try makeRealCaptureSession(duplicated)
+
+  #expect(throws: DiscoveryContractError.evidenceDoesNotMatchCapture) {
+    try DiscoveryEvidenceAnalyzer.summarize(observations: duplicated, session: session)
+  }
+}
+
+@Test func discoverySummaryUsesGlobalEnvelopeAcrossResetRecorderClocks() throws {
+  let original = try loadDiscoveryFixture()
+  let laterLowerNumberedSession = original.map {
+    PassiveCANObservation(
+      gatewayID: $0.gatewayID,
+      sessionID: 1,
+      sourceSequence: $0.sourceSequence + 100_000,
+      monotonicMicroseconds: $0.monotonicMicroseconds + 100_000_000,
+      bitrateBps: $0.bitrateBps,
+      identifier: $0.identifier,
+      extended: $0.extended,
+      remoteRequest: $0.remoteRequest,
+      listenOnly: $0.listenOnly,
+      dataLength: $0.dataLength,
+      data: $0.data,
+      evidenceSource: $0.evidenceSource,
+      ingestedAt: $0.ingestedAt)
+  }
+  let observations = original + laterLowerNumberedSession
+  let capture = try makeRealCaptureSession(observations)
+  let summary = try DiscoveryEvidenceAnalyzer.summarize(
+    observations: observations, session: capture)
+
+  #expect(summary.gatewaySessionCount == 2)
+  #expect(summary.startMonotonicMicroseconds == original.map(\.monotonicMicroseconds).min())
+  #expect(
+    summary.endMonotonicMicroseconds
+      == laterLowerNumberedSession.map(\.monotonicMicroseconds).max())
+}
+
+@Test func candidateFieldProtocolBindsFrameWidthAndBitrateIdentity() throws {
+  #expect(throws: DiscoveryContractError.invalidCandidateSignal) {
+    try CandidateFieldDefinition(
+      protocolID: .can11Bit500K, identifier: 0x022, extended: true,
+      byteOffset: 0, bitOffset: 0, bitLength: 1, byteOrder: .bigEndian, signed: false)
+  }
+  #expect(throws: DiscoveryContractError.invalidCandidateSignal) {
+    try CandidateFieldDefinition(
+      protocolID: .can29Bit250K, identifier: 0x022, extended: false,
+      byteOffset: 0, bitOffset: 0, bitLength: 1, byteOrder: .bigEndian, signed: false)
+  }
+
+  let standard = try CandidateFieldDefinition(
+    protocolID: .can11Bit500K, identifier: 0x022, extended: false,
+    byteOffset: 0, bitOffset: 0, bitLength: 1, byteOrder: .bigEndian, signed: false)
+  #expect(standard.protocolID.canBitrateBps == 500_000)
+  #expect(standard.protocolID.canExtended == false)
+}
+
 @Test func booleanAnalyzerUsesRealFramesButNeverPromotesCircularTestLabels() throws {
   let observations = try loadDiscoveryFixture()
   let field = try CandidateFieldDefinition(
@@ -97,6 +156,7 @@ private let discoveryReviewerID = "reviewer_01K32Q6T000000000000000003"
       try EventMarker(
         id: DiscoveryIDGenerator.make(prefix: "marker"),
         captureID: discoveryCaptureID,
+        gatewaySessionID: observation.sessionID,
         gatewayMonotonicMicroseconds: observation.monotonicMicroseconds,
         recordedAt: observation.ingestedAt,
         kind: state ? .brakePressed : .brakeReleased,
@@ -109,7 +169,9 @@ private let discoveryReviewerID = "reviewer_01K32Q6T000000000000000003"
     lastState = state
   }
 
+  let capture = try makeRealCaptureSession(observations, eventMarkers: markers)
   let result = try BooleanCandidateAnalyzer.evaluate(
+    capture: capture,
     field: field,
     observations: observations,
     markers: markers,
@@ -123,6 +185,307 @@ private let discoveryReviewerID = "reviewer_01K32Q6T000000000000000003"
   #expect(result.authority == .candidate)
   #expect(result.authority.rawValue == "EXPERIMENTAL_CANDIDATE")
   #expect(result.observationReferences == matching.map(\.id))
+}
+
+@Test func booleanAnalyzerRejectsMarkerOutsideTheFinalizedCapture() throws {
+  let observations = try loadDiscoveryFixture()
+  let first = try #require(observations.first)
+  let retained = try EventMarker(
+    id: "marker_01K32Q6T000000000000000009",
+    captureID: discoveryCaptureID,
+    gatewaySessionID: first.sessionID,
+    gatewayMonotonicMicroseconds: first.monotonicMicroseconds,
+    recordedAt: first.ingestedAt,
+    kind: .brakePressed,
+    label: "Retained marker",
+    source: .user,
+    nearestCANSequence: first.sourceSequence)
+  let unretained = try EventMarker(
+    id: "marker_01K32Q6T00000000000000000A",
+    captureID: discoveryCaptureID,
+    gatewaySessionID: first.sessionID,
+    gatewayMonotonicMicroseconds: first.monotonicMicroseconds,
+    recordedAt: first.ingestedAt,
+    kind: .brakeReleased,
+    label: "Marker not retained by the finalized capture",
+    source: .user,
+    nearestCANSequence: first.sourceSequence)
+  let capture = try makeRealCaptureSession(observations, eventMarkers: [retained])
+  let field = try CandidateFieldDefinition(
+    protocolID: .can11Bit500K, identifier: first.identifier, extended: false,
+    byteOffset: 0, bitOffset: 0, bitLength: 1, byteOrder: .bigEndian, signed: false)
+
+  #expect(throws: DiscoveryContractError.evidenceDoesNotMatchCapture) {
+    try BooleanCandidateAnalyzer.evaluate(
+      capture: capture,
+      field: field,
+      observations: observations,
+      markers: [retained, unretained],
+      trueKinds: [.brakePressed],
+      falseKinds: [.brakeReleased])
+  }
+}
+
+@Test func captureSessionRejectsOutOfWindowMarkers() throws {
+  let observations = try loadDiscoveryFixture()
+  let last = try #require(observations.last)
+  let marker = try EventMarker(
+    id: "marker_01K32Q6T00000000000000000B",
+    captureID: discoveryCaptureID,
+    gatewaySessionID: last.sessionID,
+    gatewayMonotonicMicroseconds: last.monotonicMicroseconds + 1,
+    recordedAt: last.ingestedAt,
+    kind: .custom,
+    label: "Outside finalized capture",
+    source: .user,
+    nearestCANSequence: last.sourceSequence + 1)
+
+  #expect(throws: DiscoveryContractError.invalidCaptureSession) {
+    try makeRealCaptureSession(observations, eventMarkers: [marker])
+  }
+}
+
+@Test func captureSessionRejectsDuplicateMarkerIDsBeforeAnalysis() throws {
+  let observations = try loadDiscoveryFixture()
+  let first = try #require(observations.first)
+  let marker = try EventMarker(
+    id: "marker_01K32Q6T00000000000000000E",
+    captureID: discoveryCaptureID,
+    gatewaySessionID: first.sessionID,
+    gatewayMonotonicMicroseconds: first.monotonicMicroseconds,
+    recordedAt: first.ingestedAt,
+    kind: .custom,
+    label: "Duplicate identity guard",
+    source: .user,
+    nearestCANSequence: first.sourceSequence)
+
+  #expect(throws: DiscoveryContractError.invalidCaptureSession) {
+    try makeRealCaptureSession(observations, eventMarkers: [marker, marker])
+  }
+}
+
+@Test func legacyV1MarkerRemainsReadableButCannotLabelRecorderSessionEvidence() throws {
+  let observations = try loadDiscoveryFixture()
+  let first = try #require(observations.first)
+  let current = try EventMarker(
+    id: "marker_01K32Q6T00000000000000000F",
+    captureID: discoveryCaptureID,
+    gatewaySessionID: first.sessionID,
+    gatewayMonotonicMicroseconds: first.monotonicMicroseconds,
+    recordedAt: first.ingestedAt,
+    kind: .brakePressed,
+    label: "Legacy-compatible marker",
+    source: .user,
+    nearestCANSequence: first.sourceSequence)
+  var object = try #require(
+    JSONSerialization.jsonObject(with: VHOSJSON.encoder().encode(current)) as? [String: Any])
+  object.removeValue(forKey: "gateway_session_id")
+  let legacyData = try JSONSerialization.data(withJSONObject: object, options: [.sortedKeys])
+  let legacy = try VHOSJSON.decoder().decode(EventMarker.self, from: legacyData)
+
+  #expect(legacy.gatewaySessionID == nil)
+  try legacy.validateContract()
+  let capture = try makeRealCaptureSession(observations, eventMarkers: [legacy])
+  let field = try CandidateFieldDefinition(
+    protocolID: .can11Bit500K, identifier: first.identifier, extended: false,
+    byteOffset: 0, bitOffset: 0, bitLength: 1, byteOrder: .bigEndian, signed: false)
+
+  #expect(throws: DiscoveryContractError.evidenceDoesNotMatchCapture) {
+    try BooleanCandidateAnalyzer.evaluate(
+      capture: capture,
+      field: field,
+      observations: observations,
+      markers: [legacy],
+      trueKinds: [.brakePressed],
+      falseKinds: [.brakeReleased])
+  }
+}
+
+@Test func legacyV1PhysicalMeasurementRemainsReadableAndExplicitlyUnbound() throws {
+  let observations = try loadDiscoveryFixture()
+  let first = try #require(observations.first)
+  let current = try PhysicalMeasurement(
+    id: "measurement_01K32Q6T00000000000000000F",
+    captureID: discoveryCaptureID,
+    gatewaySessionID: first.sessionID,
+    gatewayMonotonicMicroseconds: first.monotonicMicroseconds,
+    recordedAt: first.ingestedAt,
+    signalID: "ac.low_side_pressure",
+    value: 34.2,
+    unit: "psi",
+    method: "Manual service-gauge reading",
+    source: .externalInstrument,
+    quality: .manuallyEntered,
+    nearestCANSequence: first.sourceSequence)
+  var object = try #require(
+    JSONSerialization.jsonObject(with: VHOSJSON.encoder().encode(current)) as? [String: Any])
+  object.removeValue(forKey: "gateway_session_id")
+  let legacyData = try JSONSerialization.data(withJSONObject: object, options: [.sortedKeys])
+  let legacy = try VHOSJSON.decoder().decode(PhysicalMeasurement.self, from: legacyData)
+
+  #expect(legacy.gatewaySessionID == nil)
+  try legacy.validateContract()
+  _ = try makeRealCaptureSession(observations, physicalMeasurements: [legacy])
+}
+
+@Test func booleanAnalyzerNeverAppliesMarkersAcrossRecorderSessions() throws {
+  let original = try loadDiscoveryFixture()
+  let secondSessionID = try #require(original.first?.sessionID).addingReportingOverflow(1)
+    .partialValue
+  let secondSession = original.map {
+    PassiveCANObservation(
+      gatewayID: $0.gatewayID,
+      sessionID: secondSessionID,
+      sourceSequence: $0.sourceSequence,
+      monotonicMicroseconds: $0.monotonicMicroseconds,
+      bitrateBps: $0.bitrateBps,
+      identifier: $0.identifier,
+      extended: $0.extended,
+      remoteRequest: $0.remoteRequest,
+      listenOnly: $0.listenOnly,
+      dataLength: $0.dataLength,
+      data: $0.data,
+      evidenceSource: $0.evidenceSource,
+      ingestedAt: $0.ingestedAt)
+  }
+  let observations = original + secondSession
+  let matching = original.filter { $0.identifier == 0x022 }
+    .sorted { $0.monotonicMicroseconds < $1.monotonicMicroseconds }
+  let firstFalse = try #require(matching.first { ($0.data[3] & 0x01) == 0 })
+  let firstTrue = try #require(matching.first { ($0.data[3] & 0x01) == 1 })
+  let markers = [
+    try EventMarker(
+      id: "marker_01K32Q6T00000000000000000C",
+      captureID: discoveryCaptureID,
+      gatewaySessionID: firstFalse.sessionID,
+      gatewayMonotonicMicroseconds: firstFalse.monotonicMicroseconds,
+      recordedAt: firstFalse.ingestedAt,
+      kind: .brakeReleased,
+      label: "Session-scoped false marker",
+      source: .user,
+      nearestCANSequence: firstFalse.sourceSequence),
+    try EventMarker(
+      id: "marker_01K32Q6T00000000000000000D",
+      captureID: discoveryCaptureID,
+      gatewaySessionID: firstTrue.sessionID,
+      gatewayMonotonicMicroseconds: firstTrue.monotonicMicroseconds,
+      recordedAt: firstTrue.ingestedAt,
+      kind: .brakePressed,
+      label: "Session-scoped true marker",
+      source: .user,
+      nearestCANSequence: firstTrue.sourceSequence),
+  ]
+  let capture = try makeRealCaptureSession(observations, eventMarkers: markers)
+  let result = try BooleanCandidateAnalyzer.evaluate(
+    capture: capture,
+    field: CandidateFieldDefinition(
+      protocolID: .can11Bit500K, identifier: 0x022, extended: false,
+      byteOffset: 3, bitOffset: 0, bitLength: 1, byteOrder: .bigEndian, signed: false),
+    observations: observations,
+    markers: markers,
+    trueKinds: [.brakePressed],
+    falseKinds: [.brakeReleased])
+
+  #expect(result.observationReferences.allSatisfy { $0.contains(":\(firstFalse.sessionID):") })
+  #expect(!result.observationReferences.contains { $0.contains(":\(secondSessionID):") })
+}
+
+@Test func booleanAnalyzerRequiresMarkerSequenceInItsExactRecorderSession() throws {
+  let original = try loadDiscoveryFixture()
+  let secondSessionID = try #require(original.first?.sessionID).addingReportingOverflow(1)
+    .partialValue
+  let secondSession = original.map {
+    PassiveCANObservation(
+      gatewayID: $0.gatewayID,
+      sessionID: secondSessionID,
+      sourceSequence: $0.sourceSequence + 100_000,
+      monotonicMicroseconds: $0.monotonicMicroseconds,
+      bitrateBps: $0.bitrateBps,
+      identifier: $0.identifier,
+      extended: $0.extended,
+      remoteRequest: $0.remoteRequest,
+      listenOnly: $0.listenOnly,
+      dataLength: $0.dataLength,
+      data: $0.data,
+      evidenceSource: $0.evidenceSource,
+      ingestedAt: $0.ingestedAt)
+  }
+  let observations = original + secondSession
+  let secondObservation = try #require(secondSession.first)
+  let sequenceFromDifferentSession = try #require(original.first).sourceSequence
+  let marker = try EventMarker(
+    id: "marker_01K32Q6T00000000000000000G",
+    captureID: discoveryCaptureID,
+    gatewaySessionID: secondSessionID,
+    gatewayMonotonicMicroseconds: secondObservation.monotonicMicroseconds,
+    recordedAt: secondObservation.ingestedAt,
+    kind: .brakePressed,
+    label: "Sequence belongs to a different recorder session",
+    source: .user,
+    nearestCANSequence: sequenceFromDifferentSession)
+  let capture = try makeRealCaptureSession(observations, eventMarkers: [marker])
+  let field = try CandidateFieldDefinition(
+    protocolID: .can11Bit500K, identifier: secondObservation.identifier, extended: false,
+    byteOffset: 0, bitOffset: 0, bitLength: 1, byteOrder: .bigEndian, signed: false)
+
+  #expect(throws: DiscoveryContractError.evidenceDoesNotMatchCapture) {
+    try BooleanCandidateAnalyzer.evaluate(
+      capture: capture,
+      field: field,
+      observations: observations,
+      markers: [marker],
+      trueKinds: [.brakePressed],
+      falseKinds: [.brakeReleased])
+  }
+}
+
+@Test func booleanAnalyzerRequiresMarkerTimeInItsExactRecorderSessionWindow() throws {
+  let original = try loadDiscoveryFixture()
+  let secondSessionID = try #require(original.first?.sessionID).addingReportingOverflow(1)
+    .partialValue
+  let secondSession = original.map {
+    PassiveCANObservation(
+      gatewayID: $0.gatewayID,
+      sessionID: secondSessionID,
+      sourceSequence: $0.sourceSequence + 100_000,
+      monotonicMicroseconds: $0.monotonicMicroseconds + 100_000_000,
+      bitrateBps: $0.bitrateBps,
+      identifier: $0.identifier,
+      extended: $0.extended,
+      remoteRequest: $0.remoteRequest,
+      listenOnly: $0.listenOnly,
+      dataLength: $0.dataLength,
+      data: $0.data,
+      evidenceSource: $0.evidenceSource,
+      ingestedAt: $0.ingestedAt)
+  }
+  let observations = original + secondSession
+  let firstSessionObservation = try #require(original.first)
+  let secondSessionObservation = try #require(secondSession.first)
+  let marker = try EventMarker(
+    id: "marker_01K32Q6T00000000000000000H",
+    captureID: discoveryCaptureID,
+    gatewaySessionID: secondSessionID,
+    gatewayMonotonicMicroseconds: firstSessionObservation.monotonicMicroseconds,
+    recordedAt: secondSessionObservation.ingestedAt,
+    kind: .brakePressed,
+    label: "Time belongs to a different recorder-session clock",
+    source: .user,
+    nearestCANSequence: secondSessionObservation.sourceSequence)
+  let capture = try makeRealCaptureSession(observations, eventMarkers: [marker])
+  let field = try CandidateFieldDefinition(
+    protocolID: .can11Bit500K, identifier: secondSessionObservation.identifier, extended: false,
+    byteOffset: 0, bitOffset: 0, bitLength: 1, byteOrder: .bigEndian, signed: false)
+
+  #expect(throws: DiscoveryContractError.evidenceDoesNotMatchCapture) {
+    try BooleanCandidateAnalyzer.evaluate(
+      capture: capture,
+      field: field,
+      observations: observations,
+      markers: [marker],
+      trueKinds: [.brakePressed],
+      falseKinds: [.brakeReleased])
+  }
 }
 
 @Test func defaultPromotionFailsClosedAndRequiresEveryEvidenceGateAndReviewer() throws {
@@ -158,7 +521,7 @@ private let discoveryReviewerID = "reviewer_01K32Q6T000000000000000003"
   #expect(decision.blockers.contains("MISSING_OR_NONAPPROVING_REVIEW"))
 }
 
-@Test func completeReviewedChecklistExercisesPromotionAllowedContractPath() throws {
+@Test func completeReviewedChecklistStillRequiresResolvedEvidenceAndSignedApproval() throws {
   let observations = try loadDiscoveryFixture()
   let candidate = try makeRealCandidate(observations)
   let source = "contract-test-evidence:real-fixture-af230502"
@@ -185,11 +548,34 @@ private let discoveryReviewerID = "reviewer_01K32Q6T000000000000000003"
     checklist: checklist,
     evaluatedAt: "2026-08-18T17:43:00Z")
 
-  #expect(checklist.authority == .validated)
-  #expect(checklist.authority.rawValue == "VEHICLE_VALIDATED")
-  #expect(decision.promotionAllowed)
-  #expect(decision.blockers.isEmpty)
-  #expect(decision.authority == .promoted)
+  #expect(checklist.authority == .candidate)
+  #expect(checklist.authority.rawValue == "EXPERIMENTAL_CANDIDATE")
+  #expect(!decision.promotionAllowed)
+  #expect(decision.blockers.contains("VERIFIED_EVIDENCE_RESOLVER_REQUIRED"))
+  #expect(decision.blockers.contains("SIGNED_REVIEWER_APPROVAL_REQUIRED"))
+  #expect(decision.authority == .candidate)
+}
+
+@Test func promotionDecisionDecoderRejectsCraftedVehicleAuthority() throws {
+  let payload = Data(
+    """
+    {
+      "contract": "vhos.discovery.signal-promotion-decision",
+      "contract_version": "1.0.0",
+      "candidate_id": "\(discoveryCandidateID)",
+      "evaluated_at": "2026-08-18T17:43:00Z",
+      "policy_id": "discovery.signal-promotion.definition-of-done",
+      "policy_version": "1.0.0",
+      "promotion_allowed": true,
+      "blockers": [],
+      "satisfied_evidence_references": ["caller-asserted:unverified"],
+      "authority": "VEHICLE_VALIDATED"
+    }
+    """.utf8)
+
+  #expect(throws: DiscoveryContractError.invalidPromotionDecision) {
+    try VHOSJSON.decoder().decode(SignalPromotionDecision.self, from: payload)
+  }
 }
 
 @Test func recommendedNextTestIsDeterministicAcrossInputOrder() throws {
@@ -236,6 +622,7 @@ private let discoveryReviewerID = "reviewer_01K32Q6T000000000000000003"
   let marker = try EventMarker(
     id: "marker_01K32Q6T000000000000000006",
     captureID: discoveryCaptureID,
+    gatewaySessionID: firstObservation.sessionID,
     gatewayMonotonicMicroseconds: firstObservation.monotonicMicroseconds,
     recordedAt: firstObservation.ingestedAt,
     kind: .measurementTaken,
@@ -246,6 +633,7 @@ private let discoveryReviewerID = "reviewer_01K32Q6T000000000000000003"
   let measurement = try PhysicalMeasurement(
     id: "measurement_01K32Q6T000000000000000007",
     captureID: discoveryCaptureID,
+    gatewaySessionID: firstObservation.sessionID,
     gatewayMonotonicMicroseconds: firstObservation.monotonicMicroseconds,
     recordedAt: firstObservation.ingestedAt,
     signalID: "vehicle.network-bitrate",
@@ -296,7 +684,9 @@ private let discoveryReviewerID = "reviewer_01K32Q6T000000000000000003"
 
 private func makeRealCaptureSession(
   _ observations: [PassiveCANObservation],
-  archiveSHA256 overrideArchiveSHA: String? = nil
+  archiveSHA256 overrideArchiveSHA: String? = nil,
+  eventMarkers: [EventMarker] = [],
+  physicalMeasurements: [PhysicalMeasurement] = []
 ) throws -> CaptureSession {
   let archiveSHA = try overrideArchiveSHA ?? PassiveCANEvidenceArchive.semanticSHA256(observations)
   let sequences = observations.map(\.sourceSequence)
@@ -320,6 +710,8 @@ private func makeRealCaptureSession(
     lastSourceSequence: try #require(sequences.max()),
     archiveSHA256: archiveSHA,
     manifestSHA256: sha256("capture-manifest:\(discoveryCaptureID):\(archiveSHA)"),
+    eventMarkers: eventMarkers,
+    physicalMeasurements: physicalMeasurements,
     notes: "Materialized from the retained 2026-08-18 gateway evidence fixture.")
 }
 

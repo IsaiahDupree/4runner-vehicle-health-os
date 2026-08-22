@@ -347,10 +347,24 @@ final class AppModel {
     do {
       discoveryMarkers = try discoveryEvidenceStore.markers()
       discoveryTestRuns = try discoveryEvidenceStore.testRuns()
-      discoveryMarkerMessage =
+      let retainedMessage =
         discoveryMarkers.isEmpty
         ? "No synchronized Discovery markers are retained."
         : "\(discoveryMarkers.count) append-only Discovery marker(s) retained on this iPhone."
+      let recoveries = discoveryEvidenceStore.recoveryReports
+      if let latestRecovery = recoveries.last {
+        let recoveredFiles = Set(recoveries.map(\.sourceFileName)).sorted()
+          .joined(separator: ", ")
+        let quarantinedByteCount = recoveries.reduce(0) {
+          $0 + $1.quarantinedByteCount
+        }
+        discoveryMarkerMessage =
+          "\(retainedMessage) Recovered \(recoveries.count) interrupted ledger append(s) in "
+          + "\(recoveredFiles); quarantined \(quarantinedByteCount) uncommitted tail byte(s). "
+          + "Latest quarantine: \(latestRecovery.quarantineURL.lastPathComponent)."
+      } else {
+        discoveryMarkerMessage = retainedMessage
+      }
     } catch {
       discoveryMarkers = []
       discoveryTestRuns = []
@@ -383,6 +397,8 @@ final class AppModel {
       let health = gateway.health, handshake.listenOnly, health.listenOnly,
       let observation = gateway.latestCANObservation,
       observation.gatewayID == handshake.gatewayID, observation.listenOnly,
+      let currentSessionID = health.captureSessionID,
+      observation.sessionID == currentSessionID,
       let receivedAt = gateway.latestCANObservationReceivedAt
     else { throw AppModelError.discoveryCurrentTimelineRequired }
     let age = Date().timeIntervalSince(receivedAt)
@@ -504,6 +520,12 @@ final class AppModel {
 
   func runDiscovery(_ kind: DiscoveryKind, explicitApproval: Bool) {
     do {
+      guard gateway.hasCurrentGatewayHealth else {
+        throw AppModelError.gatewayHealthRequired
+      }
+      guard gateway.hasCurrentParkedAuthority else {
+        throw AppModelError.discoveryParkedStateRequired
+      }
       guard let handshake = gateway.handshake, let health = gateway.health else {
         throw AppModelError.gatewayHealthRequired
       }

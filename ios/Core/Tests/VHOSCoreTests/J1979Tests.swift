@@ -79,6 +79,18 @@ import Testing
   _ = try response.validatedPayload()
 }
 
+@Test func recorderContextRejectsLateDiagnosticResponseFromPreviousSession() {
+  let currentGatewayID = "esp32-9454c5b08d14"
+  let old = response(
+    pid: 0x00, payload: "410000180000", time: 1, captureID: "capture-41")
+  let current = response(
+    pid: 0x00, payload: "410000180000", time: 2, captureID: "capture-42")
+
+  #expect(!old.matchesRecorderContext(gatewayID: currentGatewayID, captureSessionID: 42))
+  #expect(current.matchesRecorderContext(gatewayID: currentGatewayID, captureSessionID: 42))
+  #expect(!current.matchesRecorderContext(gatewayID: "esp32-different", captureSessionID: 42))
+}
+
 private func response(
   pid: UInt8,
   payload: String,

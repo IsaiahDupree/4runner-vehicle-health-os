@@ -27,8 +27,8 @@
     "manifest_sha256": {"$ref": "common.schema.json#/$defs/sha256"},
     "test_template_id": {"$ref": "common.schema.json#/$defs/semanticId"},
     "test_template_version": {"$ref": "common.schema.json#/$defs/semanticVersion"},
-    "event_markers": {"type": "array", "items": {"$ref": "discovery-common.schema.json#/$defs/eventMarker"}},
-    "physical_measurements": {"type": "array", "items": {"$ref": "discovery-common.schema.json#/$defs/physicalMeasurement"}},
+    "event_markers": {"type": "array", "uniqueItems": true, "items": {"$ref": "discovery-common.schema.json#/$defs/eventMarker"}},
+    "physical_measurements": {"type": "array", "uniqueItems": true, "items": {"$ref": "discovery-common.schema.json#/$defs/physicalMeasurement"}},
     "notes": {"type": "string", "maxLength": 2000},
     "authority": {"const": "OBSERVED"}
   },

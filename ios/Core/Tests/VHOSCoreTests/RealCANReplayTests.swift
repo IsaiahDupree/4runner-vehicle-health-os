@@ -5,12 +5,14 @@ import Testing
 @testable import VHOSCore
 
 private let realCANFixtureName = "real-can-2026-08-18-627753796-256"
-private let realCANFixtureSHA256 = "af2305021c2d48d89c55d1739da407d78ee28baa39cce63125d0656672f58aed"
+private let realCANFixtureSHA256 =
+  "af2305021c2d48d89c55d1739da407d78ee28baa39cce63125d0656672f58aed"
 
 @Test func realCapturedCANFixtureIsPinnedAndRoundTripsTheDeployedLiveRecord() throws {
   let (raw, observations) = try loadRealCANFixture()
 
-  #expect(SHA256.hash(data: raw).map { String(format: "%02x", $0) }.joined() == realCANFixtureSHA256)
+  #expect(
+    SHA256.hash(data: raw).map { String(format: "%02x", $0) }.joined() == realCANFixtureSHA256)
   #expect(observations.count == 256)
   #expect(observations.allSatisfy { $0.sessionID == 627_753_796 })
   #expect(observations.allSatisfy { $0.listenOnly && $0.bitrateBps == 500_000 })
@@ -65,9 +67,25 @@ private let realCANFixtureSHA256 = "af2305021c2d48d89c55d1739da407d78ee28baa39cc
   #expect(decoder.bufferedByteCount == 0)
 }
 
+@Test func liveObservationRequiresExactCurrentRecorderContext() throws {
+  let (_, observations) = try loadRealCANFixture()
+  let observation = try #require(observations.first)
+
+  #expect(
+    observation.matchesRecorderContext(
+      gatewayID: observation.gatewayID, captureSessionID: observation.sessionID))
+  #expect(
+    !observation.matchesRecorderContext(
+      gatewayID: observation.gatewayID, captureSessionID: observation.sessionID + 1))
+  #expect(
+    !observation.matchesRecorderContext(
+      gatewayID: "esp32-different", captureSessionID: observation.sessionID))
+}
+
 private func loadRealCANFixture() throws -> (Data, [PassiveCANObservation]) {
   let url = try #require(
-    Bundle.module.url(forResource: realCANFixtureName, withExtension: "ndjson", subdirectory: "Fixtures")
+    Bundle.module.url(
+      forResource: realCANFixtureName, withExtension: "ndjson", subdirectory: "Fixtures")
   )
   let raw = try Data(contentsOf: url)
   let observations = try raw.split(separator: 0x0A).map { line in

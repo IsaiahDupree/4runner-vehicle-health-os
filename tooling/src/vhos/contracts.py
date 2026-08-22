@@ -119,6 +119,51 @@ class ContractCatalog:
         if errors:
             details = "; ".join(_format_error(error.path, error.message) for error in errors)
             raise ContractError(f"{contract} validation failed: {details}")
+        _validate_contract_semantics(contract, document)
+
+
+def _validate_contract_semantics(contract: str, document: dict[str, Any]) -> None:
+    if contract != "vhos.discovery.capture-session":
+        return
+
+    capture_id = document["id"]
+    start = document["start_monotonic_microseconds"]
+    end = document["end_monotonic_microseconds"]
+    first_sequence = document["first_source_sequence"]
+    last_sequence = document["last_source_sequence"]
+    gateway_sessions = set(document["gateway_session_ids"])
+    if start > end:
+        raise ContractError(f"{contract} semantic validation failed: capture time is reversed")
+    if first_sequence > last_sequence:
+        raise ContractError(f"{contract} semantic validation failed: source sequence is reversed")
+
+    for collection_name in ("event_markers", "physical_measurements"):
+        records = document[collection_name]
+        identities = [record["id"] for record in records]
+        if len(identities) != len(set(identities)):
+            raise ContractError(
+                f"{contract} semantic validation failed: duplicate {collection_name} identity"
+            )
+        for record in records:
+            if record["capture_id"] != capture_id:
+                raise ContractError(
+                    f"{contract} semantic validation failed: {collection_name} capture mismatch"
+                )
+            monotonic = record["gateway_monotonic_microseconds"]
+            if monotonic < start or monotonic > end:
+                raise ContractError(
+                    f"{contract} semantic validation failed: {collection_name} time outside capture"
+                )
+            gateway_session_id = record.get("gateway_session_id")
+            if gateway_session_id is not None and gateway_session_id not in gateway_sessions:
+                raise ContractError(
+                    f"{contract} semantic validation failed: {collection_name} session mismatch"
+                )
+            nearest_sequence = record.get("nearest_can_sequence")
+            if nearest_sequence is not None and not first_sequence <= nearest_sequence <= last_sequence:
+                raise ContractError(
+                    f"{contract} semantic validation failed: {collection_name} sequence outside capture"
+                )
 
 
 def _format_error(path: Iterable[Any], message: str) -> str:

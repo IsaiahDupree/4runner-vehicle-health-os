@@ -228,6 +228,10 @@ public struct EventMarker: Codable, Equatable, Sendable, Identifiable {
   public let contractVersion: String
   public let id: String
   public let captureID: String
+  /// Exact recorder-session lineage for newly captured evidence. This remains optional on the v1
+  /// wire shape so records written before the field existed still decode; unbound legacy markers
+  /// are never eligible for correlation analysis.
+  public let gatewaySessionID: UInt32?
   public let gatewayMonotonicMicroseconds: UInt64
   public let recordedAt: String
   public let kind: DiscoveryMarkerKind
@@ -242,6 +246,7 @@ public struct EventMarker: Codable, Equatable, Sendable, Identifiable {
     case contract, contractVersion, id, gatewayMonotonicMicroseconds, recordedAt, kind, label
     case source, note, authority
     case captureID = "captureId"
+    case gatewaySessionID = "gatewaySessionId"
     case observerID = "observerId"
     case nearestCANSequence = "nearestCanSequence"
   }
@@ -249,6 +254,7 @@ public struct EventMarker: Codable, Equatable, Sendable, Identifiable {
   public init(
     id: String,
     captureID: String,
+    gatewaySessionID: UInt32? = nil,
     gatewayMonotonicMicroseconds: UInt64,
     recordedAt: String,
     kind: DiscoveryMarkerKind,
@@ -269,6 +275,7 @@ public struct EventMarker: Codable, Equatable, Sendable, Identifiable {
     contractVersion = "1.0.0"
     self.id = id
     self.captureID = captureID
+    self.gatewaySessionID = gatewaySessionID
     self.gatewayMonotonicMicroseconds = gatewayMonotonicMicroseconds
     self.recordedAt = recordedAt
     self.kind = kind
@@ -285,7 +292,7 @@ public struct EventMarker: Codable, Equatable, Sendable, Identifiable {
       authority == .observed
     else { throw DiscoveryContractError.unsupportedContract }
     _ = try EventMarker(
-      id: id, captureID: captureID,
+      id: id, captureID: captureID, gatewaySessionID: gatewaySessionID,
       gatewayMonotonicMicroseconds: gatewayMonotonicMicroseconds,
       recordedAt: recordedAt, kind: kind, label: label, source: source,
       observerID: observerID, nearestCANSequence: nearestCANSequence, note: note)
@@ -297,6 +304,9 @@ public struct PhysicalMeasurement: Codable, Equatable, Sendable, Identifiable {
   public let contractVersion: String
   public let id: String
   public let captureID: String
+  /// Exact recorder-session lineage for newly captured evidence. Missing values identify legacy
+  /// v1 records and must not be inferred across gateway restarts.
+  public let gatewaySessionID: UInt32?
   public let gatewayMonotonicMicroseconds: UInt64
   public let recordedAt: String
   public let signalID: String
@@ -315,6 +325,7 @@ public struct PhysicalMeasurement: Codable, Equatable, Sendable, Identifiable {
     case contract, contractVersion, id, gatewayMonotonicMicroseconds, recordedAt, value, unit
     case method, calibrationReference, source, quality, note, authority
     case captureID = "captureId"
+    case gatewaySessionID = "gatewaySessionId"
     case signalID = "signalId"
     case instrumentID = "instrumentId"
     case nearestCANSequence = "nearestCanSequence"
@@ -323,6 +334,7 @@ public struct PhysicalMeasurement: Codable, Equatable, Sendable, Identifiable {
   public init(
     id: String,
     captureID: String,
+    gatewaySessionID: UInt32? = nil,
     gatewayMonotonicMicroseconds: UInt64,
     recordedAt: String,
     signalID: String,
@@ -351,6 +363,7 @@ public struct PhysicalMeasurement: Codable, Equatable, Sendable, Identifiable {
     contractVersion = "1.0.0"
     self.id = id
     self.captureID = captureID
+    self.gatewaySessionID = gatewaySessionID
     self.gatewayMonotonicMicroseconds = gatewayMonotonicMicroseconds
     self.recordedAt = recordedAt
     self.signalID = signalID
@@ -371,7 +384,7 @@ public struct PhysicalMeasurement: Codable, Equatable, Sendable, Identifiable {
       authority == .observed
     else { throw DiscoveryContractError.unsupportedContract }
     _ = try PhysicalMeasurement(
-      id: id, captureID: captureID,
+      id: id, captureID: captureID, gatewaySessionID: gatewaySessionID,
       gatewayMonotonicMicroseconds: gatewayMonotonicMicroseconds,
       recordedAt: recordedAt, signalID: signalID, value: value, unit: unit,
       method: method, instrumentID: instrumentID,
@@ -503,8 +516,26 @@ public struct CaptureSession: Codable, Equatable, Sendable, Identifiable {
       DiscoveryContractValidation.isSHA256(manifestSHA256), hasTemplatePair,
       testTemplateID.map(DiscoveryContractValidation.isSemanticID) ?? true,
       testTemplateVersion.map(DiscoveryContractValidation.isSemanticVersion) ?? true,
-      eventMarkers.allSatisfy({ $0.captureID == id }),
-      physicalMeasurements.allSatisfy({ $0.captureID == id }), notes.count <= 2_000
+      Set(eventMarkers.map(\.id)).count == eventMarkers.count,
+      Set(physicalMeasurements.map(\.id)).count == physicalMeasurements.count,
+      eventMarkers.allSatisfy({ marker in
+        marker.captureID == id
+          && (marker.gatewaySessionID.map(gatewaySessionIDs.contains) ?? true)
+          && (startMonotonicMicroseconds...endMonotonicMicroseconds).contains(
+            marker.gatewayMonotonicMicroseconds)
+          && marker.nearestCANSequence.map({
+            (firstSourceSequence...lastSourceSequence).contains($0)
+          }) ?? true
+      }),
+      physicalMeasurements.allSatisfy({ measurement in
+        measurement.captureID == id
+          && (measurement.gatewaySessionID.map(gatewaySessionIDs.contains) ?? true)
+          && (startMonotonicMicroseconds...endMonotonicMicroseconds).contains(
+            measurement.gatewayMonotonicMicroseconds)
+          && measurement.nearestCANSequence.map({
+            (firstSourceSequence...lastSourceSequence).contains($0)
+          }) ?? true
+      }), notes.count <= 2_000
     else { throw DiscoveryContractError.invalidCaptureSession }
     _ = try CaptureGatewayProvenance(
       gatewayID: gateway.gatewayID, hardwareRevision: gateway.hardwareRevision,
@@ -726,7 +757,7 @@ public struct CandidateFieldDefinition: Codable, Equatable, Sendable {
     byteOrder: CandidateByteOrder,
     signed: Bool
   ) throws {
-    guard protocolID.isPassiveCAN,
+    guard protocolID.isPassiveCAN, protocolID.canExtended == extended,
       identifier <= (extended ? 0x1FFF_FFFF : 0x7FF),
       (0...7).contains(byteOffset), (0...7).contains(bitOffset),
       (1...64).contains(bitLength), byteOffset * 8 + bitOffset + bitLength <= 64
@@ -989,21 +1020,14 @@ public struct SignalValidationChecklist: Codable, Equatable, Sendable {
     self.evaluatedAt = evaluatedAt
     self.items = items.sorted { $0.requirement.rawValue < $1.requirement.rawValue }
     self.approval = approval
-    let complete = Set(items.map(\.requirement)) == Set(SignalValidationRequirement.allCases)
-    authority =
-      complete && items.allSatisfy({ $0.status == .satisfied })
-        && approval?.decision == .approve
-      ? .validated : .candidate
+    // A checklist records review assertions. It cannot itself resolve evidence bytes or
+    // authenticate a reviewer, so v1 never grants vehicle authority from these fields alone.
+    authority = .candidate
   }
 
   public func validateContract() throws {
-    let expectedAuthority: DiscoveryAuthorityStatus =
-      Set(items.map(\.requirement)) == Set(SignalValidationRequirement.allCases)
-        && items.allSatisfy({ $0.status == .satisfied })
-        && approval?.decision == .approve
-      ? .validated : .candidate
     guard contract == "vhos.discovery.signal-validation-checklist",
-      contractVersion == "1.0.0", authority == expectedAuthority
+      contractVersion == "1.0.0", authority == .candidate
     else { throw DiscoveryContractError.unsupportedContract }
     _ = try SignalValidationChecklist(
       candidateID: candidateID, evaluatedAt: evaluatedAt, items: items, approval: approval)
@@ -1072,6 +1096,64 @@ public struct SignalPromotionDecision: Codable, Equatable, Sendable {
     case candidateID = "candidateId"
     case policyID = "policyId"
   }
+
+  public init(
+    candidateID: String,
+    evaluatedAt: String,
+    policyID: String,
+    policyVersion: String,
+    blockers: [String],
+    satisfiedEvidenceReferences: [String]
+  ) throws {
+    guard DiscoveryContractValidation.isDomainID(candidateID, prefix: "candidate"),
+      DiscoveryContractValidation.isWallTime(evaluatedAt),
+      DiscoveryContractValidation.isSemanticID(policyID),
+      DiscoveryContractValidation.isSemanticVersion(policyVersion), !blockers.isEmpty,
+      blockers.allSatisfy({ DiscoveryContractValidation.isBoundedText($0, maximum: 240) }),
+      satisfiedEvidenceReferences.allSatisfy({
+        DiscoveryContractValidation.isBoundedText($0, maximum: 240)
+      })
+    else { throw DiscoveryContractError.invalidPromotionDecision }
+    contract = "vhos.discovery.signal-promotion-decision"
+    contractVersion = "1.0.0"
+    self.candidateID = candidateID
+    self.evaluatedAt = evaluatedAt
+    self.policyID = policyID
+    self.policyVersion = policyVersion
+    promotionAllowed = false
+    self.blockers = Array(Set(blockers)).sorted()
+    self.satisfiedEvidenceReferences = Array(Set(satisfiedEvidenceReferences)).sorted()
+    authority = .candidate
+  }
+
+  public init(from decoder: Decoder) throws {
+    let values = try decoder.container(keyedBy: CodingKeys.self)
+    let contract = try values.decode(String.self, forKey: .contract)
+    let contractVersion = try values.decode(String.self, forKey: .contractVersion)
+    let promotionAllowed = try values.decode(Bool.self, forKey: .promotionAllowed)
+    let authority = try values.decode(DiscoveryAuthorityStatus.self, forKey: .authority)
+    guard contract == "vhos.discovery.signal-promotion-decision",
+      contractVersion == "1.0.0", !promotionAllowed, authority == .candidate
+    else { throw DiscoveryContractError.invalidPromotionDecision }
+    try self.init(
+      candidateID: values.decode(String.self, forKey: .candidateID),
+      evaluatedAt: values.decode(String.self, forKey: .evaluatedAt),
+      policyID: values.decode(String.self, forKey: .policyID),
+      policyVersion: values.decode(String.self, forKey: .policyVersion),
+      blockers: values.decode([String].self, forKey: .blockers),
+      satisfiedEvidenceReferences: values.decode(
+        [String].self, forKey: .satisfiedEvidenceReferences))
+  }
+
+  public func validateContract() throws {
+    guard contract == "vhos.discovery.signal-promotion-decision",
+      contractVersion == "1.0.0", !promotionAllowed, authority == .candidate
+    else { throw DiscoveryContractError.invalidPromotionDecision }
+    _ = try SignalPromotionDecision(
+      candidateID: candidateID, evaluatedAt: evaluatedAt, policyID: policyID,
+      policyVersion: policyVersion, blockers: blockers,
+      satisfiedEvidenceReferences: satisfiedEvidenceReferences)
+  }
 }
 
 public struct RecommendedDiscoveryTest: Codable, Equatable, Sendable, Identifiable {
@@ -1112,6 +1194,7 @@ public enum DiscoveryContractError: Error, Equatable, LocalizedError {
   case invalidCandidateSignal
   case invalidValidationChecklist
   case invalidPromotionPolicy
+  case invalidPromotionDecision
   case evidenceDoesNotMatchCapture
   case emptyEvidence
   case noApplicableTestTemplate
@@ -1128,6 +1211,8 @@ public enum DiscoveryContractError: Error, Equatable, LocalizedError {
     case .invalidCandidateSignal: "The candidate signal contract is invalid."
     case .invalidValidationChecklist: "The signal validation checklist is invalid."
     case .invalidPromotionPolicy: "The signal promotion policy is invalid."
+    case .invalidPromotionDecision:
+      "The Discovery v1 promotion decision must remain blocked and experimental."
     case .evidenceDoesNotMatchCapture:
       "The retained evidence does not match the declared capture session."
     case .emptyEvidence: "Discovery analysis requires retained evidence."
@@ -1185,6 +1270,11 @@ enum DiscoveryContractValidation {
 
 enum DiscoveryOrdering {
   static func marker(_ left: EventMarker, _ right: EventMarker) -> Bool {
+    let leftSession = left.gatewaySessionID.map(UInt64.init) ?? UInt64.max
+    let rightSession = right.gatewaySessionID.map(UInt64.init) ?? UInt64.max
+    if leftSession != rightSession {
+      return leftSession < rightSession
+    }
     if left.gatewayMonotonicMicroseconds != right.gatewayMonotonicMicroseconds {
       return left.gatewayMonotonicMicroseconds < right.gatewayMonotonicMicroseconds
     }
@@ -1192,6 +1282,11 @@ enum DiscoveryOrdering {
   }
 
   static func measurement(_ left: PhysicalMeasurement, _ right: PhysicalMeasurement) -> Bool {
+    let leftSession = left.gatewaySessionID.map(UInt64.init) ?? UInt64.max
+    let rightSession = right.gatewaySessionID.map(UInt64.init) ?? UInt64.max
+    if leftSession != rightSession {
+      return leftSession < rightSession
+    }
     if left.gatewayMonotonicMicroseconds != right.gatewayMonotonicMicroseconds {
       return left.gatewayMonotonicMicroseconds < right.gatewayMonotonicMicroseconds
     }
