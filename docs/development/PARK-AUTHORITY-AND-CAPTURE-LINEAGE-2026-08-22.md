@@ -56,6 +56,30 @@ did not lose a valid `PARKED` assertion.
 Those counters establish acquisition activity and quality. They do not establish the selector
 position.
 
+### Selector-shaped candidate in the returned capture
+
+The newest raw-CAN session (`122561546`) contains 636 live observations across approximately
+318.760 seconds. Within that session, the already researched cross-model selector candidate
+`0x2D0 byte[2] & 0x7F` changed through this retained sequence:
+
+| Elapsed time | Source sequence | Raw candidate code |
+| ---: | ---: | ---: |
+| 3.015 s | 10,083 | 8 |
+| 201.841 s | 116,093 | 2 |
+| 209.371 s | 120,118 | 0 |
+| 209.878 s | 120,386 | 8 |
+| 214.890 s | 123,058 | 2 |
+| 246.486 s | 139,888 | 8 |
+| 274.108 s | 154,601 | 16 |
+| 276.115 s | 155,679 | 2 |
+| 283.633 s | 159,672 | 8 |
+
+This is useful selector-shaped activity, not a decoded gear position. The session contains no
+synchronized P/R/N/D event markers, so none of codes `0`, `2`, `8`, or `16` may be named `PARK`,
+`REVERSE`, `NEUTRAL`, or `DRIVE`. Sparse live observations may also omit intermediate transitions.
+The ordered selector bootstrap below exists to bind those raw codes to owner-observed positions and
+then test repeatability before any canonical signal is promoted.
+
 ## Root cause 1: no Park authority source
 
 The current firmware target publishes a literal `UNKNOWN` vehicle-motion value. The previous IMU
@@ -100,13 +124,14 @@ It is allowed only when all of these facts are current and agree:
 - the gateway reports motion as `UNKNOWN`, never `MOVING`.
 
 The procedure requires level ground, wheels chocked, parking brake applied, engine off, ignition on,
-and foot brake held. It records these owner-observed selector markers in order:
+and foot brake held. It records these markers in exact order:
 
-1. Park
-2. Reverse
-3. Neutral
-4. Drive
-5. Park
+1. Safety setup confirmed
+2. Park
+3. Reverse
+4. Neutral
+5. Drive
+6. Park (return)
 
 The result is experimental evidence only. It does not mutate gateway motion, manufacture a Park
 signal, satisfy the independent-corroboration gate, or authorize a second procedure.
