@@ -93,8 +93,6 @@ struct DiscoveryView: View {
               systemImage: "checklist")
           }
           .buttonStyle(.plain)
-          .disabled(!engineeringUnlocked)
-          .opacity(engineeringUnlocked ? 1 : 0.55)
 
           NavigationLink {
             BoundedProtocolExperimentView()
@@ -218,7 +216,7 @@ private struct DiscoveryEngineeringGateBanner: View {
         Text(
           currentParkedAuthority
             ? "Fresh gateway health deterministically reports PARKED."
-            : "Latest motion is \(motion.rawValue), but no fresh verified PARKED authority is active. Tests and raw engineering controls stay locked. Stored evidence review and replay remain available."
+            : "Latest motion is \(motion.rawValue), but no fresh verified PARKED authority is active. Parked-only and raw engineering controls stay locked. Use Run a Test → Park / Selector Bootstrap to gather passive selector evidence; stored review and replay remain available."
         )
         .font(.footnote)
         .foregroundStyle(.secondary)
@@ -349,6 +347,7 @@ private struct DiscoveryTemplatePresentation: Identifiable, Sendable {
 
   static func library() throws -> [DiscoveryTemplatePresentation] {
     try [
+      parkSelectorBootstrap(),
       make(
         id: "discovery.electrical.ignition-cycle", title: "Ignition Cycle",
         category: .electrical,
@@ -481,6 +480,25 @@ private struct DiscoveryTemplatePresentation: Identifiable, Sendable {
     ]
   }
 
+  private static func parkSelectorBootstrap() throws -> DiscoveryTemplatePresentation {
+    let template = try DiscoveryMutationPolicy.parkSelectorBootstrapTemplate()
+    let actions: [(String, DiscoveryMarkerKind)] = [
+      ("SAFETY SETUP CONFIRMED", .custom),
+      ("SELECTOR: PARK", .selectorPark),
+      ("SELECTOR: REVERSE", .selectorReverse),
+      ("SELECTOR: NEUTRAL", .selectorNeutral),
+      ("SELECTOR: DRIVE", .selectorDrive),
+      ("SELECTOR: PARK (RETURN)", .selectorPark),
+    ]
+    return DiscoveryTemplatePresentation(
+      template: template,
+      markerActions: actions.enumerated().map { index, action in
+        DiscoveryMarkerAction(
+          id: "\(template.id).marker.\(index + 1)", label: action.0, kind: action.1)
+      },
+      iPhoneInteractiveSupported: true)
+  }
+
   private static func make(
     id: String,
     title: String,
@@ -594,7 +612,11 @@ private struct DiscoveryTestRunnerView: View {
   }
 
   private var runMatchesTemplate: Bool {
-    activeRun?.templateID == template.id
+    guard let activeRun else { return false }
+    return DiscoveryMutationPolicy.testRunIdentityMatches(
+      template: template.template,
+      templateID: activeRun.templateID,
+      templateVersion: activeRun.templateVersion)
   }
 
   private var activeRunMatchesGatewayCapture: Bool {
@@ -604,18 +626,31 @@ private struct DiscoveryTestRunnerView: View {
   }
 
   private var evidenceReady: Bool {
-    model.gateway.state == .vhosConnected
-      && model.gateway.hasCurrentParkedAuthority
-      && model.gateway.health?.captureActive == true
-      && model.discoveryTimelineCurrent
+    model.discoveryMutationAuthority(for: template.template) != nil
       && template.iPhoneInteractiveSupported
-      && template.template.requiredGatewayCapabilities.allSatisfy {
-        model.gateway.handshake?.capabilities.contains($0) == true
-      }
+  }
+
+  private var isParkSelectorBootstrap: Bool {
+    template.id == DiscoveryMutationPolicy.parkSelectorBootstrapTemplateID
   }
 
   private var markerReady: Bool {
     evidenceReady && runMatchesTemplate && activeRunMatchesGatewayCapture
+  }
+
+  private var recordedBootstrapMarkers: [DiscoveryOrderedMarkerRequirement] {
+    guard isParkSelectorBootstrap, let activeRun else { return [] }
+    return model.discoveryMarkers.filter { $0.testRunID == activeRun.id }.map {
+      DiscoveryOrderedMarkerRequirement(kind: $0.marker.kind, label: $0.label)
+    }
+  }
+
+  private var nextBootstrapMarker: DiscoveryOrderedMarkerRequirement? {
+    DiscoveryMutationPolicy.nextParkSelectorBootstrapMarker(after: recordedBootstrapMarkers)
+  }
+
+  private var bootstrapComplete: Bool {
+    DiscoveryMutationPolicy.parkSelectorBootstrapIsComplete(recordedBootstrapMarkers)
   }
 
   var body: some View {
@@ -636,14 +671,37 @@ private struct DiscoveryTestRunnerView: View {
           .frame(maxWidth: .infinity, alignment: .leading)
           .background(.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 14))
 
+        if isParkSelectorBootstrap {
+          Label(
+            "Evidence only: this workflow does not create or upgrade Park authority. It cannot unlock OTA, diagnostic transmission, or other parked-only controls.",
+            systemImage: "lock.shield.fill"
+          )
+          .font(.footnote.weight(.semibold))
+          .foregroundStyle(.blue)
+          .padding()
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .background(.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 14))
+        }
+
         VStack(alignment: .leading, spacing: 10) {
           Text("Evidence readiness").font(.headline)
           SafetyRow(label: "VHOS gateway contract", pass: model.gateway.state == .vhosConnected)
           SafetyRow(
             label: "Passive recorder active", pass: model.gateway.health?.captureActive == true)
-          SafetyRow(
-            label: "Motion deterministically PARKED",
-            pass: model.gateway.hasCurrentParkedAuthority)
+          if isParkSelectorBootstrap {
+            if model.gateway.hasCurrentParkedAuthority {
+              SafetyRow(label: "Current deterministic PARKED authority", pass: true)
+            } else {
+              SafetyRow(
+                label: "Gateway motion honestly remains UNKNOWN",
+                pass: model.gateway.hasCurrentGatewayHealth
+                  && model.gateway.health?.vehicleMotion == .unknown)
+            }
+          } else {
+            SafetyRow(
+              label: "Motion deterministically PARKED",
+              pass: model.gateway.hasCurrentParkedAuthority)
+          }
           SafetyRow(
             label: "Fresh verified listen-only CAN timeline",
             pass: model.discoveryTimelineCurrent)
@@ -680,11 +738,16 @@ private struct DiscoveryTestRunnerView: View {
           }
 
           if let activeRun, !runMatchesTemplate {
-            Text(
-              "Another test run draft is active (\(activeRun.templateID)). End or abort it before beginning this procedure."
-            )
-            .font(.footnote)
-            .foregroundStyle(.orange)
+            VStack(alignment: .leading, spacing: 8) {
+              Text(
+                "Another or incompatible test run draft is active (\(activeRun.templateID) v\(activeRun.templateVersion)). Abort it before beginning this procedure. Its existing append-only evidence will be retained."
+              )
+              .font(.footnote)
+              .foregroundStyle(.orange)
+              Button("Abort incompatible run") { model.abortDiscoveryTestRun() }
+                .buttonStyle(.bordered)
+                .tint(.red)
+            }
           }
 
           if runMatchesTemplate, !activeRunMatchesGatewayCapture {
@@ -699,7 +762,9 @@ private struct DiscoveryTestRunnerView: View {
             HStack {
               Button("End Session") { model.endDiscoveryTestRun() }
                 .buttonStyle(.borderedProminent)
-                .disabled(!evidenceReady || !activeRunMatchesGatewayCapture)
+                .disabled(
+                  !evidenceReady || !activeRunMatchesGatewayCapture
+                    || (isParkSelectorBootstrap && !bootstrapComplete))
               Button("Abort") { model.abortDiscoveryTestRun() }
                 .buttonStyle(.bordered)
                 .tint(.red)
@@ -735,22 +800,28 @@ private struct DiscoveryTestRunnerView: View {
                 .frame(maxWidth: .infinity, minHeight: 58)
             }
             .buttonStyle(.borderedProminent)
-            .disabled(!markerReady)
+            .disabled(
+              !markerReady
+                || (isParkSelectorBootstrap
+                  && nextBootstrapMarker
+                    != DiscoveryOrderedMarkerRequirement(kind: action.kind, label: action.label)))
           }
 
-          Button {
-            model.recordDiscoveryMarker(
-              template: template.template,
-              kind: .custom,
-              label: "EVENT")
-          } label: {
-            Label("MARK EVENT", systemImage: "bookmark.fill")
-              .font(.title3.bold())
-              .frame(maxWidth: .infinity, minHeight: 64)
+          if !isParkSelectorBootstrap {
+            Button {
+              model.recordDiscoveryMarker(
+                template: template.template,
+                kind: .custom,
+                label: "EVENT")
+            } label: {
+              Label("MARK EVENT", systemImage: "bookmark.fill")
+                .font(.title3.bold())
+                .frame(maxWidth: .infinity, minHeight: 64)
+            }
+            .buttonStyle(.bordered)
+            .tint(.orange)
+            .disabled(!markerReady)
           }
-          .buttonStyle(.bordered)
-          .tint(.orange)
-          .disabled(!markerReady)
         }
 
         DiscoveryMarkerLedgerView(templateID: template.id, testRunID: activeRun?.id)

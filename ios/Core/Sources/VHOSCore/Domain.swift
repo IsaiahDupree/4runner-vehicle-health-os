@@ -147,6 +147,22 @@ public struct GatewayHealth: Codable, Equatable, Sendable {
   public let captureSessionID: UInt32?
   public let captureStorageWriteFailures: UInt64?
 
+  // JSONDecoder.convertFromSnakeCase maps `capture_session_id` to `captureSessionId`.
+  // Spell the acronym keys explicitly so the deployed firmware's recorder lineage is retained.
+  private enum CodingKeys: String, CodingKey {
+    case contract, contractVersion, observedAt, vehicleMotion, supplyMillivolts, receivedFrames
+    case droppedFrames, busErrorCount, busOffCount, storageFreeBytes, captureActive, listenOnly
+    case canBitrateBps, canControllerRunning, canExtendedFrames, canFrames250k, canFrames500k
+    case canPassiveLock, canScanCycles, canScanState, canStandardFrames
+    case canTwaiReceiveMissedFrames, canTwaiReceiveOverrunFrames, canTwaiReceiveQueueDepth
+    case canTwaiReceiveQueueCapacity, canObserverQueueDroppedFrames, canObserverQueueDepth
+    case canObserverQueueHighWater, canObserverQueueCapacity, passiveCanCandidate
+    case captureCurrentRecords, captureObservedFrames, capturePreviousRecords
+    case captureQueueDroppedRecords, captureRetainedRecords, captureSampleSuppressedFrames
+    case captureSampledFrames, captureStorageWriteFailures
+    case captureSessionID = "captureSessionId"
+  }
+
   public init(
     contract: String = "gateway.health",
     contractVersion: String = "1.0.0",

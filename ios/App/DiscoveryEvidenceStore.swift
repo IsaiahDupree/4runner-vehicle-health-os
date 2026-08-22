@@ -377,7 +377,11 @@ final class DiscoveryEvidenceStore {
     try template.validateContract()
     try PassiveCANEvidenceArchive.validate(observation)
     guard let current = try testRuns().first(where: { $0.id == testRun.id }), current == testRun,
-      current.state == .active, testRun.templateID == template.id,
+      current.state == .active,
+      DiscoveryMutationPolicy.testRunIdentityMatches(
+        template: template,
+        templateID: testRun.templateID,
+        templateVersion: testRun.templateVersion),
       testRun.gatewayID == observation.gatewayID,
       testRun.gatewaySessionID == observation.sessionID
     else { throw DiscoveryEvidenceStoreError.testRunCaptureChanged }

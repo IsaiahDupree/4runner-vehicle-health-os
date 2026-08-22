@@ -366,10 +366,12 @@ struct SystemStatusView: View {
         level: handshake == nil ? .pending : .pass),
       StatusIndicator(
         "gateway.health", title: "Live health report",
-        value: health == nil ? "NOT RECEIVED" : "RECEIVED",
-        detail: health.map { "Gateway observed at \($0.observedAt)" }
-          ?? "No current-session gateway health evidence",
-        level: health == nil ? .pending : .pass),
+        value: gateway.hasCurrentGatewayHealth ? "CURRENT" : health == nil ? "NOT RECEIVED" : "STALE",
+        detail: gateway.hasCurrentGatewayHealth
+          ? health.map { "Gateway observed at \($0.observedAt)" }
+            ?? "No current-session gateway health evidence"
+          : "No health frame received within the five-second authority window",
+        level: gateway.hasCurrentGatewayHealth ? .pass : health == nil ? .pending : .warning),
       StatusIndicator(
         "gateway.health-arrival", title: "Health stream arrival",
         value: gateway.lastHealthReceivedAt.map(clockTime) ?? "UNAVAILABLE",
@@ -773,11 +775,13 @@ struct SystemStatusView: View {
   }
 
   private var listenOnlySatisfied: Bool {
-    gateway.handshake?.listenOnly == true && gateway.health?.listenOnly == true
+    gateway.hasCurrentGatewayHealth && gateway.handshake?.listenOnly == true
+      && gateway.health?.listenOnly == true
   }
 
   private var motionLevel: IndicatorLevel {
-    switch gateway.health?.vehicleMotion {
+    guard gateway.hasCurrentGatewayHealth else { return .pending }
+    return switch gateway.health?.vehicleMotion {
     case .parked: .pass
     case .moving: .warning
     case .unknown, nil: .pending
@@ -785,7 +789,10 @@ struct SystemStatusView: View {
   }
 
   private var motionDetail: String {
-    switch gateway.health?.vehicleMotion {
+    guard gateway.hasCurrentGatewayHealth else {
+      return "Current motion authority is unavailable because gateway health is stale"
+    }
+    return switch gateway.health?.vehicleMotion {
     case .parked: "Gateway reports PARKED; other gates still apply"
     case .moving: "Vehicle tests and OTA are blocked while moving"
     case .unknown, nil: "Motion must be deterministically PARKED before tests or OTA"

@@ -64,6 +64,24 @@ final class AppModel {
     (try? currentDiscoveryObservation()) != nil
   }
 
+  func discoveryMutationAuthority(
+    for template: TestTemplate
+  ) -> DiscoveryMutationAuthority? {
+    let now = Date()
+    let healthAge = gateway.lastHealthReceivedAt.map { now.timeIntervalSince($0) }
+    let observationAge = gateway.latestCANObservationReceivedAt.map { now.timeIntervalSince($0) }
+    return DiscoveryMutationPolicy.authority(
+      for: template,
+      context: DiscoveryMutationContext(
+        connectionState: gateway.state,
+        handshake: gateway.handshake,
+        health: gateway.health,
+        healthAgeSeconds: healthAge,
+        observation: gateway.latestCANObservation,
+        observationAgeSeconds: observationAge,
+        hasCurrentParkedAuthority: gateway.hasCurrentParkedAuthority))
+  }
+
   private init() {
     let store = KeyStore(service: "com.isaiahdupree.VehicleHealthOS")
     keyStore = store
@@ -242,21 +260,29 @@ final class AppModel {
     label: String
   ) {
     do {
-      guard gateway.state == .vhosConnected, let health = gateway.health,
-        let handshake = gateway.handshake
+      guard gateway.state == .vhosConnected, gateway.health != nil,
+        gateway.handshake != nil
       else {
         throw AppModelError.gatewayHealthRequired
       }
-      guard gateway.hasCurrentParkedAuthority else {
-        throw AppModelError.discoveryParkedStateRequired
+      guard discoveryMutationAuthority(for: template) != nil else {
+        throw AppModelError.discoveryEvidenceAuthorityRequired
       }
-      guard template.requiredGatewayCapabilities.allSatisfy(handshake.capabilities.contains) else {
-        throw AppModelError.discoveryCapabilityRequired
-      }
-      guard health.captureActive else { throw AppModelError.discoveryCaptureRequired }
       let observation = try currentDiscoveryObservation()
-      guard let run = activeDiscoveryTestRun, run.templateID == template.id else {
+      guard let run = activeDiscoveryTestRun,
+        DiscoveryMutationPolicy.testRunIdentityMatches(
+          template: template,
+          templateID: run.templateID,
+          templateVersion: run.templateVersion)
+      else {
         throw AppModelError.discoveryTestRunRequired
+      }
+      if run.templateID == DiscoveryMutationPolicy.parkSelectorBootstrapTemplateID {
+        let recorded = orderedBootstrapMarkers(for: run)
+        guard
+          DiscoveryMutationPolicy.nextParkSelectorBootstrapMarker(after: recorded)
+            == DiscoveryOrderedMarkerRequirement(kind: kind, label: label)
+        else { throw AppModelError.discoveryMarkerSequenceRequired }
       }
       let stored = try discoveryEvidenceStore.append(
         template: template,
@@ -277,21 +303,14 @@ final class AppModel {
 
   func beginDiscoveryTestRun(template: TestTemplate) {
     do {
-      guard gateway.state == .vhosConnected, let health = gateway.health,
-        let handshake = gateway.handshake
+      guard gateway.state == .vhosConnected, gateway.health != nil,
+        gateway.handshake != nil
       else {
         throw AppModelError.gatewayHealthRequired
       }
-      guard template.requiredVehicleMotion == .parked else {
-        throw AppModelError.discoveryInteractiveTestUnavailable
+      guard discoveryMutationAuthority(for: template) != nil else {
+        throw AppModelError.discoveryEvidenceAuthorityRequired
       }
-      guard template.requiredGatewayCapabilities.allSatisfy(handshake.capabilities.contains) else {
-        throw AppModelError.discoveryCapabilityRequired
-      }
-      guard gateway.hasCurrentParkedAuthority else {
-        throw AppModelError.discoveryParkedStateRequired
-      }
-      guard health.captureActive else { throw AppModelError.discoveryCaptureRequired }
       let observation = try currentDiscoveryObservation()
       let run = try discoveryEvidenceStore.beginTestRun(
         template: template,
@@ -320,8 +339,25 @@ final class AppModel {
         throw AppModelError.discoveryTestRunRequired
       }
       if state == .ended {
-        guard gateway.hasCurrentParkedAuthority else {
-          throw AppModelError.discoveryParkedStateRequired
+        if run.templateID == DiscoveryMutationPolicy.parkSelectorBootstrapTemplateID {
+          let template = try DiscoveryMutationPolicy.parkSelectorBootstrapTemplate()
+          guard
+            DiscoveryMutationPolicy.testRunIdentityMatches(
+              template: template,
+              templateID: run.templateID,
+              templateVersion: run.templateVersion)
+          else { throw AppModelError.discoveryTestRunRequired }
+          guard discoveryMutationAuthority(for: template) != nil else {
+            throw AppModelError.discoveryEvidenceAuthorityRequired
+          }
+          guard
+            DiscoveryMutationPolicy.parkSelectorBootstrapIsComplete(
+              orderedBootstrapMarkers(for: run))
+          else { throw AppModelError.discoveryTestIncomplete }
+        } else {
+          guard gateway.hasCurrentParkedAuthority else {
+            throw AppModelError.discoveryParkedStateRequired
+          }
         }
       }
       let endObservation = state == .ended ? try currentDiscoveryObservation() : nil
@@ -340,6 +376,14 @@ final class AppModel {
       errorMessage = nil
     } catch {
       errorMessage = error.localizedDescription
+    }
+  }
+
+  private func orderedBootstrapMarkers(
+    for run: DiscoveryTestRunDraft
+  ) -> [DiscoveryOrderedMarkerRequirement] {
+    discoveryMarkers.filter { $0.testRunID == run.id }.map {
+      DiscoveryOrderedMarkerRequirement(kind: $0.marker.kind, label: $0.label)
     }
   }
 
@@ -393,7 +437,8 @@ final class AppModel {
   }
 
   private func currentDiscoveryObservation() throws -> PassiveCANObservation {
-    guard gateway.state == .vhosConnected, let handshake = gateway.handshake,
+    guard gateway.hasCurrentGatewayHealth, gateway.state == .vhosConnected,
+      let handshake = gateway.handshake,
       let health = gateway.health, handshake.listenOnly, health.listenOnly,
       let observation = gateway.latestCANObservation,
       observation.gatewayID == handshake.gatewayID, observation.listenOnly,
@@ -567,6 +612,9 @@ final class AppModel {
       guard let handshake = gateway.handshake, gateway.health != nil else {
         throw AppModelError.gatewayHealthRequired
       }
+      guard gateway.hasCurrentParkedAuthority else {
+        throw AppModelError.discoveryParkedStateRequired
+      }
       guard handshake.capabilities.contains(.otaSignedImage),
         handshake.capabilities.contains(.otaAB),
         handshake.capabilities.contains(.otaRollbackSelfTest)
@@ -578,6 +626,9 @@ final class AppModel {
       try gateway.setCaptureLogging(false)
       try await waitForCapturePause()
       guard let pausedHealth = gateway.health else { throw AppModelError.gatewayHealthRequired }
+      guard gateway.hasCurrentParkedAuthority else {
+        throw AppModelError.discoveryParkedStateRequired
+      }
       try package.validatePreflight(
         .init(
           handshake: handshake,
@@ -756,6 +807,9 @@ enum AppModelError: Error, LocalizedError {
   case discoveryInteractiveTestUnavailable
   case discoveryCurrentTimelineRequired
   case discoveryCapabilityRequired
+  case discoveryEvidenceAuthorityRequired
+  case discoveryMarkerSequenceRequired
+  case discoveryTestIncomplete
 
   var errorDescription: String? {
     switch self {
@@ -795,6 +849,12 @@ enum AppModelError: Error, LocalizedError {
       "A listen-only CAN observation from the verified gateway within the last five seconds is required for Discovery timeline evidence."
     case .discoveryCapabilityRequired:
       "The verified gateway does not advertise every capability required by this versioned Discovery test template."
+    case .discoveryEvidenceAuthorityRequired:
+      "This test requires either fresh deterministic PARKED authority or the exact passive Park-selector bootstrap with current listen-only capture evidence."
+    case .discoveryMarkerSequenceRequired:
+      "The Park-selector bootstrap accepts one exact marker at a time in the required P/R/N/D/P sequence. Abort and restart if the retained sequence is not canonical."
+    case .discoveryTestIncomplete:
+      "Complete every ordered Park-selector bootstrap marker before ending this evidence session."
     }
   }
 }
