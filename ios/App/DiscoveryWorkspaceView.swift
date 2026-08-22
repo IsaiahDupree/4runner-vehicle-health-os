@@ -39,8 +39,10 @@ struct DiscoveryView: View {
             state: model.gateway.j1979Availability.isEmpty ? .unavailable : .observed)
           DiscoveryMetricRow(
             label: "Bus frames",
-            value: model.gateway.health?.receivedFrames.formatted() ?? "Unavailable",
-            state: model.gateway.health == nil ? .unavailable : .observed,
+            value: vehicleBusObserved
+              ? model.gateway.health?.receivedFrames.formatted() ?? "Unavailable"
+              : "Unavailable",
+            state: vehicleBusObserved ? .observed : .unavailable,
             detail: "Gateway cumulative counter")
           DiscoveryMetricRow(
             label: "Visible CAN IDs",
@@ -149,12 +151,16 @@ struct DiscoveryView: View {
   }
 
   private var vehicleBusObserved: Bool {
-    guard let health = model.gateway.health else { return false }
+    guard model.gateway.state == .vhosConnected, let health = model.gateway.health,
+      let receivedAt = model.gateway.lastHealthReceivedAt
+    else { return false }
+    let age = Date().timeIntervalSince(receivedAt)
+    guard age >= 0, age <= 5 else { return false }
     return health.receivedFrames > 0 || health.canPassiveLock == true
   }
 
   private var vehicleBusDescription: String {
-    guard let health = model.gateway.health else { return "Unavailable" }
+    guard vehicleBusObserved, let health = model.gateway.health else { return "Unavailable" }
     if let bitrate = health.canBitrateBps, health.canPassiveLock == true {
       return "CAN observed · \(bitrate / 1_000) kbit/s"
     }
@@ -952,7 +958,7 @@ private struct DiscoveryCaptureReviewView: View {
         Button("Pause, download, and resume") { model.pauseDownloadAndResumeGatewayHistory() }
           .disabled(
             model.gateway.state != .vhosConnected || model.gateway.captureHistoryTransferActive
-              || model.gateway.health?.vehicleMotion != .parked)
+              || !model.gateway.hasCurrentParkedAuthority)
       }
 
       Section("Stored sessions on iPhone") {
