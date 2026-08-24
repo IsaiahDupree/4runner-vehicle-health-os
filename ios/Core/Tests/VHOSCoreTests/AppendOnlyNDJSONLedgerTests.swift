@@ -120,6 +120,57 @@ private enum LedgerTestValidationError: Error {
   #expect(!FileManager.default.fileExists(atPath: fixture.quarantine.path))
 }
 
+@Test func appendOnlyLedgerRejectsNoncanonicalAndDuplicateKeyCommittedRecords() throws {
+  for line in [
+    #"{ "sequence" : 1, "value" : "first" }"#,
+    #"{"sequence":1,"sequence":1,"value":"first"}"#,
+  ] {
+    let fixture = try makeLedgerFixture()
+    defer { try? FileManager.default.removeItem(at: fixture.root) }
+    let source = Data((line + "\n").utf8)
+    try source.write(to: fixture.ledger, options: [.atomic])
+
+    do {
+      let _: AppendOnlyNDJSONLoadResult<LedgerTestRecord> =
+        try AppendOnlyNDJSONLedger.load(
+          from: fixture.ledger,
+          quarantineDirectory: fixture.quarantine,
+          validate: { _ in })
+      Issue.record("Expected a noncanonical committed record to fail closed")
+    } catch let error as AppendOnlyNDJSONLedgerError {
+      #expect(
+        error
+          == .invalidCommittedRecord(fileName: fixture.ledger.lastPathComponent, line: 1))
+    }
+
+    #expect(try Data(contentsOf: fixture.ledger) == source)
+    #expect(!FileManager.default.fileExists(atPath: fixture.quarantine.path))
+  }
+}
+
+@Test func durableEvidenceAppendProducesCanonicalNewlineCommittedLedger() throws {
+  let fixture = try makeLedgerFixture()
+  defer { try? FileManager.default.removeItem(at: fixture.root) }
+  let records = [
+    LedgerTestRecord(sequence: 1, value: "first"),
+    LedgerTestRecord(sequence: 2, value: "second"),
+  ]
+
+  for record in records {
+    try DurableEvidenceFile.appendCommittedLine(
+      try VHOSJSON.encoder().encode(record),
+      to: fixture.ledger)
+  }
+
+  #expect(try Data(contentsOf: fixture.ledger) == committedLedgerBytes(records))
+  let loaded: AppendOnlyNDJSONLoadResult<LedgerTestRecord> =
+    try AppendOnlyNDJSONLedger.load(
+      from: fixture.ledger,
+      quarantineDirectory: fixture.quarantine,
+      validate: { _ in })
+  #expect(loaded.records == records)
+}
+
 @Test func appendOnlyLedgerRejectsSemanticallyInvalidInteriorRecord() throws {
   let fixture = try makeLedgerFixture()
   defer { try? FileManager.default.removeItem(at: fixture.root) }

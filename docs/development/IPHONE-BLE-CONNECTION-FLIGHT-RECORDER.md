@@ -32,6 +32,18 @@ The recorder does not infer that a pairing succeeded merely because iOS lists a 
 Connected. The application contract is successful only after the CRC-valid VHOS handshake is
 decoded on the current link session.
 
+### Callback-storm containment
+
+Restored-central cleanup stops the active scan before retiring an inherited peripheral while
+preserving the owner's reconnect intent for the fresh session. Core Bluetooth can still deliver
+advertisement callbacks that were queued before `stopScan()`. Those callbacks continue through the
+same state guard and cannot select or connect a peripheral, but their identical
+`STALE_SCAN_DISCOVERY_IGNORED` diagnostics are coalesced into bounded evidence: the first callback
+is retained, callback 128 emits one scale checkpoint, and cleanup completion emits one final summary
+with the exact saturating count plus first and last details. No further per-callback or periodic
+records are written during the burst. This keeps the flight recorder forensically useful without
+allowing an arbitrarily long callback storm to consume its bounded retention budget.
+
 ## Record contract
 
 Each line is independently valid JSON under `ble.connection.event@1.0.0`:

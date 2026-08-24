@@ -43,6 +43,34 @@ import Testing
       context: makeMutationContext(motion: .moving)) == nil)
 }
 
+@Test func discoveryRequiresHealthyPersistenceAndStorageHeadroom() throws {
+  let template = try DiscoveryMutationPolicy.parkSelectorBootstrapTemplate()
+
+  #expect(
+    DiscoveryMutationPolicy.authority(
+      for: template,
+      context: makeMutationContext(motion: .unknown, captureQueueDroppedRecords: 1)) == nil)
+  #expect(
+    DiscoveryMutationPolicy.authority(
+      for: template,
+      context: makeMutationContext(motion: .unknown, captureStorageWriteFailures: 1)) == nil)
+  #expect(
+    DiscoveryMutationPolicy.authority(
+      for: template,
+      context: makeMutationContext(
+        motion: .unknown,
+        storageFreeBytes: DiscoveryMutationPolicy.minimumDiscoveryStorageFreeBytes - 1)) == nil)
+  #expect(
+    DiscoveryMutationPolicy.authority(
+      for: template,
+      context: makeMutationContext(
+        motion: .unknown,
+        storageFreeBytes: DiscoveryMutationPolicy.minimumDiscoveryStorageFreeBytes))
+      == .passiveParkSelectorBootstrap)
+  #expect(!DiscoveryMutationPolicy.captureWritePathIsHealthy(nil))
+  #expect(!DiscoveryMutationPolicy.captureStorageHasHeadroom(nil))
+}
+
 @Test func unknownMotionDoesNotOpenArbitraryDiscoveryTemplate() throws {
   let template = try TestTemplate(
     id: "discovery.transmission.not-the-bootstrap",
@@ -107,6 +135,47 @@ import Testing
   ]
   #expect(DiscoveryMutationPolicy.nextParkSelectorBootstrapMarker(after: injected) == nil)
   #expect(!DiscoveryMutationPolicy.parkSelectorBootstrapIsComplete(injected))
+}
+
+@Test func bootstrapSelectorDwellUsesTheGatewayMonotonicClock() {
+  let requirements = DiscoveryMutationPolicy.parkSelectorBootstrapMarkerRequirements
+  let minimum = DiscoveryMutationPolicy.minimumParkSelectorDwellMicroseconds
+
+  #expect(
+    DiscoveryMutationPolicy.parkSelectorBootstrapDwellRemainingMicroseconds(
+      after: nil,
+      lastMarkerMonotonicMicroseconds: nil,
+      currentMonotonicMicroseconds: 10) == 0)
+  #expect(
+    DiscoveryMutationPolicy.parkSelectorBootstrapDwellRemainingMicroseconds(
+      after: requirements[0],
+      lastMarkerMonotonicMicroseconds: 10,
+      currentMonotonicMicroseconds: 10) == 0)
+  #expect(
+    DiscoveryMutationPolicy.parkSelectorBootstrapDwellRemainingMicroseconds(
+      after: requirements[1],
+      lastMarkerMonotonicMicroseconds: 1_000_000,
+      currentMonotonicMicroseconds: 1_000_000) == minimum)
+  #expect(
+    DiscoveryMutationPolicy.parkSelectorBootstrapDwellRemainingMicroseconds(
+      after: requirements[1],
+      lastMarkerMonotonicMicroseconds: 1_000_000,
+      currentMonotonicMicroseconds: 5_000_000) == 4_000_000)
+  #expect(
+    DiscoveryMutationPolicy.parkSelectorBootstrapDwellRemainingMicroseconds(
+      after: requirements[1],
+      lastMarkerMonotonicMicroseconds: 1_000_000,
+      currentMonotonicMicroseconds: 9_000_000) == 0)
+  #expect(
+    DiscoveryMutationPolicy.parkSelectorBootstrapDwellRemainingMicroseconds(
+      after: requirements[1],
+      lastMarkerMonotonicMicroseconds: 9_000_000,
+      currentMonotonicMicroseconds: 1_000_000) == minimum)
+  #expect(
+    DiscoveryMutationPolicy.parkSelectorBootstrapDwellRemainingMicroseconds(
+      after: requirements[1],
+      lastMarkerMonotonicMicroseconds: nil,
+      currentMonotonicMicroseconds: 9_000_000) == minimum)
 }
 
 @Test func canonicalBootstrapCanFinishIfParkAuthorityArrivesDuringTheRun() throws {
@@ -174,7 +243,10 @@ private func makeMutationContext(
   parkedAuthority: Bool = false,
   healthAge: TimeInterval = 0.5,
   observationAge: TimeInterval = 0.25,
-  observationSessionID: UInt32 = 42
+  observationSessionID: UInt32 = 42,
+  storageFreeBytes: UInt64 = 1_000_000,
+  captureQueueDroppedRecords: UInt64? = 0,
+  captureStorageWriteFailures: UInt64? = 0
 ) -> DiscoveryMutationContext {
   let gatewayID = "esp32-9454c5b08d14"
   let handshake = GatewayHandshake(
@@ -197,10 +269,12 @@ private func makeMutationContext(
     droppedFrames: 0,
     busErrorCount: 0,
     busOffCount: 0,
-    storageFreeBytes: 1_000_000,
+    storageFreeBytes: storageFreeBytes,
     captureActive: true,
     listenOnly: true,
-    captureSessionID: 42)
+    captureQueueDroppedRecords: captureQueueDroppedRecords,
+    captureSessionID: 42,
+    captureStorageWriteFailures: captureStorageWriteFailures)
   let observation = PassiveCANObservation(
     gatewayID: gatewayID,
     sessionID: observationSessionID,

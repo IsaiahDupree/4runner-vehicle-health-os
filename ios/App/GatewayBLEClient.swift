@@ -4,6 +4,168 @@ import OSLog
 import Observation
 import VHOSCore
 
+/// Coalesces a repeated diagnostic callback into a bounded first/summary trace without changing
+/// the callback's state-machine handling. The first event is retained immediately; each summary
+/// retains the exact burst count plus the first and last details.
+struct BLETraceBurstCoalescer {
+  private let event: String
+  private let checkpointObservationCount: UInt64
+  private var observationCount: UInt64 = 0
+  private var checkpointEmitted = false
+  private var firstDetail = ""
+  private var lastDetail = ""
+
+  init(event: String, checkpointObservationCount: UInt64) {
+    precondition(checkpointObservationCount >= 2)
+    self.event = event
+    self.checkpointObservationCount = checkpointObservationCount
+  }
+
+  mutating func observe(_ detail: String) -> [String] {
+    if observationCount == 0 {
+      observationCount = 1
+      firstDetail = detail
+      lastDetail = detail
+      return ["\(event) \(detail) burst=first"]
+    }
+    if observationCount < UInt64.max { observationCount += 1 }
+    lastDetail = detail
+    guard !checkpointEmitted, observationCount >= checkpointObservationCount else { return [] }
+    checkpointEmitted = true
+    return [summary(reason: "checkpoint")]
+  }
+
+  mutating func flush(reason: String) -> String? {
+    guard observationCount > 1 else {
+      reset()
+      return nil
+    }
+    let result = summary(reason: reason)
+    reset()
+    return result
+  }
+
+  private func summary(reason: String) -> String {
+    return
+      "\(event)_COALESCED count=\(observationCount) suppressed=\(observationCount - 1) reason=\(reason) first={\(firstDetail)} last={\(lastDetail)}"
+  }
+
+  private mutating func reset() {
+    observationCount = 0
+    checkpointEmitted = false
+    firstDetail = ""
+    lastDetail = ""
+  }
+}
+
+/// Keeps a runtime ledger failure sticky until a deliberate full verification succeeds. A later
+/// notification must not overwrite the failure with a stale-looking count merely because its
+/// transport envelope decoded successfully.
+struct PortableFrameIntegrityLatch: Equatable {
+  private(set) var verifiedCount = 0
+  private(set) var failure: String?
+
+  mutating func recordVerified(count: Int) {
+    verifiedCount = count
+    failure = nil
+  }
+
+  mutating func recordSuccessfulAppend(count: Int) {
+    guard failure == nil else { return }
+    verifiedCount = count
+  }
+
+  mutating func recordRuntimeFailure(_ detail: String) {
+    if failure == nil { failure = detail }
+    verifiedCount = 0
+  }
+}
+
+/// Immutable evidence context captured when a CRC-valid frame leaves the stream decoder.
+///
+/// Transport/UI state may be torn down before the serialized persistence tail reaches this frame.
+/// The physical bytes and their source identity must not be rebound to a later handshake or dropped
+/// merely because that later UI session has a different epoch.
+struct AcceptedGatewayFrameContext: Sendable {
+  let frame: GatewayFrame
+  let acceptedLinkSession: UInt64
+  let sourceID: String?
+
+  func appliesToCurrentTransportSession(_ session: UInt64) -> Bool {
+    acceptedLinkSession == session
+  }
+}
+
+/// Immutable snapshot of the application-level response window that is allowed to promote a
+/// decoded handshake identity. Keeping this predicate beside the identity registry makes it
+/// impossible for a future caller to turn a merely CRC-valid, unsolicited handshake into source
+/// authority by calling the promotion API directly.
+struct GatewayHandshakeAuthorityWindow: Equatable {
+  let responseRequested: Bool
+  let writeAttemptCompleted: Bool
+  let commandQueueDrained: Bool
+  let responseDeadlineActive: Bool
+  let notificationSessionMatches: Bool
+  let streamNotificationsEnabled: Bool
+
+  var acceptsIdentityClaim: Bool {
+    responseRequested && writeAttemptCompleted && commandQueueDrained
+      && responseDeadlineActive && notificationSessionMatches && streamNotificationsEnabled
+  }
+}
+
+/// Source identities promoted only after the application-level handshake window accepts them.
+/// Merely decoding a CRC-valid handshake payload is not authority: unsolicited or stale frames
+/// remain attributed to their physical BLE transport and cannot relabel later evidence.
+struct ValidatedGatewayIdentityRegistry {
+  private var identitiesByLinkSession: [UInt64: String] = [:]
+
+  func identity(for linkSession: UInt64) -> String? {
+    identitiesByLinkSession[linkSession]
+  }
+
+  /// Resolves durable evidence attribution without consulting a decoded-but-unaccepted handshake.
+  ///
+  /// A link-scoped identity becomes authoritative only through `promoteHandshakeClaim`. Until
+  /// then, evidence remains attributed to the physical BLE transport. This makes the rejection of
+  /// an unsolicited handshake observable without allowing the rejected payload's claimed identity
+  /// to relabel any frame that follows it.
+  func evidenceSourceID(
+    for linkSession: UInt64,
+    physicalTransportSourceID: String?
+  ) -> String? {
+    identitiesByLinkSession[linkSession] ?? physicalTransportSourceID
+  }
+
+  @discardableResult
+  mutating func promoteHandshakeClaim(
+    gatewayID: String,
+    linkSession: UInt64,
+    authorityWindow: GatewayHandshakeAuthorityWindow
+  ) -> Bool {
+    guard authorityWindow.acceptsIdentityClaim else { return false }
+    identitiesByLinkSession[linkSession] = gatewayID
+    if identitiesByLinkSession.count > 8 {
+      for staleSession in identitiesByLinkSession.keys.sorted().dropLast(8) {
+        identitiesByLinkSession.removeValue(forKey: staleSession)
+      }
+    }
+    return true
+  }
+}
+
+/// One fail-closed predicate shared by every operation that can claim live gateway authority.
+/// A physically connected BLE link is not an authoritative VHOS session when its durable evidence
+/// sink is unavailable or has a sticky integrity failure.
+struct GatewayEvidenceAuthorityGate {
+  static func permits(
+    evidencePersistenceReady: Bool,
+    portableFrameIntegrityError: String?
+  ) -> Bool {
+    evidencePersistenceReady && portableFrameIntegrityError == nil
+  }
+}
+
 @MainActor
 @Observable
 final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate {
@@ -64,9 +226,9 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         callbackSession: linkSession)
     }
 
-    func peripheral(_ peripheral: CBPeripheral, didReadRSSI RSSI: NSNumber, error: Error?) {
+    func peripheral(_ peripheral: CBPeripheral, didReadRSSI rssi: NSNumber, error: Error?) {
       owner?.handleRSSIRead(
-        peripheral, rssi: RSSI, error: error, callbackSession: linkSession)
+        peripheral, rssi: rssi, error: error, callbackSession: linkSession)
     }
   }
 
@@ -169,8 +331,13 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   private var candidateNameSuggestsGateway = false
   private var candidateAdvertisedVHOSService = false
   private var candidateWasPreviouslyValidated = false
-  private let captureStore = CaptureLogStore()
-  private let portableFrameStore = PortableFrameStore()
+  private let evidencePersistence = GatewayEvidencePersistenceWorker()
+  private var evidencePersistenceReady = false
+  private var framePersistenceTail: Task<Void, Never>?
+  private var pendingFramePersistenceCount = 0
+  private static let maximumPendingFramePersistenceCount = 512
+  private var validatedGatewayIdentities = ValidatedGatewayIdentityRegistry()
+  private var portableFrameIntegrityLatch = PortableFrameIntegrityLatch()
   private var j1979Accumulator = J1979Accumulator()
   private var captureSyncTargets: [CaptureSyncTarget] = []
   private var captureSyncSuspendedForOTA = false
@@ -182,6 +349,9 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   private var captureChunkResponseTask: Task<Void, Never>?
   private var freshnessTask: Task<Void, Never>?
   private var lastCaptureSyncFingerprint: String?
+  private var staleScanDiscoveryTrace = BLETraceBurstCoalescer(
+    event: "STALE_SCAN_DISCOVERY_IGNORED",
+    checkpointObservationCount: 128)
 
   var bluetoothStateDescription = "Initializing"
   var bluetoothReady = false
@@ -231,7 +401,8 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   var captureHistoryTransferActive = false
   var captureDownloadedRecords: UInt64 = 0
   var captureSyncCompletionGeneration: UInt64 = 0
-  var portableFrameCount = 0
+  var portableFrameCount: Int { portableFrameIntegrityLatch.verifiedCount }
+  var portableFrameIntegrityError: String? { portableFrameIntegrityLatch.failure }
   var lastEvidenceSyncMessage = "No Android/iPhone evidence sync has run."
   var j1979Availability: [J1979ECUAvailability] = []
   var standardOBDSamples: [J1979StandardSample] = []
@@ -242,7 +413,12 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   var freshnessNow = Date()
 
   var hasCurrentGatewayHealth: Bool {
-    guard state == .vhosConnected, health != nil, let receivedAt = lastHealthReceivedAt else {
+    guard
+      GatewayEvidenceAuthorityGate.permits(
+        evidencePersistenceReady: evidencePersistenceReady,
+        portableFrameIntegrityError: portableFrameIntegrityError),
+      state == .vhosConnected, health != nil, let receivedAt = lastHealthReceivedAt
+    else {
       return false
     }
     let age = max(Date(), freshnessNow).timeIntervalSince(receivedAt)
@@ -289,7 +465,10 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   }
 
   var applicationSessionHealthy: Bool {
-    peripheralConnected && gatewayIdentityValidated && state == .vhosConnected
+    GatewayEvidenceAuthorityGate.permits(
+      evidencePersistenceReady: evidencePersistenceReady,
+      portableFrameIntegrityError: portableFrameIntegrityError)
+      && peripheralConnected && gatewayIdentityValidated && state == .vhosConnected
       && handshake != nil && lastHandshakeReceivedAt != nil && decodedFrameCount > 0
   }
 
@@ -343,7 +522,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         self?.freshnessNow = Date()
       }
     }
-    portableFrameCount = portableFrameStore.count()
+    refreshPortableFrameIntegrity()
     if captureTransferReconnectRequested {
       Self.logger.info("BLE reconnect requested by interrupted capture transfer")
       trace(
@@ -366,6 +545,13 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     trace(
       "SCAN_REQUEST source=\(source) state=\(state.rawValue) peripheral=\(peripheral?.identifier.uuidString ?? "none") connected=\(peripheralConnected) active=\(scanActive)"
     )
+    guard evidencePersistenceReady else {
+      scanRequested = true
+      transportMessage =
+        "Verifying the local append-only evidence store before opening a gateway link…"
+      Self.commissioningTrace("SCAN_DEFERRED reason=evidence-persistence-not-ready")
+      return
+    }
     if state == .connecting, peripheral != nil {
       Self.commissioningTrace("SCAN_IGNORED reason=gateway-connection-in-progress")
       return
@@ -528,7 +714,10 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     reconnectTask?.cancel()
     scanRequested = false
     scanFallbackTask?.cancel()
-    central.stopScan()
+    if central.state == .poweredOn {
+      central.stopScan()
+    }
+    flushStaleScanDiscoveryTrace(reason: "user-disconnect")
     if let peripheral {
       retireRestoredPeripheral(peripheral, reason: "user-disconnect-or-cancel")
     }
@@ -545,12 +734,121 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     try writeFrame(type: .experimentPlan, payload: envelope.encoded())
   }
 
-  func captureLogExportURL() throws -> URL {
-    try captureStore.exportURL()
+  private func refreshPortableFrameIntegrity() {
+    Task { @MainActor [weak self, evidencePersistence] in
+      guard let self else { return }
+      do {
+        let preparation = try await evidencePersistence.prepare()
+        self.portableFrameIntegrityLatch.recordVerified(count: preparation.portableFrameCount)
+        self.captureSessions = preparation.captureSessions
+        self.evidencePersistenceReady = true
+        if self.scanRequested, self.central.state == .poweredOn,
+          !self.userRequestedDisconnect
+        {
+          self.startScan(source: "evidence-persistence-ready")
+        }
+      } catch {
+        self.evidencePersistenceReady = false
+        self.recordPortableFrameIntegrityFailure(error)
+      }
+    }
   }
 
-  func storedPassiveCANObservations(limit: Int = 50_000) throws -> [PassiveCANObservation] {
-    try captureStore.observations(limit: limit)
+  func retryPortableFrameIntegrityVerification() {
+    refreshPortableFrameIntegrity()
+  }
+
+  private func recordPortableFrameIntegrityFailure(_ error: Error) {
+    let failureAlreadyLatched = portableFrameIntegrityLatch.failure != nil
+    portableFrameIntegrityLatch.recordRuntimeFailure(error.localizedDescription)
+    if failureAlreadyLatched {
+      Self.commissioningTrace(
+        "PORTABLE_LEDGER_INTEGRITY_FAILURE_REPEATED action=link-already-retired error={\(Self.errorEvidence(error))}"
+      )
+      return
+    }
+    evidencePersistenceReady = false
+    scanRequested = false
+    scanAfterRestorationCleanup = false
+    pendingRestoredPeripheral = nil
+    reconnectIntentRequested = false
+    automaticReconnectEnabled = false
+    automaticReconnectActive = false
+    reconnectTask?.cancel()
+    reconnectTask = nil
+    scanFallbackTask?.cancel()
+    scanFallbackTask = nil
+    if central.state == .poweredOn {
+      central.stopScan()
+    }
+    scanActive = false
+    lastEvidenceSyncMessage =
+      "Portable evidence is preserved but unavailable until this integrity failure is resolved: "
+      + error.localizedDescription
+    Self.commissioningTrace(
+      "PORTABLE_LEDGER_INTEGRITY_FAILURE action=retire-authoritative-link link_session=\(linkSession) error={\(Self.errorEvidence(error))}"
+    )
+    if let peripheral, isActivePeripheral(peripheral) {
+      retireRestoredPeripheral(peripheral, reason: "authoritative-evidence-persistence-failure")
+    }
+    resetTransportSession()
+    state = .degraded
+    transportMessage =
+      "Authoritative evidence storage failed integrity verification. The BLE link was closed; repair and re-verify evidence before reconnecting."
+  }
+
+  func reportPortableFrameIntegrityFailure(_ error: Error) {
+    recordPortableFrameIntegrityFailure(error)
+  }
+
+  /// Opens a bounded page from the same store instance that owns live BLE appends.
+  ///
+  /// Only immutable file descriptors and exact byte lengths leave the main actor. The worker
+  /// actor performs decoding, hashing, analysis, and archive construction, so a second store
+  /// instance can never race recovery/index maintenance against the live receive path.
+  func makePortableEvidenceWorkSnapshot(
+    excludingArtifactIdentities: Set<String>,
+    maximumArtifacts: Int
+  ) async throws -> PortableEvidenceWorkSnapshot {
+    do {
+      return try await evidencePersistence.makePortableEvidenceWorkSnapshot(
+        excludingArtifactIdentities: excludingArtifactIdentities,
+        maximumArtifacts: maximumArtifacts)
+    } catch {
+      recordPortableFrameIntegrityFailure(error)
+      throw error
+    }
+  }
+
+  func makePassiveCANWorkSnapshot(
+    maximumObservationCount: Int = 50_000
+  ) async throws -> PassiveCANWorkSnapshot {
+    guard (1...50_000).contains(maximumObservationCount) else {
+      throw CaptureSyncError.invalidSnapshotLimit
+    }
+    do {
+      return try await evidencePersistence.makePassiveCANWorkSnapshot(
+        maximumObservationCount: maximumObservationCount)
+    } catch {
+      if error is PortableFrameStoreError {
+        recordPortableFrameIntegrityFailure(error)
+      }
+      throw error
+    }
+  }
+
+  private func persistAcceptedPortableFrame(
+    _ accepted: AcceptedGatewayFrameContext
+  ) async throws {
+    do {
+      let count = try await evidencePersistence.appendAcceptedPortableFrame(
+        accepted,
+        ingestedAt: Self.timestamp())
+      portableFrameIntegrityLatch.recordSuccessfulAppend(count: count)
+    } catch {
+      recordPortableFrameIntegrityFailure(error)
+      throw error
+    }
   }
 
   func bleConnectionTraceExportURL() throws -> URL {
@@ -627,7 +925,15 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       Self.commissioningTrace(
         "CAPTURE_TRANSFER_REQUESTED mode=continue-paused-download-auto-resume link_session=\(linkSession)"
       )
-      beginCaptureSync(index)
+      Task { @MainActor [weak self] in
+        guard let self else { return }
+        do {
+          try await self.beginCaptureSync(index)
+        } catch {
+          self.captureSyncMessage =
+            "Capture history is unavailable: \(error.localizedDescription)"
+        }
+      }
       return
     }
     do {
@@ -726,7 +1032,8 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     let shouldReconnectWhenPoweredOn = reconnectIntentRequested && !userRequestedDisconnect
     reconnectTask?.cancel()
     scanFallbackTask?.cancel()
-    central.stopScan()
+    // CoreBluetooth has already stopped scanning when the radio is not powered on. Calling
+    // stopScan() from this branch is an API misuse and can destabilize restoration callbacks.
     scanActive = false
     scanRequested = shouldReconnectWhenPoweredOn
     automaticReconnectActive = shouldReconnectWhenPoweredOn
@@ -758,6 +1065,22 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     }
     let restoredPeripherals =
       (dict[CBCentralManagerRestoredStatePeripheralsKey] as? [CBPeripheral]) ?? []
+    guard evidencePersistenceReady else {
+      for restored in restoredPeripherals {
+        retireRestoredPeripheral(restored, reason: "evidence-persistence-not-ready")
+      }
+      if !restoredPeripherals.isEmpty {
+        reconnectIntentRequested = true
+        scanRequested = true
+        scanAfterRestorationCleanup = true
+      }
+      transportMessage =
+        "Verifying the local append-only evidence store before restoring the gateway link…"
+      Self.commissioningTrace(
+        "RESTORE_DEFERRED reason=evidence-persistence-not-ready count=\(restoredPeripherals.count)"
+      )
+      return
+    }
     if userRequestedDisconnect {
       for restored in restoredPeripherals {
         retireRestoredPeripheral(restored, reason: "late-restore-after-user-disconnect")
@@ -902,11 +1225,12 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     guard scanActive, scanRequested, state == .scanning, !userRequestedDisconnect,
       !connectionCleanupActive
     else {
-      Self.commissioningTrace(
-        "STALE_SCAN_DISCOVERY_IGNORED scan_active=\(scanActive) scan_requested=\(scanRequested) state=\(state.rawValue) user_disconnected=\(userRequestedDisconnect) cleanup=\(connectionCleanupActive) peripheral=\(peripheralEvidence(peripheral))"
+      recordStaleScanDiscovery(
+        "scan_active=\(scanActive) scan_requested=\(scanRequested) state=\(state.rawValue) user_disconnected=\(userRequestedDisconnect) cleanup=\(connectionCleanupActive) peripheral=\(peripheralEvidence(peripheral))"
       )
       return
     }
+    flushStaleScanDiscoveryTrace(reason: "valid-scan-callback")
     let advertised = advertisementData[CBAdvertisementDataServiceUUIDsKey] as? [CBUUID] ?? []
     let overflow = advertisementData[CBAdvertisementDataOverflowServiceUUIDsKey] as? [CBUUID] ?? []
     let solicited =
@@ -1549,10 +1873,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
           "FRAME_STREAM_RESYNCHRONIZED link_session=\(linkSession) recoveries=\(recoveries) discarded_bytes=\(discarded) corrupt_candidates=\(corrupt) buffered_bytes=\(streamDecoder.bufferedByteCount)"
         )
       }
-      for frame in frames {
-        record(frame)
-        try consume(frame)
-      }
+      for frame in frames { enqueueFrameForPersistence(frame, callbackSession: callbackSession) }
     } catch {
       frameDecodeErrorCount &+= 1
       state = .degraded
@@ -1828,28 +2149,102 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       ? "\(message) Finishing the unresponsive link first…" : message
   }
 
-  private func consume(_ frame: GatewayFrame) throws {
-    if frame.messageType != .handshake, let handshake {
-      _ = try portableFrameStore.append(
-        frame: frame,
-        sourceRole: .obdCAN,
-        sourceID: handshake.gatewayID,
-        ingestedAt: Self.timestamp()
+  private func enqueueFrameForPersistence(_ frame: GatewayFrame, callbackSession: UInt64) {
+    guard pendingFramePersistenceCount < Self.maximumPendingFramePersistenceCount else {
+      frameDecodeErrorCount &+= 1
+      state = .degraded
+      transportMessage =
+        "Local evidence persistence could not keep up with the BLE stream; the link was stopped before silently losing more frames."
+      Self.commissioningTrace(
+        "FRAME_PERSISTENCE_BACKPRESSURE_EXHAUSTED link_session=\(callbackSession) pending=\(pendingFramePersistenceCount)"
       )
-      portableFrameCount = portableFrameStore.count()
+      if let peripheral, isActivePeripheral(peripheral) {
+        retireRestoredPeripheral(peripheral, reason: "evidence-persistence-backpressure")
+      }
+      return
     }
+    let physicalSourceID: String?
+    if callbackSession == linkSession,
+      let physicalIdentifier = peripheral?.identifier.uuidString ?? discoveredIdentifier
+    {
+      physicalSourceID = "ble-peripheral-\(physicalIdentifier.lowercased())"
+    } else {
+      physicalSourceID = nil
+    }
+    let sourceID = validatedGatewayIdentities.evidenceSourceID(
+      for: callbackSession,
+      physicalTransportSourceID: physicalSourceID)
+    let acceptedContext = AcceptedGatewayFrameContext(
+      frame: frame,
+      acceptedLinkSession: callbackSession,
+      sourceID: sourceID)
+
+    pendingFramePersistenceCount += 1
+    let predecessor = framePersistenceTail
+    framePersistenceTail = Task { @MainActor [weak self] in
+      _ = await predecessor?.value
+      guard let self else { return }
+      defer { self.pendingFramePersistenceCount -= 1 }
+      do {
+        try await self.persistAcceptedPortableFrame(acceptedContext)
+      } catch {
+        self.frameDecodeErrorCount &+= 1
+        if self.portableFrameIntegrityError == nil {
+          self.recordPortableFrameIntegrityFailure(error)
+        }
+        // The integrity failure is sticky and the authoritative link has been retired. Do not
+        // reinterpret it as an ordinary decoder error.
+        return
+      }
+      guard acceptedContext.appliesToCurrentTransportSession(self.linkSession) else {
+        Self.commissioningTrace(
+          "STALE_ACCEPTED_FRAME_UI_IGNORED persisted=true callback_session=\(callbackSession) active_session=\(self.linkSession) sequence=\(frame.sequence)"
+        )
+        return
+      }
+      do {
+        self.record(frame)
+        try await self.applyFrameToCurrentSession(frame)
+      } catch {
+        self.frameDecodeErrorCount &+= 1
+        self.state = .degraded
+        self.transportMessage = error.localizedDescription
+        Self.commissioningTrace(
+          "FRAME_OR_CONTRACT_DECODE_FAILED sequence=\(frame.sequence) error=\(error.localizedDescription)"
+        )
+      }
+    }
+  }
+
+  private func applyFrameToCurrentSession(_ frame: GatewayFrame) async throws {
     switch frame.messageType {
     case .handshake:
-      guard handshakeRequested, handshakeWriteAttemptInFlight == nil,
-        pendingCommandChunks.isEmpty, handshakeResponseTask != nil,
-        notificationRequestSession == linkSession, streamNotificationsEnabled
-      else {
+      let authorityWindow = GatewayHandshakeAuthorityWindow(
+        responseRequested: handshakeRequested,
+        writeAttemptCompleted: handshakeWriteAttemptInFlight == nil,
+        commandQueueDrained: pendingCommandChunks.isEmpty,
+        responseDeadlineActive: handshakeResponseTask != nil,
+        notificationSessionMatches: notificationRequestSession == linkSession,
+        streamNotificationsEnabled: streamNotificationsEnabled)
+      guard authorityWindow.acceptsIdentityClaim else {
         Self.commissioningTrace(
           "UNSOLICITED_OR_STALE_HANDSHAKE_IGNORED link_session=\(linkSession) requested=\(handshakeRequested) write_in_flight=\(handshakeWriteAttemptInFlight != nil) chunks=\(pendingCommandChunks.count) response_window=\(handshakeResponseTask != nil) stream_confirmed=\(streamNotificationsEnabled)"
         )
         return
       }
       let value = try VHOSJSON.decoder().decode(GatewayHandshake.self, from: frame.payload)
+      guard validatedGatewayIdentities.promoteHandshakeClaim(
+        gatewayID: value.gatewayID,
+        linkSession: linkSession,
+        authorityWindow: authorityWindow)
+      else {
+        // Defensive duplicate of the pre-decode gate. The registry owns the final authority
+        // boundary so later refactors cannot promote a decoded-but-rejected claim.
+        Self.commissioningTrace(
+          "HANDSHAKE_IDENTITY_PROMOTION_REJECTED link_session=\(linkSession) gateway_id=\(value.gatewayID)"
+        )
+        return
+      }
       handshakeRetryTask?.cancel()
       handshakeRetryTask = nil
       handshakeWriteAckTask?.cancel()
@@ -1857,13 +2252,6 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       handshakeResponseTask?.cancel()
       handshakeResponseTask = nil
       handshakeWriteAttemptInFlight = nil
-      _ = try portableFrameStore.append(
-        frame: frame,
-        sourceRole: .obdCAN,
-        sourceID: value.gatewayID,
-        ingestedAt: Self.timestamp()
-      )
-      portableFrameCount = portableFrameStore.count()
       handshake = value
       lastHandshakeReceivedAt = Date()
       if let peripheral, isActivePeripheral(peripheral) {
@@ -1876,7 +2264,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       Self.commissioningTrace(
         "HANDSHAKE_VERIFIED firmware=\(value.firmwareVersion) reset_reason=\(value.resetReason.map(String.init) ?? "unavailable")"
       )
-      captureSessions = captureStore.summaries()
+      captureSessions = try await evidencePersistence.captureSummaries()
       if value.capabilities.contains(.persistentEvidenceLog) {
         do {
           if captureResumeConfirmationPending {
@@ -1978,7 +2366,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         "CAPTURE_INDEX current_session=\(index.currentSessionID) current_records=\(index.currentRecords) previous_session=\(index.previousSessionID) previous_records=\(index.previousRecords) retained=\(index.retainedRecords) queue_drops=\(index.queueDroppedRecords) write_failures=\(index.storageWriteFailures)"
       )
       if index.logging, !captureSyncSuspendedForOTA, !captureHistoryTransferActive,
-        hasIncompleteLocalCapture(for: index)
+        try await hasIncompleteLocalCapture(for: index)
       {
         captureAutoResumeAfterHistoryTransfer = true
         captureResumeConfirmationPending = false
@@ -2035,7 +2423,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
           "CAPTURE_SYNC_DEFERRED reason=recorder-active policy=inventory-only current_session=\(index.currentSessionID) current_records=\(index.currentRecords) previous_session=\(index.previousSessionID) previous_records=\(index.previousRecords)"
         )
       case .transferHistory:
-        if !captureHistoryTransferActive, hasIncompleteLocalCapture(for: index) {
+        if !captureHistoryTransferActive, try await hasIncompleteLocalCapture(for: index) {
           captureAutoResumeAfterHistoryTransfer = true
           captureResumeConfirmationPending = false
           captureTransferRearmPending = false
@@ -2048,7 +2436,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
           )
         }
         if captureHistoryTransferActive {
-          beginCaptureSync(index)
+          try await beginCaptureSync(index)
         } else {
           captureSyncMessage =
             "The gateway recorder is paused. Choose Download paused history and resume, or resume recording now."
@@ -2064,7 +2452,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         gatewayID: gatewayID,
         ingestedAt: Self.timestamp()
       )
-      try consumeCaptureChunk(chunk)
+      try await consumeCaptureChunk(chunk)
     case .otaControl:
       let status = try VHOSJSON.decoder().decode(GatewayOTAStatus.self, from: frame.payload)
       otaStatus = status
@@ -2078,17 +2466,19 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     }
   }
 
-  private func hasIncompleteLocalCapture(for index: CaptureLogIndex) -> Bool {
+  private func hasIncompleteLocalCapture(for index: CaptureLogIndex) async throws -> Bool {
     guard let gatewayID = handshake?.gatewayID else { return false }
     let candidates: [(UInt32, UInt32)] = [
       (index.previousSessionID, index.previousRecords),
       (index.currentSessionID, index.currentRecords),
     ]
-    return candidates.contains { sessionID, totalRecords in
-      guard sessionID != 0, totalRecords > 0 else { return false }
-      let localCount = captureStore.recordCount(gatewayID: gatewayID, sessionID: sessionID)
-      return localCount > 0 && localCount < totalRecords
+    for (sessionID, totalRecords) in candidates {
+      guard sessionID != 0, totalRecords > 0 else { continue }
+      let localCount = try await evidencePersistence.captureRecordCount(
+        gatewayID: gatewayID, sessionID: sessionID)
+      if localCount > 0 && localCount < totalRecords { return true }
     }
+    return false
   }
 
   private func writeFrame(type: GatewayMessageType, payload: Data) throws {
@@ -2114,31 +2504,49 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     }
   }
 
-  func evidenceSyncExportURL(
-    applicationID: String,
-    applicationVersion: String,
-    deviceModel: String
-  ) throws -> URL {
-    let url = try portableFrameStore.export(
-      applicationID: applicationID,
-      applicationVersion: applicationVersion,
-      deviceModel: deviceModel
-    )
-    lastEvidenceSyncMessage =
-      "Prepared \(portableFrameCount) validated logical frames for Android/iPhone sync."
-    return url
-  }
-
-  func importEvidenceSync(from url: URL) throws -> EvidenceSyncImportSummary {
-    let bytes = try Data(contentsOf: url, options: [.mappedIfSafe])
-    let summary = try portableFrameStore.importBundle(bytes)
-    portableFrameCount = portableFrameStore.count()
+  func importEvidenceSync(from url: URL) async throws -> EvidenceSyncImportSummary {
+    let summary: EvidenceSyncImportSummary
+    do {
+      // URL preflight and bounded archive reads belong to the serial persistence actor. Reading
+      // an 18 MiB document-provider file on CoreBluetooth's main actor can otherwise starve the
+      // live notification and handshake deadlines.
+      let imported = try await evidencePersistence.importBundle(from: url)
+      summary = imported.summary
+      portableFrameIntegrityLatch.recordVerified(count: imported.portableFrameCount)
+    } catch {
+      recordPortableFrameIntegrityFailure(error)
+      throw error
+    }
     lastEvidenceSyncMessage =
       "Verified \(summary.verifiedRecords) records; appended \(summary.appendedRecords) new logical frames."
     return summary
   }
 
-  private func beginCaptureSync(_ index: CaptureLogIndex) {
+  nonisolated static func readBoundedEvidenceSyncArchive(from url: URL) throws -> Data {
+    let values = try url.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey])
+    if values.isRegularFile == false { throw EvidenceSyncError.invalidArchive }
+    if let fileSize = values.fileSize,
+      fileSize > EvidenceSyncBundle.maximumArchiveByteCount
+    {
+      throw EvidenceSyncError.archiveTooLarge
+    }
+    let handle = try FileHandle(forReadingFrom: url)
+    defer { try? handle.close() }
+    var archive = Data()
+    archive.reserveCapacity(
+      min(values.fileSize ?? 0, EvidenceSyncBundle.maximumArchiveByteCount))
+    while true {
+      let chunk = try handle.read(upToCount: 64 * 1_024) ?? Data()
+      if chunk.isEmpty { break }
+      guard chunk.count <= EvidenceSyncBundle.maximumArchiveByteCount - archive.count else {
+        throw EvidenceSyncError.archiveTooLarge
+      }
+      archive.append(chunk)
+    }
+    return archive
+  }
+
+  private func beginCaptureSync(_ index: CaptureLogIndex) async throws {
     guard let gatewayID = handshake?.gatewayID else { return }
     captureSyncTask?.cancel()
     captureSyncTask = nil
@@ -2150,7 +2558,8 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       (0, index.currentSessionID, index.currentRecords),
     ]
     for (slot, sessionID, totalRecords) in candidates where sessionID != 0 && totalRecords > 0 {
-      let localCount = captureStore.recordCount(gatewayID: gatewayID, sessionID: sessionID)
+      let localCount = try await evidencePersistence.captureRecordCount(
+        gatewayID: gatewayID, sessionID: sessionID)
       let offset = localCount <= totalRecords ? localCount : 0
       captureSyncTargets.append(
         CaptureSyncTarget(
@@ -2160,7 +2569,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
           recordOffset: offset
         ))
     }
-    captureSessions = captureStore.summaries()
+    captureSessions = try await evidencePersistence.captureSummaries()
     Self.commissioningTrace(
       "CAPTURE_FLOW_CONTROL policy=response-validated-window window=1 pacing=firmware-backpressure"
     )
@@ -2190,19 +2599,15 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       captureSyncTargets.removeFirst()
     }
     guard let target = captureSyncTargets.first else {
-      captureSessions = captureStore.summaries()
-      captureSyncMessage = "Recent gateway logs are synchronized on this iPhone."
-      let fingerprint =
-        captureSessions
-        .map { "\($0.gatewayID):\($0.sessionID):\($0.recordCount):\($0.byteCount)" }
-        .joined(separator: "|")
-      if !fingerprint.isEmpty, fingerprint != lastCaptureSyncFingerprint {
-        lastCaptureSyncFingerprint = fingerprint
-        captureSyncCompletionGeneration &+= 1
+      Task { @MainActor [weak self] in
+        guard let self else { return }
+        do {
+          try await self.finishCaptureSync()
+        } catch {
+          self.captureSyncMessage =
+            "Capture history is unavailable: \(error.localizedDescription)"
+        }
       }
-      Self.commissioningTrace(
-        "CAPTURE_SYNC_COMPLETE downloaded=\(captureDownloadedRecords) local_sessions=\(captureSessions.count) outbox_generation=\(captureSyncCompletionGeneration)"
-      )
       requestCaptureResumeAfterHistoryTransfer(
         completionMessage: "History download complete; resuming passive recording…"
       )
@@ -2223,6 +2628,22 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     } catch {
       captureSyncMessage = error.localizedDescription
     }
+  }
+
+  private func finishCaptureSync() async throws {
+    captureSessions = try await evidencePersistence.captureSummaries()
+    captureSyncMessage = "Recent gateway logs are synchronized on this iPhone."
+    let fingerprint =
+      captureSessions
+      .map { "\($0.gatewayID):\($0.sessionID):\($0.recordCount):\($0.byteCount)" }
+      .joined(separator: "|")
+    if !fingerprint.isEmpty, fingerprint != lastCaptureSyncFingerprint {
+      lastCaptureSyncFingerprint = fingerprint
+      captureSyncCompletionGeneration &+= 1
+    }
+    Self.commissioningTrace(
+      "CAPTURE_SYNC_COMPLETE downloaded=\(captureDownloadedRecords) local_sessions=\(captureSessions.count) outbox_generation=\(captureSyncCompletionGeneration)"
+    )
   }
 
   private func armCaptureChunkResponseTimeout(for target: CaptureSyncTarget) {
@@ -2277,7 +2698,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     }
   }
 
-  private func consumeCaptureChunk(_ chunk: CaptureLogChunk) throws {
+  private func consumeCaptureChunk(_ chunk: CaptureLogChunk) async throws {
     guard var target = captureSyncTargets.first,
       chunk.slot == target.slot,
       chunk.sessionID == target.sessionID,
@@ -2288,7 +2709,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     captureChunkResponseTask?.cancel()
     captureChunkResponseTask = nil
     guard let gatewayID = handshake?.gatewayID else { return }
-    let appended = try captureStore.append(
+    let appended = try await evidencePersistence.appendCaptureRecords(
       chunk.records,
       gatewayID: gatewayID,
       sessionID: chunk.sessionID
@@ -2299,7 +2720,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     )
     target.recordOffset &+= UInt32(chunk.records.count)
     captureSyncTargets[0] = target
-    captureSessions = captureStore.summaries()
+    captureSessions = try await evidencePersistence.captureSummaries()
     if chunk.endOfFile || target.recordOffset >= target.totalRecords {
       captureSyncTargets.removeFirst()
     } else if chunk.records.isEmpty {
@@ -2839,6 +3260,14 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     if isActivePeripheral(peripheral) {
       retireActivePeripheralDelegate()
     }
+    // Core Bluetooth may still deliver callbacks already queued for an active scan. Stop creating
+    // new work before retiring the inherited link, while preserving scanRequested so cleanup can
+    // resume the user's reconnect intent on one fresh central session.
+    scanFallbackTask?.cancel()
+    scanFallbackTask = nil
+    central.stopScan()
+    scanActive = false
+    scanMode = "Link cleanup"
     peripheral.delegate = nil
     retiredRestoredPeripherals[key] = peripheral
     connectionCleanupActive = true
@@ -2872,6 +3301,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     restoredCleanupTask?.cancel()
     restoredCleanupTask = nil
     connectionCleanupActive = false
+    flushStaleScanDiscoveryTrace(reason: "restoration-cleanup-complete")
     Self.commissioningTrace(
       "RESTORED_CLEANUP_COMPLETE source=\(source) user_disconnected=\(userRequestedDisconnect) pending_restore=\(pendingRestoredPeripheral != nil) scan_after=\(scanAfterRestorationCleanup)"
     )
@@ -2944,6 +3374,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         central.cancelPeripheralConnection(stale)
       }
     }
+    flushStaleScanDiscoveryTrace(reason: "central-cleanup-rebuild")
     central.stopScan()
     central.delegate = nil
     restoredCleanupTask?.cancel()
@@ -3234,6 +3665,17 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     }
   }
 
+  private func recordStaleScanDiscovery(_ detail: String) {
+    for message in staleScanDiscoveryTrace.observe(detail) {
+      Self.commissioningTrace(message)
+    }
+  }
+
+  private func flushStaleScanDiscoveryTrace(reason: String) {
+    guard let summary = staleScanDiscoveryTrace.flush(reason: reason) else { return }
+    Self.commissioningTrace(summary)
+  }
+
   private func trace(_ message: String) {
     Self.commissioningTrace("client=\(instanceID) \(message)")
   }
@@ -3259,6 +3701,9 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   }
 
   private func resetTransportSession(preservingSelection: Bool = false) {
+    // Invalidate queued UI application immediately. CRC-valid frames already accepted under the
+    // previous epoch retain their captured source identity and still drain to durable evidence.
+    linkSession &+= 1
     let selectedPeripheral = peripheral
     let selectedName = discoveredName
     let selectedIdentifier = discoveredIdentifier
@@ -3354,6 +3799,111 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   }
 }
 
+struct GatewayEvidencePreparation: Sendable {
+  let portableFrameCount: Int
+  let captureSessions: [CaptureSessionSummary]
+}
+
+struct GatewayEvidenceImportResult: Sendable {
+  let summary: EvidenceSyncImportSummary
+  let portableFrameCount: Int
+}
+
+/// Exclusive serial owner of every disk-backed BLE evidence store.
+///
+/// CoreBluetooth delegates run on the main queue. No recovery, index rebuild, historical directory
+/// enumeration, import replay, or capture deduplication may execute there. Exact descriptor
+/// snapshots are opened here and handed to `EvidenceWorkCoordinator` for bounded decoding/hashing.
+actor GatewayEvidencePersistenceWorker {
+  private let captureStore: CaptureLogStore
+  private let portableFrameStore: PortableFrameStore
+
+  init(
+    portableFrameStore: PortableFrameStore = PortableFrameStore(),
+    captureStore: CaptureLogStore = CaptureLogStore()
+  ) {
+    self.portableFrameStore = portableFrameStore
+    self.captureStore = captureStore
+  }
+
+  func prepare() throws -> GatewayEvidencePreparation {
+    GatewayEvidencePreparation(
+      portableFrameCount: try portableFrameStore.count(),
+      captureSessions: try captureStore.summaries())
+  }
+
+  func appendAcceptedPortableFrame(
+    _ accepted: AcceptedGatewayFrameContext,
+    ingestedAt: String
+  ) throws -> Int {
+    guard let sourceID = accepted.sourceID else {
+      throw GatewayBLEError.evidenceSourceIdentityUnavailable
+    }
+    _ = try portableFrameStore.append(
+      frame: accepted.frame,
+      sourceRole: .obdCAN,
+      sourceID: sourceID,
+      ingestedAt: ingestedAt)
+    return try portableFrameStore.count()
+  }
+
+  func portableRecords(limit: Int) throws -> [PortableLogicalFrame] {
+    try portableFrameStore.records(limit: limit)
+  }
+
+  func makePortableEvidenceWorkSnapshot(
+    excludingArtifactIdentities: Set<String>,
+    maximumArtifacts: Int
+  ) throws -> PortableEvidenceWorkSnapshot {
+    try portableFrameStore.makeEvidenceWorkSnapshot(
+      excludingArtifactIdentities: excludingArtifactIdentities,
+      maximumArtifacts: maximumArtifacts)
+  }
+
+  func makePassiveCANWorkSnapshot(
+    maximumObservationCount: Int
+  ) throws -> PassiveCANWorkSnapshot {
+    let capture = try captureStore.makeWorkSnapshots(
+      maximumFiles: 32,
+      maximumBytes: 16 * 1_024 * 1_024)
+    do {
+      return PassiveCANWorkSnapshot(
+        captureFiles: capture.snapshots,
+        portableLedgers: try portableFrameStore.makeResearchLedgerSnapshots(maximumSources: 3),
+        maximumObservationCount: maximumObservationCount,
+        hasEarlierCaptureBytes: capture.hasEarlierBytes)
+    } catch {
+      for source in capture.snapshots { try? source.handle.close() }
+      throw error
+    }
+  }
+
+  func captureRecordCount(gatewayID: String, sessionID: UInt32) throws -> UInt32 {
+    try captureStore.recordCount(gatewayID: gatewayID, sessionID: sessionID)
+  }
+
+  func captureSummaries() throws -> [CaptureSessionSummary] { try captureStore.summaries() }
+
+  func appendCaptureRecords(
+    _ observations: [PassiveCANObservation],
+    gatewayID: String,
+    sessionID: UInt32
+  ) throws -> Int {
+    try captureStore.append(observations, gatewayID: gatewayID, sessionID: sessionID)
+  }
+
+  func importBundle(_ bytes: Data) throws -> GatewayEvidenceImportResult {
+    let summary = try portableFrameStore.importBundle(bytes)
+    return GatewayEvidenceImportResult(
+      summary: summary,
+      portableFrameCount: try portableFrameStore.count())
+  }
+
+  func importBundle(from url: URL) throws -> GatewayEvidenceImportResult {
+    try importBundle(GatewayBLEClient.readBoundedEvidenceSyncArchive(from: url))
+  }
+}
+
 private struct CaptureSyncTarget {
   let slot: UInt8
   let sessionID: UInt32
@@ -3361,7 +3911,7 @@ private struct CaptureSyncTarget {
   var recordOffset: UInt32
 }
 
-struct CaptureSessionSummary: Identifiable {
+struct CaptureSessionSummary: Identifiable, Sendable {
   let gatewayID: String
   let sessionID: UInt32
   let recordCount: UInt32
@@ -3372,21 +3922,37 @@ struct CaptureSessionSummary: Identifiable {
   var id: String { "\(gatewayID):\(sessionID)" }
 }
 
-private final class CaptureLogStore {
-  private let fileManager = FileManager.default
-  private let root: URL
-  private var sequenceCache: [String: Set<UInt64>] = [:]
+final class CaptureLogStore {
+  private static let maximumRecordByteCount = 64 * 1_024
+  private static let maximumReadyLedgerCount = 16
 
-  init() {
+  private let fileManager: FileManager
+  private let root: URL
+  private let indexURL: URL
+  private let recoveryDirectoryURL: URL
+  private var recordIndex: DurableLedgerIndex?
+  private var readyLedgerKeys: [String] = []
+
+  init(fileManager: FileManager = .default, root explicitRoot: URL? = nil) {
+    self.fileManager = fileManager
     let applicationSupport =
       fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)
       .first ?? fileManager.temporaryDirectory
-    root = applicationSupport.appendingPathComponent("VHOS/PassiveCAN", isDirectory: true)
-    try? fileManager.createDirectory(at: root, withIntermediateDirectories: true)
+    root =
+      explicitRoot
+      ?? applicationSupport.appendingPathComponent("VHOS/PassiveCAN", isDirectory: true)
+    indexURL = root.appendingPathComponent("capture-index.sqlite3")
+    recoveryDirectoryURL = root.appendingPathComponent(
+      "InterruptedCaptureTails", isDirectory: true)
   }
 
-  func recordCount(gatewayID: String, sessionID: UInt32) -> UInt32 {
-    UInt32(sequences(gatewayID: gatewayID, sessionID: sessionID).count)
+  func recordCount(gatewayID: String, sessionID: UInt32) throws -> UInt32 {
+    let index = try ensuredRecordIndex(gatewayID: gatewayID, sessionID: sessionID)
+    let count = try index.count(ledgerKey: ledgerKey(gatewayID: gatewayID, sessionID: sessionID))
+    guard let exact = UInt32(exactly: count) else {
+      throw CaptureLogStoreError.capacityReached
+    }
+    return exact
   }
 
   func append(
@@ -3395,58 +3961,111 @@ private final class CaptureLogStore {
     sessionID: UInt32
   ) throws -> Int {
     guard !observations.isEmpty else { return 0 }
-    let url = fileURL(gatewayID: gatewayID, sessionID: sessionID)
-    try fileManager.createDirectory(
-      at: url.deletingLastPathComponent(),
-      withIntermediateDirectories: true
-    )
-    var known = sequences(gatewayID: gatewayID, sessionID: sessionID)
-    let fresh = observations.filter { known.insert($0.sourceSequence).inserted }
-    guard !fresh.isEmpty else { return 0 }
-    let bytes = try PassiveCANEvidenceArchive.encodeNDJSON(fresh)
-    if !fileManager.fileExists(atPath: url.path) {
-      try Data().write(to: url, options: .atomic)
+    guard observations.count <= Int(UInt16.max) else {
+      throw CaptureLogStoreError.batchTooLarge
     }
-    let handle = try FileHandle(forWritingTo: url)
-    defer { try? handle.close() }
-    try handle.seekToEnd()
-    try handle.write(contentsOf: bytes)
-    sequenceCache[cacheKey(gatewayID: gatewayID, sessionID: sessionID)] = known
+    let url = fileURL(gatewayID: gatewayID, sessionID: sessionID)
+    let key = ledgerKey(gatewayID: gatewayID, sessionID: sessionID)
+    let index = try ensuredRecordIndex(gatewayID: gatewayID, sessionID: sessionID)
+    var batchSequences: [UInt64: String] = [:]
+    var fresh: [(primary: String, digest: String, line: Data)] = []
+    fresh.reserveCapacity(observations.count)
+    for observation in observations {
+      try PassiveCANEvidenceArchive.validate(observation)
+      guard sanitized(observation.gatewayID) == sanitized(gatewayID),
+        observation.sessionID == sessionID
+      else { throw CaptureLogStoreError.recordScopeMismatch(observation.id) }
+      let line = try PassiveCANEvidenceArchive.encodeNDJSON([observation])
+      guard line.count <= Self.maximumRecordByteCount else {
+        throw CaptureLogStoreError.recordTooLarge
+      }
+      let primary = Self.primaryKey(observation.sourceSequence)
+      let digest = DurableNDJSONLedger.canonicalDigest(Data(line.dropLast()))
+      if let batchDigest = batchSequences[observation.sourceSequence] {
+        guard batchDigest == digest else {
+          throw CaptureLogStoreError.sequenceCollision(observation.sourceSequence)
+        }
+        continue
+      }
+      batchSequences[observation.sourceSequence] = digest
+      if let existing = try index.dedupeKey(ledgerKey: key, primaryKey: primary) {
+        guard existing == digest else {
+          throw CaptureLogStoreError.sequenceCollision(observation.sourceSequence)
+        }
+        continue
+      }
+      fresh.append((primary, digest, line))
+    }
+    guard !fresh.isEmpty else { return 0 }
+    let existingCount = try index.count(ledgerKey: key)
+    guard existingCount <= Int(UInt32.max) - fresh.count else {
+      throw CaptureLogStoreError.capacityReached
+    }
+    var bytes = Data()
+    for candidate in fresh { bytes.append(candidate.line) }
+    let prior = try index.metadata(ledgerKey: key) ?? .empty
+    do {
+      let finalOffset = try DurableNDJSONLedger.appendDurably(
+        bytes, to: url, expectedOffset: prior.byteCount, fileManager: fileManager)
+      var updated = prior
+      for candidate in fresh { updated = updated.appending(candidate.line) }
+      guard updated.byteCount == finalOffset else {
+        throw CaptureLogStoreError.indexUnavailable
+      }
+      try index.beginDelta()
+      do {
+        for candidate in fresh {
+          try index.insert(
+            ledgerKey: key, primaryKey: candidate.primary, dedupeKey: candidate.digest)
+        }
+        try index.finish(ledgerKey: key, metadata: updated)
+      } catch {
+        index.cancel()
+        throw error
+      }
+      try DurableNDJSONLedger.synchronizeDirectory(url.deletingLastPathComponent())
+    } catch {
+      invalidatePreparedState(for: key)
+      throw error
+    }
     return fresh.count
   }
 
-  func summaries() -> [CaptureSessionSummary] {
-    guard
-      let gatewayDirectories = try? fileManager.contentsOfDirectory(
-        at: root,
-        includingPropertiesForKeys: [.isDirectoryKey],
-        options: [.skipsHiddenFiles]
-      )
-    else { return [] }
+  func summaries() throws -> [CaptureSessionSummary] {
+    guard fileManager.fileExists(atPath: root.path) else { return [] }
+    let gatewayDirectories = try fileManager.contentsOfDirectory(
+      at: root,
+      includingPropertiesForKeys: [.isDirectoryKey],
+      options: [.skipsHiddenFiles])
     var summaries: [CaptureSessionSummary] = []
     for directory in gatewayDirectories {
-      guard
-        let files = try? fileManager.contentsOfDirectory(
-          at: directory,
-          includingPropertiesForKeys: [.fileSizeKey, .contentModificationDateKey],
-          options: [.skipsHiddenFiles]
-        )
+      guard try directory.resourceValues(forKeys: [.isDirectoryKey]).isDirectory == true,
+        directory.lastPathComponent != recoveryDirectoryURL.lastPathComponent
       else { continue }
+      let files = try fileManager.contentsOfDirectory(
+        at: directory,
+        includingPropertiesForKeys: [
+          .isRegularFileKey, .fileSizeKey, .contentModificationDateKey,
+        ],
+        options: [.skipsHiddenFiles])
       for file in files where file.pathExtension == "ndjson" {
         guard let sessionID = UInt32(file.deletingPathExtension().lastPathComponent) else {
-          continue
+          throw CaptureLogStoreError.invalidLedgerFileName(file.lastPathComponent)
         }
         let gatewayID = directory.lastPathComponent
-        let resources = try? file.resourceValues(
-          forKeys: [.fileSizeKey, .contentModificationDateKey])
-        let count = recordCount(gatewayID: gatewayID, sessionID: sessionID)
+        let count = try recordCount(gatewayID: gatewayID, sessionID: sessionID)
+        let resources = try file.resourceValues(
+          forKeys: [.isRegularFileKey, .fileSizeKey, .contentModificationDateKey])
+        guard resources.isRegularFile == true else {
+          throw CaptureLogStoreError.invalidLedgerFileName(file.lastPathComponent)
+        }
         summaries.append(
           CaptureSessionSummary(
             gatewayID: gatewayID,
             sessionID: sessionID,
             recordCount: count,
-            byteCount: Int64(resources?.fileSize ?? 0),
-            updatedAt: resources?.contentModificationDate ?? .distantPast,
+            byteCount: Int64(resources.fileSize ?? 0),
+            updatedAt: resources.contentModificationDate ?? .distantPast,
             url: file
           ))
       }
@@ -3454,58 +4073,243 @@ private final class CaptureLogStore {
     return summaries.sorted { $0.updatedAt > $1.updatedAt }
   }
 
-  func exportURL() throws -> URL {
-    let sessions = summaries()
-    guard !sessions.isEmpty else { throw CaptureSyncError.noStoredLogs }
-    let directory = fileManager.temporaryDirectory.appendingPathComponent(
-      "VehicleHealthOS-Evidence", isDirectory: true)
-    try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
-    let output = directory.appendingPathComponent("passive-can-recent-logs.ndjson")
-    var combined = Data()
-    for session in sessions {
-      combined.append(try Data(contentsOf: session.url))
-    }
-    try combined.write(to: output, options: .atomic)
-    return output
-  }
+  /// Opens an exact, bounded suffix of the durable capture archive for background processing.
+  ///
+  /// The file descriptors preserve the selected byte prefix even if a gateway sync appends later.
+  /// A partial first line is discarded by the worker when `startOffset` is nonzero. No CAN bytes
+  /// are rewritten or deleted, and the caller owns closing every returned descriptor.
+  func makeWorkSnapshots(
+    maximumFiles: Int,
+    maximumBytes: Int
+  ) throws -> (snapshots: [CaptureEvidenceFileSnapshot], hasEarlierBytes: Bool) {
+    guard (1...32).contains(maximumFiles), maximumBytes > 0,
+      maximumBytes <= 16 * 1_024 * 1_024
+    else { throw CaptureSyncError.invalidSnapshotLimit }
 
-  func observations(limit: Int) throws -> [PassiveCANObservation] {
-    guard limit > 0 else { return [] }
-    var retained: [PassiveCANObservation] = []
-    // Oldest files are merged first so a bounded read keeps the newest evidence.
-    for session in summaries().reversed() {
-      let decoded = try PassiveCANEvidenceArchive.decodeNDJSON(
-        Data(contentsOf: session.url, options: [.mappedIfSafe]))
-      retained = try PassiveCANEvidenceArchive.merge(
-        existing: retained,
-        incoming: decoded
-      ).records
-      if retained.count > limit {
-        retained = Array(retained.suffix(limit))
+    var sources = try summaries().filter { $0.byteCount > 0 }
+    sources.sort {
+      if $0.updatedAt == $1.updatedAt { return $0.url.path < $1.url.path }
+      return $0.updatedAt < $1.updatedAt
+    }
+
+    var remainingBytes = maximumBytes
+    var newestFirst: [CaptureEvidenceFileSnapshot] = []
+    var hasEarlierBytes = false
+    do {
+      for source in sources.reversed() {
+        guard newestFirst.count < maximumFiles, remainingBytes > 0 else {
+          hasEarlierBytes = true
+          continue
+        }
+        guard let sourceByteCount = Int(exactly: source.byteCount) else {
+          throw CaptureLogStoreError.capacityReached
+        }
+        let selectedByteCount = min(sourceByteCount, remainingBytes)
+        let startOffset = sourceByteCount - selectedByteCount
+        if startOffset > 0 { hasEarlierBytes = true }
+        newestFirst.append(
+          CaptureEvidenceFileSnapshot(
+            handle: try FileHandle(forReadingFrom: source.url),
+            startOffset: UInt64(startOffset),
+            exactByteCount: selectedByteCount))
+        remainingBytes -= selectedByteCount
       }
+      return (newestFirst.reversed(), hasEarlierBytes)
+    } catch {
+      for snapshot in newestFirst { try? snapshot.handle.close() }
+      throw error
     }
-    return retained
   }
 
-  private func sequences(gatewayID: String, sessionID: UInt32) -> Set<UInt64> {
-    let key = cacheKey(gatewayID: gatewayID, sessionID: sessionID)
-    if let cached = sequenceCache[key] { return cached }
+  private func ensuredRecordIndex(
+    gatewayID: String, sessionID: UInt32
+  ) throws -> DurableLedgerIndex {
+    let key = ledgerKey(gatewayID: gatewayID, sessionID: sessionID)
+    if readyLedgerKeys.contains(key), let recordIndex { return recordIndex }
+    try DurableNDJSONLedger.ensureDirectory(root, fileManager: fileManager)
+    let index = try recordIndex ?? DurableLedgerIndex(url: indexURL)
     let url = fileURL(gatewayID: gatewayID, sessionID: sessionID)
-    guard let bytes = try? Data(contentsOf: url), !bytes.isEmpty else {
-      sequenceCache[key] = []
-      return []
+    do {
+      if fileManager.fileExists(atPath: url.path) {
+        try recoverInterruptedTailIfNeeded(
+          at: url, gatewayID: gatewayID, sessionID: sessionID)
+        try reconcile(
+          index, ledgerURL: url, gatewayID: gatewayID, sessionID: sessionID)
+      } else if let metadata = try index.metadata(ledgerKey: key),
+        metadata.byteCount > 0 || metadata.recordCount > 0
+      {
+        throw CaptureLogStoreError.missingLedger(key)
+      } else {
+        try index.replaceLedger(ledgerKey: key) { _ in .empty }
+      }
+      try DurableNDJSONLedger.synchronizeDirectory(root)
+      recordIndex = index
+      markReady(key)
+      return index
+    } catch {
+      invalidatePreparedState(for: key)
+      throw error
     }
-    var found: Set<UInt64> = []
-    for line in bytes.split(separator: 0x0A) {
-      if let observation = try? VHOSJSON.decoder().decode(
-        PassiveCANObservation.self,
-        from: Data(line)
-      ) {
-        found.insert(observation.sourceSequence)
+  }
+
+  private func reconcile(
+    _ index: DurableLedgerIndex,
+    ledgerURL: URL,
+    gatewayID: String,
+    sessionID: UInt32
+  ) throws {
+    let key = ledgerKey(gatewayID: gatewayID, sessionID: sessionID)
+    let fileByteCount = try DurableNDJSONLedger.fileByteCount(ledgerURL)
+    if let metadata = try index.metadata(ledgerKey: key),
+      metadata.byteCount <= fileByteCount,
+      try index.count(ledgerKey: key) == metadata.recordCount
+    {
+      do {
+        let prefix = try scanLedger(
+          at: ledgerURL, gatewayID: gatewayID, sessionID: sessionID,
+          exactByteCount: metadata.byteCount
+        ) { observation, primary, digest in
+          guard try index.dedupeKey(ledgerKey: key, primaryKey: primary) == digest else {
+            throw CaptureLogStoreError.indexUnavailable
+          }
+          _ = observation
+        }
+        guard prefix == metadata else { throw CaptureLogStoreError.indexUnavailable }
+        if metadata.byteCount < fileByteCount {
+          try index.beginDelta()
+          do {
+            let final = try scanLedger(
+              at: ledgerURL, gatewayID: gatewayID, sessionID: sessionID,
+              startOffset: metadata.byteCount, initial: metadata
+            ) { _, primary, digest in
+              try index.insert(ledgerKey: key, primaryKey: primary, dedupeKey: digest)
+            }
+            guard final.recordCount <= Int(UInt32.max) else {
+              throw CaptureLogStoreError.capacityReached
+            }
+            try index.finish(ledgerKey: key, metadata: final)
+          } catch {
+            index.cancel()
+            throw error
+          }
+        }
+        return
+      } catch let error as CaptureLogStoreError {
+        switch error {
+        case .invalidCommittedRecord, .duplicateCommittedSequence,
+          .recordScopeMismatch, .sequenceCollision:
+          throw error
+        default:
+          break
+        }
       }
     }
-    sequenceCache[key] = found
-    return found
+
+    try index.replaceLedger(ledgerKey: key) { insert in
+      let final = try scanLedger(
+        at: ledgerURL, gatewayID: gatewayID, sessionID: sessionID
+      ) { _, primary, digest in
+        try insert(primary, digest)
+      }
+      guard final.recordCount <= Int(UInt32.max) else {
+        throw CaptureLogStoreError.capacityReached
+      }
+      return final
+    }
+  }
+
+  private func scanLedger(
+    at url: URL,
+    gatewayID: String,
+    sessionID: UInt32,
+    startOffset: Int64 = 0,
+    exactByteCount: Int64? = nil,
+    initial: DurableLedgerMetadata = .empty,
+    onObservation: (PassiveCANObservation, String, String) throws -> Void
+  ) throws -> DurableLedgerMetadata {
+    do {
+      return try DurableNDJSONLedger.scan(
+        url,
+        startOffset: startOffset,
+        exactByteCount: exactByteCount,
+        initial: initial,
+        maximumLineByteCount: Self.maximumRecordByteCount
+      ) { line, lineNumber in
+        let observation: PassiveCANObservation
+        do {
+          observation = try VHOSJSON.decoder().decode(PassiveCANObservation.self, from: line)
+          try PassiveCANEvidenceArchive.validate(observation)
+        } catch {
+          throw CaptureLogStoreError.invalidCommittedRecord(
+            file: url.lastPathComponent, line: lineNumber)
+        }
+        guard try VHOSJSON.encoder().encode(observation) == line else {
+          throw CaptureLogStoreError.invalidCommittedRecord(
+            file: url.lastPathComponent, line: lineNumber)
+        }
+        guard sanitized(observation.gatewayID) == sanitized(gatewayID),
+          observation.sessionID == sessionID
+        else { throw CaptureLogStoreError.recordScopeMismatch(observation.id) }
+        let primary = Self.primaryKey(observation.sourceSequence)
+        let digest = DurableNDJSONLedger.canonicalDigest(line)
+        do {
+          try onObservation(observation, primary, digest)
+        } catch DurableLedgerIndexError.duplicateEntry {
+          throw CaptureLogStoreError.duplicateCommittedSequence(
+            observation.sourceSequence)
+        }
+      }
+    } catch DurableNDJSONLedgerError.blankCommittedLine(let line) {
+      throw CaptureLogStoreError.invalidCommittedRecord(
+        file: url.lastPathComponent, line: line)
+    } catch DurableNDJSONLedgerError.recordTooLarge(let line) {
+      throw CaptureLogStoreError.invalidCommittedRecord(
+        file: url.lastPathComponent, line: line)
+    }
+  }
+
+  private func recoverInterruptedTailIfNeeded(
+    at url: URL,
+    gatewayID: String,
+    sessionID: UInt32
+  ) throws {
+    try DurableNDJSONLedger.recoverInterruptedTailIfNeeded(
+      at: url,
+      quarantineDirectory: recoveryDirectoryURL,
+      artifactPrefix: "interrupted-capture-\(sanitized(gatewayID))-\(sessionID)",
+      receiptContract: "vhos.passive-can-tail-recovery",
+      maximumLineByteCount: Self.maximumRecordByteCount,
+      fileManager: fileManager
+    ) { line, lineNumber in
+      let observation: PassiveCANObservation
+      do {
+        observation = try VHOSJSON.decoder().decode(PassiveCANObservation.self, from: line)
+        try PassiveCANEvidenceArchive.validate(observation)
+      } catch {
+        throw CaptureLogStoreError.invalidCommittedRecord(
+          file: url.lastPathComponent, line: lineNumber)
+      }
+      guard try VHOSJSON.encoder().encode(observation) == line,
+        sanitized(observation.gatewayID) == sanitized(gatewayID),
+        observation.sessionID == sessionID
+      else {
+        throw CaptureLogStoreError.invalidCommittedRecord(
+          file: url.lastPathComponent, line: lineNumber)
+      }
+    }
+  }
+
+  private func markReady(_ key: String) {
+    readyLedgerKeys.removeAll { $0 == key }
+    readyLedgerKeys.append(key)
+    if readyLedgerKeys.count > Self.maximumReadyLedgerCount {
+      readyLedgerKeys.removeFirst(readyLedgerKeys.count - Self.maximumReadyLedgerCount)
+    }
+  }
+
+  private func invalidatePreparedState(for key: String) {
+    readyLedgerKeys.removeAll { $0 == key }
+    recordIndex = nil
   }
 
   private func fileURL(gatewayID: String, sessionID: UInt32) -> URL {
@@ -3513,8 +4317,12 @@ private final class CaptureLogStore {
       .appendingPathComponent("\(sessionID).ndjson")
   }
 
-  private func cacheKey(gatewayID: String, sessionID: UInt32) -> String {
-    "\(sanitized(gatewayID)):\(sessionID)"
+  private func ledgerKey(gatewayID: String, sessionID: UInt32) -> String {
+    "capture:\(sanitized(gatewayID)):\(sessionID)"
+  }
+
+  private static func primaryKey(_ sequence: UInt64) -> String {
+    String(format: "%020llu", sequence)
   }
 
   private func sanitized(_ value: String) -> String {
@@ -3522,10 +4330,49 @@ private final class CaptureLogStore {
   }
 }
 
-private enum CaptureSyncError: Error, LocalizedError {
+enum CaptureLogStoreError: Error, LocalizedError {
+  case batchTooLarge
+  case capacityReached
+  case duplicateCommittedSequence(UInt64)
+  case indexUnavailable
+  case invalidCommittedRecord(file: String, line: Int)
+  case invalidLedgerFileName(String)
+  case missingLedger(String)
+  case recordScopeMismatch(String)
+  case recordTooLarge
+  case sequenceCollision(UInt64)
+
+  var errorDescription: String? {
+    switch self {
+    case .batchTooLarge:
+      "A passive CAN append exceeds the bounded gateway capture-chunk size."
+    case .capacityReached:
+      "The passive CAN ledger reached its UInt32 record-offset capacity."
+    case .duplicateCommittedSequence(let sequence):
+      "The passive CAN ledger repeats committed source sequence \(sequence)."
+    case .indexUnavailable:
+      "The disk-backed passive CAN sequence index is unavailable or corrupt."
+    case .invalidCommittedRecord(let file, let line):
+      "Passive CAN ledger \(file) has a blank, invalid, or non-canonical committed record at line \(line)."
+    case .invalidLedgerFileName(let name):
+      "Passive CAN ledger file \(name) does not identify a UInt32 capture session."
+    case .missingLedger(let key):
+      "Passive CAN index \(key) exists, but its authoritative ledger is missing."
+    case .recordScopeMismatch(let id):
+      "Passive CAN record \(id) does not belong to the selected gateway capture session."
+    case .recordTooLarge:
+      "A passive CAN observation exceeds the bounded ledger record size."
+    case .sequenceCollision(let sequence):
+      "Passive CAN source sequence \(sequence) conflicts with different committed evidence."
+    }
+  }
+}
+
+enum CaptureSyncError: Error, LocalizedError {
   case unexpectedChunk
   case emptyNonterminalChunk
   case noStoredLogs
+  case invalidSnapshotLimit
 
   var errorDescription: String? {
     switch self {
@@ -3533,6 +4380,7 @@ private enum CaptureSyncError: Error, LocalizedError {
       "The gateway returned a capture chunk outside the requested session or offset."
     case .emptyNonterminalChunk: "The gateway returned an empty nonterminal capture chunk."
     case .noStoredLogs: "No synchronized passive CAN logs are stored on this iPhone yet."
+    case .invalidSnapshotLimit: "The passive CAN snapshot request exceeds its bounded limit."
     }
   }
 }
@@ -3553,6 +4401,7 @@ enum GatewayBLEError: Error, LocalizedError {
   case vhosFirmwareRequired
   case reliableWriteRequired
   case currentParkedAuthorityRequired
+  case evidenceSourceIdentityUnavailable
 
   var errorDescription: String? {
     switch self {
@@ -3562,6 +4411,8 @@ enum GatewayBLEError: Error, LocalizedError {
     case .reliableWriteRequired: "The VHOS command characteristic must support reliable writes."
     case .currentParkedAuthorityRequired:
       "Signed experiments require a fresh gateway-health frame that reports PARKED."
+    case .evidenceSourceIdentityUnavailable:
+      "A CRC-valid gateway frame arrived before a durable gateway source identity was established."
     }
   }
 }

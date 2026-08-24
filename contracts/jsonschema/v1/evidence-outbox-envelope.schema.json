@@ -10,7 +10,7 @@
     "contract_version": {"const": "1.0.0"},
     "package_id": {"type": "string", "format": "uuid"},
     "created_at": {"$ref": "common.schema.json#/$defs/wallTime"},
-    "content_type": {"type": "string", "enum": ["application/vnd.vhos.evidence-sync+zip", "application/vnd.vhos.agent-evidence+json"]},
+    "content_type": {"type": "string", "enum": ["application/vnd.vhos.evidence-sync+zip", "application/vnd.vhos.agent-evidence+json", "application/vnd.vhos.discovery-draft-evidence+json", "application/vnd.vhos.import-provenance-receipt+json"]},
     "byte_count": {"type": "integer", "minimum": 1, "maximum": 134217728},
     "sha256": {"$ref": "common.schema.json#/$defs/sha256"},
     "authority": {

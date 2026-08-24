@@ -181,6 +181,42 @@ authority contract. Exact payload hashes deduplicate. A completed capture-log sy
 automatically queues the current checksummed `.vhossync` bundle; a five-second worker uploads up to
 eight pending packages per cycle when automatic upload is enabled.
 
+Successful upload first commits a checksummed identity-and-payload acknowledgement to a
+full-synchronous SQLite catalog and only then removes the live package. The acknowledgement retains
+deduplication identity without retaining the multi-megabyte payload, so uploaded packages do not
+consume the 512-pending-package limit forever. Startup finishes either crash window: an old live
+package with no acknowledgement remains pending, while an acknowledged live package left behind by
+a crash is safely pruned. This makes the capacity a bound on undelivered work rather than a lifetime
+upload ceiling.
+
+Planner deduplication trusts only a validated live payload or a catalogued upload acknowledgement.
+Missing, malformed, hash-mismatched, or directory-mismatched package metadata/payload is moved to a
+bounded quarantine and the immutable source is eligible for regeneration on the next cycle.
+Interrupted hidden staging directories are scavenged at startup. Import provenance receipts use a
+16 MiB payload ceiling so the complete 20,000-record receipt remains queueable alongside its
+independently bounded 18 MiB source archive.
+
+The content-type allowlist is semantic rather than a generic JSON escape hatch. It admits
+checksummed evidence-sync ZIPs, agent-evidence JSON,
+`application/vnd.vhos.discovery-draft-evidence+json`, and the dedicated
+`application/vnd.vhos.import-provenance-receipt+json` lineage artifact. The shared envelope schema
+validates the Discovery content type at both sender and receiver. Its versioned payload contract
+keeps the same explicit authority boundary: interpretation and experiment proposals are allowed;
+vehicle activation and frame emission are denied. Every outbox timestamp uses the shared
+fail-closed RFC 3339 validator, including rejection of leap-second spellings.
+
+Discovery evidence is not collapsed into one lifetime-sized JSON document. Capture bindings,
+append-only test-run snapshots, and markers are each partitioned into immutable 500-primary-record
+segments. Every segment declares its kind, ordinal, total segment count, primary-record offset and
+count, total ledger count, and SHA-256 over the exact canonical primary-record NDJSON. Marker
+segments also carry the capture/run lineage needed to interpret those markers; repeated lineage is
+context, not a second primary record. Artifact identity includes the segment cursor and final
+payload SHA-256, so an unchanged ledger page deduplicates across automatic cycles while a later
+append produces a new immutable cursor or revision. Automatic handoff queues at most two missing
+segments per cycle and manual sharing prepares at most eight. The UI clearly reports when more
+segments remain, and every record allowed by the bounded ledgers is eventually exportable without
+constructing a monolithic payload.
+
 The endpoint is saved in app preferences. The bearer token is stored in Keychain. The app accepts
 only HTTPS, refuses HTTP redirects so a bearer token cannot be forwarded to another origin, and
 revalidates payload SHA-256 immediately before upload. A failed upload stays queued and records the

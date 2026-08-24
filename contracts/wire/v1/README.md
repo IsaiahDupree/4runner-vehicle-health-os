@@ -40,3 +40,19 @@ Android and iOS exchange `.vhossync` ZIP archives with uncompressed entries. The
 `manifest.json` conforming to `evidence-sync-bundle.schema.json` and the declared NDJSON segments.
 Each segment and each embedded envelope is SHA-256 verified before an append-only import. ZIP entry
 paths must be relative, unique, declared by the manifest, and free of `.`/`..` components.
+One interoperable bundle is bounded to 20,000 records, 16 MiB per data segment, a 1 MiB manifest,
+17 MiB aggregate uncompressed content, and an 18 MiB archive. Larger evidence histories are
+transferred as independently checksummed generation bundles; readers must not silently truncate or
+merge them into one allocation-heavy archive.
+
+Normal cross-app sync remains manifest version `1.0.0`. A complete portable-ledger recovery uses
+manifest version `2.0.0` and must include the recovery classification, an explicit denial of vehicle
+claims, and a source-ledger SHA-256 equal to its one complete logical-frame segment. Readers accept
+both versions; recovered evidence never becomes live vehicle authority.
+
+Desktop recovery projections are not ordinary passive-CAN NDJSON. Every line uses the
+`can.recovered-passive-can-observation` `1.0.0` wrapper and repeats
+`source_classification=RECOVERED_PORTABLE_EVIDENCE` plus
+`vehicle_claims_authorized=false` around the exact passive observation. Ordinary passive-CAN
+readers reject the wrapper; recovery-aware readers require the complete extraction manifest and
+revalidate file inventory, hashes, record counts, and wrapper authority before analysis.

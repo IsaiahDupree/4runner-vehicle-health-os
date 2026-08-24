@@ -37,7 +37,7 @@ private let researchFixtureName = "real-can-2026-08-18-627753796-256"
 
   #expect(report.recordCount == 256)
   #expect(report.sessionCount == 1)
-  #expect(report.packVersion == "0.4.0")
+  #expect(report.packVersion == "0.4.1")
   #expect(report.packSHA256 == PassiveCANResearchCatalog.packSHA256)
   #expect(report.authority == "ENGINEERING_RESEARCH_ONLY")
   #expect(!report.ownerHealthDisplayAllowed)

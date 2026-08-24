@@ -45,11 +45,15 @@ def _observation(
 
 def _with_checksum(identifier: int, values: list[int]) -> list[int]:
     data_length = len(values) + 1
-    checksum = (((identifier >> 8) & 0xFF) + (identifier & 0xFF) + data_length + sum(values)) & 0xFF
+    checksum = (
+        ((identifier >> 8) & 0xFF) + (identifier & 0xFF) + data_length + sum(values)
+    ) & 0xFF
     return values + [checksum]
 
 
-def test_discovery_reports_acquisition_facts_and_candidate_boundaries(tmp_path: Path) -> None:
+def test_discovery_reports_acquisition_facts_and_candidate_boundaries(
+    tmp_path: Path,
+) -> None:
     path = tmp_path / "real-capture-excerpt.ndjson"
     documents: list[dict[str, object]] = []
     for index in range(12):
@@ -63,25 +67,34 @@ def test_discovery_reports_acquisition_facts_and_candidate_boundaries(tmp_path: 
                     source_sequence=1 + index * 15,
                     monotonic_microseconds=timestamp,
                     identifier=0x2C4,
-                    data=_with_checksum(0x2C4, [first >> 8, first & 0xFF, 0, 0, 0, 0, 0]),
+                    data=_with_checksum(
+                        0x2C4, [first >> 8, first & 0xFF, 0, 0, 0, 0, 0]
+                    ),
                 ),
                 _observation(
                     session_id=740_616_386,
                     source_sequence=2 + index * 15,
                     monotonic_microseconds=timestamp + 10_000,
                     identifier=0x2D0,
-                    data=_with_checksum(0x2D0, [second >> 8, second & 0xFF, 0, 0, 0, 0, 0]),
+                    data=_with_checksum(
+                        0x2D0, [second >> 8, second & 0xFF, 0, 0, 0, 0, 0]
+                    ),
                 ),
                 _observation(
                     session_id=740_616_386,
                     source_sequence=3 + index * 15,
                     monotonic_microseconds=timestamp + 20_000,
                     identifier=0x025,
-                    data=_with_checksum(0x025, [0, 0, 0, 0, 120 + index % 4, 120 + index % 4, 120 + index % 4]),
+                    data=_with_checksum(
+                        0x025,
+                        [0, 0, 0, 0, 120 + index % 4, 120 + index % 4, 120 + index % 4],
+                    ),
                 ),
             ]
         )
-    path.write_text("".join(json.dumps(item) + "\n" for item in documents), encoding="utf-8")
+    path.write_text(
+        "".join(json.dumps(item) + "\n" for item in documents), encoding="utf-8"
+    )
 
     records, sources = load_passive_can_ndjson([path])
     report = analyze_passive_can(records, sources=sources)
@@ -113,7 +126,9 @@ def test_discovery_reports_acquisition_facts_and_candidate_boundaries(tmp_path: 
     assert relation["median_right_to_left_ratio"] == 2.0
     assert relation["maximum_pairing_delta_us"] == 10_000
     repeated = next(
-        item for item in report["repeated_channel_candidates"] if item["identifier"] == "0x025"
+        item
+        for item in report["repeated_channel_candidates"]
+        if item["identifier"] == "0x025"
     )
     assert repeated["byte_positions"] == [4, 5, 6]
     assert "RPM" in report["display_policy"]["blocked_until_correlated"][0]
@@ -144,10 +159,44 @@ def test_loader_rejects_duplicate_source_identity(tmp_path: Path) -> None:
         data=[1, 2, 3],
     )
     path = tmp_path / "duplicate.ndjson"
-    path.write_text(json.dumps(document) + "\n" + json.dumps(document) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(document) + "\n" + json.dumps(document) + "\n", encoding="utf-8"
+    )
 
     with pytest.raises(CANDiscoveryError, match="duplicate observation identity"):
         load_passive_can_ndjson([path])
+
+
+def test_loader_rejects_unknown_and_duplicate_json_fields(tmp_path: Path) -> None:
+    document = _observation(
+        session_id=1,
+        source_sequence=1,
+        monotonic_microseconds=1,
+        identifier=0x123,
+        data=[1, 2, 3],
+    )
+    document["vehicle_claims_authorized"] = True
+    unknown = tmp_path / "unknown.ndjson"
+    unknown.write_text(json.dumps(document) + "\n", encoding="utf-8")
+    with pytest.raises(CANDiscoveryError, match="passive CAN fields are invalid"):
+        load_passive_can_ndjson([unknown])
+
+    valid = json.dumps(
+        {
+            key: value
+            for key, value in document.items()
+            if key != "vehicle_claims_authorized"
+        }
+    )
+    duplicate = valid.replace(
+        '"contract": "gateway.passive-can-observation",',
+        '"contract": "gateway.passive-can-observation", "contract": "other",',
+        1,
+    )
+    duplicate_path = tmp_path / "duplicate-field.ndjson"
+    duplicate_path.write_text(duplicate + "\n", encoding="utf-8")
+    with pytest.raises(CANDiscoveryError, match="duplicate JSON field"):
+        load_passive_can_ndjson([duplicate_path])
 
 
 def test_time_pairing_never_reuses_a_sparse_sample() -> None:

@@ -1,4 +1,9 @@
 import Foundation
+#if canImport(Darwin)
+  import Darwin
+#else
+  import Glibc
+#endif
 
 /// Evidence retained when an interrupted append leaves bytes after the ledger's final commit
 /// boundary. NDJSON records are committed only by a trailing line-feed byte.
@@ -49,7 +54,7 @@ public enum AppendOnlyNDJSONLedgerError: Error, Equatable, LocalizedError {
 /// source ledger is atomically rewritten to its exact committed prefix. Invalid committed records
 /// fail closed and leave both the source ledger and quarantine directory unchanged.
 public enum AppendOnlyNDJSONLedger {
-  public static func load<Record: Decodable>(
+  public static func load<Record: Codable>(
     from url: URL,
     quarantineDirectory: URL,
     fileManager: FileManager = .default,
@@ -94,8 +99,14 @@ public enum AppendOnlyNDJSONLedger {
           line: index + 1)
       }
       do {
-        let record = try decoder.decode(Record.self, from: Data(line))
+        let lineBytes = Data(line)
+        let record = try decoder.decode(Record.self, from: lineBytes)
         try validate(record)
+        guard try VHOSJSON.encoder().encode(record) == lineBytes else {
+          throw AppendOnlyNDJSONLedgerError.invalidCommittedRecord(
+            fileName: url.lastPathComponent,
+            line: index + 1)
+        }
         return record
       } catch {
         throw AppendOnlyNDJSONLedgerError.invalidCommittedRecord(
@@ -108,13 +119,22 @@ public enum AppendOnlyNDJSONLedger {
       return AppendOnlyNDJSONLoadResult(records: records, recovery: nil)
     }
 
-    try fileManager.createDirectory(
-      at: quarantineDirectory,
-      withIntermediateDirectories: true)
+    try DurableEvidenceFile.ensureDirectory(
+      quarantineDirectory,
+      fileManager: fileManager)
     let quarantineURL = quarantineDirectory.appendingPathComponent(
       "\(url.lastPathComponent).\(UUID().uuidString.lowercased()).truncated-tail")
-    try uncommittedTail.write(to: quarantineURL, options: [.atomic])
-    try committedBytes.write(to: url, options: [.atomic])
+    // Preserve and durably publish the exact interrupted bytes before replacing the source with
+    // its committed prefix. A power loss can leave either the original source or the recovered
+    // source plus quarantine, but never an acknowledged tail with no preserved copy.
+    try DurableEvidenceFile.replace(
+      uncommittedTail,
+      at: quarantineURL,
+      fileManager: fileManager)
+    try DurableEvidenceFile.replace(
+      committedBytes,
+      at: url,
+      fileManager: fileManager)
 
     return AppendOnlyNDJSONLoadResult(
       records: records,
@@ -123,5 +143,92 @@ public enum AppendOnlyNDJSONLedger {
         quarantineURL: quarantineURL,
         quarantinedByteCount: uncommittedTail.count,
         retainedRecordCount: records.count))
+  }
+}
+
+/// Minimal file + parent-directory durability primitives shared by append-only evidence ledgers.
+public enum DurableEvidenceFile {
+  public static func ensureDirectory(
+    _ directory: URL,
+    fileManager: FileManager = .default
+  ) throws {
+    guard !fileManager.fileExists(atPath: directory.path) else { return }
+    try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
+    try synchronizeDirectory(directory.deletingLastPathComponent())
+  }
+
+  public static func appendCommittedLine(
+    _ canonicalRecord: Data,
+    to url: URL,
+    fileManager: FileManager = .default
+  ) throws {
+    guard !canonicalRecord.isEmpty, !canonicalRecord.contains(0x0A) else {
+      throw CocoaError(.fileWriteInvalidFileName)
+    }
+    var committed = canonicalRecord
+    committed.append(0x0A)
+    if !fileManager.fileExists(atPath: url.path) {
+      try replace(committed, at: url, fileManager: fileManager)
+      return
+    }
+    let handle = try FileHandle(forWritingTo: url)
+    do {
+      try handle.seekToEnd()
+      try handle.write(contentsOf: committed)
+      try synchronizeFile(handle.fileDescriptor)
+      try handle.close()
+    } catch {
+      try? handle.close()
+      throw error
+    }
+  }
+
+  public static func replace(
+    _ bytes: Data,
+    at url: URL,
+    fileManager: FileManager = .default
+  ) throws {
+    let directory = url.deletingLastPathComponent()
+    try ensureDirectory(directory, fileManager: fileManager)
+    let temporary = directory.appendingPathComponent(
+      ".\(url.lastPathComponent).\(UUID().uuidString.lowercased()).durable-write")
+    guard fileManager.createFile(atPath: temporary.path, contents: nil) else {
+      throw CocoaError(.fileWriteUnknown)
+    }
+    do {
+      let handle = try FileHandle(forWritingTo: temporary)
+      do {
+        try handle.write(contentsOf: bytes)
+        try synchronizeFile(handle.fileDescriptor)
+        try handle.close()
+      } catch {
+        try? handle.close()
+        throw error
+      }
+      guard rename(temporary.path, url.path) == 0 else {
+        throw CocoaError(.fileWriteUnknown)
+      }
+      try synchronizeDirectory(directory)
+    } catch {
+      try? fileManager.removeItem(at: temporary)
+      throw error
+    }
+  }
+
+  private static func synchronizeFile(_ descriptor: Int32) throws {
+    #if canImport(Darwin)
+      if fcntl(descriptor, F_FULLFSYNC) != 0, fsync(descriptor) != 0 {
+        throw CocoaError(.fileWriteUnknown)
+      }
+    #else
+      guard fsync(descriptor) == 0 else { throw CocoaError(.fileWriteUnknown) }
+    #endif
+  }
+
+  private static func synchronizeDirectory(_ directory: URL) throws {
+    let descriptor = open(directory.path, O_RDONLY)
+    guard descriptor >= 0 else { throw CocoaError(.fileWriteUnknown) }
+    defer { close(descriptor) }
+    guard fsync(descriptor) == 0 else { throw CocoaError(.fileWriteUnknown) }
   }
 }

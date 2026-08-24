@@ -646,6 +646,25 @@ private struct DiscoveryTestRunnerView: View {
     }
   }
 
+  private var bootstrapMarkerRecords: [StoredDiscoveryMarker] {
+    guard isParkSelectorBootstrap, let activeRun else { return [] }
+    return model.discoveryMarkers.filter { $0.testRunID == activeRun.id }
+  }
+
+  private var bootstrapDwellRemainingMicroseconds: UInt64 {
+    guard let last = bootstrapMarkerRecords.last,
+      let observation = model.gateway.latestCANObservation
+    else { return 0 }
+    return DiscoveryMutationPolicy.parkSelectorBootstrapDwellRemainingMicroseconds(
+      after: DiscoveryOrderedMarkerRequirement(kind: last.marker.kind, label: last.label),
+      lastMarkerMonotonicMicroseconds: last.marker.gatewayMonotonicMicroseconds,
+      currentMonotonicMicroseconds: observation.monotonicMicroseconds)
+  }
+
+  private var bootstrapDwellRemainingSeconds: UInt64 {
+    (bootstrapDwellRemainingMicroseconds + 999_999) / 1_000_000
+  }
+
   private var nextBootstrapMarker: DiscoveryOrderedMarkerRequirement? {
     DiscoveryMutationPolicy.nextParkSelectorBootstrapMarker(after: recordedBootstrapMarkers)
   }
@@ -689,6 +708,13 @@ private struct DiscoveryTestRunnerView: View {
           SafetyRow(label: "VHOS gateway contract", pass: model.gateway.state == .vhosConnected)
           SafetyRow(
             label: "Passive recorder active", pass: model.gateway.health?.captureActive == true)
+          SafetyRow(
+            label: "Recorder write path healthy",
+            pass: DiscoveryMutationPolicy.captureWritePathIsHealthy(model.gateway.health))
+          SafetyRow(
+            label:
+              "Capture storage at least \(ByteCountFormatter.string(fromByteCount: Int64(DiscoveryMutationPolicy.minimumDiscoveryStorageFreeBytes), countStyle: .file)) free",
+            pass: DiscoveryMutationPolicy.captureStorageHasHeadroom(model.gateway.health))
           if isParkSelectorBootstrap {
             if model.gateway.hasCurrentParkedAuthority {
               SafetyRow(label: "Current deterministic PARKED authority", pass: true)
@@ -785,7 +811,8 @@ private struct DiscoveryTestRunnerView: View {
                 .buttonStyle(.borderedProminent)
                 .disabled(
                   !evidenceReady || !activeRunMatchesGatewayCapture
-                    || (isParkSelectorBootstrap && !bootstrapComplete))
+                    || (isParkSelectorBootstrap && !bootstrapComplete)
+                    || (isParkSelectorBootstrap && bootstrapDwellRemainingMicroseconds > 0))
               Button("Abort") { model.abortDiscoveryTestRun() }
                 .buttonStyle(.bordered)
                 .tint(.red)
@@ -809,6 +836,17 @@ private struct DiscoveryTestRunnerView: View {
           .font(.footnote)
           .foregroundStyle(.secondary)
 
+          if isParkSelectorBootstrap, bootstrapDwellRemainingSeconds > 0,
+            let last = bootstrapMarkerRecords.last
+          {
+            Label(
+              "Hold \(last.label): \(bootstrapDwellRemainingSeconds) s remaining",
+              systemImage: "timer"
+            )
+            .font(.footnote.weight(.semibold).monospacedDigit())
+            .foregroundStyle(.blue)
+          }
+
           ForEach(template.markerActions) { action in
             Button {
               model.recordDiscoveryMarker(
@@ -825,7 +863,8 @@ private struct DiscoveryTestRunnerView: View {
               !markerReady
                 || (isParkSelectorBootstrap
                   && nextBootstrapMarker
-                    != DiscoveryOrderedMarkerRequirement(kind: action.kind, label: action.label)))
+                    != DiscoveryOrderedMarkerRequirement(kind: action.kind, label: action.label))
+                || (isParkSelectorBootstrap && bootstrapDwellRemainingMicroseconds > 0))
           }
 
           if !isParkSelectorBootstrap {
@@ -1068,7 +1107,6 @@ private struct DiscoveryCandidateDetailView: View {
 private struct DiscoveryCaptureReviewView: View {
   @Environment(AppModel.self) private var model
   @State private var selectedSeriesID = "toyota.2c4.engine-speed.be16"
-  @State private var draftExportURL: URL?
 
   var body: some View {
     List {
@@ -1163,20 +1201,28 @@ private struct DiscoveryCaptureReviewView: View {
           }
         }
 
-        Button("Prepare draft marker export") {
-          do {
-            draftExportURL = try model.discoveryDraftEvidenceExportURL()
-            model.errorMessage = nil
-          } catch {
-            draftExportURL = nil
-            model.errorMessage = error.localizedDescription
-          }
+        Button(
+          model.discoveryDraftPreparedExportHasMore
+            ? "Prepare next draft-evidence page" : "Prepare draft marker export"
+        ) {
+          model.prepareDiscoveryDraftEvidenceExport()
         }
         .disabled(!model.discoveryMutationLedgersAvailable)
-        if let draftExportURL {
+        ForEach(model.discoveryDraftPreparedExportURLs, id: \.self) { draftExportURL in
           ShareLink(item: draftExportURL) {
-            Label("Export drafts and canonical markers", systemImage: "square.and.arrow.up")
+            Label(
+              "Share \(draftExportURL.deletingPathExtension().lastPathComponent.prefix(12))…",
+              systemImage: "square.and.arrow.up")
           }
+        }
+        if !model.discoveryDraftPreparedExportURLs.isEmpty {
+          Text(
+            model.discoveryDraftPreparedExportHasMore
+              ? "The current share set is bounded; another page remains."
+              : "Every allowed Discovery ledger record is represented by these checksummed segments."
+          )
+          .font(.caption)
+          .foregroundStyle(.secondary)
         }
       }
 

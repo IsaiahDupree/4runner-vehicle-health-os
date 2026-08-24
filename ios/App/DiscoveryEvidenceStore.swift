@@ -1,9 +1,10 @@
+import CryptoKit
 import Foundation
 import VHOSCore
 
 /// Append-only binding between the gateway's numeric recorder session and the durable Discovery
 /// capture identifier used by the shared domain contracts.
-struct DiscoveryCaptureBinding: Codable, Equatable, Identifiable {
+struct DiscoveryCaptureBinding: Codable, Equatable, Identifiable, Sendable {
   let contract: String
   let contractVersion: String
   let id: String
@@ -54,7 +55,7 @@ struct DiscoveryCaptureBinding: Codable, Equatable, Identifiable {
 ///
 /// `marker` is the authoritative serialized observation. The remaining fields make the originating
 /// test and gateway recorder session queryable without changing the versioned Core contract.
-struct StoredDiscoveryMarker: Codable, Equatable, Identifiable {
+struct StoredDiscoveryMarker: Codable, Equatable, Identifiable, Sendable {
   let contract: String
   let contractVersion: String
   let templateID: String
@@ -119,7 +120,7 @@ enum DiscoveryTestRunDraftState: String, Codable, Sendable {
 
 /// A local, append-only test-run draft. It deliberately is not a finalized `CaptureSession`:
 /// archive and manifest hashes are only available after retained evidence synchronization.
-struct DiscoveryTestRunDraft: Codable, Equatable, Identifiable {
+struct DiscoveryTestRunDraft: Codable, Equatable, Identifiable, Sendable {
   let contract: String
   let contractVersion: String
   let id: String
@@ -207,10 +208,27 @@ struct DiscoveryTestRunDraft: Codable, Equatable, Identifiable {
   }
 }
 
+private enum DiscoveryEvidenceSegmentKind: String, Codable {
+  case captureBindings = "CAPTURE_BINDINGS"
+  case testRunSnapshots = "TEST_RUN_SNAPSHOTS"
+  case markers = "MARKERS"
+}
+
+private struct DiscoveryEvidenceSegment: Codable {
+  let kind: DiscoveryEvidenceSegmentKind
+  let ordinal: Int
+  let totalSegments: Int
+  let recordOffset: Int
+  let recordCount: Int
+  let totalRecordCount: Int
+  let sourceSHA256: String
+}
+
 private struct DiscoveryDraftEvidenceExport: Codable {
   let contract: String
   let contractVersion: String
   let generatedAt: String
+  let segment: DiscoveryEvidenceSegment
   let captureBindings: [DiscoveryCaptureBinding]
   let testRunSnapshots: [DiscoveryTestRunDraft]
   let markers: [StoredDiscoveryMarker]
@@ -232,6 +250,8 @@ final class DiscoveryEvidenceStore {
   private let quarantineDirectoryURL: URL
   private let maximumBindings = 10_000
   private let maximumMarkers = 100_000
+  private let maximumTestRunSnapshots = 20_000
+  private let exportSegmentRecordCount = 500
   private(set) var recoveryReports: [AppendOnlyNDJSONTailRecovery] = []
 
   init(fileManager: FileManager = .default, storageDirectory: URL? = nil) {
@@ -239,7 +259,8 @@ final class DiscoveryEvidenceStore {
     let support =
       fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
       ?? fileManager.temporaryDirectory
-    let directory = storageDirectory
+    let directory =
+      storageDirectory
       ?? support.appendingPathComponent("VHOSDiscoveryEvidence/v1", isDirectory: true)
     try? fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
     bindingsURL = directory.appendingPathComponent("capture-bindings.ndjson")
@@ -251,6 +272,9 @@ final class DiscoveryEvidenceStore {
   func markers() throws -> [StoredDiscoveryMarker] {
     let records = try decodeLedger(at: markersURL, as: StoredDiscoveryMarker.self) {
       try $0.validate()
+    }
+    guard records.count <= maximumMarkers else {
+      throw DiscoveryEvidenceStoreError.ledgerCapacityExceeded(markersURL.lastPathComponent)
     }
     try AppendOnlyEvidenceReplay.requireUniqueIdentity(
       in: records,
@@ -307,24 +331,184 @@ final class DiscoveryEvidenceStore {
     return try replayTestRuns(snapshots).sorted { $0.startedAt < $1.startedAt }
   }
 
-  func exportURL(generatedAt: String) throws -> URL {
-    let export = DiscoveryDraftEvidenceExport(
-      contract: "vhos.ios.discovery-draft-evidence-export",
-      contractVersion: "1.0.0",
-      generatedAt: generatedAt,
-      captureBindings: try captureBindings(),
-      testRunSnapshots: try testRunSnapshots(),
-      markers: try markers(),
-      authority: .observed)
-    guard !export.testRunSnapshots.isEmpty || !export.markers.isEmpty else {
+  /// Materializes at most one bounded page of immutable Discovery artifacts.
+  ///
+  /// Each append-only ledger is partitioned by a fixed record cursor. Marker and test-run pages
+  /// carry the capture/run lineage they reference, while `segment.source_sha256` binds the exact
+  /// canonical primary records. Artifact identity is the final payload digest, so an unchanged
+  /// segment deduplicates across automation cycles and a later active-run transition becomes a new
+  /// immutable revision rather than overwriting queued evidence.
+  func prepareExportPage(
+    excludingArtifactIdentities: Set<String>,
+    maximumArtifacts: Int,
+    outputDirectory: URL
+  ) throws -> PreparedDiscoveryEvidencePage {
+    guard (1...32).contains(maximumArtifacts) else {
+      throw DiscoveryEvidenceStoreError.invalidExportPageLimit
+    }
+    let bindings = try captureBindings()
+    let runSnapshots = try testRunSnapshots()
+    let markerRecords = try markers()
+    guard !bindings.isEmpty || !runSnapshots.isEmpty || !markerRecords.isEmpty else {
       throw DiscoveryEvidenceStoreError.noDiscoveryEvidence
     }
-    let directory = fileManager.temporaryDirectory.appendingPathComponent(
-      "VehicleHealthOS-Discovery", isDirectory: true)
-    try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
-    let url = directory.appendingPathComponent("discovery-test-run-drafts-and-markers.json")
-    try VHOSJSON.encoder().encode(export).write(to: url, options: [.atomic])
-    return url
+    try fileManager.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
+
+    var artifacts: [PreparedDiscoveryEvidenceArtifact] = []
+    var hasMore = false
+
+    func consider(_ export: DiscoveryDraftEvidenceExport) throws {
+      guard !hasMore else { return }
+      let payload = try VHOSJSON.encoder().encode(export)
+      let maximumBytes = EvidenceOutboxPayloadFileValidator.maximumBytes(
+        for: "application/vnd.vhos.discovery-draft-evidence+json")
+      guard !payload.isEmpty, payload.count <= maximumBytes else {
+        throw DiscoveryEvidenceStoreError.exportSegmentTooLarge(
+          export.segment.kind.rawValue,
+          export.segment.ordinal)
+      }
+      let digest = Self.sha256(payload)
+      let identity =
+        "discovery-draft:\(export.segment.kind.rawValue.lowercased()):"
+        + "\(export.segment.ordinal):\(digest)"
+      guard !excludingArtifactIdentities.contains(identity) else { return }
+      guard artifacts.count < maximumArtifacts else {
+        hasMore = true
+        return
+      }
+      let url = outputDirectory.appendingPathComponent("\(digest).discovery-evidence.json")
+      if fileManager.fileExists(atPath: url.path) {
+        guard try Data(contentsOf: url, options: [.mappedIfSafe]) == payload else {
+          throw DiscoveryEvidenceStoreError.exportArtifactConflict(url.lastPathComponent)
+        }
+      } else {
+        try payload.write(to: url, options: [.atomic])
+      }
+      artifacts.append(
+        PreparedDiscoveryEvidenceArtifact(
+          identity: identity,
+          url: url,
+          byteCount: payload.count,
+          sha256: digest))
+    }
+
+    let bindingSegmentCount = Self.segmentCount(
+      recordCount: bindings.count,
+      pageSize: exportSegmentRecordCount)
+    for offset in stride(from: 0, to: bindings.count, by: exportSegmentRecordCount) {
+      let page = Array(bindings[offset..<min(bindings.count, offset + exportSegmentRecordCount)])
+      try consider(
+        DiscoveryDraftEvidenceExport(
+          contract: "vhos.ios.discovery-draft-evidence-segment",
+          contractVersion: "1.0.0",
+          generatedAt: page.map(\.createdAt).max()!,
+          segment: try makeSegment(
+            kind: .captureBindings,
+            ordinal: offset / exportSegmentRecordCount,
+            totalSegments: bindingSegmentCount,
+            offset: offset,
+            totalRecordCount: bindings.count,
+            primaryRecords: page),
+          captureBindings: page,
+          testRunSnapshots: [],
+          markers: [],
+          authority: .observed))
+      if hasMore { break }
+    }
+
+    if !hasMore {
+      let runSegmentCount = Self.segmentCount(
+        recordCount: runSnapshots.count,
+        pageSize: exportSegmentRecordCount)
+      for offset in stride(from: 0, to: runSnapshots.count, by: exportSegmentRecordCount) {
+        let page = Array(
+          runSnapshots[offset..<min(runSnapshots.count, offset + exportSegmentRecordCount)])
+        let captureIDs = Set(page.map(\.captureID))
+        let lineageBindings = bindings.filter { captureIDs.contains($0.id) }
+        try consider(
+          DiscoveryDraftEvidenceExport(
+            contract: "vhos.ios.discovery-draft-evidence-segment",
+            contractVersion: "1.0.0",
+            generatedAt: page.map { $0.endedAt ?? $0.startedAt }.max()!,
+            segment: try makeSegment(
+              kind: .testRunSnapshots,
+              ordinal: offset / exportSegmentRecordCount,
+              totalSegments: runSegmentCount,
+              offset: offset,
+              totalRecordCount: runSnapshots.count,
+              primaryRecords: page),
+            captureBindings: lineageBindings,
+            testRunSnapshots: page,
+            markers: [],
+            authority: .observed))
+        if hasMore { break }
+      }
+    }
+
+    if !hasMore {
+      let markerSegmentCount = Self.segmentCount(
+        recordCount: markerRecords.count,
+        pageSize: exportSegmentRecordCount)
+      for offset in stride(from: 0, to: markerRecords.count, by: exportSegmentRecordCount) {
+        let page = Array(
+          markerRecords[offset..<min(markerRecords.count, offset + exportSegmentRecordCount)])
+        let runIDs = Set(page.compactMap(\.testRunID))
+        let lineageRuns = runSnapshots.filter { runIDs.contains($0.id) }
+        let captureIDs = Set(page.map { $0.marker.captureID })
+        let lineageBindings = bindings.filter { captureIDs.contains($0.id) }
+        try consider(
+          DiscoveryDraftEvidenceExport(
+            contract: "vhos.ios.discovery-draft-evidence-segment",
+            contractVersion: "1.0.0",
+            generatedAt: page.map { $0.marker.recordedAt }.max()!,
+            segment: try makeSegment(
+              kind: .markers,
+              ordinal: offset / exportSegmentRecordCount,
+              totalSegments: markerSegmentCount,
+              offset: offset,
+              totalRecordCount: markerRecords.count,
+              primaryRecords: page),
+            captureBindings: lineageBindings,
+            testRunSnapshots: lineageRuns,
+            markers: page,
+            authority: .observed))
+        if hasMore { break }
+      }
+    }
+
+    return PreparedDiscoveryEvidencePage(artifacts: artifacts, hasMore: hasMore)
+  }
+
+  private func makeSegment<Record: Encodable>(
+    kind: DiscoveryEvidenceSegmentKind,
+    ordinal: Int,
+    totalSegments: Int,
+    offset: Int,
+    totalRecordCount: Int,
+    primaryRecords: [Record]
+  ) throws -> DiscoveryEvidenceSegment {
+    var canonicalSource = Data()
+    for record in primaryRecords {
+      canonicalSource.append(try VHOSJSON.encoder().encode(record))
+      canonicalSource.append(0x0A)
+    }
+    return DiscoveryEvidenceSegment(
+      kind: kind,
+      ordinal: ordinal,
+      totalSegments: totalSegments,
+      recordOffset: offset,
+      recordCount: primaryRecords.count,
+      totalRecordCount: totalRecordCount,
+      sourceSHA256: Self.sha256(canonicalSource))
+  }
+
+  private static func segmentCount(recordCount: Int, pageSize: Int) -> Int {
+    guard recordCount > 0 else { return 0 }
+    return (recordCount + pageSize - 1) / pageSize
+  }
+
+  private static func sha256(_ bytes: Data) -> String {
+    SHA256.hash(data: bytes).map { String(format: "%02x", $0) }.joined()
   }
 
   func beginTestRun(
@@ -422,6 +606,27 @@ final class DiscoveryEvidenceStore {
     guard existingMarkers.count < maximumMarkers else {
       throw DiscoveryEvidenceStoreError.markerCapacityReached
     }
+    if testRun.templateID == DiscoveryMutationPolicy.parkSelectorBootstrapTemplateID {
+      let runMarkers = existingMarkers.filter { $0.testRunID == testRun.id }
+      let recorded = runMarkers.map {
+        DiscoveryOrderedMarkerRequirement(kind: $0.marker.kind, label: $0.label)
+      }
+      guard
+        DiscoveryMutationPolicy.nextParkSelectorBootstrapMarker(after: recorded)
+          == DiscoveryOrderedMarkerRequirement(kind: kind, label: label)
+      else { throw DiscoveryEvidenceStoreError.markerSequenceRequired }
+      if let last = runMarkers.last {
+        let remaining =
+          DiscoveryMutationPolicy.parkSelectorBootstrapDwellRemainingMicroseconds(
+            after: DiscoveryOrderedMarkerRequirement(
+              kind: last.marker.kind, label: last.label),
+            lastMarkerMonotonicMicroseconds: last.marker.gatewayMonotonicMicroseconds,
+            currentMonotonicMicroseconds: observation.monotonicMicroseconds)
+        guard remaining == 0 else {
+          throw DiscoveryEvidenceStoreError.markerDwellRequired
+        }
+      }
+    }
     let marker = try EventMarker(
       id: DiscoveryIDGenerator.make(prefix: "marker"),
       captureID: binding.id,
@@ -449,6 +654,9 @@ final class DiscoveryEvidenceStore {
     let records = try decodeLedger(at: bindingsURL, as: DiscoveryCaptureBinding.self) {
       try $0.validate()
     }
+    guard records.count <= maximumBindings else {
+      throw DiscoveryEvidenceStoreError.ledgerCapacityExceeded(bindingsURL.lastPathComponent)
+    }
     try AppendOnlyEvidenceReplay.requireBijection(
       in: records,
       leftKind: "Discovery capture binding",
@@ -467,6 +675,9 @@ final class DiscoveryEvidenceStore {
   private func testRunSnapshots() throws -> [DiscoveryTestRunDraft] {
     let records = try decodeLedger(at: testRunsURL, as: DiscoveryTestRunDraft.self) {
       try $0.validate()
+    }
+    guard records.count <= maximumTestRunSnapshots else {
+      throw DiscoveryEvidenceStoreError.ledgerCapacityExceeded(testRunsURL.lastPathComponent)
     }
     _ = try replayTestRuns(records)
 
@@ -535,7 +746,7 @@ final class DiscoveryEvidenceStore {
     return binding
   }
 
-  private func decodeLedger<Record: Decodable>(
+  private func decodeLedger<Record: Codable>(
     at url: URL,
     as type: Record.Type,
     validate: (Record) throws -> Void
@@ -557,17 +768,111 @@ final class DiscoveryEvidenceStore {
   }
 
   private func appendLine<Record: Encodable>(_ record: Record, to url: URL) throws {
-    var bytes = try VHOSJSON.encoder().encode(record)
-    bytes.append(0x0A)
-    if !fileManager.fileExists(atPath: url.path) {
-      try bytes.write(to: url, options: [.atomic])
-      return
-    }
-    let handle = try FileHandle(forWritingTo: url)
-    defer { try? handle.close() }
-    try handle.seekToEnd()
-    try handle.write(contentsOf: bytes)
-    try handle.synchronize()
+    try DurableEvidenceFile.appendCommittedLine(
+      try VHOSJSON.encoder().encode(record),
+      to: url,
+      fileManager: fileManager)
+  }
+}
+
+struct DiscoveryEvidenceSnapshot: Sendable {
+  let testRuns: [DiscoveryTestRunDraft]
+  let markers: [StoredDiscoveryMarker]
+  let recoveryReports: [AppendOnlyNDJSONTailRecovery]
+}
+
+struct PreparedDiscoveryEvidenceArtifact: Sendable {
+  let identity: String
+  let url: URL
+  let byteCount: Int
+  let sha256: String
+}
+
+struct PreparedDiscoveryEvidencePage: Sendable {
+  let artifacts: [PreparedDiscoveryEvidenceArtifact]
+  let hasMore: Bool
+}
+
+/// Exclusive serial owner of the Discovery append-only ledgers.
+///
+/// Test-run replay can scan up to 100,000 canonical markers. Keeping that work behind this actor
+/// prevents a large historical ledger or interrupted-tail recovery from starving CoreBluetooth's
+/// main-queue callbacks.
+actor DiscoveryEvidencePersistenceWorker {
+  private let store: DiscoveryEvidenceStore
+
+  init(
+    fileManager: FileManager = .default,
+    storageDirectory: URL? = nil
+  ) {
+    store = DiscoveryEvidenceStore(
+      fileManager: fileManager,
+      storageDirectory: storageDirectory)
+  }
+
+  func snapshot() throws -> DiscoveryEvidenceSnapshot {
+    DiscoveryEvidenceSnapshot(
+      testRuns: try store.testRuns(),
+      markers: try store.markers(),
+      recoveryReports: store.recoveryReports)
+  }
+
+  func testRuns() throws -> [DiscoveryTestRunDraft] { try store.testRuns() }
+
+  func markers() throws -> [StoredDiscoveryMarker] { try store.markers() }
+
+  func recoveryReports() -> [AppendOnlyNDJSONTailRecovery] { store.recoveryReports }
+
+  func beginTestRun(
+    template: TestTemplate,
+    observation: PassiveCANObservation,
+    recordedAt: String
+  ) throws -> DiscoveryTestRunDraft {
+    try store.beginTestRun(
+      template: template,
+      observation: observation,
+      recordedAt: recordedAt)
+  }
+
+  func transitionTestRun(
+    _ run: DiscoveryTestRunDraft,
+    to state: DiscoveryTestRunDraftState,
+    observation: PassiveCANObservation?,
+    recordedAt: String
+  ) throws -> DiscoveryTestRunDraft {
+    try store.transitionTestRun(
+      run,
+      to: state,
+      observation: observation,
+      recordedAt: recordedAt)
+  }
+
+  func append(
+    template: TestTemplate,
+    testRun: DiscoveryTestRunDraft,
+    kind: DiscoveryMarkerKind,
+    label: String,
+    observation: PassiveCANObservation,
+    recordedAt: String
+  ) throws -> StoredDiscoveryMarker {
+    try store.append(
+      template: template,
+      testRun: testRun,
+      kind: kind,
+      label: label,
+      observation: observation,
+      recordedAt: recordedAt)
+  }
+
+  func prepareExportPage(
+    excludingArtifactIdentities: Set<String>,
+    maximumArtifacts: Int,
+    outputDirectory: URL
+  ) throws -> PreparedDiscoveryEvidencePage {
+    try store.prepareExportPage(
+      excludingArtifactIdentities: excludingArtifactIdentities,
+      maximumArtifacts: maximumArtifacts,
+      outputDirectory: outputDirectory)
   }
 }
 
@@ -579,12 +884,18 @@ enum DiscoveryEvidenceStoreError: Error, LocalizedError {
   case invalidLedgerRecord(String, Int)
   case bindingCapacityReached
   case markerCapacityReached
+  case markerSequenceRequired
+  case markerDwellRequired
   case testRunAlreadyActive
   case invalidTestRunTransition
   case testRunCaptureChanged
   case markerLineageMismatch(String)
   case testRunLineageMismatch(String)
   case noDiscoveryEvidence
+  case invalidExportPageLimit
+  case exportSegmentTooLarge(String, Int)
+  case exportArtifactConflict(String)
+  case ledgerCapacityExceeded(String)
 
   var errorDescription: String? {
     switch self {
@@ -602,6 +913,10 @@ enum DiscoveryEvidenceStoreError: Error, LocalizedError {
       "The bounded Discovery capture-binding ledger is full. Export the evidence before continuing."
     case .markerCapacityReached:
       "The bounded Discovery marker ledger is full. Export the evidence before continuing."
+    case .markerSequenceRequired:
+      "The Park-selector bootstrap marker is out of order or duplicates committed evidence."
+    case .markerDwellRequired:
+      "Hold the current selector position for the full required dwell before recording the next marker."
     case .testRunAlreadyActive:
       "End or abort the active Discovery test run before starting another."
     case .invalidTestRunTransition:
@@ -614,6 +929,14 @@ enum DiscoveryEvidenceStoreError: Error, LocalizedError {
       "Discovery test run \(id) does not resolve to its immutable capture and gateway-session binding."
     case .noDiscoveryEvidence:
       "Begin a Discovery test run or record a synchronized marker before exporting draft evidence."
+    case .invalidExportPageLimit:
+      "Discovery evidence export must request between 1 and 32 bounded artifacts."
+    case .exportSegmentTooLarge(let kind, let ordinal):
+      "Discovery evidence segment \(kind) #\(ordinal) exceeds the private outbox limit."
+    case .exportArtifactConflict(let file):
+      "Discovery evidence artifact \(file) conflicts with an existing immutable export."
+    case .ledgerCapacityExceeded(let file):
+      "The bounded append-only Discovery ledger \(file) exceeds its published capacity."
     }
   }
 }

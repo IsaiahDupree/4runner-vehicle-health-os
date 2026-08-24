@@ -166,6 +166,13 @@ owner-health authority lock are recorded in
 The play/pause/scrub/speed/loop transport, progressive exact-point graph, session-boundary display,
 and real multi-session acceptance suite are recorded in
 [the iOS retained CAN playback lab](docs/development/IOS-RETAINED-CAN-PLAYBACK-LAB-2026-08-20.md).
+
+Run the complete copied-iPhone evidence recovery, delta analysis, candidate
+mapping, replay, and 15-scenario link stress lab with one command using
+[the offline field-return runbook](docs/development/OFFLINE-FIELD-RETURN-ONE-SHOT.md).
+Run that analysis together with all shared, Swift/iOS Simulator, and Android
+desktop gates—without contacting any physical device—using
+[the device-free field-return acceptance runner](docs/development/DEVICE-FREE-FIELD-RETURN-ACCEPTANCE.md).
 The governing unknown-by-default whole-vehicle model, head-unit inventory contract, 2005 4Runner
 configuration guard, and evidence-basis separation are recorded in
 [the whole-vehicle digital-twin foundation](docs/development/WHOLE-VEHICLE-DIGITAL-TWIN-FOUNDATION-2026-08-18.md).

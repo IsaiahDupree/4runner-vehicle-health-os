@@ -52,9 +52,20 @@ public enum DiscoveryMutationPolicy {
   public static let parkSelectorBootstrapTemplateID =
     "discovery.transmission.selector-bootstrap"
   public static let freshnessLimitSeconds: TimeInterval = 5
-  public static let parkSelectorBootstrapMarkerRequirements: [
-    DiscoveryOrderedMarkerRequirement
-  ] = [
+  /// Minimum labeled dwell after each selector-position marker before the next selector marker.
+  ///
+  /// This uses the gateway monotonic clock, not iPhone wall time, so an app suspension, clock
+  /// correction, or reconnect cannot manufacture a completed hold interval.
+  public static let minimumParkSelectorDwellMicroseconds: UInt64 = 8_000_000
+  /// Reserve enough flash for a bounded field test plus its recorder metadata.
+  ///
+  /// The gateway reports this value from the same storage used by the retained CAN recorder.
+  /// A low-but-nonzero value is not sufficient evidence that a complete experiment can be
+  /// persisted. The August 22 field return began a selector test with only 67,791 bytes free;
+  /// write failures were already cumulative and the retained session could not be recovered
+  /// from the normal capture archive.
+  public static let minimumDiscoveryStorageFreeBytes: UInt64 = 128 * 1_024
+  public static let parkSelectorBootstrapMarkerRequirements: [DiscoveryOrderedMarkerRequirement] = [
     .init(kind: .custom, label: "SAFETY SETUP CONFIRMED"),
     .init(kind: .selectorPark, label: "SELECTOR: PARK"),
     .init(kind: .selectorReverse, label: "SELECTOR: REVERSE"),
@@ -78,6 +89,8 @@ public enum DiscoveryMutationPolicy {
       (0...freshnessLimitSeconds).contains(observationAge),
       handshake.listenOnly, health.listenOnly, observation.listenOnly,
       health.captureActive,
+      captureWritePathIsHealthy(health),
+      captureStorageHasHeadroom(health),
       template.requiredGatewayCapabilities.allSatisfy(handshake.capabilities.contains),
       observation.gatewayID == handshake.gatewayID,
       let captureSessionID = health.captureSessionID,
@@ -101,6 +114,22 @@ public enum DiscoveryMutationPolicy {
     return nil
   }
 
+  /// Discovery is an evidence-producing workflow, so missing persistence telemetry fails closed.
+  public static func captureWritePathIsHealthy(_ health: GatewayHealth?) -> Bool {
+    guard let health,
+      let queueDroppedRecords = health.captureQueueDroppedRecords,
+      let storageWriteFailures = health.captureStorageWriteFailures
+    else { return false }
+    return queueDroppedRecords == 0 && storageWriteFailures == 0
+  }
+
+  /// A recorder with too little remaining flash may still stream live frames, but it cannot be
+  /// trusted to retain the complete experiment needed for replay and candidate validation.
+  public static func captureStorageHasHeadroom(_ health: GatewayHealth?) -> Bool {
+    guard let freeBytes = health?.storageFreeBytes else { return false }
+    return freeBytes >= minimumDiscoveryStorageFreeBytes
+  }
+
   public static func nextParkSelectorBootstrapMarker(
     after recorded: [DiscoveryOrderedMarkerRequirement]
   ) -> DiscoveryOrderedMarkerRequirement? {
@@ -114,6 +143,24 @@ public enum DiscoveryMutationPolicy {
     _ recorded: [DiscoveryOrderedMarkerRequirement]
   ) -> Bool {
     recorded == parkSelectorBootstrapMarkerRequirements
+  }
+
+  /// Remaining gateway-monotonic dwell required before another selector marker may be appended.
+  /// The initial safety-confirmation marker deliberately has no dwell; every physical selector
+  /// marker after it must remain in place for the full interval before the next transition or the
+  /// immutable test-run end.
+  public static func parkSelectorBootstrapDwellRemainingMicroseconds(
+    after lastRecorded: DiscoveryOrderedMarkerRequirement?,
+    lastMarkerMonotonicMicroseconds: UInt64?,
+    currentMonotonicMicroseconds: UInt64
+  ) -> UInt64 {
+    guard let lastRecorded, lastRecorded.kind != .custom else { return 0 }
+    guard let lastMarkerMonotonicMicroseconds,
+      currentMonotonicMicroseconds >= lastMarkerMonotonicMicroseconds
+    else { return minimumParkSelectorDwellMicroseconds }
+    let elapsed = currentMonotonicMicroseconds - lastMarkerMonotonicMicroseconds
+    return elapsed >= minimumParkSelectorDwellMicroseconds
+      ? 0 : minimumParkSelectorDwellMicroseconds - elapsed
   }
 
   public static func testRunIdentityMatches(
@@ -138,12 +185,12 @@ public enum DiscoveryMutationPolicy {
         id: "discovery.transmission.selector-bootstrap.step.\(index + 1)",
         sequence: index + 1,
         instruction: item.0,
-        suggestedDurationSeconds: index == 0 ? nil : 4,
+        suggestedDurationSeconds: index == 0 ? nil : 8,
         expectedMarkerKind: item.1)
     }
     return try TestTemplate(
       id: parkSelectorBootstrapTemplateID,
-      templateVersion: "1.0.0",
+      templateVersion: "1.1.0",
       title: "Park / Selector Bootstrap",
       category: .transmission,
       hypothesis:

@@ -47,10 +47,14 @@ private struct ReleaseHubView: View {
         Text(model.releaseHub.status)
           .font(.footnote)
           .foregroundStyle(.secondary)
-        Button(model.releaseHub.catalog == nil ? "Verify release catalog" : "Refresh release catalog") {
+        Button(
+          model.releaseHub.catalog == nil ? "Verify release catalog" : "Refresh release catalog"
+        ) {
           Task {
-            do { try await model.releaseHub.refresh(); model.errorMessage = nil }
-            catch { model.errorMessage = error.localizedDescription }
+            do {
+              try await model.releaseHub.refresh()
+              model.errorMessage = nil
+            } catch { model.errorMessage = error.localizedDescription }
           }
         }
         .disabled(model.releaseHub.isLoading)
@@ -62,10 +66,14 @@ private struct ReleaseHubView: View {
             LabeledContent("Readiness", value: artifact.readiness.rawValue)
             LabeledContent("Install", value: artifact.installMethod.rawValue)
             Text(artifact.releaseNotes).font(.footnote).foregroundStyle(.secondary)
-            Button(model.releaseHub.stagedURLs[artifact.artifactID] == nil ? "Download and verify" : "Verified locally") {
+            Button(
+              model.releaseHub.stagedURLs[artifact.artifactID] == nil
+                ? "Download and verify" : "Verified locally"
+            ) {
               Task { await model.stageRelease(artifact) }
             }
-            .disabled(model.releaseHub.isLoading || model.releaseHub.stagedURLs[artifact.artifactID] != nil)
+            .disabled(
+              model.releaseHub.isLoading || model.releaseHub.stagedURLs[artifact.artifactID] != nil)
             if let staged = model.releaseHub.stagedURLs[artifact.artifactID] {
               ShareLink(item: staged) {
                 Label("Share verified artifact", systemImage: "square.and.arrow.up")
@@ -74,8 +82,10 @@ private struct ReleaseHubView: View {
             if artifact.kind == .esp32VHOSOTA,
               model.releaseHub.stagedURLs[artifact.artifactID] != nil
             {
-              Text("Continue in Firmware. PARKED, supply, hardware, capture-flush, signature, and rollback gates still apply.")
-                .font(.footnote).foregroundStyle(.orange)
+              Text(
+                "Continue in Firmware. PARKED, supply, hardware, capture-flush, signature, and rollback gates still apply."
+              )
+              .font(.footnote).foregroundStyle(.orange)
             }
             if artifact.installMethod == .usbSerialInitialFlash {
               Text("USB recovery only. The iPhone cannot flash this build to the A/C ESP32-S3.")
@@ -88,8 +98,9 @@ private struct ReleaseHubView: View {
     .navigationTitle("Release Hub")
     .task {
       guard model.releaseHub.catalog == nil else { return }
-      do { try await model.releaseHub.refresh() }
-      catch { model.errorMessage = error.localizedDescription }
+      do { try await model.releaseHub.refresh() } catch {
+        model.errorMessage = error.localizedDescription
+      }
     }
   }
 
@@ -178,9 +189,7 @@ private struct FirmwareView: View {
 private struct EvidenceView: View {
   @Environment(AppModel.self) private var model
   @State private var exportURL: URL?
-  @State private var canExportURL: URL?
   @State private var bleTraceExportURL: URL?
-  @State private var syncExportURL: URL?
   @State private var importingSync = false
   @State private var outboxEndpoint = ""
   @State private var outboxToken = ""
@@ -262,13 +271,35 @@ private struct EvidenceView: View {
         .foregroundStyle(.secondary)
       }
       Section("Recent logs on iPhone") {
-        if model.gateway.captureSessions.isEmpty {
+        if let integrityError = model.gateway.portableFrameIntegrityError {
+          Label(
+            "Portable evidence integrity check failed. No zero-count inference is allowed. \(integrityError)",
+            systemImage: "exclamationmark.shield.fill"
+          )
+          .foregroundStyle(.red)
+          Button("Retry portable evidence verification") {
+            model.gateway.retryPortableFrameIntegrityVerification()
+          }
+        } else if model.gateway.captureSessions.isEmpty && model.gateway.portableFrameCount == 0 {
           ContentUnavailableView(
             "No synchronized logs",
             systemImage: "externaldrive.badge.wifi",
             description: Text(
-              "The app downloads gateway capture segments only while the recorder is not actively writing."))
+              "The app downloads gateway capture segments only while the recorder is not actively writing."
+            ))
         } else {
+          if model.gateway.portableFrameCount > 0 {
+            VStack(alignment: .leading, spacing: 4) {
+              Text("RECOVERED EVIDENCE • NOT LIVE")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.orange)
+              Text(
+                "\(model.gateway.portableFrameCount.formatted()) checksummed portable gateway frames are available for fail-closed CAN recovery."
+              )
+              .font(.caption)
+              .foregroundStyle(.secondary)
+            }
+          }
           ForEach(model.gateway.captureSessions.prefix(12)) { session in
             VStack(alignment: .leading, spacing: 4) {
               Text("Session \(session.sessionID)").font(.headline)
@@ -280,15 +311,26 @@ private struct EvidenceView: View {
               .foregroundStyle(.secondary)
             }
           }
-          Button("Prepare passive CAN export") {
-            do { canExportURL = try model.passiveCANExportURL() } catch {
-              model.errorMessage = error.localizedDescription
+          if !model.gateway.captureSessions.isEmpty {
+            Button("Prepare durable passive CAN export") {
+              model.preparePassiveCANExport()
+            }
+            .disabled(model.passiveCANExportInProgress)
+            if model.passiveCANExportInProgress {
+              ProgressView("Preparing bounded recent evidence…")
+            }
+            if let canExportURL = model.passiveCANPreparedExportURL {
+              ShareLink(item: canExportURL) {
+                Label("Share passive-can-recent-logs.ndjson", systemImage: "square.and.arrow.up")
+              }
             }
           }
-          if let canExportURL {
-            ShareLink(item: canExportURL) {
-              Label("Share passive-can-recent-logs.ndjson", systemImage: "square.and.arrow.up")
-            }
+          if model.gateway.portableFrameCount > 0 {
+            Text(
+              "Recovered portable frames remain in the checksummed .vhossync bundle below. Its v2 recovery manifest binds RECOVERED EVIDENCE • NOT LIVE, denies vehicle authority, and matches the source-ledger SHA-256 to the complete logical-frame segment."
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
           }
         }
       }
@@ -315,17 +357,20 @@ private struct EvidenceView: View {
             LabeledContent(
               "Evidence",
               value:
-                "\(series.recordCount) records · \(series.sessionCount) sessions · \(series.distinctRawValues) distinct")
+                "\(series.recordCount) records · \(series.sessionCount) sessions · \(series.distinctRawValues) distinct"
+            )
             LabeledContent(
               "Raw field range",
               value:
-                "\(series.rawMinimum.formatted(.number.precision(.fractionLength(0...3))))–\(series.rawMaximum.formatted(.number.precision(.fractionLength(0...3)))) counts")
+                "\(series.rawMinimum.formatted(.number.precision(.fractionLength(0...3))))–\(series.rawMaximum.formatted(.number.precision(.fractionLength(0...3)))) counts"
+            )
             if let transformID = series.candidateTransformID {
               LabeledContent("Candidate transform", value: transformID)
               LabeledContent(
                 "Candidate range",
                 value:
-                  "\(series.displayMinimum.formatted(.number.precision(.fractionLength(0...3))))–\(series.displayMaximum.formatted(.number.precision(.fractionLength(0...3)))) \(series.displayUnit)")
+                  "\(series.displayMinimum.formatted(.number.precision(.fractionLength(0...3))))–\(series.displayMaximum.formatted(.number.precision(.fractionLength(0...3)))) \(series.displayUnit)"
+              )
               Text(
                 "The engineering-unit axis is a pinned related-Toyota transform, not a validated 2005 4Runner value."
               )
@@ -360,6 +405,7 @@ private struct EvidenceView: View {
         Button("Rebuild research charts from retained logs") {
           model.refreshCANResearch()
         }
+        .disabled(model.canResearchInProgress)
       }
       Section("Bluetooth connection flight recorder") {
         let trace = model.gateway.bleConnectionTraceSummary
@@ -395,9 +441,11 @@ private struct EvidenceView: View {
           LabeledContent("Data", value: observation.dataHex)
           LabeledContent("Bitrate", value: "\(observation.bitrateBps / 1_000) kbit/s")
           LabeledContent("Sequence", value: observation.sourceSequence.formatted())
-          Text("Live display is sampled; the gateway flight recorder is the durable evidence source.")
-            .font(.footnote)
-            .foregroundStyle(.secondary)
+          Text(
+            "Live display is sampled; the gateway flight recorder is the durable evidence source."
+          )
+          .font(.footnote)
+          .foregroundStyle(.secondary)
         }
       }
       Section("Standard read-only OBD") {
@@ -423,7 +471,9 @@ private struct EvidenceView: View {
           }
           ForEach(latestStandardOBDSamples) { sample in
             LabeledContent(sample.name) {
-              Text("\(sample.value.formatted(.number.precision(.fractionLength(0...3)))) \(sample.unit)")
+              Text(
+                "\(sample.value.formatted(.number.precision(.fractionLength(0...3)))) \(sample.unit)"
+              )
             }
           }
           Text(
@@ -446,19 +496,23 @@ private struct EvidenceView: View {
         TextField("Techstream value (\(referencePreset.unit))", text: $referenceValue)
           .keyboardType(.numbersAndPunctuation)
         Button("Record at current gateway CAN time") {
-          model.recordTechstreamReference(
-            signalID: referencePreset.signalID,
-            valueText: referenceValue,
-            unit: referencePreset.unit
-          )
-          if model.errorMessage == nil { referenceValue = "" }
+          Task { @MainActor in
+            await model.recordTechstreamReference(
+              signalID: referencePreset.signalID,
+              valueText: referenceValue,
+              unit: referencePreset.unit
+            )
+            if model.errorMessage == nil { referenceValue = "" }
+          }
         }
         .disabled(
           model.gateway.latestCANObservation == nil
             || referenceValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         Button("Prepare synchronized reference CSV") {
-          do { referenceExportURL = try model.synchronizedReferenceExportURL() } catch {
-            model.errorMessage = error.localizedDescription
+          Task { @MainActor in
+            do { referenceExportURL = try await model.synchronizedReferenceExportURL() } catch {
+              model.errorMessage = error.localizedDescription
+            }
           }
         }
         .disabled(model.synchronizedReferenceCount == 0)
@@ -529,7 +583,9 @@ private struct EvidenceView: View {
             set: { model.setAutomaticEvidenceUpload($0) }
           ))
         Button("Queue current checksummed evidence") { model.queueCurrentEvidenceForAI() }
-          .disabled(model.gateway.portableFrameCount == 0)
+          .disabled(
+            model.gateway.portableFrameCount == 0
+              || model.gateway.portableFrameIntegrityError != nil)
         Button("Send queued packages now") { Task { await model.processEvidenceOutbox() } }
           .disabled(
             model.evidenceOutboxPendingCount == 0 || model.evidenceOutboxUploadInProgress)
@@ -540,19 +596,50 @@ private struct EvidenceView: View {
         .foregroundStyle(.secondary)
       }
       Section("Android / iPhone evidence sync") {
-        LabeledContent("Validated logical frames", value: model.gateway.portableFrameCount.formatted())
+        LabeledContent(
+          "Validated logical frames", value: model.gateway.portableFrameCount.formatted())
         Text(model.gateway.lastEvidenceSyncMessage)
           .font(.footnote)
           .foregroundStyle(.secondary)
-        Button("Prepare checksummed .vhossync bundle") {
-          do { syncExportURL = try model.evidenceSyncExportURL() } catch {
-            model.errorMessage = error.localizedDescription
-          }
+        Text(model.evidencePreparationMessage)
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+        Button(
+          model.preparedEvidenceSyncURLs.isEmpty
+            ? "Prepare checksummed .vhossync bundle page"
+            : (model.preparedEvidenceSyncHasMore
+              ? "Prepare next bounded recovery page" : "Rebuild complete recovery set")
+        ) {
+          model.prepareEvidenceSyncExportPage(
+            reset: !model.preparedEvidenceSyncURLs.isEmpty
+              && !model.preparedEvidenceSyncHasMore)
         }
-        if let syncExportURL {
-          ShareLink(item: syncExportURL) {
-            Label("Share vhos-evidence-sync.vhossync", systemImage: "arrow.left.arrow.right.circle")
+        .disabled(
+          model.gateway.portableFrameIntegrityError != nil
+            || model.evidencePreparationInProgress)
+        if model.evidencePreparationInProgress {
+          ProgressView("Preparing immutable evidence off the BLE/UI actor…")
+        }
+        if !model.preparedEvidenceSyncURLs.isEmpty {
+          ShareLink(items: model.preparedEvidenceSyncURLs) { url in
+            SharePreview(url.lastPathComponent, image: Image(systemName: "doc.zipper"))
+          } label: {
+            Label(
+              model.preparedEvidenceSyncURLs.count == 1
+                ? "Share complete recovery bundle"
+                : "Share \(model.preparedEvidenceSyncURLs.count) prepared recovery artifacts",
+              systemImage: "arrow.left.arrow.right.circle")
           }
+          Text(
+            (model.preparedEvidenceSyncHasMore
+              ? "This is not yet a complete share set; prepare the next page before transfer. "
+              : "The prepared set covers every verified generation and import-lineage artifact. ")
+              + "The share set is complete only when every listed file is transferred. "
+              + "Each file is independently checksummed, recovered/not-live evidence; no older "
+              + "generation is replaced by a newer one."
+          )
+          .font(.footnote)
+          .foregroundStyle(.orange)
         }
         Button("Import Android/iPhone sync bundle") { importingSync = true }
         Text(

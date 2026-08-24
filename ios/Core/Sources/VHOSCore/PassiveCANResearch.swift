@@ -73,9 +73,9 @@ public struct PassiveCANResearchDefinition: Identifiable, Equatable, Sendable {
 
 public enum PassiveCANResearchCatalog {
   public static let packID = "toyota.4runner.2005.passive-can-hypotheses"
-  public static let packVersion = "0.4.0"
+  public static let packVersion = "0.4.1"
   public static let packSHA256 =
-    "6e2df8207e8977d613923a01f4bea7a16baba74a1869cce2ad0a83b56cf6ba32"
+    "2eb734187bf79f04973621a3534ae6cc185d0f1cbb5a91fa71183c82055f69e8"
   public static let badge = "VALID RAW EVIDENCE • UNVERIFIED CROSS-MODEL CANDIDATE"
 
   public static let definitions: [PassiveCANResearchDefinition] = [

@@ -1,13 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://schemas.vhos.dev/v1/evidence-sync-bundle.schema.json",
-  "title": "VHOS Evidence Sync Bundle Manifest v1",
+  "title": "VHOS Evidence Sync Bundle Manifest v1/v2",
   "type": "object",
   "additionalProperties": false,
   "required": ["contract", "contract_version", "bundle_id", "created_at", "creator", "segments"],
   "properties": {
     "contract": {"const": "vhos.evidence-sync-bundle"},
-    "contract_version": {"const": "1.0.0"},
+    "contract_version": {"enum": ["1.0.0", "2.0.0"]},
     "bundle_id": {"type": "string", "format": "uuid"},
     "created_at": {"$ref": "common.schema.json#/$defs/wallTime"},
     "creator": {
@@ -37,10 +37,43 @@
           },
           "media_type": {"const": "application/x-ndjson"},
           "sha256": {"$ref": "common.schema.json#/$defs/sha256"},
-          "byte_count": {"type": "integer", "minimum": 0, "maximum": 134217728},
-          "record_count": {"type": "integer", "minimum": 0, "maximum": 1000000}
+          "byte_count": {"type": "integer", "minimum": 0, "maximum": 16777216},
+          "record_count": {"type": "integer", "minimum": 0, "maximum": 20000}
+        }
+      }
+    },
+    "recovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["classification", "vehicle_claims_authorized", "source_ledger_sha256"],
+      "properties": {
+        "classification": {"const": "RECOVERED_PORTABLE_EVIDENCE"},
+        "vehicle_claims_authorized": {"const": false},
+        "source_ledger_sha256": {"$ref": "common.schema.json#/$defs/sha256"}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"contract_version": {"const": "1.0.0"}}},
+      "then": {"not": {"required": ["recovery"]}}
+    },
+    {
+      "if": {"properties": {"contract_version": {"const": "2.0.0"}}},
+      "then": {
+        "required": ["recovery"],
+        "properties": {
+          "segments": {
+            "minItems": 1,
+            "maxItems": 1,
+            "items": {
+              "properties": {
+                "path": {"const": "segments/logical-frames.ndjson"}
+              }
+            }
+          }
         }
       }
     }
-  }
+  ]
 }

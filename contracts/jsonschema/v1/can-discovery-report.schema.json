@@ -38,6 +38,42 @@
         }
       }
     },
+    "recovery_provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_classification",
+        "vehicle_claims_authorized",
+        "required_display_label",
+        "extraction_manifest",
+        "source_files",
+        "source_bundles",
+        "output_files"
+      ],
+      "properties": {
+        "source_classification": {"const": "RECOVERED_PORTABLE_EVIDENCE"},
+        "vehicle_claims_authorized": {"const": false},
+        "required_display_label": {"const": "RECOVERED EVIDENCE • NOT LIVE"},
+        "extraction_manifest": {"$ref": "#/$defs/recoveryExtractionManifest"},
+        "source_files": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1024,
+          "items": {"$ref": "#/$defs/recoverySourceFile"}
+        },
+        "source_bundles": {
+          "type": "array",
+          "maxItems": 1024,
+          "items": {"$ref": "#/$defs/recoverySourceBundle"}
+        },
+        "output_files": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "items": {"$ref": "#/$defs/recoveryOutputFile"}
+        }
+      }
+    },
     "acquisition": {
       "type": "object",
       "additionalProperties": false,
@@ -208,6 +244,120 @@
   "$defs": {
     "candidateStatus": {"const": "DISCOVERY_CANDIDATE"},
     "identifierHex": {"type": "string", "pattern": "^0x(?:[0-9A-F]{3}|[0-9A-F]{8})$"},
+    "recoveryExtractionManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "contract", "contract_version", "byte_count", "sha256"],
+      "properties": {
+        "name": {"const": "manifest.json"},
+        "contract": {"const": "can.portable-evidence-extraction"},
+        "contract_version": {"const": "1.0.0"},
+        "byte_count": {"type": "integer", "minimum": 1, "maximum": 1048576},
+        "sha256": {"$ref": "common.schema.json#/$defs/sha256"}
+      }
+    },
+    "recoverySourceFile": {
+      "oneOf": [
+        {"$ref": "#/$defs/recoveryLooseSourceFile"},
+        {"$ref": "#/$defs/recoveryBundledSourceFile"}
+      ]
+    },
+    "recoveryLooseSourceFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "byte_count", "record_count", "sha256"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1, "maxLength": 1024},
+        "byte_count": {"type": "integer", "minimum": 0, "maximum": 134217728},
+        "record_count": {"type": "integer", "minimum": 0, "maximum": 1000000},
+        "sha256": {"$ref": "common.schema.json#/$defs/sha256"}
+      }
+    },
+    "recoveryBundledSourceFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "byte_count",
+        "record_count",
+        "sha256",
+        "source_bundle_sha256",
+        "source_bundle_manifest_sha256"
+      ],
+      "properties": {
+        "name": {"type": "string", "minLength": 1, "maxLength": 1024},
+        "byte_count": {"type": "integer", "minimum": 0, "maximum": 134217728},
+        "record_count": {"type": "integer", "minimum": 0, "maximum": 1000000},
+        "sha256": {"$ref": "common.schema.json#/$defs/sha256"},
+        "source_bundle_sha256": {"$ref": "common.schema.json#/$defs/sha256"},
+        "source_bundle_manifest_sha256": {"$ref": "common.schema.json#/$defs/sha256"}
+      }
+    },
+    "recoverySourceBundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "byte_count",
+        "sha256",
+        "manifest_sha256",
+        "contract_version",
+        "recovery"
+      ],
+      "properties": {
+        "name": {"type": "string", "minLength": 1, "maxLength": 1024},
+        "byte_count": {"type": "integer", "minimum": 1, "maximum": 135266304},
+        "sha256": {"$ref": "common.schema.json#/$defs/sha256"},
+        "manifest_sha256": {"$ref": "common.schema.json#/$defs/sha256"},
+        "contract_version": {"enum": ["1.0.0", "2.0.0"]},
+        "recovery": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/$defs/recoveryBundleMetadata"}
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"contract_version": {"const": "1.0.0"}}},
+          "then": {"properties": {"recovery": {"type": "null"}}}
+        },
+        {
+          "if": {"properties": {"contract_version": {"const": "2.0.0"}}},
+          "then": {"properties": {"recovery": {"$ref": "#/$defs/recoveryBundleMetadata"}}}
+        }
+      ]
+    },
+    "recoveryBundleMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["classification", "vehicle_claims_authorized", "source_ledger_sha256"],
+      "properties": {
+        "classification": {"const": "RECOVERED_PORTABLE_EVIDENCE"},
+        "vehicle_claims_authorized": {"const": false},
+        "source_ledger_sha256": {"$ref": "common.schema.json#/$defs/sha256"}
+      }
+    },
+    "recoveryOutputFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "gateway_id",
+        "session_id",
+        "record_count",
+        "byte_count",
+        "sha256"
+      ],
+      "properties": {
+        "path": {"type": "string", "pattern": "^sessions/[A-Za-z0-9._-]{1,128}/[0-9]+\\.ndjson$", "maxLength": 1024},
+        "gateway_id": {"type": "string", "pattern": "^[A-Za-z0-9._-]{1,128}$"},
+        "session_id": {"type": "integer", "minimum": 0, "maximum": 4294967295},
+        "record_count": {"type": "integer", "minimum": 1, "maximum": 1000000},
+        "byte_count": {"type": "integer", "minimum": 1, "maximum": 134217728},
+        "sha256": {"$ref": "common.schema.json#/$defs/sha256"}
+      }
+    },
     "nonEmptyStringArray": {
       "type": "array",
       "minItems": 1,

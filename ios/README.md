@@ -37,10 +37,17 @@ Native SwiftUI control surface for the VHOS gateway contract. Minimum deployment
   candidate-only `0x2C4`, `0x025`, and `0x2C1` analysis.
 - A retained-evidence CAN research dashboard that rebuilds multi-session timelines after an app
   restart, plots only stored listen-only observations, pins every candidate to signal-pack
-  `0.4.0`, and keeps conflicting or unvalidated fields in raw counts.
+  `0.4.1`, and keeps conflicting or unvalidated fields in raw counts.
 - A durable private evidence outbox that automatically queues completed capture sync bundles,
   verifies SHA-256 before HTTPS upload, stores its token in Keychain, and retries without losing
-  undelivered evidence.
+  undelivered evidence. A full-synchronous acknowledgement catalog preserves dedupe identity while
+  pruning uploaded payloads; corrupt packages and interrupted staging are quarantined/scavenged so
+  immutable sources can regenerate instead of being suppressed forever.
+- Content-bound portable evidence generations with deterministic recovery bundles, crash-recoverable
+  import provenance receipts, durable journal/file/directory ordering, and bounded background
+  preparation (two artifacts automatically or eight on explicit request) so evidence history
+  cannot starve CoreBluetooth callbacks. An authoritative persistence failure retires the BLE link
+  and blocks evidence controls rather than continuing with unrecorded frames.
 
 The app contains no arbitrary CAN/K-line/J1850 transmit console. Factory WiCAN compatibility mode is observation-only; experiments require the VHOS firmware fork and its capability handshake.
 

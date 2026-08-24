@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -10,10 +11,31 @@ from vhos.contracts import ContractCatalog, ContractError
 
 
 EXAMPLES = Path(__file__).resolve().parents[1] / "contracts" / "examples" / "v1"
+REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _load(name: str) -> dict[str, object]:
     return json.loads((EXAMPLES / name).read_text(encoding="utf-8"))
+
+
+def _ios_discovery_marker_kinds() -> set[str]:
+    source = (
+        REPOSITORY_ROOT
+        / "ios"
+        / "Core"
+        / "Sources"
+        / "VHOSCore"
+        / "DiscoveryDomain.swift"
+    ).read_text(encoding="utf-8")
+    declaration = re.search(
+        r"public enum DiscoveryMarkerKind:.*?\{(?P<body>.*?)\n\}",
+        source,
+        flags=re.DOTALL,
+    )
+    assert declaration is not None
+    return set(
+        re.findall(r'case\s+\w+\s*=\s*"([A-Z0-9_]+)"', declaration.group("body"))
+    )
 
 
 def test_all_discovery_interop_examples_validate() -> None:
@@ -23,6 +45,37 @@ def test_all_discovery_interop_examples_validate() -> None:
     assert len(examples) == 9
     for path in examples:
         catalog.validate(json.loads(path.read_text(encoding="utf-8")))
+
+
+def test_ios_marker_kinds_exactly_match_and_validate_against_shared_contract() -> None:
+    schema = json.loads(
+        (
+            REPOSITORY_ROOT
+            / "contracts"
+            / "jsonschema"
+            / "v1"
+            / "discovery-common.schema.json"
+        ).read_text(encoding="utf-8")
+    )
+    schema_kinds = set(schema["$defs"]["markerKind"]["enum"])
+    ios_kinds = _ios_discovery_marker_kinds()
+
+    assert ios_kinds
+    assert schema_kinds == ios_kinds
+
+    catalog = ContractCatalog.load()
+    for kind in sorted(ios_kinds):
+        marker = _load("discovery-event-marker.real-can-2026-08-18.json")
+        marker["kind"] = kind
+        catalog.validate(marker)
+
+
+def test_discovery_marker_contract_rejects_unknown_kind() -> None:
+    marker = _load("discovery-event-marker.real-can-2026-08-18.json")
+    marker["kind"] = "SELECTOR_UNKNOWN"
+
+    with pytest.raises(ContractError):
+        ContractCatalog.load().validate(marker)
 
 
 def test_observed_and_candidate_records_cannot_claim_more_authority() -> None:

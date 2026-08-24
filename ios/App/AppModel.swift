@@ -45,12 +45,20 @@ final class AppModel {
   private let experimentSigner: ExperimentSigner
   private let otaUploader = WiFiOTAUploader()
   private let temporaryGatewayNetwork = TemporaryGatewayNetwork()
-  private let evidenceOutboxStore = EvidenceOutboxStore()
+  private let evidenceOutboxBackground = EvidenceOutboxBackgroundCoordinator()
+  private let evidenceWorkCoordinator = EvidenceWorkCoordinator()
   private let evidenceOutboxUploader = EvidenceOutboxUploader()
   private let synchronizedReferenceStore = SynchronizedReferenceStore()
-  private let discoveryEvidenceStore = DiscoveryEvidenceStore()
+  private let discoveryEvidence = DiscoveryEvidencePersistenceWorker()
   private var evidenceAutomationTask: Task<Void, Never>?
+  private var canResearchTask: Task<Void, Never>?
+  private var passiveCANExportTask: Task<Void, Never>?
+  private var evidencePreparationTask: Task<Void, Never>?
+  private var canResearchRevision: UInt64 = 0
+  private var preparedEvidenceArtifactIdentities: Set<String> = []
   private var lastQueuedCaptureSyncGeneration: UInt64 = 0
+  private var discoveryEvidenceFullyQueued = false
+  private var preparedDiscoveryArtifactIdentities: Set<String> = []
   private static let evidenceEndpointDefaultsKey = "vhos.evidence-outbox.endpoint.v1"
   private static let evidenceAutomaticDefaultsKey = "vhos.evidence-outbox.automatic.v1"
 
@@ -76,11 +84,21 @@ final class AppModel {
   var synchronizedReferenceMessage = "No synchronized reference samples recorded."
   var canResearchReport: PassiveCANResearchReport?
   var canResearchMessage = "No retained CAN evidence has been analyzed on this iPhone."
+  var canResearchInProgress = false
+  var passiveCANPreparedExportURL: URL?
+  var passiveCANExportInProgress = false
+  var preparedEvidenceSyncURLs: [URL] = []
+  var preparedEvidenceSyncHasMore = false
+  var evidencePreparationInProgress = false
+  var evidencePreparationMessage =
+    "Prepare a bounded page of independently checksummed recovery artifacts."
   var discoveryMarkers: [StoredDiscoveryMarker] = []
   var discoveryMarkerMessage = "No synchronized Discovery markers are retained."
   var discoveryTestRuns: [DiscoveryTestRunDraft] = []
   var discoveryTestRunLedgerReadState: DiscoveryLedgerReadState = .notLoaded
   var discoveryMarkerLedgerReadState: DiscoveryLedgerReadState = .notLoaded
+  var discoveryDraftPreparedExportURLs: [URL] = []
+  var discoveryDraftPreparedExportHasMore = false
 
   var discoveryMutationLedgersAvailable: Bool {
     discoveryTestRunLedgerReadState.isAvailable
@@ -150,7 +168,7 @@ final class AppModel {
     evidenceOutboxTokenConfigured =
       (try? store.data(for: .evidenceOutboxBearerToken)) != nil
     refreshEvidenceOutboxStatus()
-    refreshSynchronizedReferenceStatus()
+    Task { @MainActor [weak self] in await self?.refreshSynchronizedReferenceStatus() }
     refreshCANResearch()
     refreshDiscoveryEvidence()
   }
@@ -198,23 +216,86 @@ final class AppModel {
   }
 
   func queueCurrentEvidenceForAI() {
+    guard evidencePreparationTask == nil else { return }
+    evidencePreparationTask = Task { [weak self] in
+      guard let self else { return }
+      await self.queueEvidencePageForAI(mode: .manual(maximumArtifacts: 8))
+      self.evidencePreparationTask = nil
+    }
+  }
+
+  @discardableResult
+  private func queueEvidencePageForAI(
+    mode: EvidenceOutboxEnqueueMode
+  ) async -> Bool {
+    guard gateway.portableFrameIntegrityError == nil else {
+      evidenceOutboxMessage =
+        "Portable evidence integrity is unresolved; automatic queueing remains blocked."
+      return false
+    }
+    evidencePreparationInProgress = true
+    defer { evidencePreparationInProgress = false }
     do {
-      let url = try evidenceSyncExportURL()
-      let payload = try Data(contentsOf: url, options: [.mappedIfSafe])
-      let (_, inserted) = try evidenceOutboxStore.enqueue(
-        payload: payload,
-        contentType: "application/vnd.vhos.evidence-sync+zip"
-      )
+      let knownIdentities = try await evidenceOutboxBackground.knownArtifactIdentities()
+      let maximumArtifacts: Int
+      switch mode {
+      case .automatic:
+        maximumArtifacts = EvidenceOutboxBackgroundCoordinator.automaticPageSize
+      case .manual(let requested):
+        maximumArtifacts = requested
+      }
+      let snapshot = try await gateway.makePortableEvidenceWorkSnapshot(
+        excludingArtifactIdentities: knownIdentities,
+        maximumArtifacts: maximumArtifacts)
+      let page = try await evidenceWorkCoordinator.prepareEvidencePage(
+        snapshot,
+        creator: evidenceBundleCreator,
+        outputDirectory: evidenceTemporaryDirectory)
+      let result = try await evidenceOutboxBackground.enqueuePage(
+        page.artifacts.map {
+          EvidenceOutboxFileArtifact(
+            identity: $0.artifactIdentity,
+            url: $0.url,
+            contentType: $0.contentType,
+            expectedByteCount: $0.byteCount,
+            expectedSHA256: $0.sha256)
+        },
+        mode: mode)
       refreshEvidenceOutboxStatus()
       evidenceOutboxMessage =
-        inserted
-        ? "Checksummed evidence queued in the private outbox."
-        : "This exact evidence hash is already present in the private outbox."
-      if automaticEvidenceUpload { Task { await processEvidenceOutbox() } }
+        "Queued \(result.insertedPackages) new artifact(s), confirmed "
+        + "\(result.deduplicatedPackages + result.skippedKnownArtifacts) existing; "
+        + (page.hasMore
+          ? "more immutable evidence remains for the next bounded cycle."
+          : "every immutable generation and import-lineage artifact is represented.")
       errorMessage = nil
+      return !page.hasMore
     } catch {
+      if error is PortableFrameStoreError {
+        gateway.reportPortableFrameIntegrityFailure(error)
+      }
       errorMessage = error.localizedDescription
+      evidenceOutboxMessage = "Evidence queueing failed closed: \(error.localizedDescription)"
+      return false
     }
+  }
+
+  private var evidenceBundleCreator: EvidenceBundleCreator {
+    let info = Bundle.main.infoDictionary
+    return EvidenceBundleCreator(
+      platform: "IOS",
+      applicationID: Bundle.main.bundleIdentifier ?? "com.isaiahdupree.VehicleHealthOS",
+      applicationVersion: info?["CFBundleShortVersionString"] as? String ?? "unknown",
+      deviceModel: UIDevice.current.model)
+  }
+
+  private var evidenceTemporaryDirectory: URL {
+    FileManager.default.temporaryDirectory.appendingPathComponent(
+      "VehicleHealthOS-Evidence", isDirectory: true)
+  }
+
+  private var discoveryEvidenceTemporaryDirectory: URL {
+    evidenceTemporaryDirectory.appendingPathComponent("DiscoverySegments", isDirectory: true)
   }
 
   func processEvidenceOutbox() async {
@@ -232,44 +313,49 @@ final class AppModel {
       return
     }
     evidenceOutboxUploadInProgress = true
-    defer {
-      evidenceOutboxUploadInProgress = false
-      refreshEvidenceOutboxStatus()
-    }
+    defer { evidenceOutboxUploadInProgress = false }
     do {
-      for record in try evidenceOutboxStore.records().filter({ $0.uploadedAt == nil }).prefix(8) {
+      for record in try await evidenceOutboxBackground.pendingRecords(maximumCount: 8) {
         do {
           try await evidenceOutboxUploader.upload(
             record,
-            payloadURL: try evidenceOutboxStore.payloadURL(for: record),
+            payloadURL: try await evidenceOutboxBackground.payloadURL(for: record),
             endpoint: endpoint,
             bearerToken: token
           )
-          try evidenceOutboxStore.markUploaded(record)
+          try await evidenceOutboxBackground.markUploaded(record)
           evidenceOutboxMessage = "Uploaded evidence package \(record.id.uuidString)."
         } catch {
-          try? evidenceOutboxStore.markAttempt(record, error: error.localizedDescription)
+          try? await evidenceOutboxBackground.markAttempt(
+            record, error: error.localizedDescription)
           evidenceOutboxMessage = "Private upload paused: \(error.localizedDescription)"
+          await reloadEvidenceOutboxStatus()
           return
         }
       }
     } catch {
       evidenceOutboxMessage = error.localizedDescription
     }
+    await reloadEvidenceOutboxStatus()
   }
 
   private func runEvidenceAutomationCycle() async {
-    retainStandardOBDReferences()
+    await retainStandardOBDReferences()
     let generation = gateway.captureSyncCompletionGeneration
     if generation > lastQueuedCaptureSyncGeneration {
-      lastQueuedCaptureSyncGeneration = generation
       refreshCANResearch()
-      queueCurrentEvidenceForAI()
+      let complete = await queueEvidencePageForAI(mode: .automatic)
+      if complete { lastQueuedCaptureSyncGeneration = generation }
+    }
+    if !discoveryEvidenceFullyQueued, discoveryMutationLedgersAvailable,
+      !discoveryTestRuns.isEmpty || !discoveryMarkers.isEmpty
+    {
+      await queueDiscoveryDraftEvidenceForAI()
     }
     if automaticEvidenceUpload { await processEvidenceOutbox() }
   }
 
-  func recordTechstreamReference(signalID: String, valueText: String, unit: String) {
+  func recordTechstreamReference(signalID: String, valueText: String, unit: String) async {
     do {
       let observation = try currentDiscoveryObservation()
       guard let value = Double(valueText.trimmingCharacters(in: .whitespacesAndNewlines)),
@@ -286,8 +372,8 @@ final class AppModel {
         evidenceNote:
           "Owner-entered Toyota Techstream Data List value aligned to the latest gateway CAN observation."
       )
-      _ = try synchronizedReferenceStore.append(sample)
-      refreshSynchronizedReferenceStatus()
+      _ = try await synchronizedReferenceStore.append(sample)
+      await refreshSynchronizedReferenceStatus()
       synchronizedReferenceMessage =
         "Recorded \(signalID) at gateway monotonic \(observation.monotonicMicroseconds) µs."
       errorMessage = nil
@@ -321,24 +407,48 @@ final class AppModel {
         throw AppModelError.discoveryTestRunRequired
       }
       if run.templateID == DiscoveryMutationPolicy.parkSelectorBootstrapTemplateID {
-        let recorded = orderedBootstrapMarkers(for: run)
+        let storedMarkers = bootstrapMarkerRecords(for: run)
+        let recorded = storedMarkers.map {
+          DiscoveryOrderedMarkerRequirement(kind: $0.marker.kind, label: $0.label)
+        }
         guard
           DiscoveryMutationPolicy.nextParkSelectorBootstrapMarker(after: recorded)
             == DiscoveryOrderedMarkerRequirement(kind: kind, label: label)
         else { throw AppModelError.discoveryMarkerSequenceRequired }
+        if let last = storedMarkers.last {
+          let remaining =
+            DiscoveryMutationPolicy.parkSelectorBootstrapDwellRemainingMicroseconds(
+              after: DiscoveryOrderedMarkerRequirement(
+                kind: last.marker.kind, label: last.label),
+              lastMarkerMonotonicMicroseconds: last.marker.gatewayMonotonicMicroseconds,
+              currentMonotonicMicroseconds: observation.monotonicMicroseconds)
+          guard remaining == 0 else {
+            throw AppModelError.discoveryMarkerDwellRequired(
+              Int((remaining + 999_999) / 1_000_000))
+          }
+        }
       }
-      let stored = try discoveryEvidenceStore.append(
-        template: template,
-        testRun: run,
-        kind: kind,
-        label: label,
-        observation: observation,
-        recordedAt: Self.timestamp())
-      refreshDiscoveryEvidence()
-      discoveryMarkerMessage =
-        "Recorded \(stored.marker.kind.rawValue) at source sequence \(observation.sourceSequence)."
-      noticeMessage = discoveryMarkerMessage
-      errorMessage = nil
+      let recordedAt = Self.timestamp()
+      Task { @MainActor [weak self] in
+        guard let self else { return }
+        do {
+          let stored = try await self.discoveryEvidence.append(
+            template: template,
+            testRun: run,
+            kind: kind,
+            label: label,
+            observation: observation,
+            recordedAt: recordedAt)
+          self.discoveryEvidenceFullyQueued = false
+          await self.reloadDiscoveryEvidence()
+          self.discoveryMarkerMessage =
+            "Recorded \(stored.marker.kind.rawValue) at source sequence \(observation.sourceSequence)."
+          self.noticeMessage = self.discoveryMarkerMessage
+          self.errorMessage = nil
+        } catch {
+          self.errorMessage = error.localizedDescription
+        }
+      }
     } catch {
       errorMessage = error.localizedDescription
     }
@@ -356,14 +466,23 @@ final class AppModel {
         throw AppModelError.discoveryEvidenceAuthorityRequired
       }
       let observation = try currentDiscoveryObservation()
-      let run = try discoveryEvidenceStore.beginTestRun(
-        template: template,
-        observation: observation,
-        recordedAt: Self.timestamp())
-      refreshDiscoveryEvidence()
-      noticeMessage =
-        "Test run draft \(run.id) began on gateway session \(run.gatewaySessionID)."
-      errorMessage = nil
+      let recordedAt = Self.timestamp()
+      Task { @MainActor [weak self] in
+        guard let self else { return }
+        do {
+          let run = try await self.discoveryEvidence.beginTestRun(
+            template: template,
+            observation: observation,
+            recordedAt: recordedAt)
+          self.discoveryEvidenceFullyQueued = false
+          await self.reloadDiscoveryEvidence()
+          self.noticeMessage =
+            "Test run draft \(run.id) began on gateway session \(run.gatewaySessionID)."
+          self.errorMessage = nil
+        } catch {
+          self.errorMessage = error.localizedDescription
+        }
+      }
     } catch {
       errorMessage = error.localizedDescription
     }
@@ -384,6 +503,7 @@ final class AppModel {
       guard let run = activeDiscoveryTestRun else {
         throw AppModelError.discoveryTestRunRequired
       }
+      let endObservation = state == .ended ? try currentDiscoveryObservation() : nil
       if state == .ended {
         if run.templateID == DiscoveryMutationPolicy.parkSelectorBootstrapTemplateID {
           let template = try DiscoveryMutationPolicy.parkSelectorBootstrapTemplate()
@@ -400,26 +520,75 @@ final class AppModel {
             DiscoveryMutationPolicy.parkSelectorBootstrapIsComplete(
               orderedBootstrapMarkers(for: run))
           else { throw AppModelError.discoveryTestIncomplete }
+          if let last = bootstrapMarkerRecords(for: run).last,
+            let endObservation
+          {
+            let remaining =
+              DiscoveryMutationPolicy.parkSelectorBootstrapDwellRemainingMicroseconds(
+                after: DiscoveryOrderedMarkerRequirement(
+                  kind: last.marker.kind, label: last.label),
+                lastMarkerMonotonicMicroseconds: last.marker.gatewayMonotonicMicroseconds,
+                currentMonotonicMicroseconds: endObservation.monotonicMicroseconds)
+            guard remaining == 0 else {
+              throw AppModelError.discoveryMarkerDwellRequired(
+                Int((remaining + 999_999) / 1_000_000))
+            }
+          }
         } else {
           guard gateway.hasCurrentParkedAuthority else {
             throw AppModelError.discoveryParkedStateRequired
           }
         }
       }
-      let endObservation = state == .ended ? try currentDiscoveryObservation() : nil
-      let updated = try discoveryEvidenceStore.transitionTestRun(
-        run,
-        to: state,
-        observation: endObservation,
-        recordedAt: Self.timestamp())
-      refreshDiscoveryEvidence()
-      noticeMessage =
-        state == .ended
-        ? "Test run draft ended. Finalization waits for retained archive and manifest hashes."
-        : "Test run draft aborted; all previously recorded markers remain append-only evidence."
-      discoveryMarkerMessage = "Test run draft \(updated.id) is \(updated.state.rawValue)."
-      queueDiscoveryDraftEvidenceForAI()
-      errorMessage = nil
+      let recordedAt = Self.timestamp()
+      Task { @MainActor [weak self] in
+        guard let self else { return }
+        do {
+          let updated = try await self.discoveryEvidence.transitionTestRun(
+            run,
+            to: state,
+            observation: endObservation,
+            recordedAt: recordedAt)
+          self.discoveryEvidenceFullyQueued = false
+          await self.reloadDiscoveryEvidence()
+          self.discoveryMarkerMessage =
+            "Test run draft \(updated.id) is \(updated.state.rawValue)."
+          await self.queueDiscoveryDraftEvidenceForAI()
+          if state == .ended {
+            do {
+              try self.gateway.pauseCaptureAndDownloadHistory()
+              self.noticeMessage =
+                "Test ended and retained. The recorder is pausing, offloading the current and previous CAN history, then resuming automatically."
+              self.errorMessage = nil
+            } catch {
+              self.noticeMessage =
+                "Test ended and its append-only markers are retained, but automatic CAN-history offload could not start."
+              self.errorMessage = error.localizedDescription
+            }
+          } else if self.gateway.state == .vhosConnected,
+            self.gateway.hasCurrentGatewayHealth,
+            self.gateway.handshake?.gatewayID == run.gatewayID,
+            self.gateway.health?.captureSessionID == run.gatewaySessionID
+          {
+            do {
+              try self.gateway.pauseCaptureAndDownloadHistory()
+              self.noticeMessage =
+                "Test aborted and its markers remain append-only evidence. The matching recorder session is pausing, offloading retained CAN history, then resuming automatically."
+              self.errorMessage = nil
+            } catch {
+              self.noticeMessage =
+                "Test aborted and its markers remain append-only evidence, but recovery offload for the matching recorder session could not start."
+              self.errorMessage = error.localizedDescription
+            }
+          } else {
+            self.noticeMessage =
+              "Test run draft aborted; all previously recorded markers remain append-only evidence. Open Evidence after reconnecting to recover its retained gateway session."
+            self.errorMessage = nil
+          }
+        } catch {
+          self.errorMessage = error.localizedDescription
+        }
+      }
     } catch {
       errorMessage = error.localizedDescription
     }
@@ -428,14 +597,27 @@ final class AppModel {
   private func orderedBootstrapMarkers(
     for run: DiscoveryTestRunDraft
   ) -> [DiscoveryOrderedMarkerRequirement] {
-    discoveryMarkers.filter { $0.testRunID == run.id }.map {
+    bootstrapMarkerRecords(for: run).map {
       DiscoveryOrderedMarkerRequirement(kind: $0.marker.kind, label: $0.label)
     }
   }
 
+  private func bootstrapMarkerRecords(
+    for run: DiscoveryTestRunDraft
+  ) -> [StoredDiscoveryMarker] {
+    discoveryMarkers.filter { $0.testRunID == run.id }
+  }
+
   private func refreshDiscoveryEvidence() {
+    Task { @MainActor [weak self] in
+      guard let self else { return }
+      await self.reloadDiscoveryEvidence()
+    }
+  }
+
+  private func reloadDiscoveryEvidence() async {
     do {
-      discoveryTestRuns = try discoveryEvidenceStore.testRuns()
+      discoveryTestRuns = try await discoveryEvidence.testRuns()
       discoveryTestRunLedgerReadState = .available
     } catch {
       discoveryTestRuns = []
@@ -443,7 +625,7 @@ final class AppModel {
     }
 
     do {
-      discoveryMarkers = try discoveryEvidenceStore.markers()
+      discoveryMarkers = try await discoveryEvidence.markers()
       discoveryMarkerLedgerReadState = .available
     } catch {
       discoveryMarkers = []
@@ -460,7 +642,7 @@ final class AppModel {
       discoveryMarkers.isEmpty
       ? "No synchronized Discovery markers are retained."
       : "\(discoveryMarkers.count) append-only Discovery marker(s) retained on this iPhone."
-    let recoveries = discoveryEvidenceStore.recoveryReports
+    let recoveries = await discoveryEvidence.recoveryReports()
     if let latestRecovery = recoveries.last {
       let recoveredFiles = Set(recoveries.map(\.sourceFileName)).sorted()
         .joined(separator: ", ")
@@ -477,13 +659,17 @@ final class AppModel {
   }
 
   func retryDiscoveryEvidenceLoad() {
-    refreshDiscoveryEvidence()
-    if let failure = discoveryLedgerFailureDetail {
-      errorMessage = failure
-      noticeMessage = nil
-    } else {
-      errorMessage = nil
-      noticeMessage = "Discovery evidence ledgers were re-read without changing retained bytes."
+    Task { @MainActor [weak self] in
+      guard let self else { return }
+      await self.reloadDiscoveryEvidence()
+      if let failure = self.discoveryLedgerFailureDetail {
+        self.errorMessage = failure
+        self.noticeMessage = nil
+      } else {
+        self.errorMessage = nil
+        self.noticeMessage =
+          "Discovery evidence ledgers were re-read without changing retained bytes."
+      }
     }
   }
 
@@ -501,19 +687,32 @@ final class AppModel {
     }
   }
 
-  private func queueDiscoveryDraftEvidenceForAI() {
+  private func queueDiscoveryDraftEvidenceForAI() async {
     do {
-      let url = try discoveryEvidenceStore.exportURL(generatedAt: Self.timestamp())
-      let payload = try Data(contentsOf: url, options: [.mappedIfSafe])
-      let (_, inserted) = try evidenceOutboxStore.enqueue(
-        payload: payload,
-        contentType: "application/vnd.vhos.discovery-draft-evidence+json")
+      let knownIdentities = try await evidenceOutboxBackground.knownArtifactIdentities()
+      let page = try await discoveryEvidence.prepareExportPage(
+        excludingArtifactIdentities: knownIdentities,
+        maximumArtifacts: EvidenceOutboxBackgroundCoordinator.automaticPageSize,
+        outputDirectory: discoveryEvidenceTemporaryDirectory)
+      let result = try await evidenceOutboxBackground.enqueuePage(
+        page.artifacts.map {
+          EvidenceOutboxFileArtifact(
+            identity: $0.identity,
+            url: $0.url,
+            contentType: "application/vnd.vhos.discovery-draft-evidence+json",
+            expectedByteCount: $0.byteCount,
+            expectedSHA256: $0.sha256)
+        },
+        mode: .automatic)
+      discoveryEvidenceFullyQueued = !page.hasMore
       refreshEvidenceOutboxStatus()
-      if inserted {
-        evidenceOutboxMessage =
-          "Checksummed Discovery draft evidence queued in the private outbox."
-      }
-      if automaticEvidenceUpload { Task { await processEvidenceOutbox() } }
+      evidenceOutboxMessage =
+        "Queued \(result.insertedPackages) new Discovery segment(s), confirmed "
+        + "\(result.deduplicatedPackages + result.skippedKnownArtifacts) existing; "
+        + (page.hasMore
+          ? "more bounded Discovery evidence remains for the next automatic cycle."
+          : "every append-only Discovery ledger record is represented.")
+      if automaticEvidenceUpload { await processEvidenceOutbox() }
     } catch {
       evidenceOutboxMessage =
         "Discovery draft evidence remains local: \(error.localizedDescription)"
@@ -562,19 +761,48 @@ final class AppModel {
     }
   }
 
-  func synchronizedReferenceExportURL() throws -> URL {
-    try synchronizedReferenceStore.exportURL()
+  func synchronizedReferenceExportURL() async throws -> URL {
+    try await synchronizedReferenceStore.exportURL()
   }
 
-  func discoveryDraftEvidenceExportURL() throws -> URL {
-    try discoveryEvidenceStore.exportURL(generatedAt: Self.timestamp())
+  func prepareDiscoveryDraftEvidenceExport() {
+    Task { @MainActor [weak self] in
+      guard let self else { return }
+      do {
+        if !self.discoveryDraftPreparedExportHasMore,
+          !self.discoveryDraftPreparedExportURLs.isEmpty
+        {
+          self.preparedDiscoveryArtifactIdentities.removeAll()
+          self.discoveryDraftPreparedExportURLs.removeAll()
+        }
+        let page = try await self.discoveryEvidence.prepareExportPage(
+          excludingArtifactIdentities: self.preparedDiscoveryArtifactIdentities,
+          maximumArtifacts: 8,
+          outputDirectory: self.discoveryEvidenceTemporaryDirectory)
+        for artifact in page.artifacts
+        where self.preparedDiscoveryArtifactIdentities.insert(artifact.identity).inserted {
+          self.discoveryDraftPreparedExportURLs.append(artifact.url)
+        }
+        self.discoveryDraftPreparedExportHasMore = page.hasMore
+        self.noticeMessage =
+          "Prepared \(self.discoveryDraftPreparedExportURLs.count) bounded Discovery segment(s). "
+          + (page.hasMore
+            ? "Prepare the next page to cover the remaining immutable ledger cursors."
+            : "This share set covers every Discovery binding, test-run snapshot, and marker.")
+        self.errorMessage = nil
+      } catch {
+        self.discoveryDraftPreparedExportURLs.removeAll()
+        self.preparedDiscoveryArtifactIdentities.removeAll()
+        self.discoveryDraftPreparedExportHasMore = false
+        self.errorMessage = error.localizedDescription
+      }
+    }
   }
 
-  private func retainStandardOBDReferences() {
+  private func retainStandardOBDReferences() async {
     do {
-      var inserted = 0
-      for sample in gateway.standardOBDSamples {
-        let reference = try SynchronizedReferenceSample(
+      let references = try gateway.standardOBDSamples.map { sample in
+        try SynchronizedReferenceSample(
           gatewayMonotonicMicroseconds: sample.gatewayMonotonicMicroseconds,
           signalID: "reference.\(sample.signalID)",
           value: sample.value,
@@ -585,10 +813,10 @@ final class AppModel {
           evidenceNote:
             "Standard read-only Mode 01 PID 0x\(String(format: "%02X", sample.pid)); definition revision \(sample.definitionRevision)."
         )
-        if try synchronizedReferenceStore.append(reference) { inserted += 1 }
       }
+      let inserted = try await synchronizedReferenceStore.append(references)
       if inserted > 0 {
-        refreshSynchronizedReferenceStatus()
+        await refreshSynchronizedReferenceStatus()
         synchronizedReferenceMessage = "Retained \(inserted) new standard OBD reference sample(s)."
       }
     } catch {
@@ -596,20 +824,36 @@ final class AppModel {
     }
   }
 
-  private func refreshSynchronizedReferenceStatus() {
-    synchronizedReferenceCount = ((try? synchronizedReferenceStore.samples()) ?? []).count
-    if synchronizedReferenceCount > 0 {
+  private func refreshSynchronizedReferenceStatus() async {
+    do {
+      synchronizedReferenceCount = try await synchronizedReferenceStore.count()
+      if synchronizedReferenceCount > 0 {
+        synchronizedReferenceMessage =
+          "\(synchronizedReferenceCount) append-only synchronized reference sample(s) retained."
+      }
+    } catch {
+      synchronizedReferenceCount = 0
       synchronizedReferenceMessage =
-        "\(synchronizedReferenceCount) append-only synchronized reference sample(s) retained."
+        "Synchronized reference evidence is unavailable: \(error.localizedDescription)"
     }
   }
 
   private func refreshEvidenceOutboxStatus() {
-    let records = (try? evidenceOutboxStore.records()) ?? []
-    evidenceOutboxPendingCount = records.filter { $0.uploadedAt == nil }.count
-    evidenceOutboxUploadedCount = records.filter { $0.uploadedAt != nil }.count
-    if records.isEmpty {
-      evidenceOutboxMessage = "No evidence is queued."
+    Task { @MainActor [weak self] in
+      await self?.reloadEvidenceOutboxStatus()
+    }
+  }
+
+  private func reloadEvidenceOutboxStatus() async {
+    do {
+      let status = try await evidenceOutboxBackground.status()
+      evidenceOutboxPendingCount = status.pendingCount
+      evidenceOutboxUploadedCount = status.acknowledgedUploadCount
+      if status.pendingCount == 0 {
+        evidenceOutboxMessage = "No evidence is queued."
+      }
+    } catch {
+      evidenceOutboxMessage = "Evidence outbox status failed closed: \(error.localizedDescription)"
     }
   }
 
@@ -798,26 +1042,72 @@ final class AppModel {
     return url
   }
 
-  func passiveCANExportURL() throws -> URL {
-    try gateway.captureLogExportURL()
+  func preparePassiveCANExport() {
+    guard passiveCANExportTask == nil else { return }
+    passiveCANExportInProgress = true
+    passiveCANExportTask = Task { [weak self] in
+      guard let self else { return }
+      defer {
+        self.passiveCANExportInProgress = false
+        self.passiveCANExportTask = nil
+      }
+      do {
+        let snapshot = try await self.gateway.makePassiveCANWorkSnapshot()
+        let export = try await self.evidenceWorkCoordinator.preparePassiveCANExport(
+          snapshot,
+          outputDirectory: self.evidenceTemporaryDirectory)
+        self.passiveCANPreparedExportURL = export.url
+        self.noticeMessage =
+          "Prepared \(export.recordCount.formatted()) recent validated CAN observations"
+          + (export.excludesEarlierCaptureBytes
+            ? " from the bounded 16 MiB research window; older source logs remain unchanged."
+            : ".")
+        self.errorMessage = nil
+      } catch {
+        if error is PortableFrameStoreError {
+          self.gateway.reportPortableFrameIntegrityFailure(error)
+        }
+        self.errorMessage = error.localizedDescription
+      }
+    }
   }
 
   func refreshCANResearch() {
-    do {
-      let observations = try gateway.storedPassiveCANObservations()
-      guard !observations.isEmpty else {
-        canResearchReport = nil
-        canResearchMessage =
-          "No retained CAN evidence is stored. Synchronize a gateway capture to create research graphs."
-        return
+    canResearchRevision &+= 1
+    let revision = canResearchRevision
+    canResearchTask?.cancel()
+    canResearchInProgress = true
+    canResearchMessage = "Analyzing a bounded immutable evidence snapshot…"
+    canResearchTask = Task { [weak self] in
+      guard let self else { return }
+      defer {
+        if self.canResearchRevision == revision {
+          self.canResearchInProgress = false
+          self.canResearchTask = nil
+        }
       }
-      let report = try PassiveCANResearchAnalyzer.analyze(observations)
-      canResearchReport = report
-      canResearchMessage =
-        "Analyzed \(report.recordCount.formatted()) retained records across \(report.sessionCount) sessions; owner health remains blocked."
-    } catch {
-      canResearchReport = nil
-      canResearchMessage = "Retained CAN analysis failed closed: \(error.localizedDescription)"
+      do {
+        let snapshot = try await self.gateway.makePassiveCANWorkSnapshot()
+        let report = try await self.evidenceWorkCoordinator.analyzePassiveCAN(snapshot)
+        guard !Task.isCancelled, self.canResearchRevision == revision else { return }
+        self.canResearchReport = report
+        self.canResearchMessage =
+          report.map {
+            "Analyzed \($0.recordCount.formatted()) retained records across "
+              + "\($0.sessionCount) sessions; owner health remains blocked."
+          }
+          ?? "No retained CAN evidence is stored. Synchronize a gateway capture to create research graphs."
+      } catch is CancellationError {
+        // A newer immutable snapshot owns the visible result.
+      } catch {
+        guard self.canResearchRevision == revision else { return }
+        if error is PortableFrameStoreError {
+          self.gateway.reportPortableFrameIntegrityFailure(error)
+        }
+        self.canResearchReport = nil
+        self.canResearchMessage =
+          "Retained CAN analysis failed closed: \(error.localizedDescription)"
+      }
     }
   }
 
@@ -825,25 +1115,63 @@ final class AppModel {
     try gateway.bleConnectionTraceExportURL()
   }
 
-  func evidenceSyncExportURL() throws -> URL {
-    let info = Bundle.main.infoDictionary
-    return try gateway.evidenceSyncExportURL(
-      applicationID: Bundle.main.bundleIdentifier ?? "com.isaiahdupree.VehicleHealthOS",
-      applicationVersion: info?["CFBundleShortVersionString"] as? String ?? "unknown",
-      deviceModel: UIDevice.current.model
-    )
+  func prepareEvidenceSyncExportPage(reset: Bool = false) {
+    guard evidencePreparationTask == nil else { return }
+    if reset {
+      preparedEvidenceArtifactIdentities.removeAll()
+      preparedEvidenceSyncURLs.removeAll()
+      preparedEvidenceSyncHasMore = false
+    }
+    evidencePreparationInProgress = true
+    evidencePreparationTask = Task { [weak self] in
+      guard let self else { return }
+      defer {
+        self.evidencePreparationInProgress = false
+        self.evidencePreparationTask = nil
+      }
+      do {
+        let snapshot = try await self.gateway.makePortableEvidenceWorkSnapshot(
+          excludingArtifactIdentities: self.preparedEvidenceArtifactIdentities,
+          maximumArtifacts: 8)
+        let page = try await self.evidenceWorkCoordinator.prepareEvidencePage(
+          snapshot,
+          creator: self.evidenceBundleCreator,
+          outputDirectory: self.evidenceTemporaryDirectory)
+        for artifact in page.artifacts
+        where self.preparedEvidenceArtifactIdentities.insert(artifact.artifactIdentity).inserted {
+          self.preparedEvidenceSyncURLs.append(artifact.url)
+        }
+        self.preparedEvidenceSyncHasMore = page.hasMore
+        self.evidencePreparationMessage =
+          "Prepared \(self.preparedEvidenceSyncURLs.count) artifact(s). "
+          + (page.hasMore
+            ? "More immutable generations remain; prepare the next bounded page."
+            : "This share set now covers every verified generation and import-lineage artifact.")
+        self.errorMessage = nil
+      } catch {
+        if error is PortableFrameStoreError {
+          self.gateway.reportPortableFrameIntegrityFailure(error)
+        }
+        self.errorMessage = error.localizedDescription
+        self.evidencePreparationMessage =
+          "Recovery bundle preparation failed closed: \(error.localizedDescription)"
+      }
+    }
   }
 
   func importEvidenceSync(from url: URL) {
     let hasAccess = url.startAccessingSecurityScopedResource()
-    defer { if hasAccess { url.stopAccessingSecurityScopedResource() } }
-    do {
-      let summary = try gateway.importEvidenceSync(from: url)
-      noticeMessage =
-        "Bundle \(summary.bundleID.uuidString) verified; appended \(summary.appendedRecords) of \(summary.verifiedRecords) frames."
-      errorMessage = nil
-    } catch {
-      errorMessage = error.localizedDescription
+    Task { @MainActor [weak self] in
+      defer { if hasAccess { url.stopAccessingSecurityScopedResource() } }
+      guard let self else { return }
+      do {
+        let summary = try await self.gateway.importEvidenceSync(from: url)
+        self.noticeMessage =
+          "Bundle \(summary.bundleID.uuidString) verified; appended \(summary.appendedRecords) of \(summary.verifiedRecords) frames."
+        self.errorMessage = nil
+      } catch {
+        self.errorMessage = error.localizedDescription
+      }
     }
   }
 
@@ -893,6 +1221,7 @@ enum AppModelError: Error, LocalizedError {
   case discoveryCapabilityRequired
   case discoveryEvidenceAuthorityRequired
   case discoveryMarkerSequenceRequired
+  case discoveryMarkerDwellRequired(Int)
   case discoveryTestIncomplete
   case discoveryLedgerUnavailable(String)
 
@@ -938,6 +1267,8 @@ enum AppModelError: Error, LocalizedError {
       "This test requires either fresh deterministic PARKED authority or the exact passive Park-selector bootstrap with current listen-only capture evidence."
     case .discoveryMarkerSequenceRequired:
       "The Park-selector bootstrap accepts one exact marker at a time in the required P/R/N/D/P sequence. Abort and restart if the retained sequence is not canonical."
+    case .discoveryMarkerDwellRequired(let seconds):
+      "Hold the current selector position for \(seconds) more second\(seconds == 1 ? "" : "s") before recording the next transition. The gateway monotonic clock enforces this interval."
     case .discoveryTestIncomplete:
       "Complete every ordered Park-selector bootstrap marker before ending this evidence session."
     case .discoveryLedgerUnavailable(let detail):

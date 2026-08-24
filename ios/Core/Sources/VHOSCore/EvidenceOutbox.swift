@@ -8,10 +8,10 @@ public struct EvidenceOutboxAuthority: Codable, Equatable, Sendable {
   public let mayEmitVehicleFrames: Bool
 
   private enum CodingKeys: String, CodingKey {
-    case mayInterpret = "may_interpret"
-    case mayProposeExperiment = "may_propose_experiment"
-    case mayActivateExperiment = "may_activate_experiment"
-    case mayEmitVehicleFrames = "may_emit_vehicle_frames"
+    case mayInterpret
+    case mayProposeExperiment
+    case mayActivateExperiment
+    case mayEmitVehicleFrames
   }
 
   public init() {
@@ -23,6 +23,13 @@ public struct EvidenceOutboxAuthority: Codable, Equatable, Sendable {
 }
 
 public struct EvidenceOutboxEnvelope: Codable, Equatable, Sendable, Identifiable {
+  public static let allowedContentTypes: Set<String> = [
+    "application/vnd.vhos.evidence-sync+zip",
+    "application/vnd.vhos.agent-evidence+json",
+    "application/vnd.vhos.discovery-draft-evidence+json",
+    "application/vnd.vhos.import-provenance-receipt+json",
+  ]
+
   public let contract: String
   public let contractVersion: String
   public let packageID: UUID
@@ -36,13 +43,13 @@ public struct EvidenceOutboxEnvelope: Codable, Equatable, Sendable, Identifiable
   private enum CodingKeys: String, CodingKey {
     case contract
     case contractVersion
-    case packageID = "package_id"
-    case createdAt = "created_at"
-    case contentType = "content_type"
-    case byteCount = "byte_count"
+    case packageID = "packageId"
+    case createdAt
+    case contentType
+    case byteCount
     case sha256
     case authority
-    case redactionPolicy = "redaction_policy"
+    case redactionPolicy
   }
 
   public var id: UUID { packageID }
@@ -54,10 +61,8 @@ public struct EvidenceOutboxEnvelope: Codable, Equatable, Sendable, Identifiable
     payload: Data
   ) throws {
     guard !payload.isEmpty, payload.count <= 128 * 1024 * 1024,
-      [
-        "application/vnd.vhos.evidence-sync+zip",
-        "application/vnd.vhos.agent-evidence+json",
-      ].contains(contentType)
+      Self.allowedContentTypes.contains(contentType),
+      EvidenceContractScalarValidation.isWallTime(createdAt)
     else { throw EvidenceOutboxError.invalidEnvelope }
     contract = "evidence.outbox-envelope"
     contractVersion = "1.0.0"
@@ -72,8 +77,10 @@ public struct EvidenceOutboxEnvelope: Codable, Equatable, Sendable, Identifiable
 
   public func validate(payload: Data) throws {
     guard contract == "evidence.outbox-envelope", contractVersion == "1.0.0",
-      redactionPolicy == "OWNER_PRIVATE_V1", byteCount == payload.count,
-      sha256 == Self.digest(payload), authority.mayInterpret,
+      redactionPolicy == "OWNER_PRIVATE_V1", byteCount > 0, byteCount <= 128 * 1024 * 1024,
+      byteCount == payload.count, EvidenceContractScalarValidation.isWallTime(createdAt),
+      Self.allowedContentTypes.contains(contentType), sha256 == Self.digest(payload),
+      authority.mayInterpret,
       authority.mayProposeExperiment, !authority.mayActivateExperiment,
       !authority.mayEmitVehicleFrames
     else { throw EvidenceOutboxError.invalidEnvelope }

@@ -8,7 +8,11 @@ from pathlib import Path
 
 from .ac_metrics import SIMULATOR_AC_SIGNALS, calculate_ac_metrics
 from .bundles import BundleError, load_validated_bundle, write_simulator_bundle
-from .can_discovery import CANDiscoveryError, analyze_passive_can, load_passive_can_ndjson
+from .can_discovery import (
+    CANDiscoveryError,
+    analyze_passive_can,
+    load_passive_can_ndjson,
+)
 from .can_replay import (
     CANReplayError,
     build_can_replay_corpus,
@@ -19,6 +23,7 @@ from .can_replay import (
 )
 from .contracts import ContractCatalog, ContractError
 from .evidence_inbox import EvidenceInboxError, EvidenceInboxStore, serve_evidence_inbox
+from .field_return import FieldReturnAnalysisError, analyze_field_return
 from .firmware_package import build_firmware_package, verify_firmware_package
 from .j1979 import (
     J1979Error,
@@ -26,8 +31,22 @@ from .j1979 import (
     enumerate_supported_pids,
     load_j1979_ndjson,
 )
+from .marker_correlation import (
+    DEFAULT_SETTLE_MICROSECONDS,
+    DEFAULT_WINDOW_MICROSECONDS,
+    MarkerCorrelationError,
+    correlate_can_with_markers,
+)
+from .portable_can import (
+    PortableCANError,
+    extract_portable_can,
+    load_recovered_can_extraction,
+)
 from .replay import replay_bundle
-from .reference_correlation import ReferenceCorrelationError, correlate_can_with_reference
+from .reference_correlation import (
+    ReferenceCorrelationError,
+    correlate_can_with_reference,
+)
 from .signal_hypotheses import SignalHypothesisError, evaluate_can_hypotheses
 from .simulator import generate_ac_bench_sweep, generate_cold_start_idle
 
@@ -37,10 +56,14 @@ def build_parser() -> argparse.ArgumentParser:
     subcommands = parser.add_subparsers(dest="command", required=True)
 
     contracts = subcommands.add_parser("contracts", help="Inspect contract schemas")
-    contracts_subcommands = contracts.add_subparsers(dest="contracts_command", required=True)
+    contracts_subcommands = contracts.add_subparsers(
+        dest="contracts_command", required=True
+    )
     contracts_subcommands.add_parser("check", help="Validate every JSON Schema")
 
-    simulate = subcommands.add_parser("simulate", help="Generate a deterministic capture bundle")
+    simulate = subcommands.add_parser(
+        "simulate", help="Generate a deterministic capture bundle"
+    )
     simulate.add_argument(
         "--scenario", choices=["cold-start-idle", "ac-bench-sweep"], required=True
     )
@@ -48,7 +71,8 @@ def build_parser() -> argparse.ArgumentParser:
     simulate.add_argument("--replace", action="store_true")
 
     validate_bundle = subcommands.add_parser(
-        "validate-bundle", help="Validate manifest, hashes, records, IDs, sequence, and timestamps"
+        "validate-bundle",
+        help="Validate manifest, hashes, records, IDs, sequence, and timestamps",
     )
     validate_bundle.add_argument("bundle", type=Path)
 
@@ -91,6 +115,35 @@ def build_parser() -> argparse.ArgumentParser:
         help="Versioned can.signal-hypothesis-pack; defaults to the checked-in 2005 4Runner pack",
     )
     evaluate_hypotheses.add_argument("--output", type=Path)
+
+    extract_portable = subcommands.add_parser(
+        "extract-portable-can",
+        help="Recover validated passive CAN observations from iOS portable evidence",
+    )
+    extract_portable.add_argument(
+        "input",
+        type=Path,
+        nargs="+",
+        help="One or more .vhossync bundles, logical-frames.ndjson files, or containing directories",
+    )
+    extract_portable.add_argument("--output", type=Path, required=True)
+    extract_portable.add_argument(
+        "--session-id",
+        type=int,
+        action="append",
+        help="Recover only this gateway recorder session; repeat for multiple sessions",
+    )
+
+    discover_recovered = subcommands.add_parser(
+        "discover-recovered-can",
+        help="Analyze a complete recovered-CAN extraction while retaining its non-authority label",
+    )
+    discover_recovered.add_argument(
+        "extraction",
+        type=Path,
+        help="Root created by extract-portable-can; manifest.json is mandatory",
+    )
+    discover_recovered.add_argument("--output", type=Path)
 
     build_can_replay = subcommands.add_parser(
         "build-can-replay-corpus",
@@ -143,7 +196,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enumerate supported Mode 01 PIDs per ECU and decode only pinned, supported values",
     )
     decode_j1979.add_argument(
-        "input", type=Path, nargs="+", help="One or more obd.j1979-response NDJSON files"
+        "input",
+        type=Path,
+        nargs="+",
+        help="One or more obd.j1979-response NDJSON files",
     )
     decode_j1979.add_argument("--supported-output", type=Path, required=True)
     decode_j1979.add_argument("--samples-output", type=Path, required=True)
@@ -153,28 +209,77 @@ def build_parser() -> argparse.ArgumentParser:
         help="Rank raw fields from 0x2C4, 0x025, and 0x2C1 against synchronized reference samples",
     )
     correlate_reference.add_argument("--can", type=Path, action="append", required=True)
-    correlate_reference.add_argument("--reference", type=Path, action="append", required=True)
+    correlate_reference.add_argument(
+        "--reference", type=Path, action="append", required=True
+    )
     correlate_reference.add_argument(
         "--identifier",
         action="append",
         type=lambda value: int(value, 0),
         help="11-bit CAN identifier; defaults to 0x2C4, 0x025, and 0x2C1",
     )
-    correlate_reference.add_argument("--maximum-pairing-delta-us", type=int, default=250_000)
+    correlate_reference.add_argument(
+        "--maximum-pairing-delta-us", type=int, default=250_000
+    )
     correlate_reference.add_argument("--output", type=Path, required=True)
 
+    correlate_markers = subcommands.add_parser(
+        "correlate-can-markers",
+        help="Rank raw CAN fields against synchronized append-only Discovery event markers",
+    )
+    correlate_markers.add_argument("--can", type=Path, action="append", required=True)
+    correlate_markers.add_argument(
+        "--markers", type=Path, action="append", required=True
+    )
+    correlate_markers.add_argument("--settle-us", type=int, default=0)
+    correlate_markers.add_argument("--window-us", type=int, default=4_000_000)
+    correlate_markers.add_argument("--output", type=Path, required=True)
+
+    field_return = subcommands.add_parser(
+        "analyze-field-return",
+        help="Validate and analyze a copied iPhone field return in one atomic offline run",
+    )
+    field_return.add_argument(
+        "app_data",
+        type=Path,
+        help="Copied iPhone application-data directory",
+    )
+    field_return.add_argument(
+        "--baseline",
+        type=Path,
+        help="Optional earlier copied app-data directory; must be an exact ledger prefix",
+    )
+    field_return.add_argument("--output", type=Path, required=True)
+    field_return.add_argument("--soak-cycles", type=int, default=20)
+    field_return.add_argument(
+        "--pack",
+        type=Path,
+        help="Optional versioned CAN hypothesis pack",
+    )
+    field_return.add_argument(
+        "--marker-settle-us", type=int, default=DEFAULT_SETTLE_MICROSECONDS
+    )
+    field_return.add_argument(
+        "--marker-window-us", type=int, default=DEFAULT_WINDOW_MICROSECONDS
+    )
+
     evidence_inbox = subcommands.add_parser(
-        "evidence-inbox", help="Run or inspect the authenticated private evidence receiver"
+        "evidence-inbox",
+        help="Run or inspect the authenticated private evidence receiver",
     )
     inbox_commands = evidence_inbox.add_subparsers(dest="inbox_command", required=True)
-    inbox_serve = inbox_commands.add_parser("serve", help="Serve the append-only evidence inbox")
+    inbox_serve = inbox_commands.add_parser(
+        "serve", help="Serve the append-only evidence inbox"
+    )
     inbox_serve.add_argument("--root", type=Path, required=True)
     inbox_serve.add_argument("--bind", default="127.0.0.1")
     inbox_serve.add_argument("--port", type=int, default=8765)
     inbox_serve.add_argument("--token-env", default="VHOS_EVIDENCE_INBOX_TOKEN")
     inbox_serve.add_argument("--tls-certificate", type=Path)
     inbox_serve.add_argument("--tls-private-key", type=Path)
-    inbox_list = inbox_commands.add_parser("list", help="List accepted evidence packages")
+    inbox_list = inbox_commands.add_parser(
+        "list", help="List accepted evidence packages"
+    )
     inbox_list.add_argument("--root", type=Path, required=True)
     inbox_list.add_argument("--pending-only", action="store_true")
     inbox_claim = inbox_commands.add_parser(
@@ -193,12 +298,15 @@ def build_parser() -> argparse.ArgumentParser:
     package_firmware.add_argument("--firmware-version", required=True)
     package_firmware.add_argument("--firmware-build-id", required=True)
     package_firmware.add_argument("--hardware-revision", action="append", required=True)
-    package_firmware.add_argument("--minimum-supply-millivolts", type=int, required=True)
+    package_firmware.add_argument(
+        "--minimum-supply-millivolts", type=int, required=True
+    )
     package_firmware.add_argument("--minimum-bootloader-version")
     package_firmware.add_argument("--release-channel", default="development")
 
     verify_firmware = subcommands.add_parser(
-        "verify-firmware-package", help="Verify a .vhosota package and print its manifest"
+        "verify-firmware-package",
+        help="Verify a .vhosota package and print its manifest",
     )
     verify_firmware.add_argument("package", type=Path)
     verify_firmware.add_argument("--public-key", type=Path, required=True)
@@ -271,7 +379,9 @@ def main(argv: list[str] | None = None) -> int:
             }
             if args.output:
                 if args.output.exists():
-                    raise BundleError(f"A/C calculation output already exists: {args.output}")
+                    raise BundleError(
+                        f"A/C calculation output already exists: {args.output}"
+                    )
                 args.output.parent.mkdir(parents=True, exist_ok=True)
                 args.output.write_text(
                     json.dumps(report, indent=2, sort_keys=True) + "\n",
@@ -301,6 +411,51 @@ def main(argv: list[str] | None = None) -> int:
                 _write_new_json(args.output, report)
             _print_json(report)
             return 0
+        if args.command == "extract-portable-can":
+            manifest = extract_portable_can(
+                args.input,
+                args.output,
+                session_ids=args.session_id or (),
+            )
+            _print_json(
+                {
+                    "output": str(args.output.resolve()),
+                    "records": manifest["statistics"]["recovered_unique_observations"],
+                    "sessions": manifest["statistics"]["sessions"],
+                    "duplicates_reconciled": manifest["statistics"][
+                        "exact_duplicate_observations"
+                    ],
+                    "required_display_label": manifest["display_policy"][
+                        "required_label"
+                    ],
+                }
+            )
+            return 0
+        if args.command == "discover-recovered-can":
+            records, recovery = load_recovered_can_extraction(args.extraction)
+            report = analyze_passive_can(records, sources=recovery["source_files"])
+            report["recovery_provenance"] = {
+                "source_classification": recovery["source_classification"],
+                "vehicle_claims_authorized": recovery["vehicle_claims_authorized"],
+                "required_display_label": recovery["required_display_label"],
+                "extraction_manifest": recovery["extraction_manifest"],
+                "source_files": recovery["original_source_files"],
+                "source_bundles": recovery["source_bundles"],
+                "output_files": recovery["output_files"],
+            }
+            report["authority"] = (
+                "RECOVERED_PORTABLE_EVIDENCE; vehicle_claims_authorized=false. "
+                + report["authority"]
+            )
+            report["display_policy"]["proven_now"].insert(
+                0,
+                "recovery provenance and explicit non-authority verified from the complete extraction",
+            )
+            ContractCatalog.load().validate(report)
+            if args.output:
+                _write_new_json(args.output, report)
+            _print_json(report)
+            return 0
         if args.command == "build-can-replay-corpus":
             manifest = build_can_replay_corpus(
                 args.input,
@@ -314,7 +469,9 @@ def main(argv: list[str] | None = None) -> int:
                     "records": manifest["statistics"]["records"],
                     "sessions": manifest["statistics"]["sessions"],
                     "semantic_digest": manifest["semantic_digest"],
-                    "required_display_label": manifest["display_policy"]["required_label"],
+                    "required_display_label": manifest["display_policy"][
+                        "required_label"
+                    ],
                 }
             )
             return 0
@@ -373,7 +530,8 @@ def main(argv: list[str] | None = None) -> int:
                     "source_files": sources,
                     "ecu_count": len(supported["ecu_results"]),
                     "complete_ecu_count": sum(
-                        item["enumeration_complete"] for item in supported["ecu_results"]
+                        item["enumeration_complete"]
+                        for item in supported["ecu_results"]
                     ),
                     "decoded_samples": len(samples),
                 }
@@ -400,10 +558,58 @@ def main(argv: list[str] | None = None) -> int:
                 }
             )
             return 0
+        if args.command == "correlate-can-markers":
+            report = correlate_can_with_markers(
+                args.can,
+                args.markers,
+                settle_microseconds=args.settle_us,
+                window_microseconds=args.window_us,
+            )
+            _write_new_json(args.output, report)
+            _print_json(
+                {
+                    "output": str(args.output.resolve()),
+                    "test_runs": len(report["test_runs"]),
+                    "ranked_candidates": len(report["ranked_candidates"]),
+                    "promotion_allowed": report["promotion_allowed"],
+                }
+            )
+            return 0
+        if args.command == "analyze-field-return":
+            manifest = analyze_field_return(
+                args.app_data,
+                args.output,
+                baseline=args.baseline,
+                soak_cycles=args.soak_cycles,
+                hypothesis_pack=args.pack,
+                marker_settle_microseconds=args.marker_settle_us,
+                marker_window_microseconds=args.marker_window_us,
+            )
+            full = manifest["analysis_scopes"]["full"]
+            appended = manifest["analysis_scopes"]["appended"]
+            _print_json(
+                {
+                    "output": str(args.output.resolve()),
+                    "analysis_id": manifest["analysis_id"],
+                    "status": manifest["status"],
+                    "full_records": full["records"],
+                    "appended_records": (
+                        appended.get("records", 0) if appended is not None else 0
+                    ),
+                    "marker_candidates": full["marker_correlation"].get(
+                        "ranked_candidates", 0
+                    ),
+                    "reliability_status": full["reliability_status"],
+                    "summary": str((args.output / "SUMMARY.md").resolve()),
+                }
+            )
+            return 0
         if args.command == "evidence-inbox":
             store = EvidenceInboxStore(args.root)
             if args.inbox_command == "list":
-                _print_json({"packages": store.list_packages(pending_only=args.pending_only)})
+                _print_json(
+                    {"packages": store.list_packages(pending_only=args.pending_only)}
+                )
                 return 0
             if args.inbox_command == "claim":
                 _print_json(store.claim(args.package_id, args.agent_id))
@@ -463,7 +669,10 @@ def main(argv: list[str] | None = None) -> int:
         CANReplayError,
         ContractError,
         EvidenceInboxError,
+        FieldReturnAnalysisError,
         J1979Error,
+        MarkerCorrelationError,
+        PortableCANError,
         ReferenceCorrelationError,
         SignalHypothesisError,
         OSError,
@@ -491,7 +700,9 @@ def _write_new_json(path: Path, document: dict[str, object]) -> None:
     if path.exists():
         raise ValueError(f"Output already exists: {path}")
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(document, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(document, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
 
 
 def _write_new_ndjson(path: Path, documents: list[dict[str, object]]) -> None:
@@ -499,7 +710,10 @@ def _write_new_ndjson(path: Path, documents: list[dict[str, object]]) -> None:
         raise ValueError(f"Output already exists: {path}")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
-        "".join(json.dumps(item, sort_keys=True, separators=(",", ":")) + "\n" for item in documents),
+        "".join(
+            json.dumps(item, sort_keys=True, separators=(",", ":")) + "\n"
+            for item in documents
+        ),
         encoding="utf-8",
     )
 

@@ -34,8 +34,8 @@ targets:
       path: App/Info.plist
       properties:
         CFBundleDisplayName: Vehicle Health OS
-        CFBundleShortVersionString: "0.3.22"
-        CFBundleVersion: "29"
+        CFBundleShortVersionString: "0.3.24"
+        CFBundleVersion: "31"
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait

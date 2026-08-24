@@ -14,13 +14,16 @@ import pytest
 from vhos.evidence_inbox import EvidenceInboxError, EvidenceInboxServer, EvidenceInboxStore
 
 
-def _envelope(payload: bytes) -> dict[str, object]:
+def _envelope(
+    payload: bytes,
+    content_type: str = "application/vnd.vhos.evidence-sync+zip",
+) -> dict[str, object]:
     return {
         "contract": "evidence.outbox-envelope",
         "contract_version": "1.0.0",
         "package_id": "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
         "created_at": "2026-08-18T12:00:00Z",
-        "content_type": "application/vnd.vhos.evidence-sync+zip",
+        "content_type": content_type,
         "byte_count": len(payload),
         "sha256": hashlib.sha256(payload).hexdigest(),
         "authority": {
@@ -71,6 +74,37 @@ def test_inbox_rejects_payload_substitution(tmp_path: Path) -> None:
             claimed_content_type=envelope["content_type"],
             claimed_sha256=hashlib.sha256(b"substituted").hexdigest(),
         )
+
+
+def test_discovery_draft_evidence_is_accepted_without_vehicle_authority(
+    tmp_path: Path,
+) -> None:
+    payload = b'{"contract":"vhos.discovery-draft-evidence"}'
+    envelope = _envelope(
+        payload, "application/vnd.vhos.discovery-draft-evidence+json"
+    )
+    store = EvidenceInboxStore(tmp_path / "inbox")
+
+    result = store.ingest(
+        envelope["package_id"],
+        json.dumps(envelope).encode(),
+        payload,
+        claimed_content_type=envelope["content_type"],
+        claimed_sha256=envelope["sha256"],
+    )
+
+    assert result.inserted is True
+    stored = store.list_packages()[0]
+    assert stored["content_type"] == envelope["content_type"]
+    stored_envelope = json.loads(
+        (result.directory / "envelope.json").read_text(encoding="utf-8")
+    )
+    assert stored_envelope["authority"] == {
+        "may_interpret": True,
+        "may_propose_experiment": True,
+        "may_activate_experiment": False,
+        "may_emit_vehicle_frames": False,
+    }
 
 
 def test_concurrent_duplicate_ingest_is_atomic_and_idempotent(tmp_path: Path) -> None:
