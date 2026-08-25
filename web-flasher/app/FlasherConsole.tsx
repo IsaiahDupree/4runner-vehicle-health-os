@@ -9,12 +9,17 @@ type ReleaseManifest = {
   channel: "development" | "stable";
   publishedAt: string;
   chipFamily: "ESP32-S3" | "ESP32";
-  hardwareFamily: "WiCAN-OBD-PRO" | "MRDIY-CAN-SHIELD";
+  hardwareFamily: "WiCAN-OBD-PRO" | "MRDIY-CAN-SHIELD" | "AC-SENSOR-NODE-ESP32S3";
   hardwareRevision: string;
   upstreamTag: string;
   sourceCommit: string;
   firmwareCommit: string;
   espIdfVersion: string;
+  softwareProfile?: "EMPTY_RECOVERY";
+  runtimeRadios?: {
+    wifi: "not-initialized";
+    ble: "not-initialized";
+  };
   artifact: {
     url: string;
     address: number;
@@ -42,7 +47,7 @@ type FlashFile = {
   sha256?: string;
 };
 
-type TargetId = "mrdiy-esp32-v13" | "wican-pro-esp32s3";
+type TargetId = "mrdiy-esp32-v13" | "wican-pro-esp32s3" | "ac-sensor-node-esp32s3";
 
 type ProvisioningTarget = {
   id: TargetId;
@@ -55,6 +60,7 @@ type ProvisioningTarget = {
   requiredBoard: string;
   confirmation: string;
   backupPrefix: string;
+  expectedFlashBytes?: number;
 };
 
 type Stage = "idle" | "connecting" | "connected" | "backing-up" | "ready" | "flashing" | "complete" | "error";
@@ -84,13 +90,29 @@ const TARGETS: ProvisioningTarget[] = [
     confirmation: "I confirm this is a WiCAN Pro ESP32-S3 and the full-flash backup is stored safely.",
     backupPrefix: "wican-pro-factory-backup",
   },
+  {
+    id: "ac-sensor-node-esp32s3",
+    label: "ESP32-S3 + A/C Sensor Node — Wi-Fi-off recovery",
+    shortLabel: "A/C RECOVERY",
+    chipFamily: "ESP32-S3",
+    manifestUrl: "/firmware/manifest-ac-sensor-node-esp32s3.json",
+    baudrate: 115200,
+    connection: "Connect the A/C node's USB-C data port on the bench. Do not connect the sensor harness or vehicle power for recovery flashing.",
+    requiredBoard: "A/C sensor-node ESP32-S3 with 16 MB flash and 8 MB octal PSRAM; verify the board identity physically",
+    confirmation: "I confirm this is the 16 MB ESP32-S3 A/C sensor node, the full-flash backup is stored safely, and I want the EMPTY_RECOVERY profile with Wi-Fi and BLE off.",
+    backupPrefix: "ac-sensor-node-esp32s3-backup",
+    expectedFlashBytes: 16 * 1024 * 1024,
+  },
 ];
 
-function matchesTarget(chip: string | null, target: ProvisioningTarget | null) {
+function matchesTarget(chip: string | null, flashBytes: number | null, target: ProvisioningTarget | null) {
   if (!chip || !target) return false;
   const normalized = chip.toUpperCase();
-  if (target.chipFamily === "ESP32-S3") return normalized.includes("ESP32-S3");
-  return normalized.includes("ESP32") && !normalized.includes("ESP32-S");
+  const chipMatches = target.chipFamily === "ESP32-S3"
+    ? normalized.includes("ESP32-S3")
+    : normalized.includes("ESP32") && !normalized.includes("ESP32-S");
+  const capacityMatches = target.expectedFlashBytes === undefined || flashBytes === target.expectedFlashBytes;
+  return chipMatches && capacityMatches;
 }
 
 function validateInstallPlan(manifest: ReleaseManifest) {
@@ -157,7 +179,7 @@ export function FlasherConsole() {
   const serialSupported = typeof navigator !== "undefined" && "serial" in navigator;
   const secureContext = typeof window !== "undefined" && window.isSecureContext;
   const selectedTarget = TARGETS.find((target) => target.id === selectedTargetId) ?? null;
-  const chipMatches = matchesTarget(chip, selectedTarget);
+  const chipMatches = matchesTarget(chip, flashBytes, selectedTarget);
   const releaseVerified = Boolean(manifest && !manifestError);
 
   const appendLog = useCallback((line: string) => {
@@ -234,12 +256,12 @@ export function FlasherConsole() {
       transportRef.current = transport;
       setChip(detected);
       setFlashBytes(capacity);
-      const detectedMatches = matchesTarget(detected, selectedTarget);
+      const detectedMatches = matchesTarget(detected, capacity, selectedTarget);
       setStage(detectedMatches ? "connected" : "error");
       appendLog(
         detectedMatches
           ? `Hardware gate passed: ${detected}, ${formatBytes(capacity)} flash.`
-          : `Hardware gate failed: detected ${detected}; selected target requires ${selectedTarget.chipFamily}.`,
+          : `Hardware gate failed: detected ${detected} with ${formatBytes(capacity)} flash; selected target requires ${selectedTarget.chipFamily}${selectedTarget.expectedFlashBytes ? ` with ${formatBytes(selectedTarget.expectedFlashBytes)} flash` : ""}.`,
       );
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "unable to open the serial device";
@@ -405,7 +427,7 @@ export function FlasherConsole() {
       <header className="topbar">
         <a className="brand" href="#top" aria-label="VHOS provisioner home">
           <span className="brandMark" aria-hidden="true">V</span>
-          <span>VHOS / GATEWAY PROVISIONER</span>
+          <span>VHOS / DEVICE PROVISIONER</span>
         </a>
         <nav aria-label="Project links">
           <a href="https://github.com/IsaiahDupree/4runner-vehicle-health-os">PROJECT</a>
@@ -418,7 +440,7 @@ export function FlasherConsole() {
         <div className="eyebrow">ESP32 · ESP32-S3 · BACKUP-FIRST USB SERIAL</div>
         <h1>Flash with a way back.</h1>
         <p className="heroCopy">
-          A hardware-gated installer for the 4Runner Vehicle Health OS gateway. Choose the exact board,
+          A hardware-gated installer for the 4Runner Vehicle Health OS gateways and A/C sensor node. Choose the exact board,
           preserve its full factory flash, verify the release checksum, then write the matching image.
         </p>
         <div className="heroActions">
@@ -461,7 +483,7 @@ export function FlasherConsole() {
 
       <section className="statusRail" aria-label="Provisioning gates">
         <Status index="01" label="Browser" value={serialSupported && secureContext ? "READY" : "BLOCKED"} good={serialSupported && secureContext} />
-        <Status index="02" label="ESP target" value={chip ?? selectedTarget?.chipFamily ?? "SELECT TARGET"} good={chipMatches} />
+        <Status index="02" label="ESP target" value={chip ? `${chip} · ${formatBytes(flashBytes)}` : selectedTarget?.chipFamily ?? "SELECT TARGET"} good={chipMatches} />
         <Status index="03" label="Factory backup" value={backupComplete ? "SAVED" : "REQUIRED"} good={backupComplete} />
         <Status index="04" label="Release" value={manifest?.release ?? "UNAVAILABLE"} good={releaseVerified} />
       </section>
@@ -502,7 +524,7 @@ export function FlasherConsole() {
             <div className="stepNumber">03</div>
             <div>
               <h2>Verify and install VHOS</h2>
-              <p>The browser checks every published segment by byte count and SHA-256 before writing. On supported releases, the NVS identity and saved BLE bond are preserved across installs.</p>
+              <p>The browser checks every published segment by byte count and SHA-256 before writing. On supported releases, the NVS identity and any saved or future BLE bond are preserved across installs.</p>
               <label className="confirm">
                 <input type="checkbox" checked={hardwareConfirmed} disabled={!selectedTarget} onChange={(event) => setHardwareConfirmed(event.target.checked)} />
                 <span>{selectedTarget?.confirmation ?? "Select and verify the exact target first."}</span>
@@ -522,6 +544,8 @@ export function FlasherConsole() {
             <div><dt>Channel</dt><dd>{manifest?.channel ?? "—"}</dd></div>
             <div><dt>Hardware</dt><dd>{manifest?.hardwareFamily ?? selectedTarget?.shortLabel ?? "—"}</dd></div>
             <div><dt>ESP-IDF</dt><dd>{manifest?.espIdfVersion ?? "—"}</dd></div>
+            <div><dt>Profile</dt><dd>{manifest?.softwareProfile ?? "FULL FIRMWARE"}</dd></div>
+            <div><dt>Radios</dt><dd>{manifest?.runtimeRadios ? "WI-FI OFF · BLE OFF" : "RELEASE DEFINED"}</dd></div>
             <div><dt>Upstream</dt><dd>{manifest?.upstreamTag ?? "—"}</dd></div>
             <div><dt>Image</dt><dd>{formatBytes(manifest?.artifact.byteCount ?? null)}</dd></div>
             <div><dt>Install plan</dt><dd>{manifest?.segments?.length ? `${manifest.segments.length} segments · NVS preserved` : "Full flash image"}</dd></div>
@@ -549,7 +573,7 @@ export function FlasherConsole() {
 
       <footer>
         <span>NO VEHICLE-BUS TRANSMIT CONTROLS</span>
-        <span>TARGET-GATED USB FIRST-FLASH · WI-FI OTA ACTIVATION PENDING</span>
+        <span>TARGET-GATED USB RECOVERY · RADIO ACTIVATION IS PROFILE-GATED</span>
         <span>GPL-3.0 FIRMWARE SOURCE PUBLISHED</span>
       </footer>
     </main>

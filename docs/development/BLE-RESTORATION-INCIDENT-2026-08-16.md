@@ -25,9 +25,27 @@ peer security record, and the iPhone repeatedly recognized the same peripheral i
    reconnect immediately even while the UI correctly reported a longer backoff, creating another
    connection-timeout loop.
 7. Firmware serial evidence identified disconnect reason `520` as a controller-reported HCI
-   connection-supervision timeout (`0x08`). Some reconnects inherited a supervision window too
-   short for reliable GATT negotiation, even though encryption and notification subscriptions
-   restored successfully.
+   connection-supervision timeout (`0x08`). At the time, a short inherited supervision window was
+   one plausible contributor to some reconnects even when encryption and notification
+   subscriptions restored successfully.
+
+### Later decoding clarification — 2026-08-17
+
+Later synchronized `dev.20` evidence refined how these numbers must be interpreted. In that run,
+`BLE_ENCRYPTION status=13` was exactly NimBLE host error `BLE_HS_ETIMEOUT` after the Security
+Manager's 30-second procedure timer. Disconnect reason `520` arrived later and decoded as host-
+encoded HCI `0x08`, connection supervision timeout. It was the controller's terminal report for a
+link that had already stalled, not proof by itself that the configured supervision interval caused
+the security failure.
+
+Disconnect reason `531` is different: `0x213` decodes to HCI `0x13`, remote user terminated the
+connection. From the ESP32's perspective this is expected when iOS intentionally cancels or retires
+a link, including stale-restoration cleanup. It must not be grouped with reason `520` or reported as
+an ESP32 reset.
+
+The complete `dev.20` through `dev.23` diagnosis, including pre-`CONNECT` encryption/CCCD restore
+ordering, is in the
+[pairing and restored-session incident](BLE-PAIRING-RESET-INCIDENT-2026-08-17.md).
 
 The earlier ESP32 `nimble_host` stack overflow was a separate failure and was fixed in firmware
 `v0.1.0-dev.4` by increasing the host stack and pacing notification traffic.
@@ -87,3 +105,13 @@ show firmware/build identity, uptime/reset reason, listen-only enforcement, rece
 frame counters, storage, supply, and OTA/rollback state. It must not expose arbitrary CAN transmit
 or diagnostic commands. The SoftAP must be authenticated, time-bounded or explicitly enabled, and
 must not publish secrets, bond identities, raw keys, or fabricated unavailable values.
+
+Update: that surface was implemented in the unreleased `v0.1.0-dev.6` bench image. Physical Mac
+association testing showed that automatic boot activation was disruptive, so `v0.1.0-dev.7`
+keeps Wi-Fi completely off by default and reserves activation for an explicit encrypted owner
+action. See the [SoftAP activation incident and decision](ESP32-SOFTAP-ACTIVATION-INCIDENT-2026-08-16.md).
+
+Update: a later vehicle session exposed a separate identity-selection failure in which a generic
+`FEE0` peripheral named `Battery Monitor` was shown as the ESP32 link. The correction and its
+evidence ladder are recorded in
+[BLE gateway identity incident](BLE-GATEWAY-IDENTITY-INCIDENT-2026-08-16.md).

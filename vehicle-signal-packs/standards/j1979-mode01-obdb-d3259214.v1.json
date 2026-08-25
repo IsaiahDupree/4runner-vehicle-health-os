@@ -1,0 +1,32 @@
+{
+  "contract": "obd.j1979-definition-registry",
+  "contract_version": "1.0.0",
+  "standard_family": "SAE J1979",
+  "mode": 1,
+  "authority": "Pinned, attributed reference-implementation definitions. Verify against the licensed SAE revision applicable to the exact vehicle before safety-critical use.",
+  "source": {
+    "publisher": "OBDb",
+    "repository": "https://github.com/OBDb/SAEJ1979",
+    "revision": "d3259214a9e0340c4a6cff9ec5f8ff5953eee6f2",
+    "license": "CC-BY-SA-4.0",
+    "definition_path": "signalsets/v3/default.json",
+    "retrieved_at": "2026-08-18"
+  },
+  "definitions": [
+    {"pid": 4, "signal_id": "obd.engine.calculated_load", "name": "Calculated engine load", "byte_count": 1, "multiplier": 100, "divisor": 255, "offset": 0, "unit": "%"},
+    {"pid": 5, "signal_id": "obd.engine.coolant_temperature", "name": "Engine coolant temperature", "byte_count": 1, "multiplier": 1, "divisor": 1, "offset": -40, "unit": "degC"},
+    {"pid": 6, "signal_id": "obd.engine.short_fuel_trim_bank1", "name": "Short-term fuel trim bank 1", "byte_count": 1, "multiplier": 100, "divisor": 128, "offset": -100, "unit": "%"},
+    {"pid": 7, "signal_id": "obd.engine.long_fuel_trim_bank1", "name": "Long-term fuel trim bank 1", "byte_count": 1, "multiplier": 100, "divisor": 128, "offset": -100, "unit": "%"},
+    {"pid": 8, "signal_id": "obd.engine.short_fuel_trim_bank2", "name": "Short-term fuel trim bank 2", "byte_count": 1, "multiplier": 100, "divisor": 128, "offset": -100, "unit": "%"},
+    {"pid": 9, "signal_id": "obd.engine.long_fuel_trim_bank2", "name": "Long-term fuel trim bank 2", "byte_count": 1, "multiplier": 100, "divisor": 128, "offset": -100, "unit": "%"},
+    {"pid": 10, "signal_id": "obd.engine.fuel_pressure", "name": "Fuel pressure", "byte_count": 1, "multiplier": 3, "divisor": 1, "offset": 0, "unit": "kPa"},
+    {"pid": 11, "signal_id": "obd.engine.intake_manifold_pressure", "name": "Intake manifold absolute pressure", "byte_count": 1, "multiplier": 1, "divisor": 1, "offset": 0, "unit": "kPa"},
+    {"pid": 12, "signal_id": "obd.engine.speed", "name": "Engine speed", "byte_count": 2, "multiplier": 1, "divisor": 4, "offset": 0, "unit": "rpm"},
+    {"pid": 13, "signal_id": "obd.vehicle.speed", "name": "Vehicle speed", "byte_count": 1, "multiplier": 1, "divisor": 1, "offset": 0, "unit": "km/h"},
+    {"pid": 14, "signal_id": "obd.engine.timing_advance", "name": "Timing advance", "byte_count": 1, "multiplier": 1, "divisor": 2, "offset": -64, "unit": "deg"},
+    {"pid": 15, "signal_id": "obd.engine.intake_air_temperature", "name": "Intake air temperature", "byte_count": 1, "multiplier": 1, "divisor": 1, "offset": -40, "unit": "degC"},
+    {"pid": 16, "signal_id": "obd.engine.mass_air_flow", "name": "Mass air flow", "byte_count": 2, "multiplier": 1, "divisor": 100, "offset": 0, "unit": "g/s"},
+    {"pid": 17, "signal_id": "obd.engine.throttle_position", "name": "Absolute throttle position", "byte_count": 1, "multiplier": 100, "divisor": 255, "offset": 0, "unit": "%"},
+    {"pid": 31, "signal_id": "obd.engine.run_time", "name": "Time since engine start", "byte_count": 2, "multiplier": 1, "divisor": 1, "offset": 0, "unit": "s"}
+  ]
+}

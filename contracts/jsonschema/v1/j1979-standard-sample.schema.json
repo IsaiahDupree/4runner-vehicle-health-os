@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/j1979-standard-sample.schema.json",
+  "title": "VHOS decoded SAE J1979 Mode 01 sample v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract", "contract_version", "sample_id", "gateway_id", "capture_id", "ecu_address",
+    "observed_at", "gateway_monotonic_microseconds", "source_sequence", "mode", "pid", "signal_id", "name",
+    "raw_data_hex", "value", "unit", "quality", "support_verified", "definition_source"
+  ],
+  "properties": {
+    "contract": {"const": "obd.j1979-standard-sample"},
+    "contract_version": {"const": "1.0.0"},
+    "sample_id": {"type": "string", "pattern": "^sample_[0-9A-HJKMNP-TV-Z]{26}$"},
+    "gateway_id": {"type": "string", "pattern": "^[A-Za-z0-9._-]{1,128}$"},
+    "capture_id": {"type": "string", "pattern": "^[A-Za-z0-9._-]{1,160}$"},
+    "ecu_address": {"type": "string", "pattern": "^0x[0-9A-F]{3,8}$"},
+    "observed_at": {"$ref": "common.schema.json#/$defs/wallTime"},
+    "gateway_monotonic_microseconds": {"type": "integer", "minimum": 0},
+    "source_sequence": {"type": "integer", "minimum": 0},
+    "mode": {"const": 1},
+    "pid": {"type": "integer", "minimum": 1, "maximum": 255},
+    "signal_id": {"$ref": "common.schema.json#/$defs/semanticId"},
+    "name": {"type": "string", "minLength": 1, "maxLength": 160},
+    "raw_data_hex": {"type": "string", "pattern": "^[0-9A-F]{2,510}$"},
+    "value": {"type": "number"},
+    "unit": {"$ref": "common.schema.json#/$defs/unit"},
+    "quality": {"const": "GOOD"},
+    "support_verified": {"const": true},
+    "definition_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["publisher", "repository", "revision", "license", "definition_path"],
+      "properties": {
+        "publisher": {"const": "OBDb"},
+        "repository": {"const": "https://github.com/OBDb/SAEJ1979"},
+        "revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "license": {"const": "CC-BY-SA-4.0"},
+        "definition_path": {"const": "signalsets/v3/default.json"}
+      }
+    }
+  }
+}

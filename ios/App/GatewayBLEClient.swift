@@ -1,16 +1,298 @@
 @preconcurrency import CoreBluetooth
 import Foundation
-import Observation
 import OSLog
+import Observation
 import VHOSCore
+
+/// Coalesces a repeated diagnostic callback into a bounded first/summary trace without changing
+/// the callback's state-machine handling. The first event is retained immediately; each summary
+/// retains the exact burst count plus the first and last details.
+struct BLETraceBurstCoalescer {
+  private let event: String
+  private let checkpointObservationCount: UInt64
+  private var observationCount: UInt64 = 0
+  private var checkpointEmitted = false
+  private var firstDetail = ""
+  private var lastDetail = ""
+
+  init(event: String, checkpointObservationCount: UInt64) {
+    precondition(checkpointObservationCount >= 2)
+    self.event = event
+    self.checkpointObservationCount = checkpointObservationCount
+  }
+
+  mutating func observe(_ detail: String) -> [String] {
+    if observationCount == 0 {
+      observationCount = 1
+      firstDetail = detail
+      lastDetail = detail
+      return ["\(event) \(detail) burst=first"]
+    }
+    if observationCount < UInt64.max { observationCount += 1 }
+    lastDetail = detail
+    guard !checkpointEmitted, observationCount >= checkpointObservationCount else { return [] }
+    checkpointEmitted = true
+    return [summary(reason: "checkpoint")]
+  }
+
+  mutating func flush(reason: String) -> String? {
+    guard observationCount > 1 else {
+      reset()
+      return nil
+    }
+    let result = summary(reason: reason)
+    reset()
+    return result
+  }
+
+  private func summary(reason: String) -> String {
+    return
+      "\(event)_COALESCED count=\(observationCount) suppressed=\(observationCount - 1) reason=\(reason) first={\(firstDetail)} last={\(lastDetail)}"
+  }
+
+  private mutating func reset() {
+    observationCount = 0
+    checkpointEmitted = false
+    firstDetail = ""
+    lastDetail = ""
+  }
+}
+
+/// Keeps a runtime ledger failure sticky until a deliberate full verification succeeds. A later
+/// notification must not overwrite the failure with a stale-looking count merely because its
+/// transport envelope decoded successfully.
+struct PortableFrameIntegrityLatch: Equatable {
+  private(set) var verifiedCount = 0
+  private(set) var failure: String?
+
+  mutating func recordVerified(count: Int) {
+    verifiedCount = count
+    failure = nil
+  }
+
+  mutating func recordSuccessfulAppend(count: Int) {
+    guard failure == nil else { return }
+    verifiedCount = count
+  }
+
+  mutating func recordRuntimeFailure(_ detail: String) {
+    if failure == nil { failure = detail }
+    verifiedCount = 0
+  }
+}
+
+/// Immutable evidence context captured when a CRC-valid frame leaves the stream decoder.
+///
+/// Transport/UI state may be torn down before the serialized persistence tail reaches this frame.
+/// The physical bytes and their source identity must not be rebound to a later handshake or dropped
+/// merely because that later UI session has a different epoch.
+struct AcceptedGatewayFrameContext: Sendable {
+  let frame: GatewayFrame
+  let acceptedLinkSession: UInt64
+  let sourceID: String?
+
+  func appliesToCurrentTransportSession(_ session: UInt64) -> Bool {
+    acceptedLinkSession == session
+  }
+}
+
+/// Immutable snapshot of the application-level response window that is allowed to promote a
+/// decoded handshake identity. Keeping this predicate beside the identity registry makes it
+/// impossible for a future caller to turn a merely CRC-valid, unsolicited handshake into source
+/// authority by calling the promotion API directly.
+struct GatewayHandshakeAuthorityWindow: Equatable {
+  let responseRequested: Bool
+  let writeAttemptCompleted: Bool
+  let commandQueueDrained: Bool
+  let responseDeadlineActive: Bool
+  let notificationSessionMatches: Bool
+  let streamNotificationsEnabled: Bool
+
+  var acceptsIdentityClaim: Bool {
+    responseRequested && writeAttemptCompleted && commandQueueDrained
+      && responseDeadlineActive && notificationSessionMatches && streamNotificationsEnabled
+  }
+}
+
+/// Source identities promoted only after the application-level handshake window accepts them.
+/// Merely decoding a CRC-valid handshake payload is not authority: unsolicited or stale frames
+/// remain attributed to their physical BLE transport and cannot relabel later evidence.
+struct ValidatedGatewayIdentityRegistry {
+  private var identitiesByLinkSession: [UInt64: String] = [:]
+
+  func identity(for linkSession: UInt64) -> String? {
+    identitiesByLinkSession[linkSession]
+  }
+
+  /// Resolves durable evidence attribution without consulting a decoded-but-unaccepted handshake.
+  ///
+  /// A link-scoped identity becomes authoritative only through `promoteHandshakeClaim`. Until
+  /// then, evidence remains attributed to the physical BLE transport. This makes the rejection of
+  /// an unsolicited handshake observable without allowing the rejected payload's claimed identity
+  /// to relabel any frame that follows it.
+  func evidenceSourceID(
+    for linkSession: UInt64,
+    physicalTransportSourceID: String?
+  ) -> String? {
+    identitiesByLinkSession[linkSession] ?? physicalTransportSourceID
+  }
+
+  @discardableResult
+  mutating func promoteHandshakeClaim(
+    gatewayID: String,
+    linkSession: UInt64,
+    authorityWindow: GatewayHandshakeAuthorityWindow
+  ) -> Bool {
+    guard authorityWindow.acceptsIdentityClaim else { return false }
+    identitiesByLinkSession[linkSession] = gatewayID
+    if identitiesByLinkSession.count > 8 {
+      for staleSession in identitiesByLinkSession.keys.sorted().dropLast(8) {
+        identitiesByLinkSession.removeValue(forKey: staleSession)
+      }
+    }
+    return true
+  }
+}
+
+/// One fail-closed predicate shared by every operation that can claim live gateway authority.
+/// A physically connected BLE link is not an authoritative VHOS session when its durable evidence
+/// sink is unavailable or has a sticky integrity failure.
+struct GatewayEvidenceAuthorityGate {
+  static func permits(
+    evidencePersistenceReady: Bool,
+    portableFrameIntegrityError: String?
+  ) -> Bool {
+    evidencePersistenceReady && portableFrameIntegrityError == nil
+  }
+}
+
+/// Launch-time ownership policy for the one handshake-verified peripheral restored by
+/// CoreBluetooth. Restoration commonly arrives before the append-only evidence store finishes
+/// verification. In that interval the inherited link must remain quiescent: cancelling it creates
+/// disconnect/connect callbacks while the app model is still being initialized, while adopting it
+/// would allow telemetry before durable evidence authority exists.
+enum GatewayRestoredLinkAction: Equatable {
+  case deferUntilEvidenceReady
+  case adoptConnected
+  case awaitExistingConnection
+  case connect
+  case awaitDisconnection
+}
+
+struct GatewayRestoredLinkPolicy {
+  static func action(
+    evidencePersistenceReady: Bool,
+    peripheralState: CBPeripheralState
+  ) -> GatewayRestoredLinkAction {
+    guard evidencePersistenceReady else { return .deferUntilEvidenceReady }
+    switch peripheralState {
+    case .connected: return .adoptConnected
+    case .connecting: return .awaitExistingConnection
+    case .disconnected: return .connect
+    case .disconnecting: return .awaitDisconnection
+    @unknown default: return .awaitDisconnection
+    }
+  }
+}
+
+enum CaptureHistoryTransferPhase: String {
+  case downloading
+  case resuming
+}
+
+struct CaptureHistoryRecoveryPersistencePolicy {
+  static func restoredRecoveryAvailable(
+    phase: CaptureHistoryTransferPhase?,
+    persistedIncompleteCheckpointAvailable: Bool
+  ) -> Bool {
+    switch phase {
+    case .downloading:
+      // A terminated bulk transfer always leaves a resumable checkpoint. Legacy builds persisted
+      // only the phase, so this must migrate to an explicit incomplete-checkpoint bit.
+      true
+    case .resuming, nil:
+      // RESUMING describes recorder state, not history completeness. Preserve a recovery action
+      // only when an incomplete checkpoint was independently persisted.
+      persistedIncompleteCheckpointAvailable
+    }
+  }
+}
 
 @MainActor
 @Observable
-final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate,
-  @preconcurrency CBPeripheralDelegate
-{
+final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate {
+  @MainActor
+  private final class LinkScopedPeripheralDelegate: NSObject,
+    @preconcurrency CBPeripheralDelegate
+  {
+    weak var owner: GatewayBLEClient?
+    let linkSession: UInt64
+
+    init(owner: GatewayBLEClient, linkSession: UInt64) {
+      self.owner = owner
+      self.linkSession = linkSession
+    }
+
+    func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
+      owner?.handleServicesDiscovered(peripheral, error: error, callbackSession: linkSession)
+    }
+
+    func peripheral(
+      _ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService,
+      error: Error?
+    ) {
+      owner?.handleCharacteristicsDiscovered(
+        peripheral, service: service, error: error, callbackSession: linkSession)
+    }
+
+    func peripheral(
+      _ peripheral: CBPeripheral,
+      didUpdateNotificationStateFor characteristic: CBCharacteristic,
+      error: Error?
+    ) {
+      owner?.handleNotificationStateUpdated(
+        peripheral, characteristic: characteristic, error: error,
+        callbackSession: linkSession)
+    }
+
+    func peripheral(
+      _ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic,
+      error: Error?
+    ) {
+      owner?.handleValueUpdated(
+        peripheral, characteristic: characteristic, error: error,
+        callbackSession: linkSession)
+    }
+
+    func peripheral(
+      _ peripheral: CBPeripheral, didWriteValueFor characteristic: CBCharacteristic,
+      error: Error?
+    ) {
+      owner?.handleValueWritten(
+        peripheral, characteristic: characteristic, error: error,
+        callbackSession: linkSession)
+    }
+
+    func peripheral(_ peripheral: CBPeripheral, didReadRSSI rssi: NSNumber, error: Error?) {
+      owner?.handleRSSIRead(
+        peripheral, rssi: rssi, error: error, callbackSession: linkSession)
+    }
+  }
+
+  static let shared = GatewayBLEClient()
+
   private static let logger = Logger(
     subsystem: "com.isaiahdupree.VehicleHealthOS", category: "GatewayBLE")
+  private static let connectionTraceRecorder: BLEConnectionTraceRecorder? = {
+    do {
+      return try BLEConnectionTraceRecorder(
+        directory: BLEConnectionTraceRecorder.defaultDirectory())
+    } catch {
+      logger.error(
+        "BLE flight recorder unavailable: \(error.localizedDescription, privacy: .public)")
+      return nil
+    }
+  }()
   static let vhosService = CBUUID(string: "33613EB3-FFCA-42D1-83FA-A18F12B3F123")
   static let commandCharacteristic = CBUUID(string: "B3D3279B-0244-4D54-A2AB-A1AB47A5FC0A")
   static let streamCharacteristic = CBUUID(string: "265B90C0-A600-4659-BBBD-5CDA411C49CC")
@@ -19,29 +301,106 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   static let factoryService = CBUUID(string: "FEE0")
   static let factoryCharacteristic = CBUUID(string: "FEE1")
   private static let securityRetryLimit = 30
+  private static let handshakeResponseAttemptLimit = 3
+  private static let handshakeWriteAckTimeout: Duration = .seconds(2)
+  private static let handshakeResponseTimeout: Duration = .seconds(2)
+  private static let notificationEnableTimeout: Duration = .seconds(15)
+  private static let linkRSSIValidationTimeout: Duration = .seconds(3)
+  private static let restoredCleanupTimeout: Duration = .seconds(4)
+  private static let captureInitialSyncDelay: Duration = .seconds(3)
+  private static let captureChunkResponseTimeout: Duration = .seconds(20)
+  private static let gattDiscoveryTimeoutStrong: Duration = .seconds(12)
+  private static let gattDiscoveryTimeoutWeak: Duration = .seconds(22)
+  private static let gattDiscoveryTimeoutFringe: Duration = .seconds(30)
   private static let autoScanArgument = "--vhos-auto-scan"
   private static let autoScanEnvironmentKey = "VHOS_AUTO_SCAN"
   private static let commissioningTraceEnvironmentKey = "VHOS_COMMISSIONING_TRACE"
   private static let centralRestoreIdentifier =
-    "com.isaiahdupree.VehicleHealthOS.central.v2"
+    "com.isaiahdupree.VehicleHealthOS.central.v3"
+  private static let centralRestoreIdentifierKey =
+    "vhos.currentCentralRestoreIdentifier.v1"
+  private static let validatedPeripheralIdentifiersKey =
+    "vhos.validatedGatewayPeripheralIdentifiers.v1"
+  private static let handshakeVerifiedPeripheralIdentifierKey =
+    "vhos.handshakeVerifiedGatewayPeripheralIdentifier.v1"
+  private static let captureHistoryTransferPhaseKey =
+    "vhos.captureHistoryTransferPhase.v1"
+  private static let captureHistoryRecoveryAvailableKey =
+    "vhos.captureHistoryRecoveryAvailable.v1"
 
   private var central: CBCentralManager!
+  private var currentCentralRestoreIdentifier = ""
+  private let instanceID = String(UUID().uuidString.prefix(8))
   private var peripheral: CBPeripheral?
   private var command: CBCharacteristic?
-  private var scanAfterPendingCancellation = false
+  private var factoryReadCharacteristic: CBCharacteristic?
   private var streamDecoder = GatewayFrameStreamDecoder()
   private var sequence: UInt64 = 1
   private var scanRequested = false
   private var scanFallbackTask: Task<Void, Never>?
+  private var reliableAdvertisementStreak = 0
+  private var lastReliableAdvertisementAt: Date?
   private var reconnectTask: Task<Void, Never>?
   private var serviceDiscoveryTask: Task<Void, Never>?
+  private var restoredConnectionTask: Task<Void, Never>?
+  private var restoredCleanupTask: Task<Void, Never>?
+  private var restoredCleanupGeneration: UInt64 = 0
+  private var centralCleanupRecoveryPending = false
+  private var handshakeRetryTask: Task<Void, Never>?
+  private var handshakeWriteAckTask: Task<Void, Never>?
+  private var handshakeResponseTask: Task<Void, Never>?
+  private var notificationEnableTask: Task<Void, Never>?
+  private var linkRSSIValidationTask: Task<Void, Never>?
   private var freshCentralRecoveryAttempted = false
+  private var reconnectIntentRequested = false
   private var automaticReconnectEnabled = false
   private var userRequestedDisconnect = false
   private var handshakeRequested = false
   private var handshakeSecurityRetryCount = 0
-  private var notificationSecurityRetryCounts: [CBUUID: Int] = [:]
+  private var handshakeResponseAttemptCount = 0
+  private var handshakeWriteAttemptInFlight: Int?
+  private var notificationCharacteristics: [CBUUID: CBCharacteristic] = [:]
+  private var notificationSetupInFlight: CBUUID?
+  private var notificationRequestSession: UInt64?
+  private var notificationPairingPending = false
+  private var linkSession: UInt64 = 0
+  private var linkRSSIQualifiedSession: UInt64?
+  private var activePeripheralDelegate: LinkScopedPeripheralDelegate?
+  private var retiredPeripheralDelegates: [UInt64: LinkScopedPeripheralDelegate] = [:]
+  private var retiredRestoredPeripherals: [ObjectIdentifier: CBPeripheral] = [:]
+  private var pendingRestoredPeripheral: CBPeripheral?
+  private var scanAfterRestorationCleanup = false
   private var pendingCommandChunks: [Data] = []
+  private var pendingStaleGATTRescan = false
+  private var pendingStaleGATTReason: String?
+  private var pendingWeakLinkRescan = false
+  private var pendingWeakLinkReason: String?
+  private var skipKnownGatewayRetrievalOnNextScan = false
+  private var consecutiveStaleGATTRecoveryCount = 0
+  private var candidateNameSuggestsGateway = false
+  private var candidateAdvertisedVHOSService = false
+  private var candidateWasPreviouslyValidated = false
+  private let evidencePersistence = GatewayEvidencePersistenceWorker()
+  private var evidencePersistenceReady = false
+  private var framePersistenceTail: Task<Void, Never>?
+  private var pendingFramePersistenceCount = 0
+  private static let maximumPendingFramePersistenceCount = 512
+  private var validatedGatewayIdentities = ValidatedGatewayIdentityRegistry()
+  private var portableFrameIntegrityLatch = PortableFrameIntegrityLatch()
+  private var j1979Accumulator = J1979Accumulator()
+  private var captureSyncTargets: [CaptureSyncTarget] = []
+  private var captureSyncSuspendedForOTA = false
+  private var captureAutoResumeAfterHistoryTransfer = false
+  private var captureResumeConfirmationPending = false
+  private var captureTransferRearmPending = false
+  private var captureHistoryTransferPhase: CaptureHistoryTransferPhase?
+  private var captureSyncTask: Task<Void, Never>?
+  private var captureChunkResponseTask: Task<Void, Never>?
+  private var freshnessTask: Task<Void, Never>?
+  private var lastCaptureSyncFingerprint: String?
+  private var staleScanDiscoveryTrace = BLETraceBurstCoalescer(
+    event: "STALE_SCAN_DISCOVERY_IGNORED",
+    checkpointObservationCount: 128)
 
   var bluetoothStateDescription = "Initializing"
   var bluetoothReady = false
@@ -54,6 +413,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   var discoveredIdentifier: String?
   var discoveredRSSI: Int?
   var peripheralConnected = false
+  var gatewayIdentityValidated = false
   var connectedAt: Date?
   var vhosServiceDiscovered = false
   var factoryServiceDiscovered = false
@@ -74,54 +434,229 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   var lastHealthReceivedAt: Date?
   var lastExperimentResultAt: Date?
   var lastOTAStatusAt: Date?
+  var otaStatus: GatewayOTAStatus?
   var commandChunksPending = 0
   var currentSessionResultStartIndex = 0
   var factoryBanner: String?
   var handshake: GatewayHandshake?
   var health: GatewayHealth?
   var experimentResults: [ProtocolExperimentResult] = []
+  var captureLogIndex: CaptureLogIndex?
+  var latestCANObservation: PassiveCANObservation?
+  var latestCANObservationReceivedAt: Date?
+  var recentCANObservations: [PassiveCANObservation] = []
+  var captureSessions: [CaptureSessionSummary] = []
+  var captureSyncMessage = "Waiting for a gateway capture index."
+  var captureHistoryTransferActive = false
+  var captureHistoryRecoveryAvailable = false
+  var captureDownloadedRecords: UInt64 = 0
+  var captureSyncCompletionGeneration: UInt64 = 0
+  var portableFrameCount: Int { portableFrameIntegrityLatch.verifiedCount }
+  var portableFrameIntegrityError: String? { portableFrameIntegrityLatch.failure }
+  var lastEvidenceSyncMessage = "No Android/iPhone evidence sync has run."
+  var j1979Availability: [J1979ECUAvailability] = []
+  var standardOBDSamples: [J1979StandardSample] = []
   var transportMessage: String?
+  var lastTransportFailureAt: Date?
+  var lastTransportFailureEvidence: String?
+  var verifiedSavedGatewayIdentifier: String?
+  var freshnessNow = Date()
+
+  var hasCurrentGatewayHealth: Bool {
+    guard
+      GatewayEvidenceAuthorityGate.permits(
+        evidencePersistenceReady: evidencePersistenceReady,
+        portableFrameIntegrityError: portableFrameIntegrityError),
+      state == .vhosConnected, health != nil, let receivedAt = lastHealthReceivedAt
+    else {
+      return false
+    }
+    let age = max(Date(), freshnessNow).timeIntervalSince(receivedAt)
+    return age >= 0 && age <= 5
+  }
+
+  func isCurrentStandardOBDSample(_ sample: J1979StandardSample) -> Bool {
+    guard hasCurrentGatewayHealth, sample.gatewayID == handshake?.gatewayID,
+      sample.captureID == health?.captureSessionID.map({ "capture-\($0)" }),
+      let observedAt = ISO8601DateFormatter().date(from: sample.observedAt)
+    else { return false }
+    let age = max(Date(), freshnessNow).timeIntervalSince(observedAt)
+    return age >= 0 && age <= 5
+  }
+
+  var hasCurrentParkedAuthority: Bool {
+    guard hasCurrentGatewayHealth, handshake?.listenOnly == true, health?.listenOnly == true,
+      health?.vehicleMotion == .parked, let receivedAt = lastHealthReceivedAt
+    else { return false }
+    let age = Date().timeIntervalSince(receivedAt)
+    return age >= 0 && age <= 5
+  }
+  var canStartOwnerTriggeredHistoryTransfer: Bool {
+    CaptureSyncPolicy.permitsOwnerTriggeredHistoryTransfer(
+      gatewayConnected: state == .vhosConnected,
+      hasCurrentParkedAuthority: hasCurrentParkedAuthority,
+      transferActive: captureHistoryTransferActive)
+  }
+  var connectionCleanupActive = false
   var automaticReconnectActive = false
   var reconnectAttemptCount = 0
+
+  var bleConnectionTraceSummary: BLEConnectionTraceSummary {
+    Self.connectionTraceRecorder?.summary()
+      ?? BLEConnectionTraceSummary(recordCount: 0, fileCount: 0, byteCount: 0)
+  }
+
+  var canonicalDisplayName: String {
+    GatewayDisplayIdentity.obdName(
+      advertisedName: discoveredName,
+      gatewayID: handshake?.gatewayID)
+  }
 
   var currentSessionExperimentResults: [ProtocolExperimentResult] {
     Array(experimentResults.dropFirst(currentSessionResultStartIndex))
   }
 
-  override init() {
+  var hasVerifiedSavedGateway: Bool {
+    verifiedSavedGatewayIdentifier != nil
+  }
+
+  var applicationSessionHealthy: Bool {
+    GatewayEvidenceAuthorityGate.permits(
+      evidencePersistenceReady: evidencePersistenceReady,
+      portableFrameIntegrityError: portableFrameIntegrityError)
+      && peripheralConnected && gatewayIdentityValidated && state == .vhosConnected
+      && handshake != nil && lastHandshakeReceivedAt != nil && decodedFrameCount > 0
+  }
+
+  private override init() {
     super.init()
-    scanRequested = CommandLine.arguments.contains(Self.autoScanArgument)
+    captureHistoryTransferPhase = UserDefaults.standard.string(
+      forKey: Self.captureHistoryTransferPhaseKey
+    ).flatMap(CaptureHistoryTransferPhase.init(rawValue:))
+    captureHistoryRecoveryAvailable =
+      CaptureHistoryRecoveryPersistencePolicy.restoredRecoveryAvailable(
+        phase: captureHistoryTransferPhase,
+        persistedIncompleteCheckpointAvailable: UserDefaults.standard.bool(
+          forKey: Self.captureHistoryRecoveryAvailableKey))
+    switch captureHistoryTransferPhase {
+    case .downloading:
+      // A bulk history-transfer intent must never own launch or reconnection. A field trace
+      // showed that the old implicit pause/read/retry loop could exhaust the peripheral GATT
+      // service until a hardware power cycle. Preserve the recoverable evidence and clear only
+      // the bulk retry intent.
+      setCaptureHistoryRecoveryAvailable(true)
+      captureHistoryTransferActive = false
+      captureAutoResumeAfterHistoryTransfer = false
+      captureResumeConfirmationPending = false
+      captureTransferRearmPending = false
+      captureHistoryTransferPhase = nil
+      UserDefaults.standard.removeObject(forKey: Self.captureHistoryTransferPhaseKey)
+      captureSyncMessage =
+        "Saved history checkpoint found. Automatic bulk recovery was cleared; connect normally and retry from Evidence when ready."
+    case .resuming:
+      // Recorder resume is a single small command, not a bulk transfer. Keep this exact state so
+      // the next owner-initiated connection can confirm recording without starting a scan itself.
+      captureHistoryTransferActive = true
+      captureAutoResumeAfterHistoryTransfer = false
+      captureResumeConfirmationPending = true
+      captureTransferRearmPending = false
+      captureSyncMessage =
+        "A recorder-resume confirmation is pending. Connect normally; no history transfer will start."
+    case nil:
+      break
+    }
+    currentCentralRestoreIdentifier =
+      UserDefaults.standard.string(forKey: Self.centralRestoreIdentifierKey)
+      ?? Self.centralRestoreIdentifier
+    verifiedSavedGatewayIdentifier = UserDefaults.standard.string(
+      forKey: Self.handshakeVerifiedPeripheralIdentifierKey
+    ).flatMap { UUID(uuidString: $0)?.uuidString.uppercased() }
+    scanRequested =
+      CommandLine.arguments.contains(Self.autoScanArgument)
       || ProcessInfo.processInfo.environment[Self.autoScanEnvironmentKey] == "1"
+    reconnectIntentRequested = scanRequested
+    automaticReconnectEnabled = false
+    // State restoration is required for a bonded gateway. An inherited link remains quiescent
+    // until the durable evidence store verifies, then receives one current-process delegate and
+    // renegotiates the VHOS contract without a launch-time disconnect/reconnect cycle.
     central = CBCentralManager(
       delegate: self,
       queue: .main,
-      options: [
-        CBCentralManagerOptionRestoreIdentifierKey: Self.centralRestoreIdentifier
-      ]
+      options: [CBCentralManagerOptionRestoreIdentifierKey: currentCentralRestoreIdentifier]
     )
+    freshnessTask = Task { @MainActor [weak self] in
+      while !Task.isCancelled {
+        do {
+          try await Task.sleep(for: .seconds(1))
+        } catch {
+          return
+        }
+        self?.freshnessNow = Date()
+      }
+    }
+    refreshPortableFrameIntegrity()
     if scanRequested {
       Self.logger.info("BLE auto-scan requested by commissioning launch")
-      Self.commissioningTrace("AUTO_SCAN_REQUESTED")
+      trace("AUTO_SCAN_REQUESTED")
     }
+    let info = Bundle.main.infoDictionary
+    let appVersion = info?["CFBundleShortVersionString"] as? String ?? "unknown"
+    let appBuild = info?["CFBundleVersion"] as? String ?? "unknown"
+    trace(
+      "CLIENT_INITIALIZED restore_identifier=\(currentCentralRestoreIdentifier) app_version=\(appVersion) app_build=\(appBuild) os={\(ProcessInfo.processInfo.operatingSystemVersionString)}"
+    )
   }
 
-  func startScan() {
+  func startScan(source: String = "user", skipConnectedRetrieval: Bool = false) {
+    reconnectIntentRequested = true
+    trace(
+      "SCAN_REQUEST source=\(source) state=\(state.rawValue) peripheral=\(peripheral?.identifier.uuidString ?? "none") connected=\(peripheralConnected) active=\(scanActive)"
+    )
+    guard evidencePersistenceReady else {
+      scanRequested = true
+      transportMessage =
+        "Verifying the local append-only evidence store before opening a gateway link…"
+      Self.commissioningTrace("SCAN_DEFERRED reason=evidence-persistence-not-ready")
+      return
+    }
+    if state == .connecting, peripheral != nil {
+      Self.commissioningTrace("SCAN_IGNORED reason=gateway-connection-in-progress")
+      return
+    }
+    if pendingStaleGATTRescan {
+      transportMessage =
+        "Waiting for the stale BLE link to close before scanning for the gateway again…"
+      Self.commissioningTrace("SCAN_IGNORED reason=stale-gatt-disconnect-pending")
+      return
+    }
+    if pendingWeakLinkRescan {
+      transportMessage =
+        "Waiting for the weak BLE link to close before scanning for the gateway again…"
+      Self.commissioningTrace("SCAN_IGNORED reason=weak-link-disconnect-pending")
+      return
+    }
+    if !retiredRestoredPeripherals.isEmpty {
+      scanRequested = true
+      scanAfterRestorationCleanup = true
+      transportMessage =
+        "Closing an older restored BLE link before scanning for the gateway…"
+      Self.commissioningTrace(
+        "SCAN_DEFERRED reason=restoration-cleanup count=\(retiredRestoredPeripherals.count)"
+      )
+      return
+    }
     reconnectTask?.cancel()
     automaticReconnectActive = false
     automaticReconnectEnabled = true
     userRequestedDisconnect = false
     reconnectAttemptCount = 0
     freshCentralRecoveryAttempted = false
-    guard !peripheralConnected else {
-      transportMessage = "Disconnect the connected gateway before starting another scan."
+    if scanActive, state == .scanning {
+      Self.commissioningTrace("SCAN_REENTRY_IGNORED")
       return
     }
-    if state == .connecting, let peripheral {
-      Self.commissioningTrace("STALE_CONNECTION_CANCEL id=\(peripheral.identifier.uuidString)")
-      scanAfterPendingCancellation = true
-      scanRequested = true
-      transportMessage = "Cancelling a stale gateway connection before scanning…"
-      central.cancelPeripheralConnection(peripheral)
+    guard !peripheralConnected else {
+      transportMessage = "Disconnect the connected gateway before starting another scan."
       return
     }
     scanRequested = true
@@ -130,17 +665,72 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       transportMessage = "Bluetooth is not powered on."
       return
     }
-    let connected = (
-      central.retrieveConnectedPeripherals(withServices: [Self.vhosService])
-        + central.retrieveConnectedPeripherals(withServices: [Self.factoryService])
-    ).first
+    if !skipConnectedRetrieval,
+      let savedIdentifier = verifiedSavedGatewayIdentifier,
+      let savedUUID = UUID(uuidString: savedIdentifier),
+      let known = central.retrievePeripherals(withIdentifiers: [savedUUID]).first
+    {
+      if known.state == .disconnecting {
+        retireRestoredPeripheral(known, reason: "saved-gateway-still-disconnecting")
+        scanAfterRestorationCleanup = true
+        scanRequested = true
+        transportMessage =
+          "Waiting for the saved gateway link to close before reconnecting…"
+        Self.commissioningTrace(
+          "KNOWN_GATEWAY_RECONNECT_DEFERRED peripheral=\(peripheralEvidence(known))"
+        )
+        return
+      }
+      resetTransportSession()
+      scanRequested = false
+      scanActive = false
+      scanMode = "Saved gateway"
+      discoveredName = known.name
+      discoveredIdentifier = known.identifier.uuidString
+      candidateNameSuggestsGateway = GatewayBLEIdentityPolicy.nameSuggestsGateway(known.name)
+      candidateAdvertisedVHOSService = false
+      candidateWasPreviouslyValidated = true
+      state = .connecting
+      transportMessage = "Saved VHOS gateway found; reconnecting…"
+      Self.commissioningTrace(
+        "KNOWN_GATEWAY_RECONNECT peripheral=\(peripheralEvidence(known)) source=\(source)"
+      )
+      connect(known)
+      return
+    }
+    if !skipConnectedRetrieval, verifiedSavedGatewayIdentifier != nil {
+      Self.commissioningTrace(
+        "KNOWN_GATEWAY_RETRIEVAL_EMPTY action=service-scan-fallback source=\(source)"
+      )
+    }
+    let connectedCandidates =
+      skipConnectedRetrieval
+      ? []
+      : central.retrieveConnectedPeripherals(withServices: [Self.vhosService])
+        .filter { $0.state == .connected }
+    if connectedCandidates.count > 1 {
+      for extra in connectedCandidates {
+        retireRestoredPeripheral(extra, reason: "retrieve-connected-ambiguous")
+      }
+      scanAfterRestorationCleanup = true
+      scanRequested = true
+      transportMessage =
+        "Closing ambiguous system BLE links before selecting the gateway…"
+      return
+    }
+    let connected =
+      connectedCandidates.first(where: isHandshakeVerified)
+      ?? (connectedCandidates.count == 1 ? connectedCandidates.first : nil)
     if let connected {
       resetTransportSession()
       scanRequested = false
       scanActive = false
-      scanMode = "Restored connection"
-      discoveredName = connected.name ?? connected.identifier.uuidString
+      scanMode = "Existing connection"
+      discoveredName = connected.name
       discoveredIdentifier = connected.identifier.uuidString
+      candidateNameSuggestsGateway = GatewayBLEIdentityPolicy.nameSuggestsGateway(connected.name)
+      candidateAdvertisedVHOSService = true
+      candidateWasPreviouslyValidated = isPreviouslyValidated(connected)
       beginServiceDiscovery(connected, source: "retrieve-connected")
       return
     }
@@ -149,6 +739,8 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     scanActive = true
     scanMode = "VHOS service filter"
     scanObservationCount = 0
+    reliableAdvertisementStreak = 0
+    lastReliableAdvertisementAt = nil
     lastObservedAdvertisement = nil
     state = .scanning
     transportMessage = "Scanning for a WiCAN or VHOS gateway…"
@@ -173,81 +765,578 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   }
 
   func disconnect() {
+    Self.commissioningTrace(
+      "USER_DISCONNECT_INTENT action=\(peripheralConnected ? "disconnect-active-link" : "cancel-connection-flow") state=\(state.rawValue) link_session=\(linkSession) scan_active=\(scanActive) peripheral_connected=\(peripheralConnected) reconnect_active=\(automaticReconnectActive) pairing_pending=\(notificationPairingPending) peripheral={\(activePeripheralEvidence)}"
+    )
+    pendingStaleGATTRescan = false
+    pendingStaleGATTReason = nil
+    pendingWeakLinkRescan = false
+    pendingWeakLinkReason = nil
+    let deferredRestoredPeripheral = pendingRestoredPeripheral
+    pendingRestoredPeripheral = nil
+    scanAfterRestorationCleanup = false
     userRequestedDisconnect = true
+    reconnectIntentRequested = false
     automaticReconnectEnabled = false
     automaticReconnectActive = false
     reconnectTask?.cancel()
-    scanAfterPendingCancellation = false
     scanRequested = false
     scanFallbackTask?.cancel()
-    central.stopScan()
-    if let peripheral { central.cancelPeripheralConnection(peripheral) }
+    if central.state == .poweredOn {
+      central.stopScan()
+    }
+    flushStaleScanDiscoveryTrace(reason: "user-disconnect")
+    if let peripheral {
+      retireRestoredPeripheral(peripheral, reason: "user-disconnect-or-cancel")
+    } else if let deferredRestoredPeripheral {
+      // A restored CoreBluetooth link can be intentionally held quiescent while the evidence
+      // store verifies. A user handoff must still close that physical link; merely forgetting the
+      // pending reference would leave Android unable to discover the one-client gateway.
+      retireRestoredPeripheral(
+        deferredRestoredPeripheral,
+        reason: "user-disconnect-deferred-restored-link")
+    }
     resetConnection()
-    transportMessage = "Gateway disconnected by user."
+    transportMessage =
+      connectionCleanupActive
+      ? "Finishing the current BLE link before Reconnect becomes available…"
+      : "Gateway disconnected by user."
   }
 
   func sendSignedExperimentPlan(_ envelope: SignedExperimentPlanEnvelope) throws {
     guard state == .vhosConnected else { throw GatewayBLEError.vhosFirmwareRequired }
+    guard hasCurrentParkedAuthority else { throw GatewayBLEError.currentParkedAuthorityRequired }
     try writeFrame(type: .experimentPlan, payload: envelope.encoded())
   }
 
-  func centralManagerDidUpdateState(_ central: CBCentralManager) {
-    bluetoothStateDescription = central.state.description
-    bluetoothReady = central.state == .poweredOn
-    Self.commissioningTrace(
-      "CENTRAL_STATE state=\(central.state.description) scan_requested=\(scanRequested)"
-    )
-    if central.state == .poweredOn, scanRequested { startScan() }
-    if central.state != .poweredOn {
-      scanActive = false
-      resetTransportSession()
-      state = .disconnected
-      transportMessage = "Bluetooth state: \(central.state.description)"
+  private func refreshPortableFrameIntegrity() {
+    Task { @MainActor [weak self, evidencePersistence] in
+      guard let self else { return }
+      do {
+        let preparation = try await evidencePersistence.prepare()
+        self.portableFrameIntegrityLatch.recordVerified(count: preparation.portableFrameCount)
+        self.captureSessions = preparation.captureSessions
+        self.evidencePersistenceReady = true
+        if let restored = self.pendingRestoredPeripheral,
+          self.retiredRestoredPeripherals.isEmpty,
+          !self.userRequestedDisconnect,
+          self.central.state == .poweredOn
+        {
+          self.pendingRestoredPeripheral = nil
+          self.scanRequested = false
+          self.scanAfterRestorationCleanup = false
+          Self.commissioningTrace(
+            "RESTORE_EVIDENCE_READY peripheral=\(self.peripheralEvidence(restored)) action=resume-without-launch-disconnect"
+          )
+          self.resumeRestoredPeripheral(restored)
+          return
+        }
+        if self.scanRequested, self.central.state == .poweredOn,
+          !self.userRequestedDisconnect
+        {
+          self.startScan(source: "evidence-persistence-ready")
+        }
+      } catch {
+        self.evidencePersistenceReady = false
+        self.recordPortableFrameIntegrityFailure(error)
+      }
     }
   }
 
+  func retryPortableFrameIntegrityVerification() {
+    refreshPortableFrameIntegrity()
+  }
+
+  private func recordPortableFrameIntegrityFailure(_ error: Error) {
+    let failureAlreadyLatched = portableFrameIntegrityLatch.failure != nil
+    portableFrameIntegrityLatch.recordRuntimeFailure(error.localizedDescription)
+    if failureAlreadyLatched {
+      Self.commissioningTrace(
+        "PORTABLE_LEDGER_INTEGRITY_FAILURE_REPEATED action=link-already-retired error={\(Self.errorEvidence(error))}"
+      )
+      return
+    }
+    let deferredRestoredPeripheral = pendingRestoredPeripheral
+    evidencePersistenceReady = false
+    scanRequested = false
+    scanAfterRestorationCleanup = false
+    pendingRestoredPeripheral = nil
+    reconnectIntentRequested = false
+    automaticReconnectEnabled = false
+    automaticReconnectActive = false
+    reconnectTask?.cancel()
+    reconnectTask = nil
+    scanFallbackTask?.cancel()
+    scanFallbackTask = nil
+    if central.state == .poweredOn {
+      central.stopScan()
+    }
+    scanActive = false
+    lastEvidenceSyncMessage =
+      "Portable evidence is preserved but unavailable until this integrity failure is resolved: "
+      + error.localizedDescription
+    Self.commissioningTrace(
+      "PORTABLE_LEDGER_INTEGRITY_FAILURE action=retire-authoritative-link link_session=\(linkSession) error={\(Self.errorEvidence(error))}"
+    )
+    if let peripheral, isActivePeripheral(peripheral) {
+      retireRestoredPeripheral(peripheral, reason: "authoritative-evidence-persistence-failure")
+    } else if let deferredRestoredPeripheral {
+      retireRestoredPeripheral(
+        deferredRestoredPeripheral,
+        reason: "deferred-restoration-evidence-persistence-failure")
+    }
+    resetTransportSession()
+    state = .degraded
+    transportMessage =
+      "Authoritative evidence storage failed integrity verification. The BLE link was closed; repair and re-verify evidence before reconnecting."
+  }
+
+  func reportPortableFrameIntegrityFailure(_ error: Error) {
+    recordPortableFrameIntegrityFailure(error)
+  }
+
+  /// Opens a bounded page from the same store instance that owns live BLE appends.
+  ///
+  /// Only immutable file descriptors and exact byte lengths leave the main actor. The worker
+  /// actor performs decoding, hashing, analysis, and archive construction, so a second store
+  /// instance can never race recovery/index maintenance against the live receive path.
+  func makePortableEvidenceWorkSnapshot(
+    excludingArtifactIdentities: Set<String>,
+    maximumArtifacts: Int
+  ) async throws -> PortableEvidenceWorkSnapshot {
+    do {
+      return try await evidencePersistence.makePortableEvidenceWorkSnapshot(
+        excludingArtifactIdentities: excludingArtifactIdentities,
+        maximumArtifacts: maximumArtifacts)
+    } catch {
+      recordPortableFrameIntegrityFailure(error)
+      throw error
+    }
+  }
+
+  func makePassiveCANWorkSnapshot(
+    maximumObservationCount: Int = 50_000
+  ) async throws -> PassiveCANWorkSnapshot {
+    guard (1...50_000).contains(maximumObservationCount) else {
+      throw CaptureSyncError.invalidSnapshotLimit
+    }
+    do {
+      return try await evidencePersistence.makePassiveCANWorkSnapshot(
+        maximumObservationCount: maximumObservationCount)
+    } catch {
+      if error is PortableFrameStoreError {
+        recordPortableFrameIntegrityFailure(error)
+      }
+      throw error
+    }
+  }
+
+  func retainedPassiveCANObservation(
+    gatewayID: String,
+    sessionID: UInt32,
+    sourceSequence: UInt64
+  ) async throws -> PassiveCANObservation? {
+    try await evidencePersistence.captureObservation(
+      gatewayID: gatewayID,
+      sessionID: sessionID,
+      sourceSequence: sourceSequence)
+  }
+
+  private func persistAcceptedPortableFrame(
+    _ accepted: AcceptedGatewayFrameContext
+  ) async throws {
+    do {
+      let count = try await evidencePersistence.appendAcceptedPortableFrame(
+        accepted,
+        ingestedAt: Self.timestamp())
+      portableFrameIntegrityLatch.recordSuccessfulAppend(count: count)
+    } catch {
+      recordPortableFrameIntegrityFailure(error)
+      throw error
+    }
+  }
+
+  func bleConnectionTraceExportURL() throws -> URL {
+    guard let recorder = Self.connectionTraceRecorder else {
+      throw BLEConnectionTraceError.applicationSupportUnavailable
+    }
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(
+      "VehicleHealthOS-Evidence", isDirectory: true)
+    return try recorder.export(to: directory)
+  }
+
+  func refreshCaptureLogIndex() {
+    do {
+      try writeFrame(
+        type: .captureLogRequest, payload: CaptureLogRequest(operation: .index).encoded())
+      captureSyncMessage = "Requesting the gateway capture index…"
+    } catch {
+      captureSyncMessage = error.localizedDescription
+    }
+  }
+
+  private func persistCaptureHistoryTransferPhase(_ phase: CaptureHistoryTransferPhase?) {
+    captureHistoryTransferPhase = phase
+    if let phase {
+      UserDefaults.standard.set(phase.rawValue, forKey: Self.captureHistoryTransferPhaseKey)
+    } else {
+      UserDefaults.standard.removeObject(forKey: Self.captureHistoryTransferPhaseKey)
+    }
+  }
+
+  private func setCaptureHistoryRecoveryAvailable(_ available: Bool) {
+    captureHistoryRecoveryAvailable = available
+    if available {
+      UserDefaults.standard.set(true, forKey: Self.captureHistoryRecoveryAvailableKey)
+    } else {
+      UserDefaults.standard.removeObject(forKey: Self.captureHistoryRecoveryAvailableKey)
+    }
+  }
+
+  func setCaptureLogging(_ enabled: Bool) throws {
+    captureSyncSuspendedForOTA = !enabled
+    if !enabled {
+      captureSyncTask?.cancel()
+      captureSyncTask = nil
+      captureChunkResponseTask?.cancel()
+      captureChunkResponseTask = nil
+      captureSyncTargets.removeAll()
+    }
+    try writeFrame(
+      type: .captureLogRequest,
+      payload: CaptureLogRequest(
+        operation: enabled ? .resume : .pause,
+        slot: enabled ? 0 : 1
+      ).encoded()
+    )
+    captureAutoResumeAfterHistoryTransfer = false
+    captureResumeConfirmationPending = false
+    captureTransferRearmPending = false
+    captureHistoryTransferActive = false
+    persistCaptureHistoryTransferPhase(nil)
+    captureSyncMessage =
+      enabled
+      ? "Resuming the passive flight recorder…"
+      : "Pausing and flushing the passive flight recorder for OTA…"
+  }
+
+  func pauseCaptureAndDownloadHistory() throws {
+    let recoveryWasAvailable = captureHistoryRecoveryAvailable
+    captureSyncSuspendedForOTA = false
+    captureSyncTask?.cancel()
+    captureSyncTask = nil
+    captureChunkResponseTask?.cancel()
+    captureChunkResponseTask = nil
+    captureSyncTargets.removeAll()
+    captureDownloadedRecords = 0
+    setCaptureHistoryRecoveryAvailable(false)
+    captureAutoResumeAfterHistoryTransfer = true
+    captureResumeConfirmationPending = false
+    captureTransferRearmPending = false
+    captureHistoryTransferActive = true
+    persistCaptureHistoryTransferPhase(.downloading)
+    if let index = captureLogIndex, !index.logging {
+      captureSyncMessage =
+        "Continuing the paused history transfer from the saved iPhone checkpoint…"
+      Self.commissioningTrace(
+        "CAPTURE_TRANSFER_REQUESTED mode=continue-paused-download-auto-resume link_session=\(linkSession)"
+      )
+      Task { @MainActor [weak self] in
+        guard let self else { return }
+        do {
+          try await self.beginCaptureSync(index)
+        } catch {
+          self.captureSyncMessage =
+            "Capture history is unavailable: \(error.localizedDescription)"
+        }
+      }
+      return
+    }
+    do {
+      try writeFrame(
+        type: .captureLogRequest,
+        payload: CaptureLogRequest(operation: .pause, slot: 2).encoded()
+      )
+    } catch {
+      setCaptureHistoryRecoveryAvailable(recoveryWasAvailable)
+      captureAutoResumeAfterHistoryTransfer = false
+      captureHistoryTransferActive = false
+      persistCaptureHistoryTransferPhase(nil)
+      throw error
+    }
+    captureSyncMessage =
+      "Pausing and flushing the recorder; history will download and recording will resume automatically."
+    Self.commissioningTrace(
+      "CAPTURE_TRANSFER_REQUESTED mode=pause-download-auto-resume link_session=\(linkSession)"
+    )
+  }
+
+  func resumeCaptureLogging() throws {
+    captureSyncSuspendedForOTA = false
+    let interruptedDownloadWasPending = captureHistoryTransferPhase == .downloading
+    try writeFrame(
+      type: .captureLogRequest,
+      payload: CaptureLogRequest(operation: .resume).encoded()
+    )
+    captureSyncTask?.cancel()
+    captureSyncTask = nil
+    captureChunkResponseTask?.cancel()
+    captureChunkResponseTask = nil
+    captureSyncTargets.removeAll()
+    captureAutoResumeAfterHistoryTransfer = false
+    setCaptureHistoryRecoveryAvailable(
+      captureHistoryRecoveryAvailable || interruptedDownloadWasPending)
+    captureResumeConfirmationPending = true
+    captureTransferRearmPending = false
+    captureHistoryTransferActive = true
+    persistCaptureHistoryTransferPhase(.resuming)
+    captureSyncMessage = "Confirming that passive recording resumed…"
+  }
+
+  func activateTemporaryOTANetwork(for package: VerifiedFirmwarePackage) throws {
+    otaStatus = nil
+    let request = OTAControlRequest(
+      packageID: package.manifest.packageID,
+      firmwareVersion: package.manifest.firmwareVersion,
+      firmwareSHA256: package.manifest.firmwareSHA256,
+      firmwareSizeBytes: package.firmware.count,
+      approvedAt: Self.timestamp()
+    )
+    try writeFrame(type: .otaControl, payload: request.encoded())
+    transportMessage = "Opening the temporary authenticated OTA network…"
+  }
+
+  func cancelTemporaryOTANetwork(for package: VerifiedFirmwarePackage) {
+    let request = OTAControlRequest(
+      operation: .cancel,
+      packageID: package.manifest.packageID,
+      firmwareVersion: package.manifest.firmwareVersion,
+      firmwareSHA256: package.manifest.firmwareSHA256,
+      firmwareSizeBytes: package.firmware.count,
+      approvedAt: Self.timestamp()
+    )
+    try? writeFrame(type: .otaControl, payload: request.encoded())
+  }
+
+  func centralManagerDidUpdateState(_ central: CBCentralManager) {
+    guard central === self.central else {
+      Self.commissioningTrace(
+        "STALE_CENTRAL_STATE_IGNORED candidate=\(ObjectIdentifier(central)) active=\(ObjectIdentifier(self.central))"
+      )
+      return
+    }
+    bluetoothStateDescription = central.state.description
+    bluetoothReady = central.state == .poweredOn
+    Self.commissioningTrace(
+      "CENTRAL_STATE state=\(central.state.description) scan_requested=\(scanRequested) reconnect_intent=\(reconnectIntentRequested) reconnect_enabled=\(automaticReconnectEnabled) user_disconnected=\(userRequestedDisconnect) cleanup_active=\(connectionCleanupActive)"
+    )
+    if central.state == .poweredOn {
+      if centralCleanupRecoveryPending {
+        centralCleanupRecoveryPending = false
+        connectionCleanupActive = false
+        Self.commissioningTrace(
+          "CLEANUP_CENTRAL_RECOVERY_READY reconnect_intent=\(scanRequested && !userRequestedDisconnect)"
+        )
+      }
+      if evidencePersistenceReady, let restored = pendingRestoredPeripheral,
+        retiredRestoredPeripherals.isEmpty, !userRequestedDisconnect
+      {
+        pendingRestoredPeripheral = nil
+        scanRequested = false
+        scanAfterRestorationCleanup = false
+        Self.commissioningTrace(
+          "RESTORE_RADIO_READY peripheral=\(peripheralEvidence(restored)) action=resume-without-launch-disconnect"
+        )
+        resumeRestoredPeripheral(restored)
+        return
+      }
+      if scanRequested, !userRequestedDisconnect, retiredRestoredPeripherals.isEmpty {
+        let skipKnownGatewayRetrieval = skipKnownGatewayRetrievalOnNextScan
+        skipKnownGatewayRetrievalOnNextScan = false
+        startScan(
+          source: "bluetooth-powered-on",
+          skipConnectedRetrieval: skipKnownGatewayRetrieval
+        )
+      }
+      return
+    }
+
+    let shouldReconnectWhenPoweredOn = reconnectIntentRequested && !userRequestedDisconnect
+    reconnectTask?.cancel()
+    scanFallbackTask?.cancel()
+    // CoreBluetooth has already stopped scanning when the radio is not powered on. Calling
+    // stopScan() from this branch is an API misuse and can destabilize restoration callbacks.
+    scanActive = false
+    scanRequested = shouldReconnectWhenPoweredOn
+    automaticReconnectActive = shouldReconnectWhenPoweredOn
+    if !centralCleanupRecoveryPending {
+      restoredCleanupTask?.cancel()
+      restoredCleanupTask = nil
+      retiredRestoredPeripherals.removeAll()
+      pendingRestoredPeripheral = nil
+      scanAfterRestorationCleanup = false
+      connectionCleanupActive = false
+    }
+    resetTransportSession()
+    state = shouldReconnectWhenPoweredOn ? .connecting : .disconnected
+    transportMessage =
+      shouldReconnectWhenPoweredOn
+      ? "Bluetooth is \(central.state.description); reconnecting to the verified gateway when the radio is ready…"
+      : "Bluetooth state: \(central.state.description)"
+    Self.commissioningTrace(
+      "BLUETOOTH_RECONNECT_INTENT preserved=\(shouldReconnectWhenPoweredOn) saved_id=\(verifiedSavedGatewayIdentifier ?? "none")"
+    )
+  }
+
   func centralManager(_ central: CBCentralManager, willRestoreState dict: [String: Any]) {
-    guard
-      let restored = (dict[CBCentralManagerRestoredStatePeripheralsKey] as? [CBPeripheral])?.first
-    else { return }
-    if restored.state == .connected {
-      scanRequested = false
-      scanActive = false
-      scanMode = "Restored connection"
-      discoveredName = restored.name ?? restored.identifier.uuidString
-      discoveredIdentifier = restored.identifier.uuidString
-      beginServiceDiscovery(restored, source: "state-restoration")
+    guard central === self.central else {
+      Self.commissioningTrace(
+        "STALE_CENTRAL_RESTORE_IGNORED candidate=\(ObjectIdentifier(central)) active=\(ObjectIdentifier(self.central))"
+      )
       return
     }
-    if restored.state == .connecting {
-      peripheral = restored
-      restored.delegate = self
+    let restoredPeripherals =
+      (dict[CBCentralManagerRestoredStatePeripheralsKey] as? [CBPeripheral]) ?? []
+    if userRequestedDisconnect {
+      for restored in restoredPeripherals {
+        retireRestoredPeripheral(restored, reason: "late-restore-after-user-disconnect")
+      }
+      Self.commissioningTrace(
+        "RESTORE_REJECTED reason=user-disconnected count=\(restoredPeripherals.count)"
+      )
+      return
+    }
+    if !restoredPeripherals.isEmpty {
+      reconnectIntentRequested = true
+    }
+    let eligible = restoredPeripherals.filter(isHandshakeVerified).sorted {
+      restorationStateRank($0.state) < restorationStateRank($1.state)
+    }
+    let restored = eligible.first
+    let extras = restoredPeripherals.filter { candidate in
+      guard let restored else { return true }
+      return candidate !== restored
+    }
+
+    if let active = peripheral {
+      for extra in restoredPeripherals where extra !== active {
+        retireRestoredPeripheral(extra, reason: "restore-arrived-after-active-selection")
+      }
+      Self.commissioningTrace(
+        "RESTORE_IGNORED reason=active-peripheral-exists active=\(peripheralEvidence(active)) restored_count=\(restoredPeripherals.count)"
+      )
+      return
+    }
+
+    guard let restored else {
+      for extra in extras {
+        retireRestoredPeripheral(extra, reason: "restore-not-handshake-verified")
+      }
+      scanRequested = true
+      scanAfterRestorationCleanup = !retiredRestoredPeripherals.isEmpty
+      transportMessage =
+        "Discarded an incomplete restored BLE session; scanning for the VHOS service…"
+      Self.commissioningTrace(
+        "RESTORE_REJECTED count=\(restoredPeripherals.count) reason=handshake-not-verified cleanup=\(retiredRestoredPeripherals.count)"
+      )
+      if central.state == .poweredOn, retiredRestoredPeripherals.isEmpty {
+        startScan(source: "restore-rejection")
+      }
+      return
+    }
+
+    for extra in extras {
+      retireRestoredPeripheral(extra, reason: "restore-extra")
+    }
+    if GatewayRestoredLinkPolicy.action(
+      evidencePersistenceReady: evidencePersistenceReady,
+      peripheralState: restored.state
+    ) == .deferUntilEvidenceReady {
+      pendingRestoredPeripheral = restored
+      reconnectIntentRequested = true
       automaticReconnectEnabled = true
-      userRequestedDisconnect = false
-      discoveredName = restored.name ?? restored.identifier.uuidString
-      discoveredIdentifier = restored.identifier.uuidString
+      scanRequested = false
+      scanAfterRestorationCleanup = false
       state = .connecting
-      transportMessage = "Restoring the in-progress gateway connection…"
+      transportMessage =
+        "Verifying the local append-only evidence store before resuming the existing gateway link…"
       Self.commissioningTrace(
-        "RESTORE_WAITING id=\(restored.identifier.uuidString) state=\(restored.state.rawValue)"
+        "RESTORE_DEFERRED reason=evidence-persistence-not-ready selected=\(peripheralEvidence(restored)) cleanup=\(retiredRestoredPeripherals.count) action=preserve-link-quiescent"
       )
       return
     }
-    if scanRequested {
+    if !retiredRestoredPeripherals.isEmpty {
+      pendingRestoredPeripheral = restored
+      scanRequested = false
+      scanAfterRestorationCleanup = false
+      transportMessage =
+        "Closing older restored BLE links before resuming the verified gateway…"
       Self.commissioningTrace(
-        "RESTORE_SKIPPED_FOR_SCAN id=\(restored.identifier.uuidString) state=\(restored.state.rawValue)"
+        "RESTORE_DEFERRED selected=\(peripheralEvidence(restored)) cleanup=\(retiredRestoredPeripherals.count)"
       )
       return
     }
-    peripheral = restored
-    restored.delegate = self
+    resumeRestoredPeripheral(restored)
+  }
+
+  private func resumeRestoredPeripheral(_ restored: CBPeripheral) {
+    let action = GatewayRestoredLinkPolicy.action(
+      evidencePersistenceReady: evidencePersistenceReady,
+      peripheralState: restored.state)
+    guard action != .deferUntilEvidenceReady else {
+      pendingRestoredPeripheral = restored
+      scanRequested = false
+      state = .connecting
+      transportMessage =
+        "Verifying the local append-only evidence store before resuming the existing gateway link…"
+      return
+    }
+    reconnectIntentRequested = true
     automaticReconnectEnabled = true
     userRequestedDisconnect = false
-    discoveredName = restored.name ?? restored.identifier.uuidString
+    scanRequested = false
+    scanAfterRestorationCleanup = false
+    candidateNameSuggestsGateway = GatewayBLEIdentityPolicy.nameSuggestsGateway(restored.name)
+    candidateAdvertisedVHOSService = false
+    candidateWasPreviouslyValidated = true
+    discoveredName = restored.name
     discoveredIdentifier = restored.identifier.uuidString
-    state = .connecting
-    transportMessage = "Restoring the paired gateway connection…"
-    connect(restored)
+
+    switch action {
+    case .adoptConnected:
+      peripheral = restored
+      state = .connecting
+      transportMessage = "Resuming the existing encrypted gateway link…"
+      Self.commissioningTrace(
+        "RESTORE_CONNECTED_ADOPTED peripheral=\(peripheralEvidence(restored)) action=install-current-process-delegate-and-renegotiate-contract"
+      )
+      beginServiceDiscovery(restored, source: "state-restoration")
+    case .awaitExistingConnection:
+      peripheral = restored
+      state = .connecting
+      transportMessage = "Waiting for the existing encrypted gateway connection…"
+      Self.commissioningTrace(
+        "RESTORE_CONNECTING_ADOPTED peripheral=\(peripheralEvidence(restored)) action=await-current-connect-callback"
+      )
+      armConnectionTimeout(restored, source: "state-restoration")
+    case .connect:
+      peripheral = restored
+      state = .connecting
+      transportMessage = "Restoring the paired gateway connection…"
+      connect(restored)
+    case .awaitDisconnection:
+      scanRequested = true
+      scanAfterRestorationCleanup = true
+      transportMessage =
+        "Waiting for the restored gateway link to close before reconnecting…"
+      Self.commissioningTrace(
+        "RESTORE_DISCONNECTING_DEFERRED peripheral=\(peripheralEvidence(restored))"
+      )
+      retireRestoredPeripheral(restored, reason: "restore-still-disconnecting")
+    case .deferUntilEvidenceReady:
+      // Guarded above. Keeping this branch makes future enum additions fail loudly at compile time.
+      pendingRestoredPeripheral = restored
+    }
   }
 
   func centralManager(
@@ -256,70 +1345,202 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     advertisementData: [String: Any],
     rssi: NSNumber
   ) {
+    guard central === self.central else {
+      Self.commissioningTrace(
+        "STALE_CENTRAL_DISCOVERY_IGNORED candidate=\(ObjectIdentifier(central)) active=\(ObjectIdentifier(self.central))"
+      )
+      return
+    }
+    guard scanActive, scanRequested, state == .scanning, !userRequestedDisconnect,
+      !connectionCleanupActive
+    else {
+      recordStaleScanDiscovery(
+        "scan_active=\(scanActive) scan_requested=\(scanRequested) state=\(state.rawValue) user_disconnected=\(userRequestedDisconnect) cleanup=\(connectionCleanupActive) peripheral=\(peripheralEvidence(peripheral))"
+      )
+      return
+    }
+    flushStaleScanDiscoveryTrace(reason: "valid-scan-callback")
     let advertised = advertisementData[CBAdvertisementDataServiceUUIDsKey] as? [CBUUID] ?? []
     let overflow = advertisementData[CBAdvertisementDataOverflowServiceUUIDsKey] as? [CBUUID] ?? []
-    let solicited = advertisementData[CBAdvertisementDataSolicitedServiceUUIDsKey] as? [CBUUID] ?? []
+    let solicited =
+      advertisementData[CBAdvertisementDataSolicitedServiceUUIDsKey] as? [CBUUID] ?? []
     let visibleServices = advertised + overflow + solicited
     let name =
       (advertisementData[CBAdvertisementDataLocalNameKey] as? String) ?? peripheral.name ?? ""
     scanObservationCount &+= 1
     let serviceDescription = visibleServices.map(\.uuidString).joined(separator: ",")
-    lastObservedAdvertisement = name.isEmpty
+    lastObservedAdvertisement =
+      name.isEmpty
       ? (serviceDescription.isEmpty ? peripheral.identifier.uuidString : serviceDescription)
       : name
-    let normalizedName = name.lowercased()
-    let supported =
-      visibleServices.contains(Self.vhosService)
-      || visibleServices.contains(Self.factoryService)
-      || normalizedName.contains("wican")
-      || normalizedName.contains("vhos")
+    let supported = GatewayBLEIdentityPolicy.advertisementCanBeGatewayCandidate(
+      localName: name, serviceUUIDs: visibleServices.map(\.uuidString))
     if supported || scanObservationCount.isMultiple(of: 25) {
       Self.logger.info(
         "BLE observation count=\(self.scanObservationCount) name=\(name, privacy: .public) services=\(serviceDescription, privacy: .public) supported=\(supported)"
       )
     }
     guard supported else { return }
+    if retiredRestoredPeripherals[ObjectIdentifier(peripheral)] != nil {
+      Self.commissioningTrace(
+        "RETIRED_DISCOVERY_IGNORED peripheral=\(peripheralEvidence(peripheral))"
+      )
+      return
+    }
+    if let active = self.peripheral, active !== peripheral {
+      Self.commissioningTrace(
+        "PARALLEL_DISCOVERY_IGNORED active=\(peripheralEvidence(active)) candidate=\(peripheralEvidence(peripheral))"
+      )
+      return
+    }
+    let measuredRSSI = rssi.intValue == 127 ? nil : rssi.intValue
+    if !GatewayBLEIdentityPolicy.connectionAttemptIsReliable(observedRSSI: measuredRSSI) {
+      reliableAdvertisementStreak = 0
+      lastReliableAdvertisementAt = nil
+      let priorRSSI = discoveredRSSI
+      discoveredName = name.isEmpty ? nil : name
+      discoveredIdentifier = peripheral.identifier.uuidString
+      discoveredRSSI = measuredRSSI
+      candidateNameSuggestsGateway = GatewayBLEIdentityPolicy.nameSuggestsGateway(name)
+      candidateAdvertisedVHOSService = visibleServices.contains(Self.vhosService)
+      candidateWasPreviouslyValidated = isPreviouslyValidated(peripheral)
+      scanMode = "Gateway nearby"
+      transportMessage =
+        "Gateway seen at \(measuredRSSI ?? 0) dBm; waiting for a stronger signal before opening the encrypted link…"
+      if priorRSSI == nil || abs((priorRSSI ?? 0) - (measuredRSSI ?? 0)) >= 5 {
+        Self.commissioningTrace(
+          "WEAK_GATEWAY_DEFERRED name=\(discoveredName ?? "unknown") rssi=\(measuredRSSI.map(String.init) ?? "unavailable") threshold=\(GatewayBLEIdentityPolicy.minimumReliableConnectionRSSI) action=continue-scan"
+        )
+      }
+      return
+    }
+    let observedAt = Date()
+    if let lastReliableAdvertisementAt,
+      observedAt.timeIntervalSince(lastReliableAdvertisementAt) <= 2
+    {
+      reliableAdvertisementStreak += 1
+    } else {
+      reliableAdvertisementStreak = 1
+    }
+    lastReliableAdvertisementAt = observedAt
+    guard reliableAdvertisementStreak >= 3 else {
+      discoveredName = name.isEmpty ? nil : name
+      discoveredIdentifier = peripheral.identifier.uuidString
+      discoveredRSSI = measuredRSSI
+      candidateNameSuggestsGateway = GatewayBLEIdentityPolicy.nameSuggestsGateway(name)
+      candidateAdvertisedVHOSService = visibleServices.contains(Self.vhosService)
+      candidateWasPreviouslyValidated = isPreviouslyValidated(peripheral)
+      scanMode = "Confirming signal"
+      transportMessage =
+        "Gateway signal is improving; confirming a stable link before connecting (\(reliableAdvertisementStreak)/3)…"
+      let confirmationName = discoveredName ?? "unknown"
+      let confirmationRSSI = measuredRSSI.map(String.init) ?? "unavailable"
+      Self.commissioningTrace(
+        "GATEWAY_SIGNAL_CONFIRMATION name=\(confirmationName) rssi=\(confirmationRSSI) sample=\(reliableAdvertisementStreak)/3 threshold=\(GatewayBLEIdentityPolicy.minimumReliableConnectionRSSI)"
+      )
+      return
+    }
     central.stopScan()
     scanFallbackTask?.cancel()
     scanRequested = false
     scanActive = false
     scanMode = "Matched"
     self.peripheral = peripheral
-    peripheral.delegate = self
-    discoveredName = name.isEmpty ? peripheral.identifier.uuidString : name
+    discoveredName = name.isEmpty ? nil : name
     discoveredIdentifier = peripheral.identifier.uuidString
-    discoveredRSSI = rssi.intValue
+    discoveredRSSI = measuredRSSI
+    candidateNameSuggestsGateway = GatewayBLEIdentityPolicy.nameSuggestsGateway(name)
+    candidateAdvertisedVHOSService = visibleServices.contains(Self.vhosService)
+    candidateWasPreviouslyValidated = isPreviouslyValidated(peripheral)
     state = .connecting
     transportMessage = "Gateway found; opening BLE link…"
     Self.logger.info(
       "Supported gateway selected name=\(self.discoveredName ?? "unknown", privacy: .public) rssi=\(rssi.intValue)"
     )
     Self.commissioningTrace(
-      "GATEWAY_MATCH name=\(self.discoveredName ?? "unknown") rssi=\(rssi.intValue)"
+      "GATEWAY_MATCH name=\(self.discoveredName ?? "unknown") rssi=\(rssi.intValue == 127 ? "unavailable" : String(rssi.intValue))"
     )
     connect(peripheral)
   }
 
   func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
+    guard central === self.central else {
+      Self.commissioningTrace(
+        "STALE_CENTRAL_CONNECT_IGNORED candidate=\(ObjectIdentifier(central)) active=\(ObjectIdentifier(self.central)) peripheral=\(peripheralEvidence(peripheral))"
+      )
+      central.cancelPeripheralConnection(peripheral)
+      return
+    }
+    if retiredRestoredPeripherals[ObjectIdentifier(peripheral)] != nil {
+      Self.commissioningTrace(
+        "RETIRED_LINK_CONNECTED_CANCEL peripheral=\(peripheralEvidence(peripheral))"
+      )
+      central.cancelPeripheralConnection(peripheral)
+      return
+    }
+    if let pendingRestoredPeripheral, pendingRestoredPeripheral === peripheral,
+      !evidencePersistenceReady || !retiredRestoredPeripherals.isEmpty
+    {
+      // The inherited connection completed while durable evidence authority was still loading (or
+      // while an extra restored link was being drained). Keep the physical link intact and
+      // quiescent. `refreshPortableFrameIntegrity` / cleanup completion will adopt it exactly once.
+      state = .connecting
+      transportMessage =
+        "Existing gateway link is ready; finishing local evidence verification before resuming it…"
+      Self.commissioningTrace(
+        "RESTORE_CONNECTED_CALLBACK_DEFERRED peripheral=\(peripheralEvidence(peripheral)) evidence_ready=\(evidencePersistenceReady) cleanup=\(retiredRestoredPeripherals.count)"
+      )
+      return
+    }
+    guard isActivePeripheral(peripheral) else {
+      Self.commissioningTrace(
+        "STALE_LINK_CONNECTED_IGNORED peripheral=\(peripheralEvidence(peripheral)) active=\(activePeripheralEvidence)"
+      )
+      central.cancelPeripheralConnection(peripheral)
+      return
+    }
     beginServiceDiscovery(peripheral, source: "did-connect")
   }
 
   func centralManager(
     _ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?
   ) {
-    let failure = error.map {
-      let value = $0 as NSError
-      return "domain=\(value.domain) code=\(value.code) message=\(value.localizedDescription)"
-    } ?? "none"
-    Self.commissioningTrace("LINK_FAILED_DETAIL \(failure)")
-    if scanAfterPendingCancellation {
-      scanAfterPendingCancellation = false
-      resetConnection()
-      startScan()
+    guard central === self.central else {
+      Self.commissioningTrace(
+        "STALE_CENTRAL_CONNECT_FAILURE_IGNORED candidate=\(ObjectIdentifier(central)) active=\(ObjectIdentifier(self.central)) peripheral=\(peripheralEvidence(peripheral))"
+      )
       return
     }
+    if peripheralConnected, isActivePeripheral(peripheral) {
+      Self.commissioningTrace(
+        "STALE_CONNECT_FAILURE_IGNORED reason=current-link-already-connected peripheral=\(peripheralEvidence(peripheral))"
+      )
+      return
+    }
+    if completeRetiredPeripheral(peripheral, event: "connect-failure", error: error) { return }
+    guard isActivePeripheral(peripheral) else {
+      Self.commissioningTrace(
+        "STALE_LINK_FAILURE_IGNORED peripheral=\(peripheralEvidence(peripheral)) active=\(activePeripheralEvidence)"
+      )
+      return
+    }
+    if pendingStaleGATTRescan {
+      completeStaleGATTRecovery(after: peripheral, event: "connect-failure")
+      return
+    }
+    if pendingWeakLinkRescan {
+      completeWeakLinkRecovery(after: peripheral, event: "connect-failure")
+      return
+    }
+    let failure = Self.errorEvidence(error)
+    recordTransportFailure(error, event: "link-connect-failed")
+    Self.commissioningTrace("LINK_FAILED_DETAIL error={\(failure)}")
     if isPeerPairingInformationRemoved(error), !freshCentralRecoveryAttempted {
       rebuildCentralForFreshPairing()
+      return
+    }
+    if isEncryptionTimeout(error), automaticReconnectEnabled, !userRequestedDisconnect {
+      resumeSignalAwareScan(after: peripheral, error: error)
       return
     }
     if automaticReconnectEnabled, !userRequestedDisconnect {
@@ -329,13 +1550,27 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     scanActive = false
     state = .failed
     transportMessage = connectionFailureMessage(error, fallback: "Gateway connection failed.")
-    Self.logger.error("ESP32 BLE connection failed: \(self.transportMessage ?? "unknown", privacy: .public)")
+    Self.logger.error(
+      "ESP32 BLE connection failed: \(self.transportMessage ?? "unknown", privacy: .public)")
     Self.commissioningTrace("LINK_FAILED reason=\(transportMessage ?? "unknown")")
   }
 
   func centralManager(
     _ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?
   ) {
+    guard central === self.central else {
+      Self.commissioningTrace(
+        "STALE_CENTRAL_DISCONNECT_IGNORED candidate=\(ObjectIdentifier(central)) active=\(ObjectIdentifier(self.central)) peripheral=\(peripheralEvidence(peripheral))"
+      )
+      return
+    }
+    if completeRetiredPeripheral(peripheral, event: "disconnect", error: error) { return }
+    if peripheralConnected, isActivePeripheral(peripheral), peripheral.state == .connected {
+      Self.commissioningTrace(
+        "STALE_LEGACY_DISCONNECT_IGNORED reason=current-link-still-connected link_session=\(linkSession)"
+      )
+      return
+    }
     handleDisconnect(peripheral, isSystemReconnecting: false, error: error)
   }
 
@@ -346,125 +1581,282 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     isReconnecting: Bool,
     error: Error?
   ) {
+    guard central === self.central else {
+      Self.commissioningTrace(
+        "STALE_CENTRAL_DISCONNECT_IGNORED candidate=\(ObjectIdentifier(central)) active=\(ObjectIdentifier(self.central)) peripheral=\(peripheralEvidence(peripheral))"
+      )
+      return
+    }
+    if completeRetiredPeripheral(peripheral, event: "disconnect", error: error) { return }
+    if let connectedAt,
+      Date(timeIntervalSinceReferenceDate: timestamp) < connectedAt
+    {
+      Self.commissioningTrace(
+        "STALE_TIMESTAMPED_DISCONNECT_IGNORED callback_timestamp=\(timestamp) connected_at=\(connectedAt.timeIntervalSinceReferenceDate) link_session=\(linkSession)"
+      )
+      return
+    }
     handleDisconnect(peripheral, isSystemReconnecting: isReconnecting, error: error)
   }
 
-  func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
+  private func handleServicesDiscovered(
+    _ peripheral: CBPeripheral, error: Error?, callbackSession: UInt64
+  ) {
+    guard
+      acceptsPeripheralCallback(
+        peripheral, callbackSession: callbackSession, event: "service-discovery")
+    else { return }
     serviceDiscoveryTask?.cancel()
     if let error {
-      let value = error as NSError
+      recordTransportFailure(error, event: "service-discovery-failed")
       Self.commissioningTrace(
-        "SERVICE_DISCOVERY_FAILED domain=\(value.domain) code=\(value.code) message=\(value.localizedDescription)"
+        "SERVICE_DISCOVERY_FAILED link_session=\(linkSession) error={\(Self.errorEvidence(error))}"
       )
-      transportMessage = "Gateway services did not respond; refreshing the BLE link automatically…"
-      central.cancelPeripheralConnection(peripheral)
+      refreshStaleGATTCandidate(
+        peripheral,
+        reason: "Gateway services did not respond; scanning for its current BLE identity…")
       return
     }
-    let services = peripheral.services ?? []
+    processDiscoveredServices(
+      peripheral, services: peripheral.services ?? [], source: "callback",
+      callbackSession: callbackSession)
+  }
+
+  private func processDiscoveredServices(
+    _ peripheral: CBPeripheral, services: [CBService], source: String,
+    callbackSession: UInt64
+  ) {
+    guard
+      acceptsPeripheralCallback(
+        peripheral, callbackSession: callbackSession, event: "process-services-\(source)")
+    else { return }
     Self.commissioningTrace(
-      "SERVICES_DISCOVERED uuids=\(services.map { $0.uuid.uuidString }.joined(separator: ","))"
+      "SERVICES_DISCOVERED source=\(source) uuids=\(services.map { $0.uuid.uuidString }.joined(separator: ","))"
     )
+    let kind = GatewayBLEIdentityPolicy.provenGatewayKind(
+      localName: discoveredName ?? peripheral.name,
+      discoveredServiceUUIDs: services.map { $0.uuid.uuidString })
+    guard let kind else {
+      rejectCandidateAndResumeScanning(
+        peripheral, reason: "Connected BLE device is not a verified VHOS/WiCAN gateway.")
+      return
+    }
+    consecutiveStaleGATTRecoveryCount = 0
+    gatewayIdentityValidated = true
+    rememberValidated(peripheral)
     for service in services {
-      if service.uuid == Self.vhosService {
+      if kind == .vhos, service.uuid == Self.vhosService {
         vhosServiceDiscovered = true
-        peripheral.discoverCharacteristics(
-          [
-            Self.commandCharacteristic, Self.streamCharacteristic, Self.statusCharacteristic,
-            Self.otaStatusCharacteristic,
-          ],
-          for: service
-        )
-      } else if service.uuid == Self.factoryService {
+        if let characteristics = service.characteristics, !characteristics.isEmpty {
+          processDiscoveredCharacteristics(
+            peripheral, service: service, characteristics: characteristics, source: "cache",
+            callbackSession: callbackSession)
+        } else {
+          peripheral.discoverCharacteristics(
+            [
+              Self.commandCharacteristic, Self.streamCharacteristic, Self.statusCharacteristic,
+              Self.otaStatusCharacteristic,
+            ],
+            for: service
+          )
+        }
+      } else if kind == .factoryWiCAN, service.uuid == Self.factoryService {
         factoryServiceDiscovered = true
-        peripheral.discoverCharacteristics([Self.factoryCharacteristic], for: service)
+        if let characteristics = service.characteristics, !characteristics.isEmpty {
+          processDiscoveredCharacteristics(
+            peripheral, service: service, characteristics: characteristics, source: "cache",
+            callbackSession: callbackSession)
+        } else {
+          peripheral.discoverCharacteristics([Self.factoryCharacteristic], for: service)
+        }
       }
     }
     if vhosServiceDiscovered || factoryServiceDiscovered {
       armGATTDiscoveryTimeout(peripheral, phase: "characteristics")
     }
-    if !vhosServiceDiscovered, !factoryServiceDiscovered {
-      state = .failed
-      transportMessage = "Connected device does not advertise a supported gateway service."
-    }
   }
 
-  func peripheral(
-    _ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?
+  private func handleCharacteristicsDiscovered(
+    _ peripheral: CBPeripheral, service: CBService, error: Error?,
+    callbackSession: UInt64
   ) {
+    guard
+      acceptsPeripheralCallback(
+        peripheral, callbackSession: callbackSession, event: "characteristic-discovery")
+    else { return }
     serviceDiscoveryTask?.cancel()
     if let error {
-      let value = error as NSError
+      recordTransportFailure(error, event: "characteristic-discovery-failed")
       Self.commissioningTrace(
-        "CHARACTERISTICS_FAILED service=\(service.uuid.uuidString) domain=\(value.domain) code=\(value.code)"
+        "CHARACTERISTICS_FAILED service=\(service.uuid.uuidString) link_session=\(linkSession) error={\(Self.errorEvidence(error))}"
       )
-      transportMessage = "Gateway characteristics did not respond; refreshing the BLE link automatically…"
-      central.cancelPeripheralConnection(peripheral)
+      refreshStaleGATTCandidate(
+        peripheral,
+        reason: "Gateway characteristics did not respond; scanning for its current BLE identity…")
       return
     }
-    for characteristic in service.characteristics ?? [] {
+    processDiscoveredCharacteristics(
+      peripheral, service: service, characteristics: service.characteristics ?? [],
+      source: "callback",
+      callbackSession: callbackSession)
+  }
+
+  private func processDiscoveredCharacteristics(
+    _ peripheral: CBPeripheral, service: CBService, characteristics: [CBCharacteristic],
+    source: String, callbackSession: UInt64
+  ) {
+    guard
+      acceptsPeripheralCallback(
+        peripheral, callbackSession: callbackSession, event: "process-characteristics-\(source)")
+    else { return }
+    for characteristic in characteristics {
       switch characteristic.uuid {
       case Self.commandCharacteristic:
         command = characteristic
         commandChannelReady = characteristic.properties.contains(.write)
       case Self.streamCharacteristic:
         streamChannelDiscovered = true
-        peripheral.setNotifyValue(true, for: characteristic)
+        streamNotificationsEnabled = false
+        notificationCharacteristics[characteristic.uuid] = characteristic
       case Self.statusCharacteristic:
         healthChannelDiscovered = true
-        peripheral.setNotifyValue(true, for: characteristic)
+        healthNotificationsEnabled = streamNotificationsEnabled
       case Self.otaStatusCharacteristic:
         otaStatusChannelDiscovered = true
-        peripheral.setNotifyValue(true, for: characteristic)
+        otaStatusNotificationsEnabled = streamNotificationsEnabled
       case Self.factoryCharacteristic:
+        factoryReadCharacteristic = characteristic
         state = .factoryCompatible
         factoryBanner =
           "Factory WiCAN BLE service detected. Install the VHOS firmware fork before vehicle experiments."
         if characteristic.properties.contains(.read) { peripheral.readValue(for: characteristic) }
-        if characteristic.properties.contains(.notify) {
-          peripheral.setNotifyValue(true, for: characteristic)
-        }
       default:
         break
       }
     }
     Self.commissioningTrace(
-      "CHARACTERISTICS_DISCOVERED service=\(service.uuid.uuidString) count=\(service.characteristics?.count ?? 0)"
+      "CHARACTERISTICS_DISCOVERED source=\(source) service=\(service.uuid.uuidString) count=\(characteristics.count)"
     )
-    if service.uuid == Self.vhosService { requestHandshakeIfReady() }
+    if service.uuid == Self.vhosService {
+      enableNextNotificationIfNeeded(on: peripheral, callbackSession: callbackSession)
+    }
   }
 
-  func peripheral(
-    _ peripheral: CBPeripheral,
-    didUpdateNotificationStateFor characteristic: CBCharacteristic,
-    error: Error?
+  /// All framed outbound traffic is multiplexed over the evidence stream. A single encrypted CCCD
+  /// avoids losing later notification requests while Just Works pairing is still in flight. Health
+  /// and OTA remain distinct, CRC-protected message types within that shared transport.
+  private func enableNextNotificationIfNeeded(
+    on peripheral: CBPeripheral, callbackSession: UInt64
   ) {
-    if let error {
-      let retryCount = notificationSecurityRetryCounts[characteristic.uuid, default: 0]
-      if isSecurityNegotiationError(error), retryCount < Self.securityRetryLimit {
-        let nextRetry = retryCount + 1
-        notificationSecurityRetryCounts[characteristic.uuid] = nextRetry
-        transportMessage =
-          "Pairing with ESP32; secure notification retry \(nextRetry)/\(Self.securityRetryLimit)…"
-        Self.logger.info(
-          "Waiting for BLE pairing before notification retry uuid=\(characteristic.uuid.uuidString, privacy: .public) attempt=\(nextRetry)"
+    guard
+      acceptsPeripheralCallback(
+        peripheral, callbackSession: callbackSession, event: "notification-enable-next")
+    else { return }
+    guard notificationSetupInFlight == nil else { return }
+
+    let orderedUUIDs = [Self.streamCharacteristic]
+    for uuid in orderedUUIDs {
+      guard let characteristic = notificationCharacteristics[uuid] else { return }
+      guard notificationRequestSession != linkSession else {
+        Self.commissioningTrace(
+          "SUBSCRIBE_DUPLICATE_SUPPRESSED uuid=\(uuid.uuidString) link_session=\(linkSession)"
         )
-        Task { [weak self, weak peripheral] in
-          try? await Task.sleep(for: .seconds(1))
-          guard !Task.isCancelled, let self, let peripheral, self.peripheralConnected else {
-            return
-          }
-          peripheral.setNotifyValue(true, for: characteristic)
-        }
         return
       }
-      state = .degraded
-      transportMessage = error.localizedDescription
+      notificationSetupInFlight = uuid
+      notificationRequestSession = linkSession
+      notificationPairingPending = true
+      Self.commissioningTrace(
+        "SUBSCRIBE_REQUEST uuid=\(uuid.uuidString) link_session=\(linkSession) peripheral=\(peripheralEvidence(peripheral)) attempt=1"
+      )
+      peripheral.setNotifyValue(true, for: characteristic)
+      armNotificationEnableWatchdog(
+        on: peripheral, characteristic: characteristic, callbackSession: callbackSession)
       return
     }
-    notificationSecurityRetryCounts[characteristic.uuid] = 0
+    requestHandshakeIfReady()
+  }
+
+  private func armNotificationEnableWatchdog(
+    on peripheral: CBPeripheral, characteristic: CBCharacteristic,
+    callbackSession: UInt64
+  ) {
+    notificationEnableTask?.cancel()
+    Self.commissioningTrace(
+      "SUBSCRIBE_WATCHDOG_ARMED uuid=\(characteristic.uuid.uuidString) link_session=\(callbackSession) timeout_seconds=15"
+    )
+    notificationEnableTask = Task { [weak self, weak peripheral, weak characteristic] in
+      try? await Task.sleep(for: Self.notificationEnableTimeout)
+      guard !Task.isCancelled, let self, let peripheral, let characteristic,
+        self.acceptsPeripheralCallback(
+          peripheral, callbackSession: callbackSession, event: "notification-watchdog"),
+        self.notificationRequestSession == callbackSession,
+        self.notificationSetupInFlight == characteristic.uuid,
+        self.notificationCharacteristics[characteristic.uuid] === characteristic,
+        !self.streamNotificationsEnabled
+      else { return }
+      self.notificationEnableTask = nil
+      self.notificationPairingPending = false
+      self.notificationSetupInFlight = nil
+      self.reconnectIntentRequested = true
+      self.automaticReconnectEnabled = true
+      self.automaticReconnectActive = false
+      self.scanAfterRestorationCleanup = true
+      self.lastTransportFailureAt = Date()
+      self.lastTransportFailureEvidence =
+        "notification-enable-timeout: uuid=\(characteristic.uuid.uuidString) link_session=\(callbackSession)"
+      Self.commissioningTrace(
+        "SUBSCRIBE_WATCHDOG_TIMEOUT uuid=\(characteristic.uuid.uuidString) link_session=\(callbackSession) action=retire-link-for-automatic-reconnect"
+      )
+      self.retireRestoredPeripheral(peripheral, reason: "notification-enable-timeout")
+      self.resetTransportSession()
+      self.state = .degraded
+      self.transportMessage =
+        self.connectionCleanupActive
+        ? "The encrypted stream did not confirm. Closing this BLE link before reconnecting automatically…"
+        : "The encrypted stream did not confirm. Reconnecting automatically…"
+    }
+  }
+
+  private func failNotificationSetup(
+    on peripheral: CBPeripheral, callbackSession: UInt64, reason: String,
+    evidence: String
+  ) {
+    guard
+      acceptsPeripheralCallback(
+        peripheral, callbackSession: callbackSession, event: "notification-failure")
+    else { return }
+    notificationEnableTask?.cancel()
+    notificationEnableTask = nil
+    captureSyncTask?.cancel()
+    captureSyncTask = nil
+    captureChunkResponseTask?.cancel()
+    captureChunkResponseTask = nil
+    notificationPairingPending = false
+    notificationSetupInFlight = nil
+    reconnectIntentRequested = false
+    automaticReconnectEnabled = false
+    automaticReconnectActive = false
+    lastTransportFailureAt = Date()
+    lastTransportFailureEvidence = "\(evidence) link_session=\(callbackSession)"
+    Self.commissioningTrace(
+      "SUBSCRIBE_LINK_RETIRED link_session=\(callbackSession) reason=\(evidence) action=explicit-reconnect"
+    )
+    retireRestoredPeripheral(peripheral, reason: evidence)
+    resetTransportSession()
+    state = .degraded
+    transportMessage =
+      connectionCleanupActive
+      ? "\(reason). Finishing this BLE link before Reconnect becomes available…"
+      : "\(reason). Select Reconnect to start one clean session."
+  }
+
+  private func updateNotificationState(for characteristic: CBCharacteristic) {
     switch characteristic.uuid {
     case Self.streamCharacteristic:
       streamNotificationsEnabled = characteristic.isNotifying
+      healthNotificationsEnabled = characteristic.isNotifying
+      otaStatusNotificationsEnabled = characteristic.isNotifying
     case Self.statusCharacteristic:
       healthNotificationsEnabled = characteristic.isNotifying
     case Self.otaStatusCharacteristic:
@@ -472,14 +1864,135 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     default:
       break
     }
-    requestHandshakeIfReady()
   }
 
-  func peripheral(
-    _ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?
+  private func handleNotificationStateUpdated(
+    _ peripheral: CBPeripheral, characteristic: CBCharacteristic, error: Error?,
+    callbackSession: UInt64
   ) {
+    guard
+      acceptsPeripheralCallback(
+        peripheral, callbackSession: callbackSession, event: "notification-state")
+    else { return }
+    if characteristic.uuid == Self.streamCharacteristic,
+      let expected = notificationCharacteristics[characteristic.uuid], expected !== characteristic
+    {
+      Self.commissioningTrace(
+        "STALE_SUBSCRIBE_CHARACTERISTIC_IGNORED uuid=\(characteristic.uuid.uuidString) link_session=\(linkSession)"
+      )
+      return
+    }
+    if characteristic.uuid == Self.streamCharacteristic,
+      notificationRequestSession == callbackSession,
+      notificationSetupInFlight == nil,
+      streamNotificationsEnabled,
+      error != nil || !characteristic.isNotifying
+    {
+      failNotificationSetup(
+        on: peripheral, callbackSession: callbackSession,
+        reason: "The encrypted stream stopped notifying",
+        evidence: "notification-disabled-after-enable: \(Self.errorEvidence(error))")
+      return
+    }
+    guard notificationRequestSession == callbackSession,
+      notificationSetupInFlight == characteristic.uuid
+    else {
+      Self.commissioningTrace(
+        "STALE_SUBSCRIBE_TOKEN_IGNORED uuid=\(characteristic.uuid.uuidString) callback_session=\(callbackSession) request_session=\(notificationRequestSession.map(String.init) ?? "none") in_flight=\(notificationSetupInFlight?.uuidString ?? "none")"
+      )
+      return
+    }
+    notificationEnableTask?.cancel()
+    notificationEnableTask = nil
     if let error {
-      transportMessage = error.localizedDescription
+      notificationPairingPending = false
+      if notificationSetupInFlight == characteristic.uuid {
+        notificationSetupInFlight = nil
+      }
+      let evidence = Self.errorEvidence(error)
+      recordTransportFailure(error, event: "stream-subscribe-failed")
+      Self.commissioningTrace(
+        "SUBSCRIBE_FAILED uuid=\(characteristic.uuid.uuidString) link_session=\(linkSession) error={\(evidence)}"
+      )
+      let reason =
+        isSecurityNegotiationError(error)
+        ? "Secure BLE setup did not complete"
+        : "BLE notification setup failed (\(Self.errorSymbol(error))): \(error.localizedDescription)"
+      failNotificationSetup(
+        on: peripheral, callbackSession: callbackSession, reason: reason,
+        evidence: "notification-enable-failed: \(evidence)")
+      return
+    }
+    notificationPairingPending = false
+    updateNotificationState(for: characteristic)
+    if notificationSetupInFlight == characteristic.uuid {
+      notificationSetupInFlight = nil
+    }
+    Self.commissioningTrace(
+      "SUBSCRIBE_READY uuid=\(characteristic.uuid.uuidString) enabled=\(characteristic.isNotifying) link_session=\(linkSession)"
+    )
+    guard characteristic.isNotifying || characteristic.uuid != Self.streamCharacteristic else {
+      transportMessage =
+        "The encrypted stream did not enable. Reconnecting without duplicating the request…"
+      Self.commissioningTrace(
+        "SUBSCRIBE_DISABLED_UNEXPECTED action=cancel-link link_session=\(linkSession)"
+      )
+      failNotificationSetup(
+        on: peripheral, callbackSession: callbackSession,
+        reason: "The encrypted stream did not enable",
+        evidence: "notification-enable-disabled")
+      return
+    }
+    if characteristic.uuid == Self.streamCharacteristic, characteristic.isNotifying {
+      requestHandshakeIfReady()
+    } else {
+      enableNextNotificationIfNeeded(on: peripheral, callbackSession: callbackSession)
+    }
+  }
+
+  private func handleValueUpdated(
+    _ peripheral: CBPeripheral, characteristic: CBCharacteristic, error: Error?,
+    callbackSession: UInt64
+  ) {
+    guard
+      acceptsPeripheralCallback(
+        peripheral, callbackSession: callbackSession, event: "value-update")
+    else { return }
+    guard linkRSSIQualifiedSession == callbackSession else {
+      Self.commissioningTrace(
+        "PREQUALIFICATION_VALUE_IGNORED uuid=\(characteristic.uuid.uuidString) link_session=\(callbackSession)"
+      )
+      return
+    }
+    let isCurrentStream =
+      characteristic.uuid == Self.streamCharacteristic
+      && notificationCharacteristics[Self.streamCharacteristic] === characteristic
+      && notificationRequestSession == callbackSession
+      && streamNotificationsEnabled
+    let isCurrentFactory =
+      characteristic.uuid == Self.factoryCharacteristic
+      && factoryServiceDiscovered && factoryReadCharacteristic === characteristic
+    guard isCurrentStream || isCurrentFactory else {
+      Self.commissioningTrace(
+        "STALE_OR_UNEXPECTED_VALUE_IGNORED uuid=\(characteristic.uuid.uuidString) link_session=\(linkSession) stream_confirmed=\(streamNotificationsEnabled)"
+      )
+      return
+    }
+    if characteristic.uuid == Self.streamCharacteristic,
+      let expected = notificationCharacteristics[characteristic.uuid], expected !== characteristic
+    {
+      Self.commissioningTrace(
+        "STALE_VALUE_CHARACTERISTIC_IGNORED uuid=\(characteristic.uuid.uuidString) link_session=\(linkSession)"
+      )
+      return
+    }
+    if let error {
+      recordTransportFailure(error, event: "notification-value-failed")
+      transportMessage =
+        "Gateway stream read failed (\(Self.errorSymbol(error))): \(error.localizedDescription)"
+      Self.commissioningTrace(
+        "VALUE_UPDATE_FAILED uuid=\(characteristic.uuid.uuidString) link_session=\(linkSession) error={\(Self.errorEvidence(error))}"
+      )
       return
     }
     guard let value = characteristic.value else { return }
@@ -488,24 +2001,72 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       return
     }
     do {
-      for frame in try streamDecoder.append(value) {
-        record(frame)
-        try consume(frame)
+      let recoveryCountBefore = streamDecoder.recoveryCount
+      let discardedBytesBefore = streamDecoder.discardedByteCount
+      let corruptCandidatesBefore = streamDecoder.corruptCandidateCount
+      let frames = try streamDecoder.append(value)
+      if streamDecoder.recoveryCount > recoveryCountBefore {
+        let recoveries = streamDecoder.recoveryCount - recoveryCountBefore
+        let discarded = streamDecoder.discardedByteCount - discardedBytesBefore
+        let corrupt = streamDecoder.corruptCandidateCount - corruptCandidatesBefore
+        frameDecodeErrorCount &+= UInt64(max(1, corrupt))
+        transportMessage =
+          "Recovered the VHOS stream after missing or corrupt transport bytes; evidence continuity is degraded."
+        Self.commissioningTrace(
+          "FRAME_STREAM_RESYNCHRONIZED link_session=\(linkSession) recoveries=\(recoveries) discarded_bytes=\(discarded) corrupt_candidates=\(corrupt) buffered_bytes=\(streamDecoder.bufferedByteCount)"
+        )
       }
+      for frame in frames { enqueueFrameForPersistence(frame, callbackSession: callbackSession) }
     } catch {
       frameDecodeErrorCount &+= 1
       state = .degraded
       transportMessage = error.localizedDescription
+      Self.commissioningTrace(
+        "FRAME_OR_CONTRACT_DECODE_FAILED characteristic=\(characteristic.uuid.uuidString) error=\(error.localizedDescription)"
+      )
     }
   }
 
-  func peripheral(
-    _ peripheral: CBPeripheral, didWriteValueFor characteristic: CBCharacteristic, error: Error?
+  private func handleValueWritten(
+    _ peripheral: CBPeripheral, characteristic: CBCharacteristic, error: Error?,
+    callbackSession: UInt64
   ) {
-    guard characteristic.uuid == Self.commandCharacteristic else { return }
+    guard
+      acceptsPeripheralCallback(
+        peripheral, callbackSession: callbackSession, event: "value-write"),
+      characteristic.uuid == Self.commandCharacteristic,
+      command === characteristic
+    else {
+      Self.commissioningTrace(
+        "STALE_WRITE_RESULT_IGNORED peripheral=\(peripheralEvidence(peripheral)) uuid=\(characteristic.uuid.uuidString)"
+      )
+      return
+    }
+    handshakeRetryTask?.cancel()
+    handshakeRetryTask = nil
     if let error {
+      handshakeWriteAckTask?.cancel()
+      handshakeWriteAckTask = nil
+      handshakeResponseTask?.cancel()
+      handshakeResponseTask = nil
+      handshakeWriteAttemptInFlight = nil
       pendingCommandChunks.removeAll()
       commandChunksPending = 0
+      if captureChunkResponseTask != nil, handshake != nil {
+        captureChunkResponseTask?.cancel()
+        captureChunkResponseTask = nil
+        recordTransportFailure(error, event: "capture-sync-write-failed")
+        captureSyncMessage =
+          "Recent-log sync paused after a gateway write error; live health remains connected."
+        Self.commissioningTrace(
+          "CAPTURE_SYNC_PAUSED reason=write-error link_session=\(linkSession) error={\(Self.errorEvidence(error))}"
+        )
+        requestCaptureResumeAfterHistoryTransfer(
+          completionMessage:
+            "History download paused after a BLE write error; resuming passive recording to avoid an evidence gap…"
+        )
+        return
+      }
       if isSecurityNegotiationError(error),
         handshakeSecurityRetryCount < Self.securityRetryLimit
       {
@@ -516,67 +2077,566 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         Self.logger.info(
           "Waiting for BLE encryption before handshake retry \(self.handshakeSecurityRetryCount)"
         )
-        Task { [weak self] in
+        let retrySession = linkSession
+        handshakeRetryTask = Task { [weak self, weak peripheral] in
           try? await Task.sleep(for: .seconds(1))
-          guard !Task.isCancelled else { return }
-          self?.requestHandshakeIfReady()
+          guard !Task.isCancelled, let self, let peripheral,
+            self.linkSession == retrySession, self.isActivePeripheral(peripheral),
+            self.peripheralConnected
+          else { return }
+          self.handshakeRetryTask = nil
+          self.requestHandshakeIfReady()
         }
         return
       }
+      recordTransportFailure(error, event: "command-write-failed")
+      Self.commissioningTrace(
+        "COMMAND_WRITE_FAILED link_session=\(linkSession) error={\(Self.errorEvidence(error))}"
+      )
       state = .degraded
-      transportMessage = error.localizedDescription
+      transportMessage =
+        "Gateway command failed (\(Self.errorSymbol(error))): \(error.localizedDescription)"
       return
     }
     if !pendingCommandChunks.isEmpty { pendingCommandChunks.removeFirst() }
     commandChunksPending = pendingCommandChunks.count
-    sendNextCommandChunk()
+    if !pendingCommandChunks.isEmpty {
+      sendNextCommandChunk()
+      if let attempt = handshakeWriteAttemptInFlight {
+        armHandshakeWriteAckWatchdog(on: peripheral, attempt: attempt)
+      }
+      return
+    }
+    if let attempt = handshakeWriteAttemptInFlight, handshakeRequested, handshake == nil {
+      handshakeWriteAckTask?.cancel()
+      handshakeWriteAckTask = nil
+      handshakeWriteAttemptInFlight = nil
+      handshakeResponseAttemptCount = attempt
+      Self.commissioningTrace(
+        "HANDSHAKE_REQUEST_WRITE_ACK link_session=\(linkSession) attempt=\(attempt)"
+      )
+      armHandshakeResponseWatchdog(on: peripheral, attempt: attempt)
+    }
   }
 
   private func requestHandshake() {
     do {
+      guard let peripheral, isActivePeripheral(peripheral), peripheralConnected else {
+        throw GatewayBLEError.commandChannelUnavailable
+      }
+      guard pendingCommandChunks.isEmpty, handshakeWriteAttemptInFlight == nil,
+        handshakeResponseTask == nil
+      else {
+        Self.commissioningTrace(
+          "HANDSHAKE_REQUEST_SUPPRESSED reason=prior-attempt-unfinished link_session=\(linkSession) chunks=\(pendingCommandChunks.count) write_attempt=\(handshakeWriteAttemptInFlight.map(String.init) ?? "none") response_waiting=\(handshakeResponseTask != nil)"
+        )
+        return
+      }
+      let attempt = handshakeResponseAttemptCount + 1
+      guard attempt <= Self.handshakeResponseAttemptLimit else { return }
+      Self.commissioningTrace(
+        "HANDSHAKE_REQUEST_WRITE_BEGIN link_session=\(linkSession) attempt=\(attempt)"
+      )
       let payload = try VHOSJSON.encoder().encode(HandshakeRequest())
+      handshakeWriteAttemptInFlight = attempt
       try writeFrame(type: .handshake, payload: payload)
+      armHandshakeWriteAckWatchdog(on: peripheral, attempt: attempt)
     } catch {
+      handshakeWriteAckTask?.cancel()
+      handshakeWriteAckTask = nil
+      handshakeWriteAttemptInFlight = nil
+      handshakeRequested = false
       state = .failed
       transportMessage = error.localizedDescription
+      Self.commissioningTrace(
+        "HANDSHAKE_REQUEST_WRITE_SETUP_FAILED link_session=\(linkSession) error={\(Self.errorEvidence(error))}"
+      )
     }
   }
 
   private func requestHandshakeIfReady() {
     guard
+      handshake == nil,
       !handshakeRequested,
+      handshakeWriteAttemptInFlight == nil,
+      handshakeResponseTask == nil,
+      pendingCommandChunks.isEmpty,
       command != nil,
       streamNotificationsEnabled,
-      healthNotificationsEnabled
+      healthNotificationsEnabled,
+      otaStatusNotificationsEnabled
     else { return }
     handshakeRequested = true
     requestHandshake()
   }
 
-  private func consume(_ frame: GatewayFrame) throws {
+  private func armHandshakeWriteAckWatchdog(on peripheral: CBPeripheral, attempt: Int) {
+    handshakeWriteAckTask?.cancel()
+    let writeSession = linkSession
+    Self.commissioningTrace(
+      "HANDSHAKE_WRITE_ACK_WATCHDOG_ARMED link_session=\(writeSession) attempt=\(attempt) outstanding_chunks=\(pendingCommandChunks.count) timeout_seconds=2"
+    )
+    handshakeWriteAckTask = Task { [weak self, weak peripheral] in
+      try? await Task.sleep(for: Self.handshakeWriteAckTimeout)
+      guard !Task.isCancelled, let self, let peripheral,
+        self.linkSession == writeSession, self.isActivePeripheral(peripheral),
+        self.peripheralConnected, self.handshake == nil,
+        self.handshakeWriteAttemptInFlight == attempt,
+        !self.pendingCommandChunks.isEmpty
+      else { return }
+      self.handshakeWriteAckTask = nil
+      let outstandingChunks = self.pendingCommandChunks.count
+      self.pendingCommandChunks.removeAll()
+      self.commandChunksPending = 0
+      self.handshakeWriteAttemptInFlight = nil
+      self.handshakeRequested = false
+      Self.commissioningTrace(
+        "HANDSHAKE_WRITE_ACK_TIMEOUT link_session=\(writeSession) attempt=\(attempt) outstanding_chunks=\(outstandingChunks) action=cancel-link-no-retry"
+      )
+      self.failHandshakeWriteAcknowledgement(on: peripheral, attempt: attempt)
+    }
+  }
+
+  private func armHandshakeResponseWatchdog(on peripheral: CBPeripheral, attempt: Int) {
+    handshakeResponseTask?.cancel()
+    let responseSession = linkSession
+    Self.commissioningTrace(
+      "HANDSHAKE_REQUEST_QUEUED link_session=\(responseSession) attempt=\(attempt) limit=\(Self.handshakeResponseAttemptLimit) timeout_seconds=2"
+    )
+    handshakeResponseTask = Task { [weak self, weak peripheral] in
+      try? await Task.sleep(for: Self.handshakeResponseTimeout)
+      guard !Task.isCancelled, let self, let peripheral,
+        self.linkSession == responseSession, self.isActivePeripheral(peripheral),
+        self.peripheralConnected, self.handshake == nil,
+        self.handshakeResponseAttemptCount == attempt
+      else { return }
+      self.handshakeResponseTask = nil
+      Self.commissioningTrace(
+        "HANDSHAKE_RESPONSE_TIMEOUT link_session=\(responseSession) attempt=\(attempt) limit=\(Self.handshakeResponseAttemptLimit) health_received=\(self.lastHealthReceivedAt != nil)"
+      )
+      if self.handshakeWriteAttemptInFlight != nil || !self.pendingCommandChunks.isEmpty {
+        Self.commissioningTrace(
+          "HANDSHAKE_RETRY_BLOCKED reason=prior-write-unfinished link_session=\(responseSession) attempt=\(attempt) chunks=\(self.pendingCommandChunks.count)"
+        )
+        self.failHandshakeWriteAcknowledgement(on: peripheral, attempt: attempt)
+        return
+      }
+      if attempt < Self.handshakeResponseAttemptLimit {
+        self.handshakeRequested = false
+        self.transportMessage =
+          "Gateway contract did not answer; retrying handshake \(attempt + 1)/\(Self.handshakeResponseAttemptLimit)…"
+        self.requestHandshakeIfReady()
+        return
+      }
+      self.failUnresponsiveHandshake(on: peripheral, attempts: attempt)
+    }
+  }
+
+  private func failUnresponsiveHandshake(on peripheral: CBPeripheral, attempts: Int) {
+    guard isActivePeripheral(peripheral), handshake == nil else { return }
+    handshakeRetryTask?.cancel()
+    handshakeRetryTask = nil
+    handshakeWriteAckTask?.cancel()
+    handshakeWriteAckTask = nil
+    handshakeResponseTask?.cancel()
+    handshakeResponseTask = nil
+    handshakeWriteAttemptInFlight = nil
+    handshakeRequested = false
+    reconnectIntentRequested = false
+    automaticReconnectEnabled = false
+    automaticReconnectActive = false
+    let message =
+      "Physical BLE is available, but the VHOS contract did not answer after \(attempts) handshake attempts. Select Reconnect to start one clean session."
+    lastTransportFailureAt = Date()
+    lastTransportFailureEvidence =
+      "handshake-response-timeout: attempts=\(attempts) link_session=\(linkSession)"
+    Self.commissioningTrace(
+      "HANDSHAKE_RESPONSE_EXHAUSTED link_session=\(linkSession) attempts=\(attempts) action=cancel-link-for-explicit-reconnect peripheral={\(peripheralEvidence(peripheral))}"
+    )
+    retireRestoredPeripheral(peripheral, reason: "handshake-response-timeout")
+    resetTransportSession()
+    state = .degraded
+    transportMessage =
+      connectionCleanupActive
+      ? "\(message) Finishing the unresponsive link first…" : message
+  }
+
+  private func failHandshakeWriteAcknowledgement(on peripheral: CBPeripheral, attempt: Int) {
+    guard isActivePeripheral(peripheral), handshake == nil else { return }
+    handshakeRetryTask?.cancel()
+    handshakeRetryTask = nil
+    handshakeWriteAckTask?.cancel()
+    handshakeWriteAckTask = nil
+    handshakeResponseTask?.cancel()
+    handshakeResponseTask = nil
+    handshakeWriteAttemptInFlight = nil
+    pendingCommandChunks.removeAll()
+    commandChunksPending = 0
+    handshakeRequested = false
+    reconnectIntentRequested = false
+    automaticReconnectEnabled = false
+    automaticReconnectActive = false
+    let message =
+      "The saved BLE link did not acknowledge handshake write attempt \(attempt). Select Reconnect after this stale link closes."
+    lastTransportFailureAt = Date()
+    lastTransportFailureEvidence =
+      "handshake-write-ack-timeout: attempt=\(attempt) link_session=\(linkSession)"
+    Self.commissioningTrace(
+      "HANDSHAKE_WRITE_FAILURE_LINK_CLOSE link_session=\(linkSession) attempt=\(attempt) peripheral={\(peripheralEvidence(peripheral))}"
+    )
+    retireRestoredPeripheral(peripheral, reason: "handshake-write-ack-timeout")
+    resetTransportSession()
+    state = .degraded
+    transportMessage =
+      connectionCleanupActive
+      ? "\(message) Finishing the unresponsive link first…" : message
+  }
+
+  private func enqueueFrameForPersistence(_ frame: GatewayFrame, callbackSession: UInt64) {
+    guard pendingFramePersistenceCount < Self.maximumPendingFramePersistenceCount else {
+      frameDecodeErrorCount &+= 1
+      state = .degraded
+      transportMessage =
+        "Local evidence persistence could not keep up with the BLE stream; the link was stopped before silently losing more frames."
+      Self.commissioningTrace(
+        "FRAME_PERSISTENCE_BACKPRESSURE_EXHAUSTED link_session=\(callbackSession) pending=\(pendingFramePersistenceCount)"
+      )
+      if let peripheral, isActivePeripheral(peripheral) {
+        retireRestoredPeripheral(peripheral, reason: "evidence-persistence-backpressure")
+      }
+      return
+    }
+    let physicalSourceID: String?
+    if callbackSession == linkSession,
+      let physicalIdentifier = peripheral?.identifier.uuidString ?? discoveredIdentifier
+    {
+      physicalSourceID = "ble-peripheral-\(physicalIdentifier.lowercased())"
+    } else {
+      physicalSourceID = nil
+    }
+    let sourceID = validatedGatewayIdentities.evidenceSourceID(
+      for: callbackSession,
+      physicalTransportSourceID: physicalSourceID)
+    let acceptedContext = AcceptedGatewayFrameContext(
+      frame: frame,
+      acceptedLinkSession: callbackSession,
+      sourceID: sourceID)
+
+    pendingFramePersistenceCount += 1
+    let predecessor = framePersistenceTail
+    framePersistenceTail = Task { @MainActor [weak self] in
+      _ = await predecessor?.value
+      guard let self else { return }
+      defer { self.pendingFramePersistenceCount -= 1 }
+      do {
+        try await self.persistAcceptedPortableFrame(acceptedContext)
+      } catch {
+        self.frameDecodeErrorCount &+= 1
+        if self.portableFrameIntegrityError == nil {
+          self.recordPortableFrameIntegrityFailure(error)
+        }
+        // The integrity failure is sticky and the authoritative link has been retired. Do not
+        // reinterpret it as an ordinary decoder error.
+        return
+      }
+      guard acceptedContext.appliesToCurrentTransportSession(self.linkSession) else {
+        Self.commissioningTrace(
+          "STALE_ACCEPTED_FRAME_UI_IGNORED persisted=true callback_session=\(callbackSession) active_session=\(self.linkSession) sequence=\(frame.sequence)"
+        )
+        return
+      }
+      do {
+        self.record(frame)
+        try await self.applyFrameToCurrentSession(frame)
+      } catch {
+        self.frameDecodeErrorCount &+= 1
+        self.state = .degraded
+        self.transportMessage = error.localizedDescription
+        Self.commissioningTrace(
+          "FRAME_OR_CONTRACT_DECODE_FAILED sequence=\(frame.sequence) error=\(error.localizedDescription)"
+        )
+      }
+    }
+  }
+
+  private func applyFrameToCurrentSession(_ frame: GatewayFrame) async throws {
     switch frame.messageType {
     case .handshake:
+      let authorityWindow = GatewayHandshakeAuthorityWindow(
+        responseRequested: handshakeRequested,
+        writeAttemptCompleted: handshakeWriteAttemptInFlight == nil,
+        commandQueueDrained: pendingCommandChunks.isEmpty,
+        responseDeadlineActive: handshakeResponseTask != nil,
+        notificationSessionMatches: notificationRequestSession == linkSession,
+        streamNotificationsEnabled: streamNotificationsEnabled)
+      guard authorityWindow.acceptsIdentityClaim else {
+        Self.commissioningTrace(
+          "UNSOLICITED_OR_STALE_HANDSHAKE_IGNORED link_session=\(linkSession) requested=\(handshakeRequested) write_in_flight=\(handshakeWriteAttemptInFlight != nil) chunks=\(pendingCommandChunks.count) response_window=\(handshakeResponseTask != nil) stream_confirmed=\(streamNotificationsEnabled)"
+        )
+        return
+      }
       let value = try VHOSJSON.decoder().decode(GatewayHandshake.self, from: frame.payload)
+      guard
+        validatedGatewayIdentities.promoteHandshakeClaim(
+          gatewayID: value.gatewayID,
+          linkSession: linkSession,
+          authorityWindow: authorityWindow)
+      else {
+        // Defensive duplicate of the pre-decode gate. The registry owns the final authority
+        // boundary so later refactors cannot promote a decoded-but-rejected claim.
+        Self.commissioningTrace(
+          "HANDSHAKE_IDENTITY_PROMOTION_REJECTED link_session=\(linkSession) gateway_id=\(value.gatewayID)"
+        )
+        return
+      }
+      handshakeRetryTask?.cancel()
+      handshakeRetryTask = nil
+      handshakeWriteAckTask?.cancel()
+      handshakeWriteAckTask = nil
+      handshakeResponseTask?.cancel()
+      handshakeResponseTask = nil
+      handshakeWriteAttemptInFlight = nil
       handshake = value
       lastHandshakeReceivedAt = Date()
+      if let peripheral, isActivePeripheral(peripheral) {
+        rememberHandshakeVerified(peripheral)
+      }
       state = .vhosConnected
       reconnectAttemptCount = 0
       transportMessage = "VHOS gateway contract active."
       Self.logger.info("VHOS gateway handshake verified")
-      Self.commissioningTrace("HANDSHAKE_VERIFIED firmware=\(value.firmwareVersion)")
+      Self.commissioningTrace(
+        "HANDSHAKE_VERIFIED firmware=\(value.firmwareVersion) reset_reason=\(value.resetReason.map(String.init) ?? "unavailable")"
+      )
+      captureSessions = try await evidencePersistence.captureSummaries()
+      if value.capabilities.contains(.persistentEvidenceLog) {
+        do {
+          if captureResumeConfirmationPending {
+            try writeFrame(
+              type: .captureLogRequest,
+              payload: CaptureLogRequest(operation: .resume).encoded()
+            )
+            captureSyncMessage = "Reconnected; confirming that passive recording resumed…"
+            Self.commissioningTrace(
+              "CAPTURE_TRANSFER_RECOVERY action=retry-resume link_session=\(linkSession)"
+            )
+          } else if captureAutoResumeAfterHistoryTransfer && captureTransferRearmPending {
+            try writeFrame(
+              type: .captureLogRequest,
+              payload: CaptureLogRequest(operation: .pause, slot: 2).encoded()
+            )
+            captureTransferRearmPending = false
+            captureSyncMessage =
+              "Reconnected; continuing history from the saved iPhone checkpoint…"
+            Self.commissioningTrace(
+              "CAPTURE_TRANSFER_RECOVERY action=rearm-pause-and-continue link_session=\(linkSession)"
+            )
+          } else {
+            refreshCaptureLogIndex()
+          }
+        } catch {
+          captureSyncMessage =
+            "Gateway reconnected, but transfer recovery could not be queued: \(error.localizedDescription)"
+          Self.commissioningTrace(
+            "CAPTURE_TRANSFER_RECOVERY_FAILED link_session=\(linkSession) error={\(Self.errorEvidence(error))}"
+          )
+          refreshCaptureLogIndex()
+        }
+      }
     case .gatewayHealth:
-      health = try VHOSJSON.decoder().decode(GatewayHealth.self, from: frame.payload)
+      let value = try VHOSJSON.decoder().decode(GatewayHealth.self, from: frame.payload)
+      if health?.captureSessionID != value.captureSessionID {
+        resetRecorderScopedVehicleEvidence()
+      }
+      health = value
       lastHealthReceivedAt = Date()
+      Self.commissioningTrace(
+        "HEALTH_DECODED motion=\(value.vehicleMotion.rawValue) capture_session=\(value.captureSessionID.map(String.init) ?? "unavailable") scan=\(value.canScanState?.rawValue ?? "unavailable") bitrate=\(value.canBitrateBps.map(String.init) ?? "unavailable") cycles=\(value.canScanCycles.map(String.init) ?? "unavailable") controller=\(value.canControllerRunning.map(String.init) ?? "unavailable") lock=\(value.canPassiveLock.map(String.init) ?? "unavailable") frames=\(value.receivedFrames) standard=\(value.canStandardFrames.map(String.init) ?? "unavailable") extended=\(value.canExtendedFrames.map(String.init) ?? "unavailable") dropped=\(value.droppedFrames) twai_missed=\(value.canTwaiReceiveMissedFrames.map(String.init) ?? "unavailable") twai_overrun=\(value.canTwaiReceiveOverrunFrames.map(String.init) ?? "unavailable") observer_drops=\(value.canObserverQueueDroppedFrames.map(String.init) ?? "unavailable") observer_high_water=\(value.canObserverQueueHighWater.map(String.init) ?? "unavailable") capture_observed=\(value.captureObservedFrames.map(String.init) ?? "unavailable") capture_retained=\(value.captureRetainedRecords.map(String.init) ?? "unavailable") capture_suppressed=\(value.captureSampleSuppressedFrames.map(String.init) ?? "unavailable") errors=\(value.busErrorCount) bus_off=\(value.busOffCount) candidate=\(value.passiveCanCandidate ?? "none")"
+      )
     case .experimentResult:
       let result = try VHOSJSON.decoder().decode(ProtocolExperimentResult.self, from: frame.payload)
       experimentResults.append(result)
       lastExperimentResultAt = Date()
+    case .diagnosticResponse:
+      guard let gatewayID = handshake?.gatewayID else { return }
+      let response =
+        if frame.payload.count == 36, frame.payload.first == 1 {
+          try J1979ResponseEvidence.decodePassiveWire(
+            frame.payload, gatewayID: gatewayID, observedAt: Self.timestamp())
+        } else {
+          try VHOSJSON.decoder().decode(J1979ResponseEvidence.self, from: frame.payload)
+        }
+      guard hasCurrentGatewayHealth, let captureSessionID = health?.captureSessionID,
+        response.matchesRecorderContext(
+          gatewayID: gatewayID, captureSessionID: captureSessionID)
+      else {
+        Self.commissioningTrace(
+          "J1979_RESPONSE_IGNORED reason=stale-or-mismatched-recorder-context response_gateway=\(response.gatewayID) response_capture=\(response.captureID)"
+        )
+        return
+      }
+      _ = try j1979Accumulator.ingest(response)
+      j1979Availability = j1979Accumulator.availability
+      standardOBDSamples = j1979Accumulator.standardSamples
+      Self.commissioningTrace(
+        "J1979_RESPONSE ecu=\(response.ecuAddress) pid=0x\(String(format: "%02X", response.requestPID)) complete=\(j1979Availability.first(where: { $0.ecuAddress == response.ecuAddress })?.enumerationComplete ?? false) decoded_samples=\(standardOBDSamples.count)"
+      )
+    case .rawCANFrame:
+      guard let gatewayID = handshake?.gatewayID else { return }
+      let observation = try PassiveCANObservation.decodeLive(
+        frame.payload,
+        gatewayID: gatewayID,
+        ingestedAt: Self.timestamp()
+      )
+      guard hasCurrentGatewayHealth, let captureSessionID = health?.captureSessionID,
+        observation.matchesRecorderContext(
+          gatewayID: gatewayID, captureSessionID: captureSessionID)
+      else {
+        Self.commissioningTrace(
+          "RAW_CAN_IGNORED reason=stale-or-mismatched-recorder-context observation_gateway=\(observation.gatewayID) observation_session=\(observation.sessionID)"
+        )
+        return
+      }
+      latestCANObservation = observation
+      latestCANObservationReceivedAt = Date()
+      recentCANObservations.append(observation)
+      if recentCANObservations.count > 100 {
+        recentCANObservations.removeFirst(recentCANObservations.count - 100)
+      }
+    case .captureLogIndex:
+      let index = try VHOSJSON.decoder().decode(CaptureLogIndex.self, from: frame.payload)
+      captureLogIndex = index
+      Self.commissioningTrace(
+        "CAPTURE_INDEX current_session=\(index.currentSessionID) current_records=\(index.currentRecords) previous_session=\(index.previousSessionID) previous_records=\(index.previousRecords) retained=\(index.retainedRecords) queue_drops=\(index.queueDroppedRecords) write_failures=\(index.storageWriteFailures)"
+      )
+      if CaptureSyncPolicy.permitsAutomaticHistoryRecovery, index.logging,
+        !captureSyncSuspendedForOTA, !captureHistoryTransferActive,
+        try await hasIncompleteLocalCapture(for: index)
+      {
+        captureAutoResumeAfterHistoryTransfer = true
+        captureResumeConfirmationPending = false
+        captureTransferRearmPending = false
+        captureHistoryTransferActive = true
+        persistCaptureHistoryTransferPhase(.downloading)
+        do {
+          try writeFrame(
+            type: .captureLogRequest,
+            payload: CaptureLogRequest(operation: .pause, slot: 2).encoded()
+          )
+        } catch {
+          captureTransferRearmPending = true
+          captureSyncMessage =
+            "Interrupted history is safe; the pause request will retry after reconnection: \(error.localizedDescription)"
+          Self.commissioningTrace(
+            "CAPTURE_TRANSFER_RECOVERY_DEFERRED action=pause-after-reconnect error={\(Self.errorEvidence(error))}"
+          )
+        }
+        return
+      }
+      if !captureSyncSuspendedForOTA, try await hasIncompleteLocalCapture(for: index) {
+        setCaptureHistoryRecoveryAvailable(true)
+        Self.commissioningTrace(
+          "CAPTURE_TRANSFER_AVAILABLE source=partial-local-evidence action=owner-triggered-only"
+        )
+      }
+      switch CaptureSyncPolicy.mode(
+        recorderIsLogging: index.logging,
+        suspendedForOTA: captureSyncSuspendedForOTA
+      ) {
+      case .otaPaused:
+        captureSyncMessage = "Passive flight recorder is flushed and paused for OTA."
+      case .inventoryOnlyWhileRecording:
+        captureSyncTask?.cancel()
+        captureSyncTask = nil
+        captureChunkResponseTask?.cancel()
+        captureChunkResponseTask = nil
+        captureSyncTargets.removeAll()
+        if captureResumeConfirmationPending {
+          captureResumeConfirmationPending = false
+          captureTransferRearmPending = false
+          captureHistoryTransferActive = false
+          persistCaptureHistoryTransferPhase(nil)
+          captureSyncMessage =
+            captureHistoryRecoveryAvailable
+            ? "Passive recording resumed. Interrupted history remains saved for an explicit retry from Evidence."
+            : "Gateway history is synchronized on this iPhone and passive recording has resumed."
+          Self.commissioningTrace(
+            "CAPTURE_TRANSFER_COMPLETE recorder=resumed local_sessions=\(captureSessions.count)"
+          )
+        } else {
+          captureSyncMessage =
+            captureHistoryRecoveryAvailable
+            ? "Gateway inventory refreshed. An incomplete checkpoint is available; history download starts only when you request it."
+            : "Gateway inventory refreshed. History download is deferred while CAN recording is active to protect live capture and BLE stability."
+        }
+        Self.commissioningTrace(
+          "CAPTURE_SYNC_DEFERRED reason=recorder-active policy=inventory-only current_session=\(index.currentSessionID) current_records=\(index.currentRecords) previous_session=\(index.previousSessionID) previous_records=\(index.previousRecords)"
+        )
+      case .transferHistory:
+        if CaptureSyncPolicy.permitsAutomaticHistoryRecovery,
+          !captureHistoryTransferActive, try await hasIncompleteLocalCapture(for: index)
+        {
+          captureAutoResumeAfterHistoryTransfer = true
+          captureResumeConfirmationPending = false
+          captureTransferRearmPending = false
+          captureHistoryTransferActive = true
+          persistCaptureHistoryTransferPhase(.downloading)
+          captureSyncMessage =
+            "Recovering an interrupted history transfer from its saved iPhone checkpoint…"
+          Self.commissioningTrace(
+            "CAPTURE_TRANSFER_RECOVERED source=partial-local-evidence action=continue-and-auto-resume"
+          )
+        }
+        if captureResumeConfirmationPending {
+          captureSyncMessage =
+            "Waiting for passive recording to resume; no history data is being transferred."
+          Self.commissioningTrace(
+            "CAPTURE_SYNC_DEFERRED reason=resume-confirmation-pending action=no-bulk-transfer"
+          )
+        } else if captureHistoryTransferActive && captureAutoResumeAfterHistoryTransfer {
+          try await beginCaptureSync(index)
+        } else {
+          captureSyncMessage =
+            "The gateway recorder is paused. Choose Download paused history and resume, or resume recording now."
+          Self.commissioningTrace(
+            "CAPTURE_SYNC_AWAITING_OWNER_ACTION reason=paused-without-durable-transfer-intent current_session=\(index.currentSessionID) current_records=\(index.currentRecords) previous_session=\(index.previousSessionID) previous_records=\(index.previousRecords)"
+          )
+        }
+      }
+    case .captureLogChunk:
+      guard let gatewayID = handshake?.gatewayID else { return }
+      let chunk = try CaptureLogChunk.decode(
+        frame.payload,
+        gatewayID: gatewayID,
+        ingestedAt: Self.timestamp()
+      )
+      try await consumeCaptureChunk(chunk)
     case .otaControl:
+      let status = try VHOSJSON.decoder().decode(GatewayOTAStatus.self, from: frame.payload)
+      otaStatus = status
       lastOTAStatusAt = Date()
-      transportMessage = String(data: frame.payload, encoding: .utf8) ?? "OTA status received."
+      transportMessage = status.detail
+      Self.commissioningTrace(
+        "OTA_STATUS state=\(status.state) active=\(status.sessionActive) expires=\(status.expiresInSeconds)"
+      )
     default:
       break
     }
+  }
+
+  private func hasIncompleteLocalCapture(for index: CaptureLogIndex) async throws -> Bool {
+    guard let gatewayID = handshake?.gatewayID else { return false }
+    let candidates: [(UInt32, UInt32)] = [
+      (index.previousSessionID, index.previousRecords),
+      (index.currentSessionID, index.currentRecords),
+    ]
+    for (sessionID, totalRecords) in candidates {
+      guard sessionID != 0, totalRecords > 0 else { continue }
+      let localCount = try await evidencePersistence.captureRecordCount(
+        gatewayID: gatewayID, sessionID: sessionID)
+      if localCount > 0 && localCount < totalRecords { return true }
+    }
+    return false
   }
 
   private func writeFrame(type: GatewayMessageType, payload: Data) throws {
@@ -602,6 +2662,250 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     }
   }
 
+  func importEvidenceSync(from url: URL) async throws -> EvidenceSyncImportSummary {
+    let summary: EvidenceSyncImportSummary
+    do {
+      // URL preflight and bounded archive reads belong to the serial persistence actor. Reading
+      // an 18 MiB document-provider file on CoreBluetooth's main actor can otherwise starve the
+      // live notification and handshake deadlines.
+      let imported = try await evidencePersistence.importBundle(from: url)
+      summary = imported.summary
+      portableFrameIntegrityLatch.recordVerified(count: imported.portableFrameCount)
+    } catch {
+      recordPortableFrameIntegrityFailure(error)
+      throw error
+    }
+    lastEvidenceSyncMessage =
+      "Verified \(summary.verifiedRecords) records; appended \(summary.appendedRecords) new logical frames."
+    return summary
+  }
+
+  #if DEBUG
+    func importDebugPassiveCAN(from url: URL) async throws -> DebugPassiveCANImportSummary {
+      let summary = try await evidencePersistence.importDebugPassiveCAN(from: url)
+      captureSessions = try await evidencePersistence.captureSummaries()
+      if summary.appendedRecords > 0 {
+        captureSyncCompletionGeneration &+= 1
+      }
+      captureSyncMessage =
+        "Debug import decoded \(summary.decodedRecords) passive records across \(summary.sessionCount) sessions; appended \(summary.appendedRecords) new records."
+      return summary
+    }
+  #endif
+
+  nonisolated static func readBoundedEvidenceSyncArchive(from url: URL) throws -> Data {
+    let values = try url.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey])
+    if values.isRegularFile == false { throw EvidenceSyncError.invalidArchive }
+    if let fileSize = values.fileSize,
+      fileSize > EvidenceSyncBundle.maximumArchiveByteCount
+    {
+      throw EvidenceSyncError.archiveTooLarge
+    }
+    let handle = try FileHandle(forReadingFrom: url)
+    defer { try? handle.close() }
+    var archive = Data()
+    archive.reserveCapacity(
+      min(values.fileSize ?? 0, EvidenceSyncBundle.maximumArchiveByteCount))
+    while true {
+      let chunk = try handle.read(upToCount: 64 * 1_024) ?? Data()
+      if chunk.isEmpty { break }
+      guard chunk.count <= EvidenceSyncBundle.maximumArchiveByteCount - archive.count else {
+        throw EvidenceSyncError.archiveTooLarge
+      }
+      archive.append(chunk)
+    }
+    return archive
+  }
+
+  private func beginCaptureSync(_ index: CaptureLogIndex) async throws {
+    guard let gatewayID = handshake?.gatewayID else { return }
+    captureSyncTask?.cancel()
+    captureSyncTask = nil
+    captureChunkResponseTask?.cancel()
+    captureChunkResponseTask = nil
+    captureSyncTargets.removeAll()
+    let candidates: [(UInt8, UInt32, UInt32)] = [
+      (1, index.previousSessionID, index.previousRecords),
+      (0, index.currentSessionID, index.currentRecords),
+    ]
+    for (slot, sessionID, totalRecords) in candidates where sessionID != 0 && totalRecords > 0 {
+      let localCount = try await evidencePersistence.captureRecordCount(
+        gatewayID: gatewayID, sessionID: sessionID)
+      let offset = localCount <= totalRecords ? localCount : 0
+      captureSyncTargets.append(
+        CaptureSyncTarget(
+          slot: slot,
+          sessionID: sessionID,
+          totalRecords: totalRecords,
+          recordOffset: offset
+        ))
+    }
+    captureSessions = try await evidencePersistence.captureSummaries()
+    Self.commissioningTrace(
+      "CAPTURE_FLOW_CONTROL policy=response-validated-window window=1 pacing=firmware-backpressure"
+    )
+    scheduleNextCaptureChunk(after: Self.captureInitialSyncDelay)
+  }
+
+  private func scheduleNextCaptureChunk(after delay: Duration) {
+    captureSyncTask?.cancel()
+    let scheduledSession = linkSession
+    captureSyncTask = Task { [weak self] in
+      try? await Task.sleep(for: delay)
+      guard !Task.isCancelled, let self, self.linkSession == scheduledSession,
+        self.applicationSessionHealthy, !self.captureSyncSuspendedForOTA
+      else { return }
+      self.captureSyncTask = nil
+      self.requestNextCaptureChunk()
+    }
+  }
+
+  private func requestNextCaptureChunk() {
+    guard applicationSessionHealthy, !captureSyncSuspendedForOTA,
+      captureChunkResponseTask == nil
+    else { return }
+    while let target = captureSyncTargets.first,
+      target.recordOffset >= target.totalRecords
+    {
+      captureSyncTargets.removeFirst()
+    }
+    guard let target = captureSyncTargets.first else {
+      Task { @MainActor [weak self] in
+        guard let self else { return }
+        do {
+          try await self.finishCaptureSync()
+        } catch {
+          self.captureSyncMessage =
+            "Capture history is unavailable: \(error.localizedDescription)"
+        }
+      }
+      requestCaptureResumeAfterHistoryTransfer(
+        completionMessage: "History download complete; resuming passive recording…"
+      )
+      return
+    }
+    do {
+      try writeFrame(
+        type: .captureLogRequest,
+        payload: CaptureLogRequest(
+          operation: .read,
+          slot: target.slot,
+          recordOffset: target.recordOffset
+        ).encoded()
+      )
+      captureSyncMessage =
+        "Syncing session \(target.sessionID): \(target.recordOffset)/\(target.totalRecords) records…"
+      armCaptureChunkResponseTimeout(for: target)
+    } catch {
+      captureSyncMessage = error.localizedDescription
+    }
+  }
+
+  private func finishCaptureSync() async throws {
+    captureSessions = try await evidencePersistence.captureSummaries()
+    setCaptureHistoryRecoveryAvailable(false)
+    captureSyncMessage = "Recent gateway logs are synchronized on this iPhone."
+    let fingerprint =
+      captureSessions
+      .map { "\($0.gatewayID):\($0.sessionID):\($0.recordCount):\($0.byteCount)" }
+      .joined(separator: "|")
+    if !fingerprint.isEmpty, fingerprint != lastCaptureSyncFingerprint {
+      lastCaptureSyncFingerprint = fingerprint
+      captureSyncCompletionGeneration &+= 1
+    }
+    Self.commissioningTrace(
+      "CAPTURE_SYNC_COMPLETE downloaded=\(captureDownloadedRecords) local_sessions=\(captureSessions.count) outbox_generation=\(captureSyncCompletionGeneration)"
+    )
+  }
+
+  private func armCaptureChunkResponseTimeout(for target: CaptureSyncTarget) {
+    captureChunkResponseTask?.cancel()
+    let requestSession = linkSession
+    let requestSlot = target.slot
+    let requestSessionID = target.sessionID
+    let requestOffset = target.recordOffset
+    captureChunkResponseTask = Task { [weak self] in
+      try? await Task.sleep(for: Self.captureChunkResponseTimeout)
+      guard !Task.isCancelled, let self, self.linkSession == requestSession,
+        self.applicationSessionHealthy,
+        let current = self.captureSyncTargets.first,
+        current.slot == requestSlot,
+        current.sessionID == requestSessionID,
+        current.recordOffset == requestOffset
+      else { return }
+      self.captureChunkResponseTask = nil
+      self.setCaptureHistoryRecoveryAvailable(true)
+      self.captureSyncMessage =
+        "Recent-log sync paused at record \(requestOffset); the live vehicle session remains connected."
+      Self.commissioningTrace(
+        "CAPTURE_SYNC_PAUSED reason=chunk-timeout link_session=\(requestSession) slot=\(requestSlot) session=\(requestSessionID) offset=\(requestOffset) timeout_seconds=8"
+      )
+      self.requestCaptureResumeAfterHistoryTransfer(
+        completionMessage:
+          "History download paused after a timeout; resuming passive recording to avoid an evidence gap…"
+      )
+    }
+  }
+
+  private func requestCaptureResumeAfterHistoryTransfer(completionMessage: String) {
+    guard captureAutoResumeAfterHistoryTransfer else { return }
+    captureAutoResumeAfterHistoryTransfer = false
+    captureResumeConfirmationPending = true
+    captureTransferRearmPending = false
+    persistCaptureHistoryTransferPhase(.resuming)
+    do {
+      try writeFrame(
+        type: .captureLogRequest,
+        payload: CaptureLogRequest(operation: .resume).encoded()
+      )
+      captureSyncMessage = completionMessage
+      Self.commissioningTrace(
+        "CAPTURE_AUTO_RESUME_REQUESTED link_session=\(linkSession)"
+      )
+    } catch {
+      captureSyncMessage =
+        "History is saved on this iPhone; recorder resume will retry after reconnection: \(error.localizedDescription)"
+      Self.commissioningTrace(
+        "CAPTURE_AUTO_RESUME_DEFERRED link_session=\(linkSession) retry=after-reconnect error={\(Self.errorEvidence(error))}"
+      )
+    }
+  }
+
+  private func consumeCaptureChunk(_ chunk: CaptureLogChunk) async throws {
+    guard var target = captureSyncTargets.first,
+      chunk.slot == target.slot,
+      chunk.sessionID == target.sessionID,
+      chunk.recordOffset == target.recordOffset
+    else {
+      throw CaptureSyncError.unexpectedChunk
+    }
+    captureChunkResponseTask?.cancel()
+    captureChunkResponseTask = nil
+    guard let gatewayID = handshake?.gatewayID else { return }
+    let appended = try await evidencePersistence.appendCaptureRecords(
+      chunk.records,
+      gatewayID: gatewayID,
+      sessionID: chunk.sessionID
+    )
+    captureDownloadedRecords &+= UInt64(appended)
+    Self.commissioningTrace(
+      "CAPTURE_CHUNK session=\(chunk.sessionID) slot=\(chunk.slot) offset=\(chunk.recordOffset) received=\(chunk.records.count) appended=\(appended) end=\(chunk.endOfFile)"
+    )
+    target.recordOffset &+= UInt32(chunk.records.count)
+    captureSyncTargets[0] = target
+    captureSessions = try await evidencePersistence.captureSummaries()
+    if chunk.endOfFile || target.recordOffset >= target.totalRecords {
+      captureSyncTargets.removeFirst()
+    } else if chunk.records.isEmpty {
+      throw CaptureSyncError.emptyNonterminalChunk
+    }
+    // A decoded response is the only credit that releases another request. This
+    // one-frame window is safe under iOS suspension because it does not depend on
+    // an app timer to keep the transfer alive; ESP-side notify retry/backpressure
+    // remains the transport-rate authority.
+    requestNextCaptureChunk()
+  }
+
   private func record(_ frame: GatewayFrame) {
     decodedFrameCount &+= 1
     lastFrameReceivedAt = Date()
@@ -610,6 +2914,9 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       if frame.sequence != expected {
         sequenceDiscontinuityCount &+= 1
         if frame.sequence > expected { missingSequenceCount &+= frame.sequence - expected }
+        Self.commissioningTrace(
+          "FRAME_SEQUENCE_DISCONTINUITY link_session=\(linkSession) expected=\(expected) observed=\(frame.sequence) discontinuities=\(sequenceDiscontinuityCount) missing=\(missingSequenceCount)"
+        )
       }
     }
     lastReceivedSequence = frame.sequence
@@ -634,9 +2941,33 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       && value.code == CBError.peerRemovedPairingInformation.rawValue
   }
 
+  private func isEncryptionTimeout(_ error: Error?) -> Bool {
+    guard let error else { return false }
+    let value = error as NSError
+    return value.domain == CBErrorDomain
+      && value.code == CBError.encryptionTimedOut.rawValue
+  }
+
+  private func resumeSignalAwareScan(after peripheral: CBPeripheral, error: Error?) {
+    Self.commissioningTrace(
+      "ENCRYPTION_TIMEOUT_SCAN_FALLBACK peripheral=\(peripheralEvidence(peripheral)) error={\(Self.errorEvidence(error))} action=service-scan-with-rssi-gate"
+    )
+    resetTransportSession()
+    state = .disconnected
+    startScan(source: "encryption-timeout-fallback", skipConnectedRetrieval: true)
+    transportMessage =
+      "Encryption timed out; scanning for the saved gateway and waiting for a reliable signal…"
+  }
+
   private func connect(_ peripheral: CBPeripheral) {
+    if let active = self.peripheral, active !== peripheral {
+      Self.commissioningTrace(
+        "PARALLEL_CONNECT_REJECTED active=\(peripheralEvidence(active)) candidate=\(peripheralEvidence(peripheral))"
+      )
+      central.cancelPeripheralConnection(peripheral)
+      return
+    }
     self.peripheral = peripheral
-    peripheral.delegate = self
     if peripheral.state == .connected {
       beginServiceDiscovery(peripheral, source: "already-connected")
       return
@@ -645,112 +2976,331 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       state = .connecting
       transportMessage = "Waiting for the existing gateway connection…"
       Self.commissioningTrace("CONNECT_WAITING id=\(peripheral.identifier.uuidString)")
+      armConnectionTimeout(peripheral, source: "existing-connect-request")
       return
     }
+    if peripheral.state == .disconnecting {
+      scanRequested = true
+      scanAfterRestorationCleanup = true
+      transportMessage = "Waiting for the previous gateway link to close before reconnecting…"
+      Self.commissioningTrace(
+        "CONNECT_DISCONNECTING_DEFERRED peripheral=\(peripheralEvidence(peripheral))"
+      )
+      retireRestoredPeripheral(peripheral, reason: "connect-called-while-disconnecting")
+      return
+    }
+    guard peripheral.state == .disconnected else {
+      Self.commissioningTrace(
+        "CONNECT_STATE_REJECTED peripheral=\(peripheralEvidence(peripheral))"
+      )
+      return
+    }
+    Self.commissioningTrace(
+      "CONNECT_REQUEST peripheral=\(peripheralEvidence(peripheral)) reconnect_attempt=\(reconnectAttemptCount)"
+    )
     central.connect(
       peripheral,
       options: [
-        CBConnectPeripheralOptionNotifyOnDisconnectionKey: true,
+        CBConnectPeripheralOptionNotifyOnDisconnectionKey: true
       ])
+    armConnectionTimeout(peripheral, source: "new-connect-request")
   }
 
   private func handleDisconnect(
     _ peripheral: CBPeripheral, isSystemReconnecting: Bool, error: Error?
   ) {
-    let failure = error.map {
-      let value = $0 as NSError
-      return "domain=\(value.domain) code=\(value.code) message=\(value.localizedDescription)"
-    } ?? "none"
-    Self.commissioningTrace(
-      "LINK_DISCONNECTED system_reconnecting=\(isSystemReconnecting) \(failure)"
-    )
-    if scanAfterPendingCancellation {
-      scanAfterPendingCancellation = false
-      resetConnection()
-      startScan()
+    if completeRetiredPeripheral(peripheral, event: "disconnect", error: error) { return }
+    guard isActivePeripheral(peripheral) else {
+      Self.commissioningTrace(
+        "STALE_DISCONNECT_IGNORED peripheral=\(peripheralEvidence(peripheral)) "
+          + "active=\(activePeripheralEvidence)"
+      )
       return
+    }
+    if pendingStaleGATTRescan {
+      completeStaleGATTRecovery(after: peripheral, event: "disconnect")
+      return
+    }
+    if pendingWeakLinkRescan {
+      completeWeakLinkRecovery(after: peripheral, event: "disconnect")
+      return
+    }
+    let failure = Self.errorEvidence(error)
+    recordTransportFailure(error, event: "link-disconnected")
+    Self.commissioningTrace(
+      "LINK_DISCONNECTED link_session=\(linkSession) pairing_pending=\(notificationPairingPending) system_reconnecting=\(isSystemReconnecting) error={\(failure)}"
+    )
+    if captureHistoryTransferActive {
+      let recoveryAvailableAfterDisconnect =
+        CaptureHistoryRecoveryPersistencePolicy.restoredRecoveryAvailable(
+          phase: captureHistoryTransferPhase,
+          persistedIncompleteCheckpointAvailable: captureHistoryRecoveryAvailable)
+      captureSyncTask?.cancel()
+      captureSyncTask = nil
+      captureChunkResponseTask?.cancel()
+      captureChunkResponseTask = nil
+      captureSyncTargets.removeAll()
+      // RESUMING says only that recorder confirmation is pending. It does not imply the
+      // completed history copy became incomplete again. Preserve a separately recorded
+      // checkpoint, but never manufacture one merely because the link dropped late.
+      setCaptureHistoryRecoveryAvailable(recoveryAvailableAfterDisconnect)
+      captureAutoResumeAfterHistoryTransfer = false
+      captureTransferRearmPending = false
+      if captureHistoryTransferPhase == .resuming || captureResumeConfirmationPending {
+        captureResumeConfirmationPending = true
+        captureHistoryTransferActive = true
+        persistCaptureHistoryTransferPhase(.resuming)
+        captureSyncMessage =
+          "Recorder resume is still unconfirmed. Normal BLE reconnection may retry only that resume command; bulk history remains disabled."
+        Self.commissioningTrace(
+          "CAPTURE_TRANSFER_INTERRUPTED link_session=\(linkSession) phase=resuming downloaded=\(captureDownloadedRecords) recovery=resume-only"
+        )
+      } else {
+        captureResumeConfirmationPending = false
+        captureHistoryTransferActive = false
+        persistCaptureHistoryTransferPhase(nil)
+        captureSyncMessage =
+          "History transfer stopped with the link. Its checkpoint remains available for an explicit retry; normal BLE reconnection is independent."
+        Self.commissioningTrace(
+          "CAPTURE_TRANSFER_INTERRUPTED link_session=\(linkSession) phase=cleared downloaded=\(captureDownloadedRecords) recovery=owner-triggered-only"
+        )
+      }
     }
     if userRequestedDisconnect || !automaticReconnectEnabled {
       resetConnection()
       transportMessage = "Gateway disconnected by user."
       return
     }
-    resetTransportSession(preservingSelection: true)
     if isSystemReconnecting {
+      resetTransportSession(preservingSelection: true)
       automaticReconnectActive = true
       state = .connecting
       transportMessage = "Connection interrupted; iPhone is automatically reconnecting…"
       Self.commissioningTrace("SYSTEM_RECONNECT_ACTIVE")
       return
     }
+    if isEncryptionTimeout(error) {
+      resumeSignalAwareScan(after: peripheral, error: error)
+      return
+    }
     scheduleReconnect(to: peripheral, error: error)
   }
 
   private func beginServiceDiscovery(_ peripheral: CBPeripheral, source: String) {
+    if isActivePeripheral(peripheral), peripheralConnected {
+      Self.commissioningTrace(
+        "LINK_CONNECTED_DUPLICATE_IGNORED link_session=\(linkSession) source=\(source) peripheral=\(peripheralEvidence(peripheral))"
+      )
+      return
+    }
+    if let active = self.peripheral, active !== peripheral {
+      Self.commissioningTrace(
+        "PARALLEL_LINK_ADOPTION_REJECTED source=\(source) active=\(peripheralEvidence(active)) candidate=\(peripheralEvidence(peripheral))"
+      )
+      central.cancelPeripheralConnection(peripheral)
+      return
+    }
+    restoredConnectionTask?.cancel()
     reconnectTask?.cancel()
+    central.stopScan()
+    scanFallbackTask?.cancel()
+    scanRequested = false
+    scanActive = false
     automaticReconnectActive = false
     automaticReconnectEnabled = true
     userRequestedDisconnect = false
     self.peripheral = peripheral
-    peripheral.delegate = self
     peripheralConnected = true
+    gatewayIdentityValidated = false
     connectedAt = Date()
     currentSessionResultStartIndex = experimentResults.count
+    linkSession &+= 1
+    installPeripheralDelegate(on: peripheral, for: linkSession)
+    notificationRequestSession = nil
+    notificationPairingPending = false
+    linkRSSIQualifiedSession = nil
+    discoveredRSSI = nil
     state = .connecting
-    transportMessage = "Connected; negotiating gateway contract…"
+    transportMessage = "Connected; validating the current BLE signal…"
     Self.logger.info("ESP32 BLE connection established via \(source, privacy: .public)")
     Self.commissioningTrace(
-      "LINK_CONNECTED id=\(peripheral.identifier.uuidString) source=\(source) state=\(peripheral.state.rawValue)"
+      "LINK_CONNECTED link_session=\(linkSession) peripheral=\(peripheralEvidence(peripheral)) source=\(source) state=\(peripheral.state.rawValue)"
     )
-    peripheral.discoverServices([Self.vhosService, Self.factoryService])
-    armGATTDiscoveryTimeout(peripheral, phase: "services")
+    Self.commissioningTrace("LINK_RSSI_REQUEST link_session=\(linkSession) reason=connected")
+    peripheral.readRSSI()
+    armLinkRSSIValidationTimeout(peripheral, callbackSession: linkSession)
+  }
+
+  private func armLinkRSSIValidationTimeout(
+    _ peripheral: CBPeripheral, callbackSession: UInt64
+  ) {
+    linkRSSIValidationTask?.cancel()
+    linkRSSIValidationTask = Task { [weak self, weak peripheral] in
+      try? await Task.sleep(for: Self.linkRSSIValidationTimeout)
+      guard !Task.isCancelled, let self, let peripheral,
+        self.acceptsPeripheralCallback(
+          peripheral, callbackSession: callbackSession, event: "linked-rssi-watchdog")
+      else { return }
+      self.linkRSSIValidationTask = nil
+      Self.commissioningTrace(
+        "LINK_RSSI_VALIDATION_TIMEOUT link_session=\(callbackSession) timeout_seconds=3 action=close-and-rescan"
+      )
+      self.refreshWeakLinkCandidate(
+        peripheral,
+        reason: "The current BLE signal could not be verified in time."
+      )
+    }
+  }
+
+  private func beginGATTDiscoveryAfterRSSI(
+    _ peripheral: CBPeripheral, callbackSession: UInt64
+  ) {
+    guard
+      acceptsPeripheralCallback(
+        peripheral, callbackSession: callbackSession, event: "linked-rssi-qualified")
+    else { return }
+    guard let discoveredRSSI,
+      GatewayBLEIdentityPolicy.connectionAttemptIsReliable(observedRSSI: discoveredRSSI)
+    else { return }
+    linkRSSIValidationTask?.cancel()
+    linkRSSIValidationTask = nil
+    linkRSSIQualifiedSession = callbackSession
+    transportMessage = "Connected; negotiating gateway contract…"
+    Self.commissioningTrace(
+      "LINK_RSSI_QUALIFIED link_session=\(callbackSession) rssi=\(discoveredRSSI) threshold=\(GatewayBLEIdentityPolicy.minimumReliableConnectionRSSI) action=begin-gatt"
+    )
+    if let services = peripheral.services, !services.isEmpty {
+      Self.commissioningTrace(
+        "GATT_CACHE_ADOPTED id=\(peripheral.identifier.uuidString) service_count=\(services.count)"
+      )
+      processDiscoveredServices(
+        peripheral, services: services, source: "cache", callbackSession: callbackSession)
+    } else {
+      peripheral.discoverServices([Self.vhosService, Self.factoryService])
+      armGATTDiscoveryTimeout(peripheral, phase: "services")
+    }
   }
 
   private func armGATTDiscoveryTimeout(_ peripheral: CBPeripheral, phase: String) {
     serviceDiscoveryTask?.cancel()
+    let discoverySession = linkSession
+    let watchdog = gattDiscoveryWatchdog()
+    let watchdogRSSI = discoveredRSSI.map(String.init) ?? "unavailable"
+    Self.commissioningTrace(
+      "GATT_DISCOVERY_WATCHDOG_ARMED phase=\(phase) link_session=\(discoverySession) profile=\(watchdog.profile) rssi=\(watchdogRSSI) timeout_seconds=\(watchdog.seconds)"
+    )
     serviceDiscoveryTask = Task { [weak self, weak peripheral] in
-      try? await Task.sleep(for: .seconds(6))
+      try? await Task.sleep(for: watchdog.delay)
       guard !Task.isCancelled, let self, let peripheral,
-        self.peripheral?.identifier == peripheral.identifier, self.peripheralConnected
+        self.acceptsPeripheralCallback(
+          peripheral, callbackSession: discoverySession, event: "gatt-watchdog-\(phase)")
       else { return }
-      let complete = phase == "services"
+      let complete =
+        phase == "services"
         ? (self.vhosServiceDiscovered || self.factoryServiceDiscovered)
         : ((self.factoryServiceDiscovered && self.state == .factoryCompatible)
           || (self.commandChannelReady && self.streamChannelDiscovered
             && self.healthChannelDiscovered && self.otaStatusChannelDiscovered))
       guard !complete else { return }
-      self.transportMessage = "Restored BLE link is not responding; refreshing it automatically…"
+      if phase == "services", !self.gatewayIdentityValidated {
+        if self.candidateAdvertisedVHOSService || self.candidateWasPreviouslyValidated {
+          Self.commissioningTrace(
+            "TRUSTED_GATT_TIMEOUT id=\(peripheral.identifier.uuidString)"
+          )
+          self.refreshStaleGATTCandidate(
+            peripheral,
+            reason:
+              "The saved gateway database is stale; scanning for the current gateway identity…"
+          )
+        } else {
+          self.rejectCandidateAndResumeScanning(
+            peripheral, reason: "BLE candidate did not prove a VHOS/WiCAN service identity.")
+        }
+        return
+      }
+      self.transportMessage =
+        "Verified gateway GATT is not responding; refreshing it automatically…"
       Self.commissioningTrace(
         "GATT_DISCOVERY_TIMEOUT phase=\(phase) id=\(peripheral.identifier.uuidString) state=\(peripheral.state.rawValue)"
       )
-      self.central.cancelPeripheralConnection(peripheral)
+      self.refreshStaleGATTCandidate(
+        peripheral,
+        reason: "Gateway contract discovery timed out; scanning for the current gateway identity…")
+    }
+  }
+
+  private func gattDiscoveryWatchdog() -> (profile: String, delay: Duration, seconds: Int) {
+    guard let discoveredRSSI else {
+      return ("unknown-signal", Self.gattDiscoveryTimeoutWeak, 22)
+    }
+    if discoveredRSSI <= -80 {
+      return ("fringe", Self.gattDiscoveryTimeoutFringe, 30)
+    }
+    if discoveredRSSI <= -72 {
+      return ("weak", Self.gattDiscoveryTimeoutWeak, 22)
+    }
+    return ("normal", Self.gattDiscoveryTimeoutStrong, 12)
+  }
+
+  private func armConnectionTimeout(_ peripheral: CBPeripheral, source: String) {
+    restoredConnectionTask?.cancel()
+    restoredConnectionTask = Task { [weak self, weak peripheral] in
+      try? await Task.sleep(for: .seconds(12))
+      guard !Task.isCancelled, let self, let peripheral,
+        self.isActivePeripheral(peripheral),
+        !self.peripheralConnected
+      else { return }
+      if peripheral.state == .connected {
+        Self.commissioningTrace(
+          "RESTORED_CONNECT_ADOPT id=\(peripheral.identifier.uuidString) recovery=service-discovery"
+        )
+        self.beginServiceDiscovery(peripheral, source: "restored-timeout-adopted")
+        return
+      }
+      Self.commissioningTrace(
+        "CONNECT_TIMEOUT id=\(peripheral.identifier.uuidString) state=\(peripheral.state.rawValue) source=\(source) recovery=cancel-and-service-scan"
+      )
+      self.transportMessage =
+        "The restored BLE connection stopped responding; scanning again automatically…"
+      self.retireRestoredPeripheral(peripheral, reason: "restored-connection-timeout")
+      self.resetTransportSession()
+      self.scanRequested = true
+      self.scanAfterRestorationCleanup = true
+      if self.retiredRestoredPeripherals.isEmpty {
+        self.scanAfterRestorationCleanup = false
+        self.startScan(source: "connection-timeout-fallback", skipConnectedRetrieval: true)
+      }
     }
   }
 
   private func scheduleReconnect(to peripheral: CBPeripheral, error: Error?) {
     reconnectTask?.cancel()
+    let wasPairingPending = notificationPairingPending
+    let reason = connectionFailureMessage(
+      error,
+      fallback: "BLE link interrupted.",
+      pairingWasPending: wasPairingPending
+    )
     resetTransportSession(preservingSelection: true)
     self.peripheral = peripheral
-    peripheral.delegate = self
     reconnectAttemptCount += 1
     automaticReconnectActive = true
     state = .connecting
     let delays = [1, 2, 4, 8, 15, 30]
     let delay = delays[min(reconnectAttemptCount - 1, delays.count - 1)]
-    let reason = connectionFailureMessage(error, fallback: "BLE link interrupted.")
     transportMessage =
       "\(reason) Reconnecting automatically in \(delay) second\(delay == 1 ? "" : "s")…"
     Self.commissioningTrace(
-      "RECONNECT_SCHEDULED attempt=\(reconnectAttemptCount) delay=\(delay)"
+      "RECONNECT_SCHEDULED attempt=\(reconnectAttemptCount) delay=\(delay) previous_pairing_pending=\(wasPairingPending) error={\(Self.errorEvidence(error))}"
     )
     reconnectTask = Task { [weak self, weak peripheral] in
       try? await Task.sleep(for: .seconds(delay))
       guard !Task.isCancelled, let self, let peripheral,
         self.automaticReconnectEnabled, !self.userRequestedDisconnect,
-        self.central.state == .poweredOn
+        self.central.state == .poweredOn, self.isActivePeripheral(peripheral)
       else { return }
       self.transportMessage =
-        "Reconnecting to \(self.discoveredName ?? "the saved gateway")…"
+        "Reconnecting to \(self.canonicalDisplayName)…"
       self.connect(peripheral)
     }
   }
@@ -761,18 +3311,469 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     Self.commissioningTrace("CENTRAL_REBUILD reason=peer-removed-pairing-information")
     central.stopScan()
     central.delegate = nil
+    restoredCleanupTask?.cancel()
+    restoredCleanupTask = nil
+    retiredRestoredPeripherals.removeAll()
+    pendingRestoredPeripheral = nil
+    scanAfterRestorationCleanup = false
+    connectionCleanupActive = false
+    centralCleanupRecoveryPending = false
     resetTransportSession()
     scanRequested = true
+    reconnectIntentRequested = true
     automaticReconnectEnabled = true
     userRequestedDisconnect = false
     state = .scanning
     transportMessage = "Resetting the Bluetooth session for fresh pairing…"
-    central = CBCentralManager(delegate: self, queue: .main, options: nil)
+    replaceCentralManager(reason: "peer-removed-pairing-information")
   }
 
-  private func connectionFailureMessage(_ error: Error?, fallback: String) -> String {
+  private func replaceCentralManager(reason: String) {
+    let previousIdentifier = currentCentralRestoreIdentifier
+    central.stopScan()
+    central.delegate = nil
+    let replacementIdentifier =
+      "\(Self.centralRestoreIdentifier).\(UUID().uuidString.lowercased())"
+    currentCentralRestoreIdentifier = replacementIdentifier
+    UserDefaults.standard.set(
+      replacementIdentifier, forKey: Self.centralRestoreIdentifierKey)
+    Self.commissioningTrace(
+      "CENTRAL_MANAGER_REPLACED reason=\(reason) previous_restore_id=\(previousIdentifier) replacement_restore_id=\(replacementIdentifier)"
+    )
+    central = CBCentralManager(
+      delegate: self,
+      queue: .main,
+      options: [CBCentralManagerOptionRestoreIdentifierKey: replacementIdentifier]
+    )
+  }
+
+  private func isActivePeripheral(_ candidate: CBPeripheral) -> Bool {
+    guard let peripheral else { return false }
+    return peripheral === candidate
+  }
+
+  private func installPeripheralDelegate(on peripheral: CBPeripheral, for session: UInt64) {
+    retireActivePeripheralDelegate()
+    let delegate = LinkScopedPeripheralDelegate(owner: self, linkSession: session)
+    activePeripheralDelegate = delegate
+    peripheral.delegate = delegate
+    if retiredPeripheralDelegates.count > 8,
+      let oldest = retiredPeripheralDelegates.keys.min()
+    {
+      retiredPeripheralDelegates.removeValue(forKey: oldest)
+    }
+    Self.commissioningTrace(
+      "PERIPHERAL_DELEGATE_INSTALLED link_session=\(session) peripheral=\(peripheralEvidence(peripheral))"
+    )
+  }
+
+  private func retireActivePeripheralDelegate() {
+    guard let delegate = activePeripheralDelegate else { return }
+    retiredPeripheralDelegates[delegate.linkSession] = delegate
+    activePeripheralDelegate = nil
+  }
+
+  private func acceptsPeripheralCallback(
+    _ candidate: CBPeripheral, callbackSession: UInt64, event: String
+  ) -> Bool {
+    guard callbackSession == linkSession, peripheralConnected,
+      isActivePeripheral(candidate),
+      activePeripheralDelegate?.linkSession == callbackSession
+    else {
+      Self.commissioningTrace(
+        "STALE_PERIPHERAL_CALLBACK_IGNORED event=\(event) callback_session=\(callbackSession) active_session=\(linkSession) connected=\(peripheralConnected) candidate={\(peripheralEvidence(candidate))} active={\(activePeripheralEvidence)}"
+      )
+      return false
+    }
+    return true
+  }
+
+  private func handleRSSIRead(
+    _ peripheral: CBPeripheral, rssi: NSNumber, error: Error?, callbackSession: UInt64
+  ) {
+    guard
+      acceptsPeripheralCallback(
+        peripheral, callbackSession: callbackSession, event: "rssi-read")
+    else { return }
+    if let error {
+      Self.commissioningTrace(
+        "LINK_RSSI_FAILED link_session=\(callbackSession) error={\(Self.errorEvidence(error))}"
+      )
+      return
+    }
+    let value = rssi.intValue
+    guard value != 127 else {
+      Self.commissioningTrace(
+        "LINK_RSSI_FAILED link_session=\(callbackSession) error={unavailable-sentinel}"
+      )
+      return
+    }
+    discoveredRSSI = value
+    Self.commissioningTrace("LINK_RSSI link_session=\(callbackSession) rssi=\(value)")
+    guard GatewayBLEIdentityPolicy.connectionAttemptIsReliable(observedRSSI: value) else {
+      linkRSSIValidationTask?.cancel()
+      linkRSSIValidationTask = nil
+      Self.commissioningTrace(
+        "LINK_RSSI_REJECTED link_session=\(callbackSession) rssi=\(value) threshold=\(GatewayBLEIdentityPolicy.minimumReliableConnectionRSSI) action=close-and-rescan"
+      )
+      refreshWeakLinkCandidate(
+        peripheral,
+        reason:
+          "The current BLE link is \(value) dBm, below the \(GatewayBLEIdentityPolicy.minimumReliableConnectionRSSI) dBm transfer threshold."
+      )
+      return
+    }
+    beginGATTDiscoveryAfterRSSI(peripheral, callbackSession: callbackSession)
+  }
+
+  private var activePeripheralEvidence: String {
+    peripheral.map(peripheralEvidence) ?? "none"
+  }
+
+  private func peripheralEvidence(_ peripheral: CBPeripheral) -> String {
+    "id=\(peripheral.identifier.uuidString),object=\(ObjectIdentifier(peripheral)),state=\(peripheral.state.rawValue)"
+  }
+
+  private func restorationStateRank(_ state: CBPeripheralState) -> Int {
+    switch state {
+    case .connected: 0
+    case .connecting: 1
+    case .disconnected: 2
+    case .disconnecting: 3
+    @unknown default: 4
+    }
+  }
+
+  private func retireRestoredPeripheral(_ peripheral: CBPeripheral, reason: String) {
+    let key = ObjectIdentifier(peripheral)
+    guard retiredRestoredPeripherals[key] == nil else { return }
+    guard
+      peripheral.state == .connected || peripheral.state == .connecting
+        || peripheral.state == .disconnecting
+    else {
+      Self.commissioningTrace(
+        "RESTORED_PERIPHERAL_ALREADY_IDLE reason=\(reason) peripheral=\(peripheralEvidence(peripheral))"
+      )
+      return
+    }
+    if isActivePeripheral(peripheral) {
+      retireActivePeripheralDelegate()
+    }
+    // Core Bluetooth may still deliver callbacks already queued for an active scan. Stop creating
+    // new work before retiring the inherited link, while preserving scanRequested so cleanup can
+    // resume the user's reconnect intent on one fresh central session.
+    scanFallbackTask?.cancel()
+    scanFallbackTask = nil
+    central.stopScan()
+    scanActive = false
+    scanMode = "Link cleanup"
+    peripheral.delegate = nil
+    retiredRestoredPeripherals[key] = peripheral
+    connectionCleanupActive = true
+    Self.commissioningTrace(
+      "RESTORED_PERIPHERAL_RETIRING reason=\(reason) peripheral=\(peripheralEvidence(peripheral))"
+    )
+    if peripheral.state != .disconnecting {
+      central.cancelPeripheralConnection(peripheral)
+    }
+    armRetiredPeripheralCleanupWatchdog()
+  }
+
+  @discardableResult
+  private func completeRetiredPeripheral(
+    _ peripheral: CBPeripheral, event: String, error: Error?
+  ) -> Bool {
+    let key = ObjectIdentifier(peripheral)
+    guard retiredRestoredPeripherals.removeValue(forKey: key) != nil else { return false }
+    Self.commissioningTrace(
+      "RESTORED_PERIPHERAL_RETIRED event=\(event) peripheral=\(peripheralEvidence(peripheral)) error={\(Self.errorEvidence(error))} remaining=\(retiredRestoredPeripherals.count)"
+    )
+    guard retiredRestoredPeripherals.isEmpty else {
+      armRetiredPeripheralCleanupWatchdog()
+      return true
+    }
+    finishRetiredPeripheralCleanup(source: event)
+    return true
+  }
+
+  private func finishRetiredPeripheralCleanup(source: String) {
+    restoredCleanupTask?.cancel()
+    restoredCleanupTask = nil
+    connectionCleanupActive = false
+    flushStaleScanDiscoveryTrace(reason: "restoration-cleanup-complete")
+    Self.commissioningTrace(
+      "RESTORED_CLEANUP_COMPLETE source=\(source) user_disconnected=\(userRequestedDisconnect) pending_restore=\(pendingRestoredPeripheral != nil) scan_after=\(scanAfterRestorationCleanup)"
+    )
+    if userRequestedDisconnect {
+      pendingRestoredPeripheral = nil
+      scanAfterRestorationCleanup = false
+      transportMessage = "Gateway disconnected by user."
+      return
+    }
+    if let restored = pendingRestoredPeripheral {
+      guard evidencePersistenceReady else {
+        transportMessage =
+          "Verifying the local append-only evidence store before resuming the existing gateway link…"
+        Self.commissioningTrace(
+          "RESTORE_CLEANUP_COMPLETE_DEFERRED reason=evidence-persistence-not-ready peripheral=\(peripheralEvidence(restored))"
+        )
+        return
+      }
+      pendingRestoredPeripheral = nil
+      resumeRestoredPeripheral(restored)
+      return
+    }
+    if scanAfterRestorationCleanup {
+      scanAfterRestorationCleanup = false
+      startScan(source: "restoration-cleanup-complete", skipConnectedRetrieval: true)
+      return
+    }
+    if state == .degraded {
+      transportMessage =
+        "The previous BLE link is closed. Select Reconnect to start one clean session."
+    }
+  }
+
+  private func armRetiredPeripheralCleanupWatchdog() {
+    restoredCleanupTask?.cancel()
+    restoredCleanupGeneration &+= 1
+    let cleanupGeneration = restoredCleanupGeneration
+    guard !retiredRestoredPeripherals.isEmpty else {
+      connectionCleanupActive = false
+      return
+    }
+    connectionCleanupActive = true
+    Self.commissioningTrace(
+      "RESTORED_CLEANUP_WATCHDOG_ARMED generation=\(cleanupGeneration) count=\(retiredRestoredPeripherals.count) timeout_seconds=4"
+    )
+    restoredCleanupTask = Task { [weak self] in
+      try? await Task.sleep(for: Self.restoredCleanupTimeout)
+      guard !Task.isCancelled, let self,
+        self.restoredCleanupGeneration == cleanupGeneration,
+        !self.retiredRestoredPeripherals.isEmpty
+      else { return }
+      self.restoredCleanupTask = nil
+      let stillActive = self.retiredRestoredPeripherals.values.filter {
+        $0.state != .disconnected
+      }
+      Self.commissioningTrace(
+        "RESTORED_CLEANUP_WATCHDOG_FIRED generation=\(cleanupGeneration) retained=\(self.retiredRestoredPeripherals.count) still_active=\(stillActive.count)"
+      )
+      if stillActive.isEmpty {
+        self.retiredRestoredPeripherals.removeAll()
+        self.finishRetiredPeripheralCleanup(source: "watchdog-observed-disconnected")
+        return
+      }
+      self.rebuildCentralAfterCleanupTimeout(stillActive, generation: cleanupGeneration)
+    }
+  }
+
+  private func rebuildCentralAfterCleanupTimeout(
+    _ stillActive: [CBPeripheral], generation: UInt64
+  ) {
+    let shouldReconnect = reconnectIntentRequested && !userRequestedDisconnect
+    Self.commissioningTrace(
+      "RESTORED_CLEANUP_CENTRAL_RECOVERY generation=\(generation) active=\(stillActive.count) reconnect_intent=\(shouldReconnect) action=cancel-old-central-before-rebuild"
+    )
+    for stale in stillActive {
+      stale.delegate = nil
+      if stale.state != .disconnecting {
+        central.cancelPeripheralConnection(stale)
+      }
+    }
+    flushStaleScanDiscoveryTrace(reason: "central-cleanup-rebuild")
+    central.stopScan()
+    central.delegate = nil
+    restoredCleanupTask?.cancel()
+    restoredCleanupTask = nil
+    retiredRestoredPeripherals.removeAll()
+    pendingRestoredPeripheral = nil
+    scanAfterRestorationCleanup = false
+    resetTransportSession()
+    scanRequested = shouldReconnect
+    automaticReconnectActive = shouldReconnect
+    state = shouldReconnect ? .connecting : .disconnected
+    transportMessage =
+      shouldReconnect
+      ? "Refreshing Core Bluetooth before reconnecting to the verified gateway…"
+      : "Finishing the previous BLE link…"
+    connectionCleanupActive = true
+    centralCleanupRecoveryPending = true
+    replaceCentralManager(reason: "retired-peripheral-cleanup-timeout")
+  }
+
+  private var validatedPeripheralIdentifiers: Set<String> {
+    Set(
+      (UserDefaults.standard.stringArray(forKey: Self.validatedPeripheralIdentifiersKey) ?? [])
+        .map { $0.uppercased() })
+  }
+
+  private func isPreviouslyValidated(_ peripheral: CBPeripheral) -> Bool {
+    GatewayBLEIdentityPolicy.restorationIsAllowed(
+      identifier: peripheral.identifier.uuidString,
+      validatedIdentifiers: validatedPeripheralIdentifiers)
+  }
+
+  private func isHandshakeVerified(_ peripheral: CBPeripheral) -> Bool {
+    guard let identifier = verifiedSavedGatewayIdentifier else { return false }
+    return identifier.caseInsensitiveCompare(peripheral.identifier.uuidString) == .orderedSame
+  }
+
+  private func rememberHandshakeVerified(_ peripheral: CBPeripheral) {
+    let identifier = peripheral.identifier.uuidString.uppercased()
+    verifiedSavedGatewayIdentifier = identifier
+    UserDefaults.standard.set(
+      identifier,
+      forKey: Self.handshakeVerifiedPeripheralIdentifierKey
+    )
+    Self.commissioningTrace(
+      "RESTORATION_TRUST_PROMOTED peripheral=\(peripheralEvidence(peripheral)) link_session=\(linkSession) basis=verified-handshake"
+    )
+  }
+
+  private func rememberValidated(_ peripheral: CBPeripheral) {
+    var identifiers = validatedPeripheralIdentifiers
+    identifiers.insert(peripheral.identifier.uuidString.uppercased())
+    UserDefaults.standard.set(
+      identifiers.sorted(), forKey: Self.validatedPeripheralIdentifiersKey)
+    candidateWasPreviouslyValidated = true
+  }
+
+  private func forgetValidated(_ peripheral: CBPeripheral) {
+    var identifiers = validatedPeripheralIdentifiers
+    identifiers.remove(peripheral.identifier.uuidString.uppercased())
+    UserDefaults.standard.set(
+      identifiers.sorted(), forKey: Self.validatedPeripheralIdentifiersKey)
+    if isHandshakeVerified(peripheral) {
+      verifiedSavedGatewayIdentifier = nil
+      UserDefaults.standard.removeObject(
+        forKey: Self.handshakeVerifiedPeripheralIdentifierKey)
+    }
+    candidateWasPreviouslyValidated = false
+  }
+
+  private func rejectCandidateAndResumeScanning(_ peripheral: CBPeripheral, reason: String) {
+    forgetValidated(peripheral)
+    automaticReconnectEnabled = false
+    gatewayIdentityValidated = false
+    transportMessage = "\(reason) Resuming the service-filtered scan…"
+    Self.commissioningTrace(
+      "GATEWAY_REJECTED id=\(peripheral.identifier.uuidString) name=\(peripheral.name ?? "unknown")"
+    )
+    central.cancelPeripheralConnection(peripheral)
+    resetConnection()
+    startScan(source: "candidate-rejection")
+  }
+
+  private func refreshStaleGATTCandidate(_ peripheral: CBPeripheral, reason: String) {
+    guard isActivePeripheral(peripheral) else { return }
+    consecutiveStaleGATTRecoveryCount += 1
+    Self.commissioningTrace(
+      "STALE_GATT_CANDIDATE_RETIRED id=\(peripheral.identifier.uuidString) consecutive=\(consecutiveStaleGATTRecoveryCount)"
+    )
+    automaticReconnectEnabled = false
+    automaticReconnectActive = false
+    reconnectTask?.cancel()
+    serviceDiscoveryTask?.cancel()
+    central.stopScan()
+    scanActive = false
+    scanRequested = false
+    pendingStaleGATTRescan = true
+    pendingStaleGATTReason = reason
+    state = .connecting
+    transportMessage =
+      "\(reason) Waiting for the stale BLE link to close; no Settings cleanup is required."
+    central.cancelPeripheralConnection(peripheral)
+  }
+
+  private func completeStaleGATTRecovery(after peripheral: CBPeripheral, event: String) {
+    guard pendingStaleGATTRescan, isActivePeripheral(peripheral) else {
+      return
+    }
+    let reason =
+      pendingStaleGATTReason
+      ?? "The saved gateway database is stale; scanning for the current gateway identity…"
+    pendingStaleGATTRescan = false
+    pendingStaleGATTReason = nil
+    Self.commissioningTrace(
+      "STALE_GATT_DISCONNECT_CONFIRMED id=\(peripheral.identifier.uuidString) event=\(event)"
+    )
+    resetTransportSession()
+    if consecutiveStaleGATTRecoveryCount >= 2 {
+      consecutiveStaleGATTRecoveryCount = 0
+      scanRequested = true
+      reconnectIntentRequested = true
+      automaticReconnectEnabled = true
+      userRequestedDisconnect = false
+      state = .connecting
+      transportMessage =
+        "Repeated stale GATT sessions detected; rebuilding Core Bluetooth before resuming the saved transfer…"
+      Self.commissioningTrace(
+        "STALE_GATT_CENTRAL_REBUILD threshold=2 action=replace-central-and-service-scan"
+      )
+      skipKnownGatewayRetrievalOnNextScan = true
+      replaceCentralManager(reason: "repeated-stale-gatt-timeout")
+      return
+    }
+    state = .disconnected
+    transportMessage = "\(reason) Starting a fresh service-filtered scan…"
+    startScan(source: "stale-gatt-disconnect-confirmed", skipConnectedRetrieval: true)
+  }
+
+  private func refreshWeakLinkCandidate(_ peripheral: CBPeripheral, reason: String) {
+    guard isActivePeripheral(peripheral) else { return }
+    linkRSSIValidationTask?.cancel()
+    linkRSSIValidationTask = nil
+    automaticReconnectActive = false
+    reconnectTask?.cancel()
+    serviceDiscoveryTask?.cancel()
+    central.stopScan()
+    scanActive = false
+    scanRequested = false
+    pendingWeakLinkRescan = true
+    pendingWeakLinkReason = reason
+    state = .connecting
+    transportMessage = "\(reason) Closing this link and waiting for a stronger signal…"
+    Self.commissioningTrace(
+      "WEAK_LINK_CANDIDATE_RETIRED id=\(peripheral.identifier.uuidString) rssi=\(discoveredRSSI.map(String.init) ?? "unavailable") action=preserve-bond-and-rescan"
+    )
+    central.cancelPeripheralConnection(peripheral)
+  }
+
+  private func completeWeakLinkRecovery(after peripheral: CBPeripheral, event: String) {
+    guard pendingWeakLinkRescan, isActivePeripheral(peripheral) else { return }
+    let reason =
+      pendingWeakLinkReason
+      ?? "The current BLE link is below the reliable transfer threshold."
+    pendingWeakLinkRescan = false
+    pendingWeakLinkReason = nil
+    Self.commissioningTrace(
+      "WEAK_LINK_DISCONNECT_CONFIRMED id=\(peripheral.identifier.uuidString) event=\(event) action=service-scan"
+    )
+    resetTransportSession()
+    reconnectIntentRequested = true
+    automaticReconnectEnabled = true
+    userRequestedDisconnect = false
+    state = .connecting
+    transportMessage = "\(reason) Scanning for three stable advertisements…"
+    startScan(source: "weak-link-disconnect-confirmed", skipConnectedRetrieval: true)
+  }
+
+  private func recordTransportFailure(_ error: Error?, event: String) {
+    guard let error else { return }
+    lastTransportFailureAt = Date()
+    lastTransportFailureEvidence = "\(event): \(Self.errorEvidence(error))"
+  }
+
+  private func connectionFailureMessage(
+    _ error: Error?, fallback: String, pairingWasPending: Bool = false
+  ) -> String {
     guard let error else { return fallback }
     let value = error as NSError
+    if value.domain == CBErrorDomain, value.code == 6, pairingWasPending {
+      return
+        "Secure BLE pairing timed out (CBError.connectionTimeout, code 6)."
+    }
     if value.domain == CBErrorDomain,
       value.code == CBError.encryptionTimedOut.rawValue
     {
@@ -787,20 +3788,117 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       return
         "iPhone still has stale gateway pairing state. Toggle Bluetooth off and on, then scan again."
     }
-    return error.localizedDescription
+    return "\(error.localizedDescription) [\(Self.errorSymbol(error)), code \(value.code)]"
+  }
+
+  private static func errorSymbol(_ error: Error) -> String {
+    let value = error as NSError
+    if value.domain == CBErrorDomain {
+      switch value.code {
+      case 0: return "CBError.unknown"
+      case 1: return "CBError.invalidParameters"
+      case 2: return "CBError.invalidHandle"
+      case 3: return "CBError.notConnected"
+      case 4: return "CBError.outOfSpace"
+      case 5: return "CBError.operationCancelled"
+      case 6: return "CBError.connectionTimeout"
+      case 7: return "CBError.peripheralDisconnected"
+      case 8: return "CBError.uuidNotAllowed"
+      case 9: return "CBError.alreadyAdvertising"
+      case 10: return "CBError.connectionFailed"
+      case 11: return "CBError.connectionLimitReached"
+      case 12: return "CBError.unknownDevice"
+      case 13: return "CBError.operationNotSupported"
+      case 14: return "CBError.peerRemovedPairingInformation"
+      case 15: return "CBError.encryptionTimedOut"
+      case 16: return "CBError.tooManyLEPairedDevices"
+      default: return "CBError.unknownCode"
+      }
+    }
+    if value.domain == CBATTErrorDomain {
+      switch value.code {
+      case CBATTError.insufficientAuthentication.rawValue:
+        return "CBATTError.insufficientAuthentication"
+      case CBATTError.insufficientAuthorization.rawValue:
+        return "CBATTError.insufficientAuthorization"
+      case CBATTError.insufficientEncryption.rawValue:
+        return "CBATTError.insufficientEncryption"
+      default:
+        return "CBATTError.code\(value.code)"
+      }
+    }
+    return "\(value.domain).code\(value.code)"
+  }
+
+  private static func errorEvidence(_ error: Error?) -> String {
+    guard let error else { return "none" }
+    let value = error as NSError
+    let message = value.localizedDescription
+      .replacingOccurrences(of: "\n", with: " ")
+      .replacingOccurrences(of: "\r", with: " ")
+    return
+      "domain=\(value.domain) code=\(value.code) symbol=\(errorSymbol(error)) message=\(message)"
   }
 
   private static func commissioningTrace(_ message: String) {
-    guard ProcessInfo.processInfo.environment[commissioningTraceEnvironmentKey] == "1" else {
-      return
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    let wallClock = formatter.string(from: Date())
+    let monotonicMicroseconds = UInt64(ProcessInfo.processInfo.systemUptime * 1_000_000)
+    let processInstance = message.split(whereSeparator: { $0.isWhitespace }).first.flatMap {
+      token -> String? in
+      let value = String(token)
+      guard value.hasPrefix("client=") else { return nil }
+      return String(value.dropFirst("client=".count))
     }
-    FileHandle.standardError.write(Data("VHOS_COMMISSIONING \(message)\n".utf8))
+    do {
+      try connectionTraceRecorder?.append(
+        recordedAt: wallClock,
+        monotonicMicroseconds: monotonicMicroseconds,
+        processInstance: processInstance,
+        message: message
+      )
+    } catch {
+      logger.error(
+        "BLE flight-recorder append failed: \(error.localizedDescription, privacy: .public)")
+    }
+    if ProcessInfo.processInfo.environment[commissioningTraceEnvironmentKey] == "1" {
+      FileHandle.standardError.write(
+        Data(
+          "VHOS_COMMISSIONING timestamp=\(wallClock) monotonic_us=\(monotonicMicroseconds) \(message)\n"
+            .utf8
+        )
+      )
+    }
+  }
+
+  private func recordStaleScanDiscovery(_ detail: String) {
+    for message in staleScanDiscoveryTrace.observe(detail) {
+      Self.commissioningTrace(message)
+    }
+  }
+
+  private func flushStaleScanDiscoveryTrace(reason: String) {
+    guard let summary = staleScanDiscoveryTrace.flush(reason: reason) else { return }
+    Self.commissioningTrace(summary)
+  }
+
+  private func trace(_ message: String) {
+    Self.commissioningTrace("client=\(instanceID) \(message)")
+  }
+
+  private func resetRecorderScopedVehicleEvidence() {
+    j1979Accumulator = J1979Accumulator()
+    j1979Availability = []
+    standardOBDSamples = []
+    latestCANObservation = nil
+    latestCANObservationReceivedAt = nil
+    recentCANObservations.removeAll(keepingCapacity: true)
   }
 
   private func resetConnection() {
     reconnectTask?.cancel()
     automaticReconnectActive = false
-    scanAfterPendingCancellation = false
     central.stopScan()
     scanFallbackTask?.cancel()
     scanActive = false
@@ -810,21 +3908,51 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   }
 
   private func resetTransportSession(preservingSelection: Bool = false) {
+    // Invalidate queued UI application immediately. CRC-valid frames already accepted under the
+    // previous epoch retain their captured source identity and still drain to durable evidence.
+    linkSession &+= 1
     let selectedPeripheral = peripheral
     let selectedName = discoveredName
     let selectedIdentifier = discoveredIdentifier
     let selectedRSSI = discoveredRSSI
+    let selectedNameEvidence = candidateNameSuggestsGateway
+    let selectedVHOSAdvertisementEvidence = candidateAdvertisedVHOSService
     scanFallbackTask?.cancel()
     serviceDiscoveryTask?.cancel()
+    linkRSSIValidationTask?.cancel()
+    linkRSSIValidationTask = nil
+    restoredConnectionTask?.cancel()
+    handshakeRetryTask?.cancel()
+    handshakeRetryTask = nil
+    handshakeWriteAckTask?.cancel()
+    handshakeWriteAckTask = nil
+    handshakeResponseTask?.cancel()
+    handshakeResponseTask = nil
+    notificationEnableTask?.cancel()
+    notificationEnableTask = nil
+    captureSyncTask?.cancel()
+    captureSyncTask = nil
+    captureChunkResponseTask?.cancel()
+    captureChunkResponseTask = nil
+    handshakeWriteAttemptInFlight = nil
+    selectedPeripheral?.delegate = nil
+    retireActivePeripheralDelegate()
     peripheral = nil
     command = nil
+    factoryReadCharacteristic = nil
     streamDecoder = GatewayFrameStreamDecoder()
     pendingCommandChunks.removeAll()
     commandChunksPending = 0
     handshakeRequested = false
     handshakeSecurityRetryCount = 0
-    notificationSecurityRetryCounts.removeAll()
+    handshakeResponseAttemptCount = 0
+    notificationCharacteristics.removeAll()
+    notificationSetupInFlight = nil
+    notificationRequestSession = nil
+    notificationPairingPending = false
+    linkRSSIQualifiedSession = nil
     peripheralConnected = false
+    gatewayIdentityValidated = false
     connectedAt = nil
     vhosServiceDiscovered = false
     factoryServiceDiscovered = false
@@ -844,18 +3972,686 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     lastHandshakeReceivedAt = nil
     lastHealthReceivedAt = nil
     lastOTAStatusAt = nil
+    otaStatus = nil
     discoveredName = nil
     discoveredIdentifier = nil
     discoveredRSSI = nil
+    candidateNameSuggestsGateway = false
+    candidateAdvertisedVHOSService = false
+    candidateWasPreviouslyValidated = false
     factoryBanner = nil
     handshake = nil
     health = nil
+    resetRecorderScopedVehicleEvidence()
+    captureLogIndex = nil
+    captureSyncTargets.removeAll()
+    if captureHistoryTransferActive {
+      captureSyncMessage =
+        captureResumeConfirmationPending
+        ? "Waiting to reconnect and confirm passive recording resumed…"
+        : "Waiting to reconnect and continue retained history from the saved checkpoint…"
+    } else {
+      captureSyncMessage = "Waiting for a gateway capture index."
+    }
     currentSessionResultStartIndex = experimentResults.count
     if preservingSelection {
       peripheral = selectedPeripheral
       discoveredName = selectedName
       discoveredIdentifier = selectedIdentifier
       discoveredRSSI = selectedRSSI
+      candidateNameSuggestsGateway = selectedNameEvidence
+      candidateAdvertisedVHOSService = selectedVHOSAdvertisementEvidence
+      candidateWasPreviouslyValidated = selectedPeripheral.map(isPreviouslyValidated) ?? false
+    }
+  }
+}
+
+struct GatewayEvidencePreparation: Sendable {
+  let portableFrameCount: Int
+  let captureSessions: [CaptureSessionSummary]
+}
+
+struct GatewayEvidenceImportResult: Sendable {
+  let summary: EvidenceSyncImportSummary
+  let portableFrameCount: Int
+}
+
+struct DebugPassiveCANImportSummary: Sendable {
+  let decodedRecords: Int
+  let appendedRecords: Int
+  let sessionCount: Int
+}
+
+private struct PassiveCANImportScope: Hashable {
+  let gatewayID: String
+  let sessionID: UInt32
+}
+
+/// Exclusive serial owner of every disk-backed BLE evidence store.
+///
+/// CoreBluetooth delegates run on the main queue. No recovery, index rebuild, historical directory
+/// enumeration, import replay, or capture deduplication may execute there. Exact descriptor
+/// snapshots are opened here and handed to `EvidenceWorkCoordinator` for bounded decoding/hashing.
+actor GatewayEvidencePersistenceWorker {
+  private let captureStore: CaptureLogStore
+  private let portableFrameStore: PortableFrameStore
+
+  init(
+    portableFrameStore: PortableFrameStore = PortableFrameStore(),
+    captureStore: CaptureLogStore = CaptureLogStore()
+  ) {
+    self.portableFrameStore = portableFrameStore
+    self.captureStore = captureStore
+  }
+
+  func prepare() throws -> GatewayEvidencePreparation {
+    GatewayEvidencePreparation(
+      portableFrameCount: try portableFrameStore.count(),
+      captureSessions: try captureStore.summaries())
+  }
+
+  func appendAcceptedPortableFrame(
+    _ accepted: AcceptedGatewayFrameContext,
+    ingestedAt: String
+  ) throws -> Int {
+    guard let sourceID = accepted.sourceID else {
+      throw GatewayBLEError.evidenceSourceIdentityUnavailable
+    }
+    _ = try portableFrameStore.append(
+      frame: accepted.frame,
+      sourceRole: .obdCAN,
+      sourceID: sourceID,
+      ingestedAt: ingestedAt)
+    return try portableFrameStore.count()
+  }
+
+  func portableRecords(limit: Int) throws -> [PortableLogicalFrame] {
+    try portableFrameStore.records(limit: limit)
+  }
+
+  func makePortableEvidenceWorkSnapshot(
+    excludingArtifactIdentities: Set<String>,
+    maximumArtifacts: Int
+  ) throws -> PortableEvidenceWorkSnapshot {
+    try portableFrameStore.makeEvidenceWorkSnapshot(
+      excludingArtifactIdentities: excludingArtifactIdentities,
+      maximumArtifacts: maximumArtifacts)
+  }
+
+  func makePassiveCANWorkSnapshot(
+    maximumObservationCount: Int
+  ) throws -> PassiveCANWorkSnapshot {
+    let capture = try captureStore.makeWorkSnapshots(
+      maximumFiles: 32,
+      maximumBytes: 16 * 1_024 * 1_024)
+    do {
+      return PassiveCANWorkSnapshot(
+        captureFiles: capture.snapshots,
+        portableLedgers: try portableFrameStore.makeResearchLedgerSnapshots(maximumSources: 3),
+        maximumObservationCount: maximumObservationCount,
+        hasEarlierCaptureBytes: capture.hasEarlierBytes)
+    } catch {
+      for source in capture.snapshots { try? source.handle.close() }
+      throw error
+    }
+  }
+
+  func captureRecordCount(gatewayID: String, sessionID: UInt32) throws -> UInt32 {
+    try captureStore.recordCount(gatewayID: gatewayID, sessionID: sessionID)
+  }
+
+  func captureObservation(
+    gatewayID: String,
+    sessionID: UInt32,
+    sourceSequence: UInt64
+  ) throws -> PassiveCANObservation? {
+    try captureStore.observation(
+      gatewayID: gatewayID,
+      sessionID: sessionID,
+      sourceSequence: sourceSequence)
+  }
+
+  func captureSummaries() throws -> [CaptureSessionSummary] { try captureStore.summaries() }
+
+  func appendCaptureRecords(
+    _ observations: [PassiveCANObservation],
+    gatewayID: String,
+    sessionID: UInt32
+  ) throws -> Int {
+    try captureStore.append(observations, gatewayID: gatewayID, sessionID: sessionID)
+  }
+
+  func importBundle(_ bytes: Data) throws -> GatewayEvidenceImportResult {
+    let summary = try portableFrameStore.importBundle(bytes)
+    return GatewayEvidenceImportResult(
+      summary: summary,
+      portableFrameCount: try portableFrameStore.count())
+  }
+
+  func importBundle(from url: URL) throws -> GatewayEvidenceImportResult {
+    try importBundle(GatewayBLEClient.readBoundedEvidenceSyncArchive(from: url))
+  }
+
+  #if DEBUG
+    func importDebugPassiveCAN(from url: URL) throws -> DebugPassiveCANImportSummary {
+      let bytes = try GatewayBLEClient.readBoundedEvidenceSyncArchive(from: url)
+      let observations = try PassiveCANEvidenceArchive.decodeCanonicalNDJSON(bytes)
+      guard !observations.isEmpty else { throw CaptureSyncError.noStoredLogs }
+      guard observations.count <= 50_000 else { throw EvidenceSyncError.tooManyRecords }
+      let grouped = Dictionary(grouping: observations) {
+        PassiveCANImportScope(gatewayID: $0.gatewayID, sessionID: $0.sessionID)
+      }
+      var appendedRecords = 0
+      for scope in grouped.keys.sorted(by: {
+        ($0.gatewayID, $0.sessionID) < ($1.gatewayID, $1.sessionID)
+      }) {
+        guard let records = grouped[scope] else { continue }
+        appendedRecords += try captureStore.append(
+          records,
+          gatewayID: scope.gatewayID,
+          sessionID: scope.sessionID)
+      }
+      return DebugPassiveCANImportSummary(
+        decodedRecords: observations.count,
+        appendedRecords: appendedRecords,
+        sessionCount: grouped.count)
+    }
+  #endif
+}
+
+private struct CaptureSyncTarget {
+  let slot: UInt8
+  let sessionID: UInt32
+  let totalRecords: UInt32
+  var recordOffset: UInt32
+}
+
+struct CaptureSessionSummary: Identifiable, Sendable {
+  let gatewayID: String
+  let sessionID: UInt32
+  let recordCount: UInt32
+  let byteCount: Int64
+  let updatedAt: Date
+  let url: URL
+
+  var id: String { "\(gatewayID):\(sessionID)" }
+}
+
+final class CaptureLogStore {
+  private static let maximumRecordByteCount = 64 * 1_024
+  private static let maximumReadyLedgerCount = 16
+
+  private let fileManager: FileManager
+  private let root: URL
+  private let indexURL: URL
+  private let recoveryDirectoryURL: URL
+  private var recordIndex: DurableLedgerIndex?
+  private var readyLedgerKeys: [String] = []
+
+  init(fileManager: FileManager = .default, root explicitRoot: URL? = nil) {
+    self.fileManager = fileManager
+    let applicationSupport =
+      fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)
+      .first ?? fileManager.temporaryDirectory
+    root =
+      explicitRoot
+      ?? applicationSupport.appendingPathComponent("VHOS/PassiveCAN", isDirectory: true)
+    indexURL = root.appendingPathComponent("capture-index.sqlite3")
+    recoveryDirectoryURL = root.appendingPathComponent(
+      "InterruptedCaptureTails", isDirectory: true)
+  }
+
+  func recordCount(gatewayID: String, sessionID: UInt32) throws -> UInt32 {
+    let index = try ensuredRecordIndex(gatewayID: gatewayID, sessionID: sessionID)
+    let count = try index.count(ledgerKey: ledgerKey(gatewayID: gatewayID, sessionID: sessionID))
+    guard let exact = UInt32(exactly: count) else {
+      throw CaptureLogStoreError.capacityReached
+    }
+    return exact
+  }
+
+  func observation(
+    gatewayID: String,
+    sessionID: UInt32,
+    sourceSequence: UInt64
+  ) throws -> PassiveCANObservation? {
+    let url = fileURL(gatewayID: gatewayID, sessionID: sessionID)
+    guard fileManager.fileExists(atPath: url.path) else { return nil }
+    _ = try ensuredRecordIndex(gatewayID: gatewayID, sessionID: sessionID)
+    var matched: PassiveCANObservation?
+    _ = try scanLedger(at: url, gatewayID: gatewayID, sessionID: sessionID) {
+      candidate, _, _ in
+      if candidate.sourceSequence == sourceSequence { matched = candidate }
+    }
+    return matched
+  }
+
+  func append(
+    _ observations: [PassiveCANObservation],
+    gatewayID: String,
+    sessionID: UInt32
+  ) throws -> Int {
+    guard !observations.isEmpty else { return 0 }
+    guard observations.count <= Int(UInt16.max) else {
+      throw CaptureLogStoreError.batchTooLarge
+    }
+    let url = fileURL(gatewayID: gatewayID, sessionID: sessionID)
+    let key = ledgerKey(gatewayID: gatewayID, sessionID: sessionID)
+    let index = try ensuredRecordIndex(gatewayID: gatewayID, sessionID: sessionID)
+    var batchSequences: [UInt64: String] = [:]
+    var fresh: [(primary: String, digest: String, line: Data)] = []
+    fresh.reserveCapacity(observations.count)
+    for observation in observations {
+      try PassiveCANEvidenceArchive.validate(observation)
+      guard sanitized(observation.gatewayID) == sanitized(gatewayID),
+        observation.sessionID == sessionID
+      else { throw CaptureLogStoreError.recordScopeMismatch(observation.id) }
+      let line = try PassiveCANEvidenceArchive.encodeNDJSON([observation])
+      guard line.count <= Self.maximumRecordByteCount else {
+        throw CaptureLogStoreError.recordTooLarge
+      }
+      let primary = Self.primaryKey(observation.sourceSequence)
+      let digest = DurableNDJSONLedger.canonicalDigest(Data(line.dropLast()))
+      if let batchDigest = batchSequences[observation.sourceSequence] {
+        guard batchDigest == digest else {
+          throw CaptureLogStoreError.sequenceCollision(observation.sourceSequence)
+        }
+        continue
+      }
+      batchSequences[observation.sourceSequence] = digest
+      if let existing = try index.dedupeKey(ledgerKey: key, primaryKey: primary) {
+        guard existing == digest else {
+          throw CaptureLogStoreError.sequenceCollision(observation.sourceSequence)
+        }
+        continue
+      }
+      fresh.append((primary, digest, line))
+    }
+    guard !fresh.isEmpty else { return 0 }
+    let existingCount = try index.count(ledgerKey: key)
+    guard existingCount <= Int(UInt32.max) - fresh.count else {
+      throw CaptureLogStoreError.capacityReached
+    }
+    var bytes = Data()
+    for candidate in fresh { bytes.append(candidate.line) }
+    let prior = try index.metadata(ledgerKey: key) ?? .empty
+    do {
+      let finalOffset = try DurableNDJSONLedger.appendDurably(
+        bytes, to: url, expectedOffset: prior.byteCount, fileManager: fileManager)
+      var updated = prior
+      for candidate in fresh { updated = updated.appending(candidate.line) }
+      guard updated.byteCount == finalOffset else {
+        throw CaptureLogStoreError.indexUnavailable
+      }
+      try index.beginDelta()
+      do {
+        for candidate in fresh {
+          try index.insert(
+            ledgerKey: key, primaryKey: candidate.primary, dedupeKey: candidate.digest)
+        }
+        try index.finish(ledgerKey: key, metadata: updated)
+      } catch {
+        index.cancel()
+        throw error
+      }
+      try DurableNDJSONLedger.synchronizeDirectory(url.deletingLastPathComponent())
+    } catch {
+      invalidatePreparedState(for: key)
+      throw error
+    }
+    return fresh.count
+  }
+
+  func summaries() throws -> [CaptureSessionSummary] {
+    guard fileManager.fileExists(atPath: root.path) else { return [] }
+    let gatewayDirectories = try fileManager.contentsOfDirectory(
+      at: root,
+      includingPropertiesForKeys: [.isDirectoryKey],
+      options: [.skipsHiddenFiles])
+    var summaries: [CaptureSessionSummary] = []
+    for directory in gatewayDirectories {
+      guard try directory.resourceValues(forKeys: [.isDirectoryKey]).isDirectory == true,
+        directory.lastPathComponent != recoveryDirectoryURL.lastPathComponent
+      else { continue }
+      let files = try fileManager.contentsOfDirectory(
+        at: directory,
+        includingPropertiesForKeys: [
+          .isRegularFileKey, .fileSizeKey, .contentModificationDateKey,
+        ],
+        options: [.skipsHiddenFiles])
+      for file in files where file.pathExtension == "ndjson" {
+        guard let sessionID = UInt32(file.deletingPathExtension().lastPathComponent) else {
+          throw CaptureLogStoreError.invalidLedgerFileName(file.lastPathComponent)
+        }
+        let gatewayID = directory.lastPathComponent
+        let count = try recordCount(gatewayID: gatewayID, sessionID: sessionID)
+        let resources = try file.resourceValues(
+          forKeys: [.isRegularFileKey, .fileSizeKey, .contentModificationDateKey])
+        guard resources.isRegularFile == true else {
+          throw CaptureLogStoreError.invalidLedgerFileName(file.lastPathComponent)
+        }
+        summaries.append(
+          CaptureSessionSummary(
+            gatewayID: gatewayID,
+            sessionID: sessionID,
+            recordCount: count,
+            byteCount: Int64(resources.fileSize ?? 0),
+            updatedAt: resources.contentModificationDate ?? .distantPast,
+            url: file
+          ))
+      }
+    }
+    return summaries.sorted { $0.updatedAt > $1.updatedAt }
+  }
+
+  /// Opens an exact, bounded suffix of the durable capture archive for background processing.
+  ///
+  /// The file descriptors preserve the selected byte prefix even if a gateway sync appends later.
+  /// A partial first line is discarded by the worker when `startOffset` is nonzero. No CAN bytes
+  /// are rewritten or deleted, and the caller owns closing every returned descriptor.
+  func makeWorkSnapshots(
+    maximumFiles: Int,
+    maximumBytes: Int
+  ) throws -> (snapshots: [CaptureEvidenceFileSnapshot], hasEarlierBytes: Bool) {
+    guard (1...32).contains(maximumFiles), maximumBytes > 0,
+      maximumBytes <= 16 * 1_024 * 1_024
+    else { throw CaptureSyncError.invalidSnapshotLimit }
+
+    var sources = try summaries().filter { $0.byteCount > 0 }
+    sources.sort {
+      if $0.updatedAt == $1.updatedAt { return $0.url.path < $1.url.path }
+      return $0.updatedAt < $1.updatedAt
+    }
+
+    var remainingBytes = maximumBytes
+    var newestFirst: [CaptureEvidenceFileSnapshot] = []
+    var hasEarlierBytes = false
+    do {
+      for source in sources.reversed() {
+        guard newestFirst.count < maximumFiles, remainingBytes > 0 else {
+          hasEarlierBytes = true
+          continue
+        }
+        guard let sourceByteCount = Int(exactly: source.byteCount) else {
+          throw CaptureLogStoreError.capacityReached
+        }
+        let selectedByteCount = min(sourceByteCount, remainingBytes)
+        let startOffset = sourceByteCount - selectedByteCount
+        if startOffset > 0 { hasEarlierBytes = true }
+        newestFirst.append(
+          CaptureEvidenceFileSnapshot(
+            handle: try FileHandle(forReadingFrom: source.url),
+            startOffset: UInt64(startOffset),
+            exactByteCount: selectedByteCount))
+        remainingBytes -= selectedByteCount
+      }
+      return (newestFirst.reversed(), hasEarlierBytes)
+    } catch {
+      for snapshot in newestFirst { try? snapshot.handle.close() }
+      throw error
+    }
+  }
+
+  private func ensuredRecordIndex(
+    gatewayID: String, sessionID: UInt32
+  ) throws -> DurableLedgerIndex {
+    let key = ledgerKey(gatewayID: gatewayID, sessionID: sessionID)
+    if readyLedgerKeys.contains(key), let recordIndex { return recordIndex }
+    try DurableNDJSONLedger.ensureDirectory(root, fileManager: fileManager)
+    let index = try recordIndex ?? DurableLedgerIndex(url: indexURL)
+    let url = fileURL(gatewayID: gatewayID, sessionID: sessionID)
+    do {
+      if fileManager.fileExists(atPath: url.path) {
+        try recoverInterruptedTailIfNeeded(
+          at: url, gatewayID: gatewayID, sessionID: sessionID)
+        try reconcile(
+          index, ledgerURL: url, gatewayID: gatewayID, sessionID: sessionID)
+      } else if let metadata = try index.metadata(ledgerKey: key),
+        metadata.byteCount > 0 || metadata.recordCount > 0
+      {
+        throw CaptureLogStoreError.missingLedger(key)
+      } else {
+        try index.replaceLedger(ledgerKey: key) { _ in .empty }
+      }
+      try DurableNDJSONLedger.synchronizeDirectory(root)
+      recordIndex = index
+      markReady(key)
+      return index
+    } catch {
+      invalidatePreparedState(for: key)
+      throw error
+    }
+  }
+
+  private func reconcile(
+    _ index: DurableLedgerIndex,
+    ledgerURL: URL,
+    gatewayID: String,
+    sessionID: UInt32
+  ) throws {
+    let key = ledgerKey(gatewayID: gatewayID, sessionID: sessionID)
+    let fileByteCount = try DurableNDJSONLedger.fileByteCount(ledgerURL)
+    if let metadata = try index.metadata(ledgerKey: key),
+      metadata.byteCount <= fileByteCount,
+      try index.count(ledgerKey: key) == metadata.recordCount
+    {
+      do {
+        let prefix = try scanLedger(
+          at: ledgerURL, gatewayID: gatewayID, sessionID: sessionID,
+          exactByteCount: metadata.byteCount
+        ) { observation, primary, digest in
+          guard try index.dedupeKey(ledgerKey: key, primaryKey: primary) == digest else {
+            throw CaptureLogStoreError.indexUnavailable
+          }
+          _ = observation
+        }
+        guard prefix == metadata else { throw CaptureLogStoreError.indexUnavailable }
+        if metadata.byteCount < fileByteCount {
+          try index.beginDelta()
+          do {
+            let final = try scanLedger(
+              at: ledgerURL, gatewayID: gatewayID, sessionID: sessionID,
+              startOffset: metadata.byteCount, initial: metadata
+            ) { _, primary, digest in
+              try index.insert(ledgerKey: key, primaryKey: primary, dedupeKey: digest)
+            }
+            guard final.recordCount <= Int(UInt32.max) else {
+              throw CaptureLogStoreError.capacityReached
+            }
+            try index.finish(ledgerKey: key, metadata: final)
+          } catch {
+            index.cancel()
+            throw error
+          }
+        }
+        return
+      } catch let error as CaptureLogStoreError {
+        switch error {
+        case .invalidCommittedRecord, .duplicateCommittedSequence,
+          .recordScopeMismatch, .sequenceCollision:
+          throw error
+        default:
+          break
+        }
+      }
+    }
+
+    try index.replaceLedger(ledgerKey: key) { insert in
+      let final = try scanLedger(
+        at: ledgerURL, gatewayID: gatewayID, sessionID: sessionID
+      ) { _, primary, digest in
+        try insert(primary, digest)
+      }
+      guard final.recordCount <= Int(UInt32.max) else {
+        throw CaptureLogStoreError.capacityReached
+      }
+      return final
+    }
+  }
+
+  private func scanLedger(
+    at url: URL,
+    gatewayID: String,
+    sessionID: UInt32,
+    startOffset: Int64 = 0,
+    exactByteCount: Int64? = nil,
+    initial: DurableLedgerMetadata = .empty,
+    onObservation: (PassiveCANObservation, String, String) throws -> Void
+  ) throws -> DurableLedgerMetadata {
+    do {
+      return try DurableNDJSONLedger.scan(
+        url,
+        startOffset: startOffset,
+        exactByteCount: exactByteCount,
+        initial: initial,
+        maximumLineByteCount: Self.maximumRecordByteCount
+      ) { line, lineNumber in
+        let observation: PassiveCANObservation
+        do {
+          observation = try VHOSJSON.decoder().decode(PassiveCANObservation.self, from: line)
+          try PassiveCANEvidenceArchive.validate(observation)
+        } catch {
+          throw CaptureLogStoreError.invalidCommittedRecord(
+            file: url.lastPathComponent, line: lineNumber)
+        }
+        guard try VHOSJSON.encoder().encode(observation) == line else {
+          throw CaptureLogStoreError.invalidCommittedRecord(
+            file: url.lastPathComponent, line: lineNumber)
+        }
+        guard sanitized(observation.gatewayID) == sanitized(gatewayID),
+          observation.sessionID == sessionID
+        else { throw CaptureLogStoreError.recordScopeMismatch(observation.id) }
+        let primary = Self.primaryKey(observation.sourceSequence)
+        let digest = DurableNDJSONLedger.canonicalDigest(line)
+        do {
+          try onObservation(observation, primary, digest)
+        } catch DurableLedgerIndexError.duplicateEntry {
+          throw CaptureLogStoreError.duplicateCommittedSequence(
+            observation.sourceSequence)
+        }
+      }
+    } catch DurableNDJSONLedgerError.blankCommittedLine(let line) {
+      throw CaptureLogStoreError.invalidCommittedRecord(
+        file: url.lastPathComponent, line: line)
+    } catch DurableNDJSONLedgerError.recordTooLarge(let line) {
+      throw CaptureLogStoreError.invalidCommittedRecord(
+        file: url.lastPathComponent, line: line)
+    }
+  }
+
+  private func recoverInterruptedTailIfNeeded(
+    at url: URL,
+    gatewayID: String,
+    sessionID: UInt32
+  ) throws {
+    try DurableNDJSONLedger.recoverInterruptedTailIfNeeded(
+      at: url,
+      quarantineDirectory: recoveryDirectoryURL,
+      artifactPrefix: "interrupted-capture-\(sanitized(gatewayID))-\(sessionID)",
+      receiptContract: "vhos.passive-can-tail-recovery",
+      maximumLineByteCount: Self.maximumRecordByteCount,
+      fileManager: fileManager
+    ) { line, lineNumber in
+      let observation: PassiveCANObservation
+      do {
+        observation = try VHOSJSON.decoder().decode(PassiveCANObservation.self, from: line)
+        try PassiveCANEvidenceArchive.validate(observation)
+      } catch {
+        throw CaptureLogStoreError.invalidCommittedRecord(
+          file: url.lastPathComponent, line: lineNumber)
+      }
+      guard try VHOSJSON.encoder().encode(observation) == line,
+        sanitized(observation.gatewayID) == sanitized(gatewayID),
+        observation.sessionID == sessionID
+      else {
+        throw CaptureLogStoreError.invalidCommittedRecord(
+          file: url.lastPathComponent, line: lineNumber)
+      }
+    }
+  }
+
+  private func markReady(_ key: String) {
+    readyLedgerKeys.removeAll { $0 == key }
+    readyLedgerKeys.append(key)
+    if readyLedgerKeys.count > Self.maximumReadyLedgerCount {
+      readyLedgerKeys.removeFirst(readyLedgerKeys.count - Self.maximumReadyLedgerCount)
+    }
+  }
+
+  private func invalidatePreparedState(for key: String) {
+    readyLedgerKeys.removeAll { $0 == key }
+    recordIndex = nil
+  }
+
+  private func fileURL(gatewayID: String, sessionID: UInt32) -> URL {
+    root.appendingPathComponent(sanitized(gatewayID), isDirectory: true)
+      .appendingPathComponent("\(sessionID).ndjson")
+  }
+
+  private func ledgerKey(gatewayID: String, sessionID: UInt32) -> String {
+    "capture:\(sanitized(gatewayID)):\(sessionID)"
+  }
+
+  private static func primaryKey(_ sequence: UInt64) -> String {
+    String(format: "%020llu", sequence)
+  }
+
+  private func sanitized(_ value: String) -> String {
+    String(value.map { $0.isLetter || $0.isNumber || $0 == "-" ? $0 : "_" })
+  }
+}
+
+enum CaptureLogStoreError: Error, LocalizedError {
+  case batchTooLarge
+  case capacityReached
+  case duplicateCommittedSequence(UInt64)
+  case indexUnavailable
+  case invalidCommittedRecord(file: String, line: Int)
+  case invalidLedgerFileName(String)
+  case missingLedger(String)
+  case recordScopeMismatch(String)
+  case recordTooLarge
+  case sequenceCollision(UInt64)
+
+  var errorDescription: String? {
+    switch self {
+    case .batchTooLarge:
+      "A passive CAN append exceeds the bounded gateway capture-chunk size."
+    case .capacityReached:
+      "The passive CAN ledger reached its UInt32 record-offset capacity."
+    case .duplicateCommittedSequence(let sequence):
+      "The passive CAN ledger repeats committed source sequence \(sequence)."
+    case .indexUnavailable:
+      "The disk-backed passive CAN sequence index is unavailable or corrupt."
+    case .invalidCommittedRecord(let file, let line):
+      "Passive CAN ledger \(file) has a blank, invalid, or non-canonical committed record at line \(line)."
+    case .invalidLedgerFileName(let name):
+      "Passive CAN ledger file \(name) does not identify a UInt32 capture session."
+    case .missingLedger(let key):
+      "Passive CAN index \(key) exists, but its authoritative ledger is missing."
+    case .recordScopeMismatch(let id):
+      "Passive CAN record \(id) does not belong to the selected gateway capture session."
+    case .recordTooLarge:
+      "A passive CAN observation exceeds the bounded ledger record size."
+    case .sequenceCollision(let sequence):
+      "Passive CAN source sequence \(sequence) conflicts with different committed evidence."
+    }
+  }
+}
+
+enum CaptureSyncError: Error, LocalizedError {
+  case unexpectedChunk
+  case emptyNonterminalChunk
+  case noStoredLogs
+  case invalidSnapshotLimit
+
+  var errorDescription: String? {
+    switch self {
+    case .unexpectedChunk:
+      "The gateway returned a capture chunk outside the requested session or offset."
+    case .emptyNonterminalChunk: "The gateway returned an empty nonterminal capture chunk."
+    case .noStoredLogs: "No synchronized passive CAN logs are stored on this iPhone yet."
+    case .invalidSnapshotLimit: "The passive CAN snapshot request exceeds its bounded limit."
     }
   }
 }
@@ -865,10 +4661,18 @@ private struct HandshakeRequest: Encodable {
   let contractVersion = "1.0.0"
 }
 
+extension GatewayBLEClient {
+  fileprivate static func timestamp() -> String {
+    ISO8601DateFormatter().string(from: Date())
+  }
+}
+
 enum GatewayBLEError: Error, LocalizedError {
   case commandChannelUnavailable
   case vhosFirmwareRequired
   case reliableWriteRequired
+  case currentParkedAuthorityRequired
+  case evidenceSourceIdentityUnavailable
 
   var errorDescription: String? {
     switch self {
@@ -876,6 +4680,10 @@ enum GatewayBLEError: Error, LocalizedError {
     case .vhosFirmwareRequired:
       "Signed experiments require the VHOS gateway firmware, not factory compatibility mode."
     case .reliableWriteRequired: "The VHOS command characteristic must support reliable writes."
+    case .currentParkedAuthorityRequired:
+      "Signed experiments require a fresh gateway-health frame that reports PARKED."
+    case .evidenceSourceIdentityUnavailable:
+      "A CRC-valid gateway frame arrived before a durable gateway source identity was established."
     }
   }
 }

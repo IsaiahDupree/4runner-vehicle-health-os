@@ -1,0 +1,24 @@
+{
+  "contract": "vhos.discovery.vehicle-capability-snapshot",
+  "contract_version": "1.0.0",
+  "id": "capability_01K32Q6T000000000000000003",
+  "vehicle_id": "veh_01K32Q6T000000000000000001",
+  "capture_id": "capture_01K32Q6T000000000000000000",
+  "captured_at": "2026-08-18T17:37:45Z",
+  "gateway_id": "esp32-9454c5b08d14",
+  "passive_bus": {
+    "protocols": ["CAN_11_500"],
+    "retained_record_count": 256,
+    "unique_identifier_count": 17,
+    "observed_bitrates_bps": [500000],
+    "standard_frame_count": 256,
+    "extended_frame_count": 0,
+    "evidence_sha256": "af2305021c2d48d89c55d1739da407d78ee28baa39cce63125d0656672f58aed"
+  },
+  "obd_ecus": [],
+  "standard_signal_ids": [],
+  "candidate_signal_ids": ["engine.speed-candidate"],
+  "validated_signal_ids": [],
+  "evidence_references": ["archive-sha256:af2305021c2d48d89c55d1739da407d78ee28baa39cce63125d0656672f58aed"],
+  "authority": "OBSERVED"
+}

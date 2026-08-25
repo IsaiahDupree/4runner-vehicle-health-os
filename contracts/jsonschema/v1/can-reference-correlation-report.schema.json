@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/can-reference-correlation-report.schema.json",
+  "title": "VHOS synchronized CAN/reference correlation report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract", "contract_version", "status", "authority", "source_files", "reference_signals", "ranked_candidates", "promotion_allowed"],
+  "properties": {
+    "contract": {"const": "can.reference-correlation-report"},
+    "contract_version": {"const": "1.0.0"},
+    "status": {"const": "VALIDATION_CANDIDATE"},
+    "authority": {"type": "string", "minLength": 1, "maxLength": 1000},
+    "source_files": {
+      "type": "array", "minItems": 2, "maxItems": 1000,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["role", "name", "sha256", "byte_count"],
+        "properties": {
+          "role": {"type": "string", "enum": ["PASSIVE_CAN", "REFERENCE"]},
+          "name": {"type": "string", "minLength": 1, "maxLength": 256},
+          "sha256": {"$ref": "common.schema.json#/$defs/sha256"},
+          "byte_count": {"type": "integer", "minimum": 1}
+        }
+      }
+    },
+    "reference_signals": {
+      "type": "array", "minItems": 1, "maxItems": 64, "uniqueItems": true,
+      "items": {"$ref": "common.schema.json#/$defs/semanticId"}
+    },
+    "ranked_candidates": {
+      "type": "array", "maxItems": 1000,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["reference_signal", "reference_unit", "identifier", "field", "paired_samples", "maximum_pairing_delta_us", "pearson_correlation", "linear_scale", "linear_offset", "rmse", "status"],
+        "properties": {
+          "reference_signal": {"$ref": "common.schema.json#/$defs/semanticId"},
+          "reference_unit": {"$ref": "common.schema.json#/$defs/unit"},
+          "identifier": {"type": "string", "pattern": "^0x[0-9A-F]{3}$"},
+          "field": {"type": "string", "pattern": "^(byte[0-7]|be16_[0-6]|le16_[0-6])$"},
+          "paired_samples": {"type": "integer", "minimum": 5},
+          "maximum_pairing_delta_us": {"type": "integer", "minimum": 0, "maximum": 1000000},
+          "pearson_correlation": {"type": "number", "minimum": -1, "maximum": 1},
+          "linear_scale": {"type": "number"},
+          "linear_offset": {"type": "number"},
+          "rmse": {"type": "number", "minimum": 0},
+          "status": {"const": "VALIDATION_CANDIDATE"}
+        }
+      }
+    },
+    "promotion_allowed": {"const": false}
+  }
+}

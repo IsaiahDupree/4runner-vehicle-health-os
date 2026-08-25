@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/portable-evidence-import-receipt.schema.json",
+  "title": "VHOS portable evidence import provenance receipt v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract", "contract_version", "bundle_id", "manifest_sha256", "archive_sha256", "creator", "record_count", "record_link_chain_sha256", "record_links"],
+  "properties": {
+    "contract": {"const": "vhos.portable-evidence-import-receipt"},
+    "contract_version": {"const": "2.0.0"},
+    "bundle_id": {"type": "string", "format": "uuid"},
+    "manifest_sha256": {"$ref": "common.schema.json#/$defs/sha256"},
+    "archive_sha256": {"$ref": "common.schema.json#/$defs/sha256"},
+    "creator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["platform", "application_id", "application_version", "device_model"],
+      "properties": {
+        "platform": {"type": "string", "enum": ["ANDROID", "IOS"]},
+        "application_id": {"type": "string", "minLength": 1, "maxLength": 160},
+        "application_version": {"type": "string", "minLength": 1, "maxLength": 80},
+        "device_model": {"type": "string", "minLength": 1, "maxLength": 160}
+      }
+    },
+    "recovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["classification", "vehicle_claims_authorized", "source_ledger_sha256"],
+      "properties": {
+        "classification": {"const": "RECOVERED_PORTABLE_EVIDENCE"},
+        "vehicle_claims_authorized": {"const": false},
+        "source_ledger_sha256": {"$ref": "common.schema.json#/$defs/sha256"}
+      }
+    },
+    "record_count": {"type": "integer", "minimum": 0, "maximum": 20000},
+    "record_link_chain_sha256": {"$ref": "common.schema.json#/$defs/sha256"},
+    "record_links": {
+      "type": "array",
+      "maxItems": 20000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["record_id", "record_sha256"],
+        "properties": {
+          "record_id": {"type": "string", "minLength": 1, "maxLength": 512},
+          "record_sha256": {"$ref": "common.schema.json#/$defs/sha256"}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "contract": "equation.definition",
+  "contract_version": "1.0.0",
+  "equation_id": "ac.pressure.ratio",
+  "version": "1.0.0",
+  "human_explanation": "Divide high-side absolute pressure by low-side absolute pressure. Absolute pressure is required for a physically meaningful ratio.",
+  "expression": {
+    "language": "vhos-expression-1",
+    "ast": {
+      "kind": "operation",
+      "operator": "divide",
+      "arguments": [
+        {"kind": "input", "name": "high_pressure_absolute"},
+        {"kind": "input", "name": "low_pressure_absolute"}
+      ]
+    }
+  },
+  "inputs": [
+    {
+      "name": "high_pressure_absolute",
+      "unit": "kPa",
+      "maximum_age_ms": 0,
+      "accepted_quality": ["GOOD"]
+    },
+    {
+      "name": "low_pressure_absolute",
+      "unit": "kPa",
+      "maximum_age_ms": 0,
+      "accepted_quality": ["GOOD"]
+    }
+  ],
+  "constants": [],
+  "output": {"unit": "1", "minimum": 0, "truth_boundary": "ESTIMATED"},
+  "confidence_model": {
+    "equation_id": "ac.confidence.evidence",
+    "version": "1.0.0",
+    "factors": ["SOURCE_QUALITY", "CALIBRATION_QUALITY"]
+  },
+  "applicability": {
+    "vehicle_config_pack": "vhos.generic-ac-node",
+    "conditions": [
+      "Both absolute-pressure inputs come from the same telemetry observation.",
+      "Low-side absolute pressure is greater than zero.",
+      "Both pressure channels have an applicable validated calibration identity."
+    ]
+  },
+  "validation_status": "EXPERIMENTAL",
+  "reset_dependencies": ["ac.pressure.high.calibration", "ac.pressure.low.calibration"],
+  "release_notes": "Initial formula from A/C Engine-Bay Telemetry Node Specification v1.0; no acceptable-ratio threshold is defined.",
+  "released_at": "2026-08-16T00:00:00Z"
+}

@@ -7,27 +7,68 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2C20803C92A290014B149A91 /* PortableFrameStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A437465A0DC4C5D9113216 /* PortableFrameStore.swift */; };
 		34F29EA8693AF238BC815DDD /* SystemStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76F08CC4DD741600B7E20C23 /* SystemStatusView.swift */; };
+		3C6B7A855B68467F9973731A /* mrdiy-v13-development-release-ed25519.base64 in Resources */ = {isa = PBXBuildFile; fileRef = 40D58B872E56EED4853D20F3 /* mrdiy-v13-development-release-ed25519.base64 */; };
 		3F0163358C8856B35F097E02 /* VehicleHealthOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54BDEF8D2B05D75290A9451 /* VehicleHealthOSApp.swift */; };
 		433AA4BFB3B8C40F2468E476 /* GatewayBLEClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E12062579AEB4902B49940D /* GatewayBLEClient.swift */; };
 		4BB0541FC93F4D149039411A /* WiFiOTAUploader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 435E1D682EF6B8A4DE0B86F7 /* WiFiOTAUploader.swift */; };
+		4DC09285503568BD059B6630 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C904E627AC50298F57802AB7 /* Assets.xcassets */; };
 		50658F6BD96177F3C72D98A4 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ADD085CC4E0D7223092E39A /* AppModel.swift */; };
 		59F8B3E961C8C753425ACF9F /* VHOSCore in Frameworks */ = {isa = PBXBuildFile; productRef = 6616D2E0F2CEB55BF90E491B /* VHOSCore */; };
+		6038918354887A1A87E7D5D7 /* DiscoveryWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DFE18956FBB741182DC169A /* DiscoveryWorkspaceView.swift */; };
+		6138196E6016992AB5F476A7 /* EvidenceOutboxStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27355F648A0C53B4EC6CF848 /* EvidenceOutboxStore.swift */; };
 		9AF33FDA552C5A8253A86B99 /* KeyStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6A9AAE2238B7F973C0CEA46 /* KeyStore.swift */; };
+		A556A68B0A447322A223EA70 /* EvidenceWorkCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C62FF37FA894A57174E968FB /* EvidenceWorkCoordinator.swift */; };
+		AAC7CA136BA2228F0D634559 /* SynchronizedReferenceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5F07524DBD012E9F39B09DB /* SynchronizedReferenceStore.swift */; };
+		B12336DDFA67B1A55A43F447 /* DiscoveryEvidenceStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37F575257101C56C4814A332 /* DiscoveryEvidenceStoreTests.swift */; };
+		BBD00956AAD1B1F75DD26F8C /* PassiveCANPlaybackLab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33368A105329E710051228F4 /* PassiveCANPlaybackLab.swift */; };
+		C32FBE14A5EF3BEEAE086A68 /* EvidenceOutboxBackgroundTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FF7D608E6C3BC6B19524A3A /* EvidenceOutboxBackgroundTests.swift */; };
+		CADDA30B1BCE3C005880874D /* CaptureAndReferencePersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9123684AD71628F377A5EB55 /* CaptureAndReferencePersistenceTests.swift */; };
+		E1E366592FD90918002B9210 /* catalog-development-p256-public.der.base64 in Resources */ = {isa = PBXBuildFile; fileRef = BC2698DA0773B98569959E80 /* catalog-development-p256-public.der.base64 */; };
 		E925A8B64D5731C2E092673A /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDE321369856AF54C6B7946E /* RootView.swift */; };
+		F1AF0F959A5BC7A5C2BEC8DB /* DiscoveryEvidenceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C4CB58385EA15D8DE39AA03 /* DiscoveryEvidenceStore.swift */; };
+		FEC9A6E487FA351CECDA2552 /* ReleaseHubClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21CE522109AE74B24C43B096 /* ReleaseHubClient.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		04527031FED7F72E92BE1462 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D7FBF38CC1A066A7A1E14C48 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5C5ECB40116D553F668D211E;
+			remoteInfo = VehicleHealthOS;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		1C4CB58385EA15D8DE39AA03 /* DiscoveryEvidenceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoveryEvidenceStore.swift; sourceTree = "<group>"; };
+		21CE522109AE74B24C43B096 /* ReleaseHubClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReleaseHubClient.swift; sourceTree = "<group>"; };
+		27355F648A0C53B4EC6CF848 /* EvidenceOutboxStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceOutboxStore.swift; sourceTree = "<group>"; };
 		2E12062579AEB4902B49940D /* GatewayBLEClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayBLEClient.swift; sourceTree = "<group>"; };
+		33368A105329E710051228F4 /* PassiveCANPlaybackLab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PassiveCANPlaybackLab.swift; sourceTree = "<group>"; };
+		34806DF7108E5758613B6692 /* VehicleHealthOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = VehicleHealthOS.entitlements; sourceTree = "<group>"; };
+		37F575257101C56C4814A332 /* DiscoveryEvidenceStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoveryEvidenceStoreTests.swift; sourceTree = "<group>"; };
+		3DFE18956FBB741182DC169A /* DiscoveryWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoveryWorkspaceView.swift; sourceTree = "<group>"; };
+		40D58B872E56EED4853D20F3 /* mrdiy-v13-development-release-ed25519.base64 */ = {isa = PBXFileReference; path = "mrdiy-v13-development-release-ed25519.base64"; sourceTree = "<group>"; };
 		435E1D682EF6B8A4DE0B86F7 /* WiFiOTAUploader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiOTAUploader.swift; sourceTree = "<group>"; };
+		46A437465A0DC4C5D9113216 /* PortableFrameStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortableFrameStore.swift; sourceTree = "<group>"; };
 		5ADD085CC4E0D7223092E39A /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		6B2F2160F66500ABD58B9A93 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		6FF7D608E6C3BC6B19524A3A /* EvidenceOutboxBackgroundTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceOutboxBackgroundTests.swift; sourceTree = "<group>"; };
 		76F08CC4DD741600B7E20C23 /* SystemStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemStatusView.swift; sourceTree = "<group>"; };
 		7A2574A71F2C1668EC16FF99 /* VehicleHealthOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = VehicleHealthOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8B675922141EC2E868CE86B9 /* VehicleHealthOSCommissioning.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = VehicleHealthOSCommissioning.entitlements; sourceTree = "<group>"; };
+		9123684AD71628F377A5EB55 /* CaptureAndReferencePersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureAndReferencePersistenceTests.swift; sourceTree = "<group>"; };
+		BC2698DA0773B98569959E80 /* catalog-development-p256-public.der.base64 */ = {isa = PBXFileReference; path = "catalog-development-p256-public.der.base64"; sourceTree = "<group>"; };
 		C54BDEF8D2B05D75290A9451 /* VehicleHealthOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleHealthOSApp.swift; sourceTree = "<group>"; };
+		C62FF37FA894A57174E968FB /* EvidenceWorkCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceWorkCoordinator.swift; sourceTree = "<group>"; };
+		C904E627AC50298F57802AB7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D6A9AAE2238B7F973C0CEA46 /* KeyStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyStore.swift; sourceTree = "<group>"; };
+		E5A8090F593B5656A6B680E3 /* VehicleHealthOSTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = VehicleHealthOSTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		EDE321369856AF54C6B7946E /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		F058478C0C2988386954DDC9 /* Core */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Core; path = Core; sourceTree = SOURCE_ROOT; };
+		F5F07524DBD012E9F39B09DB /* SynchronizedReferenceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SynchronizedReferenceStore.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -42,10 +83,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		024C0899EA5CEE56708A1390 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				BC2698DA0773B98569959E80 /* catalog-development-p256-public.der.base64 */,
+				40D58B872E56EED4853D20F3 /* mrdiy-v13-development-release-ed25519.base64 */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 		655BA768D74F8441FAD5BE7F = {
 			isa = PBXGroup;
 			children = (
 				95010B41D132916B88921B84 /* App */,
+				B5274B5C828AA5C0D7576B7F /* AppTests */,
 				84107A1742ED7056C65222D4 /* Packages */,
 				73955CB501E1CDAFFAFAC668 /* Products */,
 			);
@@ -55,6 +106,7 @@
 			isa = PBXGroup;
 			children = (
 				7A2574A71F2C1668EC16FF99 /* VehicleHealthOS.app */,
+				E5A8090F593B5656A6B680E3 /* VehicleHealthOSTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -71,25 +123,66 @@
 			isa = PBXGroup;
 			children = (
 				5ADD085CC4E0D7223092E39A /* AppModel.swift */,
+				C904E627AC50298F57802AB7 /* Assets.xcassets */,
+				1C4CB58385EA15D8DE39AA03 /* DiscoveryEvidenceStore.swift */,
+				3DFE18956FBB741182DC169A /* DiscoveryWorkspaceView.swift */,
+				27355F648A0C53B4EC6CF848 /* EvidenceOutboxStore.swift */,
+				C62FF37FA894A57174E968FB /* EvidenceWorkCoordinator.swift */,
 				2E12062579AEB4902B49940D /* GatewayBLEClient.swift */,
 				6B2F2160F66500ABD58B9A93 /* Info.plist */,
 				D6A9AAE2238B7F973C0CEA46 /* KeyStore.swift */,
+				33368A105329E710051228F4 /* PassiveCANPlaybackLab.swift */,
+				46A437465A0DC4C5D9113216 /* PortableFrameStore.swift */,
+				21CE522109AE74B24C43B096 /* ReleaseHubClient.swift */,
 				EDE321369856AF54C6B7946E /* RootView.swift */,
+				F5F07524DBD012E9F39B09DB /* SynchronizedReferenceStore.swift */,
 				76F08CC4DD741600B7E20C23 /* SystemStatusView.swift */,
+				34806DF7108E5758613B6692 /* VehicleHealthOS.entitlements */,
 				C54BDEF8D2B05D75290A9451 /* VehicleHealthOSApp.swift */,
+				8B675922141EC2E868CE86B9 /* VehicleHealthOSCommissioning.entitlements */,
 				435E1D682EF6B8A4DE0B86F7 /* WiFiOTAUploader.swift */,
+				024C0899EA5CEE56708A1390 /* Resources */,
 			);
 			path = App;
+			sourceTree = "<group>";
+		};
+		B5274B5C828AA5C0D7576B7F /* AppTests */ = {
+			isa = PBXGroup;
+			children = (
+				9123684AD71628F377A5EB55 /* CaptureAndReferencePersistenceTests.swift */,
+				37F575257101C56C4814A332 /* DiscoveryEvidenceStoreTests.swift */,
+				6FF7D608E6C3BC6B19524A3A /* EvidenceOutboxBackgroundTests.swift */,
+			);
+			path = AppTests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		0086E7193E06222B5A21D6FC /* VehicleHealthOSTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AB31C3EC266EBD42DFF556EE /* Build configuration list for PBXNativeTarget "VehicleHealthOSTests" */;
+			buildPhases = (
+				125A03100CD5129D3762F676 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				35E8E9F1937F49A0B913E590 /* PBXTargetDependency */,
+			);
+			name = VehicleHealthOSTests;
+			packageProductDependencies = (
+			);
+			productName = VehicleHealthOSTests;
+			productReference = E5A8090F593B5656A6B680E3 /* VehicleHealthOSTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		5C5ECB40116D553F668D211E /* VehicleHealthOS */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 478546126133D3E966073A85 /* Build configuration list for PBXNativeTarget "VehicleHealthOS" */;
 			buildPhases = (
 				8D827AD2F162128EEECE29EA /* Sources */,
+				9BD21BCE786E6D9365E00AB2 /* Resources */,
 				0E76943D73DEADCE831ACAF6 /* Frameworks */,
 			);
 			buildRules = (
@@ -114,6 +207,7 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					5C5ECB40116D553F668D211E = {
+						DevelopmentTeam = Y4HDXFWXUV;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -136,19 +230,51 @@
 			projectRoot = "";
 			targets = (
 				5C5ECB40116D553F668D211E /* VehicleHealthOS */,
+				0086E7193E06222B5A21D6FC /* VehicleHealthOSTests */,
 			);
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		9BD21BCE786E6D9365E00AB2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4DC09285503568BD059B6630 /* Assets.xcassets in Resources */,
+				E1E366592FD90918002B9210 /* catalog-development-p256-public.der.base64 in Resources */,
+				3C6B7A855B68467F9973731A /* mrdiy-v13-development-release-ed25519.base64 in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
+		125A03100CD5129D3762F676 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CADDA30B1BCE3C005880874D /* CaptureAndReferencePersistenceTests.swift in Sources */,
+				B12336DDFA67B1A55A43F447 /* DiscoveryEvidenceStoreTests.swift in Sources */,
+				C32FBE14A5EF3BEEAE086A68 /* EvidenceOutboxBackgroundTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8D827AD2F162128EEECE29EA /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				50658F6BD96177F3C72D98A4 /* AppModel.swift in Sources */,
+				F1AF0F959A5BC7A5C2BEC8DB /* DiscoveryEvidenceStore.swift in Sources */,
+				6038918354887A1A87E7D5D7 /* DiscoveryWorkspaceView.swift in Sources */,
+				6138196E6016992AB5F476A7 /* EvidenceOutboxStore.swift in Sources */,
+				A556A68B0A447322A223EA70 /* EvidenceWorkCoordinator.swift in Sources */,
 				433AA4BFB3B8C40F2468E476 /* GatewayBLEClient.swift in Sources */,
 				9AF33FDA552C5A8253A86B99 /* KeyStore.swift in Sources */,
+				BBD00956AAD1B1F75DD26F8C /* PassiveCANPlaybackLab.swift in Sources */,
+				2C20803C92A290014B149A91 /* PortableFrameStore.swift in Sources */,
+				FEC9A6E487FA351CECDA2552 /* ReleaseHubClient.swift in Sources */,
 				E925A8B64D5731C2E092673A /* RootView.swift in Sources */,
+				AAC7CA136BA2228F0D634559 /* SynchronizedReferenceStore.swift in Sources */,
 				34F29EA8693AF238BC815DDD /* SystemStatusView.swift in Sources */,
 				3F0163358C8856B35F097E02 /* VehicleHealthOSApp.swift in Sources */,
 				4BB0541FC93F4D149039411A /* WiFiOTAUploader.swift in Sources */,
@@ -156,6 +282,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		35E8E9F1937F49A0B913E590 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5C5ECB40116D553F668D211E /* VehicleHealthOS */;
+			targetProxy = 04527031FED7F72E92BE1462 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		408951D1BB6E4C6C12CBC9E7 /* Debug */ = {
@@ -225,6 +359,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = App/VehicleHealthOS.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = Y4HDXFWXUV;
@@ -239,6 +374,24 @@
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		60C142CB27C39579245B274C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.isaiahdupree.VehicleHealthOSTests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Vehicle Health OS.app/Vehicle Health OS";
 			};
 			name = Release;
 		};
@@ -302,6 +455,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = App/VehicleHealthOSCommissioning.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = Y4HDXFWXUV;
@@ -316,6 +470,24 @@
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		9C61CA4D2373A6C74B09FA6A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.isaiahdupree.VehicleHealthOSTests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Vehicle Health OS.app/Vehicle Health OS";
 			};
 			name = Debug;
 		};
@@ -336,6 +508,15 @@
 			buildConfigurations = (
 				408951D1BB6E4C6C12CBC9E7 /* Debug */,
 				6C0CB611D7FF1A8F6732F962 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		AB31C3EC266EBD42DFF556EE /* Build configuration list for PBXNativeTarget "VehicleHealthOSTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9C61CA4D2373A6C74B09FA6A /* Debug */,
+				60C142CB27C39579245B274C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
