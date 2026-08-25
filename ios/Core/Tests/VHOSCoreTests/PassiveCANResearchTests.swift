@@ -32,6 +32,17 @@ private let researchFixtureName = "real-can-2026-08-18-627753796-256"
   #expect(afterPlayback == beforePlayback)
 }
 
+@Test func canonicalDebugImportNeverNormalizesOrDiscardsSourceBytes() throws {
+  let canonical = try PassiveCANEvidenceArchive.encodeNDJSON(loadResearchFixture())
+  #expect(try PassiveCANEvidenceArchive.decodeCanonicalNDJSON(canonical).count == 256)
+
+  var normalizedInput = canonical
+  normalizedInput.insert(0x20, at: normalizedInput.startIndex)
+  #expect(throws: PassiveCANArchiveError.nonCanonicalArchive) {
+    try PassiveCANEvidenceArchive.decodeCanonicalNDJSON(normalizedInput)
+  }
+}
+
 @Test func realRetainedCANProducesTraceableFailClosedResearchSeries() throws {
   let report = try PassiveCANResearchAnalyzer.analyze(loadResearchFixture())
 

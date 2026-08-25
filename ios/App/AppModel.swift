@@ -34,26 +34,18 @@ enum DiscoveryLedgerReadState: Equatable, Sendable {
   }
 }
 
-/// The acquisition authority sealed into a Discovery run controls whether a terminal transition
-/// may ever send a gateway capture-control command. In particular, recovering gateway health
-/// during a local-evidence-only run must not silently upgrade that run on End or Abort.
+/// A terminal test transition is app-local and never initiates bulk BLE work or recorder control.
+/// Retained-log transfer is an explicit action on the Evidence screen.
 enum DiscoveryGatewayOffloadPolicy {
   static func permits(
     transitionState: DiscoveryTestRunDraftState,
     acquisitionAuthority: DiscoveryMutationAuthority?,
     hasMatchingRecorderSession: Bool
   ) -> Bool {
-    guard let acquisitionAuthority, acquisitionAuthority.permitsGatewayCaptureControl else {
-      return false
-    }
-    switch transitionState {
-    case .active:
-      return false
-    case .ended:
-      return true
-    case .aborted:
-      return hasMatchingRecorderSession
-    }
+    _ = transitionState
+    _ = acquisitionAuthority
+    _ = hasMatchingRecorderSession
+    return false
   }
 }
 
@@ -73,6 +65,7 @@ final class AppModel {
   private let evidenceOutboxUploader = EvidenceOutboxUploader()
   private let synchronizedReferenceStore = SynchronizedReferenceStore()
   private let discoveryEvidence = DiscoveryEvidencePersistenceWorker()
+  private let debugEvidenceAnnotationStore: DebugEvidenceAnnotationStore
   private var evidenceAutomationTask: Task<Void, Never>?
   private var canResearchTask: Task<Void, Never>?
   private var passiveCANExportTask: Task<Void, Never>?
@@ -84,9 +77,12 @@ final class AppModel {
   private var preparedDiscoveryArtifactIdentities: Set<String> = []
   private static let evidenceEndpointDefaultsKey = "vhos.evidence-outbox.endpoint.v1"
   private static let evidenceAutomaticDefaultsKey = "vhos.evidence-outbox.automatic.v1"
+  private static let debugUnverifiedWorkspaceDefaultsKey =
+    "vhos.debug-unverified-evidence-workspace.v1"
 
   var errorMessage: String?
   var noticeMessage: String?
+  private(set) var debugUnverifiedEvidenceModeActive = false
   var verifiedFirmware: VerifiedFirmwarePackage?
   var selectedFirmwareName: String?
   var releasePublicKeyConfigured = false
@@ -118,6 +114,10 @@ final class AppModel {
   var discoveryMarkers: [StoredDiscoveryMarker] = []
   var discoveryMarkerMessage = "No synchronized Discovery markers are retained."
   var discoveryTestRuns: [DiscoveryTestRunDraft] = []
+  var debugEvidenceAnnotations: [DebugEvidenceAnnotationRecord] = []
+  var debugEvidenceObservations: [PassiveCANObservation] = []
+  private var debugPinnedRunObservations: [String: PassiveCANObservation] = [:]
+  var debugEvidenceAnnotationMessage = "No Debug evidence labels are retained."
   var discoveryTestRunLedgerReadState: DiscoveryLedgerReadState = .notLoaded
   var discoveryMarkerLedgerReadState: DiscoveryLedgerReadState = .notLoaded
   var discoveryDraftPreparedExportURLs: [URL] = []
@@ -155,10 +155,46 @@ final class AppModel {
     (try? currentDiscoveryObservation(allowDevelopmentEvidenceLab: true)) != nil
   }
 
+  var debugUnverifiedTimelineAvailable: Bool {
+    #if DEBUG
+      !availableDebugEvidenceObservations.isEmpty
+    #else
+      false
+    #endif
+  }
+
+  var availableDebugEvidenceObservations: [PassiveCANObservation] {
+    #if DEBUG
+      var observationsByID: [String: PassiveCANObservation] = [:]
+      for record in debugEvidenceAnnotations {
+        observationsByID[record.sourceObservation.id] = record.sourceObservation
+      }
+      for observation in debugEvidenceObservations {
+        observationsByID[observation.id] = observation
+      }
+      for observation in debugPinnedRunObservations.values {
+        observationsByID[observation.id] = observation
+      }
+      if let latest = gateway.latestCANObservation {
+        observationsByID[latest.id] = latest
+      }
+      return observationsByID.values.sorted {
+        if $0.sessionID != $1.sessionID { return $0.sessionID > $1.sessionID }
+        if $0.monotonicMicroseconds != $1.monotonicMicroseconds {
+          return $0.monotonicMicroseconds > $1.monotonicMicroseconds
+        }
+        return $0.sourceSequence > $1.sourceSequence
+      }
+    #else
+      []
+    #endif
+  }
+
   func discoveryMutationAuthority(
     for template: TestTemplate,
     allowLocalEvidenceOnly: Bool = false,
-    allowDevelopmentEvidenceLab: Bool = false
+    allowDevelopmentEvidenceLab: Bool = false,
+    allowUnrestrictedEvidenceWorkspace: Bool = false
   ) -> DiscoveryMutationAuthority? {
     let now = Date()
     let healthAge = gateway.lastHealthReceivedAt.map { now.timeIntervalSince($0) }
@@ -174,11 +210,181 @@ final class AppModel {
         observationAgeSeconds: observationAge,
         hasCurrentParkedAuthority: gateway.hasCurrentParkedAuthority),
       allowLocalEvidenceOnly: allowLocalEvidenceOnly,
-      allowDevelopmentEvidenceLab: allowDevelopmentEvidenceLab)
+      allowDevelopmentEvidenceLab: allowDevelopmentEvidenceLab,
+      allowUnrestrictedEvidenceWorkspace: allowUnrestrictedEvidenceWorkspace)
+  }
+
+  func setDebugUnverifiedEvidenceMode(_ active: Bool) {
+    #if DEBUG
+      debugUnverifiedEvidenceModeActive =
+        active && DiscoveryMutationPolicy.unrestrictedEvidenceWorkspaceAvailable
+      UserDefaults.standard.set(
+        debugUnverifiedEvidenceModeActive,
+        forKey: Self.debugUnverifiedWorkspaceDefaultsKey)
+    #else
+      debugUnverifiedEvidenceModeActive = false
+    #endif
+  }
+
+  func refreshDebugEvidenceAnnotations() {
+    #if DEBUG
+      let store = debugEvidenceAnnotationStore
+      Task { [weak self] in
+        do {
+          let loaded = try await Task.detached(priority: .utility) {
+            try store.load()
+          }.value
+          guard let self else { return }
+          self.debugEvidenceAnnotations = loaded.records
+          self.debugEvidenceAnnotationMessage = Self.debugAnnotationMessage(for: loaded)
+        } catch {
+          guard let self else { return }
+          self.debugEvidenceAnnotations = []
+          self.debugEvidenceAnnotationMessage =
+            "Debug evidence labels failed closed: \(error.localizedDescription)"
+        }
+      }
+    #else
+      debugEvidenceAnnotationMessage = "Debug evidence labeling is unavailable in Release builds."
+    #endif
+  }
+
+  func appendDebugEvidenceLabel(
+    label: String,
+    note: String,
+    observationID: String
+  ) {
+    appendDebugEvidenceAnnotation(
+      markerKind: nil,
+      label: label,
+      note: note,
+      observationID: observationID)
+  }
+
+  func appendDebugEvidenceMarker(
+    label: String,
+    note: String,
+    observationID: String
+  ) {
+    appendDebugEvidenceAnnotation(
+      markerKind: .custom,
+      label: label,
+      note: note,
+      observationID: observationID)
+  }
+
+  private func appendDebugEvidenceAnnotation(
+    markerKind: DiscoveryMarkerKind?,
+    label: String,
+    note: String,
+    observationID: String
+  ) {
+    #if DEBUG
+      guard debugUnverifiedEvidenceModeActive else {
+        errorMessage = AppModelError.debugModeNeeded.localizedDescription
+        return
+      }
+      let trimmedLabel = label.trimmingCharacters(in: .whitespacesAndNewlines)
+      guard !trimmedLabel.isEmpty else {
+        errorMessage = AppModelError.debugLabelNeeded.localizedDescription
+        return
+      }
+      guard let observation = debugEvidenceObservation(withID: observationID) else {
+        errorMessage = AppModelError.debugObservationNeeded.localizedDescription
+        return
+      }
+      persistDebugEvidenceAnnotation(
+        markerKind: markerKind,
+        label: trimmedLabel,
+        note: note.trimmingCharacters(in: .whitespacesAndNewlines),
+        observation: observation)
+    #else
+      errorMessage = AppModelError.debugModeNeeded.localizedDescription
+    #endif
+  }
+
+  private func debugEvidenceObservation(withID id: String) -> PassiveCANObservation? {
+    for observation in availableDebugEvidenceObservations where observation.id == id {
+      return observation
+    }
+    return nil
+  }
+
+  func hasDebugEvidenceObservation(gatewayID: String, sessionID: UInt32) -> Bool {
+    #if DEBUG
+      availableDebugEvidenceObservations.contains {
+        $0.gatewayID == gatewayID && $0.sessionID == sessionID
+      }
+    #else
+      false
+    #endif
+  }
+
+  private func persistDebugEvidenceAnnotation(
+    markerKind: DiscoveryMarkerKind?,
+    label: String,
+    note: String,
+    observation: PassiveCANObservation
+  ) {
+    #if DEBUG
+      let marker = markerKind
+      let time = Self.timestamp()
+      let store = debugEvidenceAnnotationStore
+      Task { [weak self] in
+        do {
+          let loaded = try await Task.detached(priority: .utility) {
+            if let marker {
+              try store.appendEventMarker(
+                appendedAt: time,
+                markerKind: marker,
+                label: label,
+                note: note,
+                observation: observation)
+            } else {
+              try store.appendLabel(
+                appendedAt: time,
+                label: label,
+                note: note,
+                observation: observation)
+            }
+            return try store.load()
+          }.value
+          guard let self else { return }
+          self.debugEvidenceAnnotations = loaded.records
+          self.debugEvidenceAnnotationMessage = Self.debugAnnotationMessage(for: loaded)
+          self.noticeMessage =
+            "DEBUG_UNVERIFIED evidence was appended to exact observation \(observation.id)."
+          self.errorMessage = nil
+        } catch {
+          self?.errorMessage = error.localizedDescription
+        }
+      }
+    #else
+      errorMessage = AppModelError.debugModeNeeded.localizedDescription
+    #endif
+  }
+
+  private static func debugAnnotationMessage(
+    for loaded: DebugEvidenceAnnotationLoadResult
+  ) -> String {
+    let retained =
+      loaded.records.isEmpty
+      ? "No Debug evidence labels are retained."
+      : "\(loaded.records.count) DEBUG_UNVERIFIED label or event record(s) retained."
+    guard let recovery = loaded.recovery else { return retained }
+    return retained
+      + " Recovered an interrupted append and quarantined "
+      + "\(recovery.quarantinedByteCount) unfinished byte(s)."
   }
 
   private init() {
     let store = KeyStore(service: "com.isaiahdupree.VehicleHealthOS")
+    let support =
+      FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+      ?? FileManager.default.temporaryDirectory
+    debugEvidenceAnnotationStore = DebugEvidenceAnnotationStore(
+      storageDirectory: support.appendingPathComponent(
+        "VHOSDebugEvidenceAnnotations/v1", isDirectory: true))
     keyStore = store
     experimentSigner = ExperimentSigner(keyStore: store)
     gateway = GatewayBLEClient.shared
@@ -200,12 +406,21 @@ final class AppModel {
       automaticEvidenceUpload = UserDefaults.standard.bool(
         forKey: Self.evidenceAutomaticDefaultsKey)
     }
+    #if DEBUG
+      let storedDebugPreference = UserDefaults.standard.object(
+        forKey: Self.debugUnverifiedWorkspaceDefaultsKey)
+      debugUnverifiedEvidenceModeActive =
+        DiscoveryMutationPolicy.unrestrictedEvidenceWorkspaceAvailable
+        && (storedDebugPreference == nil
+          || UserDefaults.standard.bool(forKey: Self.debugUnverifiedWorkspaceDefaultsKey))
+    #endif
     evidenceOutboxTokenConfigured =
       (try? store.data(for: .evidenceOutboxBearerToken)) != nil
     refreshEvidenceOutboxStatus()
     Task { @MainActor [weak self] in await self?.refreshSynchronizedReferenceStatus() }
     refreshCANResearch()
     refreshDiscoveryEvidence()
+    refreshDebugEvidenceAnnotations()
   }
 
   func startEvidenceAutomation() {
@@ -434,18 +649,25 @@ final class AppModel {
       }
       let runUsesDevelopmentEvidenceLab =
         run.acquisitionAuthority == .developmentEvidenceLab
+      let runUsesDebugUnverified = run.acquisitionAuthority == .debugUnverified
       let currentAuthority = discoveryMutationAuthority(
         for: template,
         allowLocalEvidenceOnly: run.acquisitionAuthority == .localEvidenceOnly,
-        allowDevelopmentEvidenceLab: runUsesDevelopmentEvidenceLab)
+        allowDevelopmentEvidenceLab: runUsesDevelopmentEvidenceLab,
+        allowUnrestrictedEvidenceWorkspace: runUsesDebugUnverified)
       guard run.acquisitionAuthority?.permitsContinuation(with: currentAuthority) == true
       else {
         throw AppModelError.discoveryEvidenceAuthorityRequired
       }
       let observation = try currentDiscoveryObservation(
         allowLocalEvidenceOnly: run.acquisitionAuthority == .localEvidenceOnly,
-        allowDevelopmentEvidenceLab: runUsesDevelopmentEvidenceLab)
-      if run.templateID == DiscoveryMutationPolicy.parkSelectorBootstrapTemplateID {
+        allowDevelopmentEvidenceLab: runUsesDevelopmentEvidenceLab,
+        allowUnrestrictedEvidenceWorkspace: runUsesDebugUnverified,
+        preferredGatewayID: runUsesDebugUnverified ? run.gatewayID : nil,
+        preferredSessionID: runUsesDebugUnverified ? run.gatewaySessionID : nil)
+      if run.templateID == DiscoveryMutationPolicy.parkSelectorBootstrapTemplateID,
+        !runUsesDebugUnverified
+      {
         let storedMarkers = bootstrapMarkerRecords(for: run)
         let recorded = storedMarkers.map {
           DiscoveryOrderedMarkerRequirement(kind: $0.marker.kind, label: $0.label)
@@ -505,18 +727,21 @@ final class AppModel {
         let acquisitionAuthority = discoveryMutationAuthority(
           for: template,
           allowLocalEvidenceOnly: allowLocalEvidenceOnly,
-          allowDevelopmentEvidenceLab: allowDevelopmentEvidenceLab)
+          allowDevelopmentEvidenceLab: allowDevelopmentEvidenceLab,
+          allowUnrestrictedEvidenceWorkspace: debugUnverifiedEvidenceModeActive)
       else {
         throw AppModelError.discoveryEvidenceAuthorityRequired
       }
       let observation = try currentDiscoveryObservation(
         allowLocalEvidenceOnly: allowLocalEvidenceOnly,
-        allowDevelopmentEvidenceLab: allowDevelopmentEvidenceLab)
+        allowDevelopmentEvidenceLab: allowDevelopmentEvidenceLab,
+        allowUnrestrictedEvidenceWorkspace: debugUnverifiedEvidenceModeActive)
       let recordedAt = Self.timestamp()
-      guard DiscoveryMutationPolicy.ownerSafetyAcknowledgementIsValid(
-        ownerSafetyAcknowledgedAt,
-        runStartedAt: recordedAt,
-        required: acquisitionAuthority.requiresOwnerSafetyAcknowledgement)
+      guard
+        DiscoveryMutationPolicy.ownerSafetyAcknowledgementIsValid(
+          ownerSafetyAcknowledgedAt,
+          runStartedAt: recordedAt,
+          required: acquisitionAuthority.requiresOwnerSafetyAcknowledgement)
       else { throw AppModelError.discoveryOwnerSafetyAcknowledgementRequired }
       Task { @MainActor [weak self] in
         guard let self else { return }
@@ -527,6 +752,9 @@ final class AppModel {
             recordedAt: recordedAt,
             acquisitionAuthority: acquisitionAuthority,
             ownerSafetyAcknowledgedAt: ownerSafetyAcknowledgedAt)
+          if acquisitionAuthority == .debugUnverified {
+            self.debugPinnedRunObservations[run.id] = observation
+          }
           self.discoveryEvidenceFullyQueued = false
           await self.reloadDiscoveryEvidence()
           self.noticeMessage =
@@ -558,10 +786,15 @@ final class AppModel {
       }
       let runUsesDevelopmentEvidenceLab =
         run.acquisitionAuthority == .developmentEvidenceLab
-      let endObservation = state == .ended
+      let runUsesDebugUnverified = run.acquisitionAuthority == .debugUnverified
+      let endObservation =
+        state == .ended
         ? try currentDiscoveryObservation(
           allowLocalEvidenceOnly: run.acquisitionAuthority == .localEvidenceOnly,
-          allowDevelopmentEvidenceLab: runUsesDevelopmentEvidenceLab) : nil
+          allowDevelopmentEvidenceLab: runUsesDevelopmentEvidenceLab,
+          allowUnrestrictedEvidenceWorkspace: runUsesDebugUnverified,
+          preferredGatewayID: runUsesDebugUnverified ? run.gatewayID : nil,
+          preferredSessionID: runUsesDebugUnverified ? run.gatewaySessionID : nil) : nil
       var discoveryAuthority: DiscoveryMutationAuthority?
       if state == .ended {
         if run.templateID == DiscoveryMutationPolicy.parkSelectorBootstrapTemplateID {
@@ -575,31 +808,34 @@ final class AppModel {
           discoveryAuthority = discoveryMutationAuthority(
             for: template,
             allowLocalEvidenceOnly: run.acquisitionAuthority == .localEvidenceOnly,
-            allowDevelopmentEvidenceLab: runUsesDevelopmentEvidenceLab)
+            allowDevelopmentEvidenceLab: runUsesDevelopmentEvidenceLab,
+            allowUnrestrictedEvidenceWorkspace: runUsesDebugUnverified)
           guard
             run.acquisitionAuthority?.permitsContinuation(with: discoveryAuthority) == true
           else {
             throw AppModelError.discoveryEvidenceAuthorityRequired
           }
-          guard
-            DiscoveryMutationPolicy.parkSelectorBootstrapIsComplete(
-              orderedBootstrapMarkers(for: run))
-          else { throw AppModelError.discoveryTestIncomplete }
-          if let last = bootstrapMarkerRecords(for: run).last,
-            let endObservation
-          {
-            let remaining =
-              DiscoveryMutationPolicy.parkSelectorBootstrapDwellRemainingMicroseconds(
-                after: DiscoveryOrderedMarkerRequirement(
-                  kind: last.marker.kind, label: last.label),
-                lastMarkerMonotonicMicroseconds: last.marker.gatewayMonotonicMicroseconds,
-                currentMonotonicMicroseconds: endObservation.monotonicMicroseconds)
-            guard remaining == 0 else {
-              throw AppModelError.discoveryMarkerDwellRequired(
-                Int((remaining + 999_999) / 1_000_000))
+          if !runUsesDebugUnverified {
+            guard
+              DiscoveryMutationPolicy.parkSelectorBootstrapIsComplete(
+                orderedBootstrapMarkers(for: run))
+            else { throw AppModelError.discoveryTestIncomplete }
+            if let last = bootstrapMarkerRecords(for: run).last,
+              let endObservation
+            {
+              let remaining =
+                DiscoveryMutationPolicy.parkSelectorBootstrapDwellRemainingMicroseconds(
+                  after: DiscoveryOrderedMarkerRequirement(
+                    kind: last.marker.kind, label: last.label),
+                  lastMarkerMonotonicMicroseconds: last.marker.gatewayMonotonicMicroseconds,
+                  currentMonotonicMicroseconds: endObservation.monotonicMicroseconds)
+              guard remaining == 0 else {
+                throw AppModelError.discoveryMarkerDwellRequired(
+                  Int((remaining + 999_999) / 1_000_000))
+              }
             }
           }
-        } else {
+        } else if !runUsesDebugUnverified {
           guard gateway.hasCurrentParkedAuthority else {
             throw AppModelError.discoveryParkedStateRequired
           }
@@ -674,6 +910,15 @@ final class AppModel {
               "Test run draft aborted; all previously recorded markers remain append-only evidence. Open Evidence after reconnecting to recover its retained gateway session."
             self.errorMessage = nil
           }
+          if state == .ended {
+            self.noticeMessage =
+              "Test ended. Frames and markers are retained for analysis; the recorder remains live and bulk transfer waits for an explicit Evidence action."
+            self.errorMessage = nil
+          } else if state == .aborted {
+            self.noticeMessage =
+              "Test aborted. Existing frames and markers remain append-only evidence; no recorder command was sent."
+            self.errorMessage = nil
+          }
         } catch {
           self.errorMessage = error.localizedDescription
         }
@@ -721,6 +966,8 @@ final class AppModel {
       discoveryMarkerLedgerReadState = .unavailable(error.localizedDescription)
     }
 
+    await refreshDebugRunObservationPins()
+
     if let failure = discoveryLedgerFailureDetail {
       discoveryMarkerMessage =
         "Discovery evidence read failed closed. \(failure) Committed ledger bytes remain untouched; no record was skipped, deleted, rewritten, or used for authority."
@@ -745,6 +992,35 @@ final class AppModel {
     } else {
       discoveryMarkerMessage = retainedMessage
     }
+  }
+
+  private func refreshDebugRunObservationPins() async {
+    #if DEBUG
+      let activeRuns = discoveryTestRuns.filter {
+        $0.state == .active && $0.acquisitionAuthority == .debugUnverified
+      }
+      var retained: [String: PassiveCANObservation] = [:]
+      for run in activeRuns {
+        if let existing = debugPinnedRunObservations[run.id],
+          existing.gatewayID == run.gatewayID,
+          existing.sessionID == run.gatewaySessionID,
+          existing.sourceSequence == run.firstSourceSequence
+        {
+          retained[run.id] = existing
+          continue
+        }
+        if let observation = try? await gateway.retainedPassiveCANObservation(
+          gatewayID: run.gatewayID,
+          sessionID: run.gatewaySessionID,
+          sourceSequence: run.firstSourceSequence)
+        {
+          retained[run.id] = observation
+        }
+      }
+      debugPinnedRunObservations = retained
+    #else
+      debugPinnedRunObservations = [:]
+    #endif
   }
 
   func retryDiscoveryEvidenceLoad() {
@@ -810,9 +1086,25 @@ final class AppModel {
 
   private func currentDiscoveryObservation(
     allowLocalEvidenceOnly: Bool = false,
-    allowDevelopmentEvidenceLab: Bool = false
+    allowDevelopmentEvidenceLab: Bool = false,
+    allowUnrestrictedEvidenceWorkspace: Bool = false,
+    preferredGatewayID: String? = nil,
+    preferredSessionID: UInt32? = nil
   ) throws -> PassiveCANObservation {
     #if DEBUG
+      if allowUnrestrictedEvidenceWorkspace, !availableDebugEvidenceObservations.isEmpty {
+        if let preferredGatewayID, let preferredSessionID,
+          let bound = availableDebugEvidenceObservations.first(where: {
+            $0.gatewayID == preferredGatewayID && $0.sessionID == preferredSessionID
+          })
+        {
+          return bound
+        }
+        guard preferredGatewayID == nil, preferredSessionID == nil else {
+          throw AppModelError.discoveryCurrentTimelineRequired
+        }
+        return availableDebugEvidenceObservations[0]
+      }
       if allowDevelopmentEvidenceLab {
         guard let observation = gateway.latestCANObservation,
           observation.listenOnly,
@@ -851,6 +1143,12 @@ final class AppModel {
   func pauseDownloadAndResumeGatewayHistory() {
     do {
       guard gateway.state == .vhosConnected else {
+        throw AppModelError.gatewayHealthRequired
+      }
+      guard gateway.hasCurrentParkedAuthority else {
+        throw AppModelError.discoveryParkedStateRequired
+      }
+      guard gateway.canStartOwnerTriggeredHistoryTransfer else {
         throw AppModelError.gatewayHealthRequired
       }
       try gateway.pauseCaptureAndDownloadHistory()
@@ -1203,7 +1501,13 @@ final class AppModel {
       do {
         let snapshot = try await self.gateway.makePassiveCANWorkSnapshot()
         let report = try await self.evidenceWorkCoordinator.analyzePassiveCAN(snapshot)
+        let sampleSnapshot = try await self.gateway.makePassiveCANWorkSnapshot(
+          maximumObservationCount: 2_048)
+        let recent = try await self.evidenceWorkCoordinator.recentPassiveCAN(
+          sampleSnapshot,
+          limit: 512)
         guard !Task.isCancelled, self.canResearchRevision == revision else { return }
+        self.debugEvidenceObservations = recent.observations
         self.canResearchReport = report
         self.canResearchMessage =
           report.map {
@@ -1289,6 +1593,34 @@ final class AppModel {
     }
   }
 
+  func importDebugPassiveCAN(from url: URL) {
+    #if DEBUG
+      guard debugUnverifiedEvidenceModeActive,
+        DiscoveryMutationAuthority.debugUnverified.permitsEvidenceWorkspaceOperation(
+          .importPassiveEvidence)
+      else {
+        errorMessage = AppModelError.debugModeNeeded.localizedDescription
+        return
+      }
+      let hasAccess = url.startAccessingSecurityScopedResource()
+      Task { @MainActor [weak self] in
+        defer { if hasAccess { url.stopAccessingSecurityScopedResource() } }
+        guard let self else { return }
+        do {
+          let summary = try await self.gateway.importDebugPassiveCAN(from: url)
+          self.noticeMessage =
+            "DEBUG_UNVERIFIED import decoded \(summary.decodedRecords) real passive CAN records across \(summary.sessionCount) sessions and appended \(summary.appendedRecords) new records."
+          self.errorMessage = nil
+          self.refreshCANResearch()
+        } catch {
+          self.errorMessage = error.localizedDescription
+        }
+      }
+    #else
+      errorMessage = AppModelError.debugModeNeeded.localizedDescription
+    #endif
+  }
+
   func stageRelease(_ artifact: ReleaseArtifact) async {
     do {
       let url = try await releaseHub.stage(artifact)
@@ -1340,8 +1672,18 @@ enum AppModelError: Error, LocalizedError {
   case discoveryTestIncomplete
   case discoveryLedgerUnavailable(String)
 
+  case debugModeNeeded
+  case debugLabelNeeded
+  case debugObservationNeeded
+
   var errorDescription: String? {
     switch self {
+    case .debugModeNeeded:
+      "Enable the Debug-only DEBUG_UNVERIFIED workspace before appending labels."
+    case .debugLabelNeeded:
+      "Enter a label before appending the record."
+    case .debugObservationNeeded:
+      "Select a real retained or live passive CAN observation before appending the record."
     case .releaseKeyRequired:
       "Import the trusted Ed25519 release public key before selecting firmware."
     case .gatewayHealthRequired: "A VHOS gateway handshake and current health report are required."

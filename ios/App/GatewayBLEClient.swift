@@ -195,14 +195,32 @@ struct GatewayRestoredLinkPolicy {
   }
 }
 
+enum CaptureHistoryTransferPhase: String {
+  case downloading
+  case resuming
+}
+
+struct CaptureHistoryRecoveryPersistencePolicy {
+  static func restoredRecoveryAvailable(
+    phase: CaptureHistoryTransferPhase?,
+    persistedIncompleteCheckpointAvailable: Bool
+  ) -> Bool {
+    switch phase {
+    case .downloading:
+      // A terminated bulk transfer always leaves a resumable checkpoint. Legacy builds persisted
+      // only the phase, so this must migrate to an explicit incomplete-checkpoint bit.
+      true
+    case .resuming, nil:
+      // RESUMING describes recorder state, not history completeness. Preserve a recovery action
+      // only when an incomplete checkpoint was independently persisted.
+      persistedIncompleteCheckpointAvailable
+    }
+  }
+}
+
 @MainActor
 @Observable
 final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate {
-  private enum CaptureHistoryTransferPhase: String {
-    case downloading
-    case resuming
-  }
-
   @MainActor
   private final class LinkScopedPeripheralDelegate: NSObject,
     @preconcurrency CBPeripheralDelegate
@@ -307,6 +325,8 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     "vhos.handshakeVerifiedGatewayPeripheralIdentifier.v1"
   private static let captureHistoryTransferPhaseKey =
     "vhos.captureHistoryTransferPhase.v1"
+  private static let captureHistoryRecoveryAvailableKey =
+    "vhos.captureHistoryRecoveryAvailable.v1"
 
   private var central: CBCentralManager!
   private var currentCentralRestoreIdentifier = ""
@@ -428,6 +448,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   var captureSessions: [CaptureSessionSummary] = []
   var captureSyncMessage = "Waiting for a gateway capture index."
   var captureHistoryTransferActive = false
+  var captureHistoryRecoveryAvailable = false
   var captureDownloadedRecords: UInt64 = 0
   var captureSyncCompletionGeneration: UInt64 = 0
   var portableFrameCount: Int { portableFrameIntegrityLatch.verifiedCount }
@@ -470,6 +491,12 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     let age = Date().timeIntervalSince(receivedAt)
     return age >= 0 && age <= 5
   }
+  var canStartOwnerTriggeredHistoryTransfer: Bool {
+    CaptureSyncPolicy.permitsOwnerTriggeredHistoryTransfer(
+      gatewayConnected: state == .vhosConnected,
+      hasCurrentParkedAuthority: hasCurrentParkedAuthority,
+      transferActive: captureHistoryTransferActive)
+  }
   var connectionCleanupActive = false
   var automaticReconnectActive = false
   var reconnectAttemptCount = 0
@@ -506,17 +533,35 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     captureHistoryTransferPhase = UserDefaults.standard.string(
       forKey: Self.captureHistoryTransferPhaseKey
     ).flatMap(CaptureHistoryTransferPhase.init(rawValue:))
+    captureHistoryRecoveryAvailable =
+      CaptureHistoryRecoveryPersistencePolicy.restoredRecoveryAvailable(
+        phase: captureHistoryTransferPhase,
+        persistedIncompleteCheckpointAvailable: UserDefaults.standard.bool(
+          forKey: Self.captureHistoryRecoveryAvailableKey))
     switch captureHistoryTransferPhase {
     case .downloading:
-      captureAutoResumeAfterHistoryTransfer = true
-      captureTransferRearmPending = true
-      captureHistoryTransferActive = true
+      // A bulk history-transfer intent must never own launch or reconnection. A field trace
+      // showed that the old implicit pause/read/retry loop could exhaust the peripheral GATT
+      // service until a hardware power cycle. Preserve the recoverable evidence and clear only
+      // the bulk retry intent.
+      setCaptureHistoryRecoveryAvailable(true)
+      captureHistoryTransferActive = false
+      captureAutoResumeAfterHistoryTransfer = false
+      captureResumeConfirmationPending = false
+      captureTransferRearmPending = false
+      captureHistoryTransferPhase = nil
+      UserDefaults.standard.removeObject(forKey: Self.captureHistoryTransferPhaseKey)
       captureSyncMessage =
-        "Recovering an interrupted history transfer from its saved iPhone checkpoint…"
+        "Saved history checkpoint found. Automatic bulk recovery was cleared; connect normally and retry from Evidence when ready."
     case .resuming:
-      captureResumeConfirmationPending = true
+      // Recorder resume is a single small command, not a bulk transfer. Keep this exact state so
+      // the next owner-initiated connection can confirm recording without starting a scan itself.
       captureHistoryTransferActive = true
-      captureSyncMessage = "Confirming that passive recording resumed…"
+      captureAutoResumeAfterHistoryTransfer = false
+      captureResumeConfirmationPending = true
+      captureTransferRearmPending = false
+      captureSyncMessage =
+        "A recorder-resume confirmation is pending. Connect normally; no history transfer will start."
     case nil:
       break
     }
@@ -526,13 +571,11 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     verifiedSavedGatewayIdentifier = UserDefaults.standard.string(
       forKey: Self.handshakeVerifiedPeripheralIdentifierKey
     ).flatMap { UUID(uuidString: $0)?.uuidString.uppercased() }
-    let captureTransferReconnectRequested = captureHistoryTransferPhase != nil
     scanRequested =
       CommandLine.arguments.contains(Self.autoScanArgument)
       || ProcessInfo.processInfo.environment[Self.autoScanEnvironmentKey] == "1"
-      || captureTransferReconnectRequested
     reconnectIntentRequested = scanRequested
-    automaticReconnectEnabled = captureTransferReconnectRequested
+    automaticReconnectEnabled = false
     // State restoration is required for a bonded gateway. An inherited link remains quiescent
     // until the durable evidence store verifies, then receives one current-process delegate and
     // renegotiates the VHOS contract without a launch-time disconnect/reconnect cycle.
@@ -552,12 +595,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       }
     }
     refreshPortableFrameIntegrity()
-    if captureTransferReconnectRequested {
-      Self.logger.info("BLE reconnect requested by interrupted capture transfer")
-      trace(
-        "CAPTURE_TRANSFER_LAUNCH_RECOVERY phase=\(captureHistoryTransferPhase?.rawValue ?? "unknown") saved_id=\(verifiedSavedGatewayIdentifier ?? "none")"
-      )
-    } else if scanRequested {
+    if scanRequested {
       Self.logger.info("BLE auto-scan requested by commissioning launch")
       trace("AUTO_SCAN_REQUESTED")
     }
@@ -893,6 +931,17 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     }
   }
 
+  func retainedPassiveCANObservation(
+    gatewayID: String,
+    sessionID: UInt32,
+    sourceSequence: UInt64
+  ) async throws -> PassiveCANObservation? {
+    try await evidencePersistence.captureObservation(
+      gatewayID: gatewayID,
+      sessionID: sessionID,
+      sourceSequence: sourceSequence)
+  }
+
   private func persistAcceptedPortableFrame(
     _ accepted: AcceptedGatewayFrameContext
   ) async throws {
@@ -935,6 +984,15 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     }
   }
 
+  private func setCaptureHistoryRecoveryAvailable(_ available: Bool) {
+    captureHistoryRecoveryAvailable = available
+    if available {
+      UserDefaults.standard.set(true, forKey: Self.captureHistoryRecoveryAvailableKey)
+    } else {
+      UserDefaults.standard.removeObject(forKey: Self.captureHistoryRecoveryAvailableKey)
+    }
+  }
+
   func setCaptureLogging(_ enabled: Bool) throws {
     captureSyncSuspendedForOTA = !enabled
     if !enabled {
@@ -963,6 +1021,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   }
 
   func pauseCaptureAndDownloadHistory() throws {
+    let recoveryWasAvailable = captureHistoryRecoveryAvailable
     captureSyncSuspendedForOTA = false
     captureSyncTask?.cancel()
     captureSyncTask = nil
@@ -970,6 +1029,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     captureChunkResponseTask = nil
     captureSyncTargets.removeAll()
     captureDownloadedRecords = 0
+    setCaptureHistoryRecoveryAvailable(false)
     captureAutoResumeAfterHistoryTransfer = true
     captureResumeConfirmationPending = false
     captureTransferRearmPending = false
@@ -998,6 +1058,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         payload: CaptureLogRequest(operation: .pause, slot: 2).encoded()
       )
     } catch {
+      setCaptureHistoryRecoveryAvailable(recoveryWasAvailable)
       captureAutoResumeAfterHistoryTransfer = false
       captureHistoryTransferActive = false
       persistCaptureHistoryTransferPhase(nil)
@@ -1012,6 +1073,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
 
   func resumeCaptureLogging() throws {
     captureSyncSuspendedForOTA = false
+    let interruptedDownloadWasPending = captureHistoryTransferPhase == .downloading
     try writeFrame(
       type: .captureLogRequest,
       payload: CaptureLogRequest(operation: .resume).encoded()
@@ -1022,6 +1084,8 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     captureChunkResponseTask = nil
     captureSyncTargets.removeAll()
     captureAutoResumeAfterHistoryTransfer = false
+    setCaptureHistoryRecoveryAvailable(
+      captureHistoryRecoveryAvailable || interruptedDownloadWasPending)
     captureResumeConfirmationPending = true
     captureTransferRearmPending = false
     captureHistoryTransferActive = true
@@ -2312,10 +2376,11 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         return
       }
       let value = try VHOSJSON.decoder().decode(GatewayHandshake.self, from: frame.payload)
-      guard validatedGatewayIdentities.promoteHandshakeClaim(
-        gatewayID: value.gatewayID,
-        linkSession: linkSession,
-        authorityWindow: authorityWindow)
+      guard
+        validatedGatewayIdentities.promoteHandshakeClaim(
+          gatewayID: value.gatewayID,
+          linkSession: linkSession,
+          authorityWindow: authorityWindow)
       else {
         // Defensive duplicate of the pre-decode gate. The registry owns the final authority
         // boundary so later refactors cannot promote a decoded-but-rejected claim.
@@ -2444,7 +2509,8 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       Self.commissioningTrace(
         "CAPTURE_INDEX current_session=\(index.currentSessionID) current_records=\(index.currentRecords) previous_session=\(index.previousSessionID) previous_records=\(index.previousRecords) retained=\(index.retainedRecords) queue_drops=\(index.queueDroppedRecords) write_failures=\(index.storageWriteFailures)"
       )
-      if index.logging, !captureSyncSuspendedForOTA, !captureHistoryTransferActive,
+      if CaptureSyncPolicy.permitsAutomaticHistoryRecovery, index.logging,
+        !captureSyncSuspendedForOTA, !captureHistoryTransferActive,
         try await hasIncompleteLocalCapture(for: index)
       {
         captureAutoResumeAfterHistoryTransfer = true
@@ -2452,11 +2518,6 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         captureTransferRearmPending = false
         captureHistoryTransferActive = true
         persistCaptureHistoryTransferPhase(.downloading)
-        captureSyncMessage =
-          "Found an interrupted history transfer; pausing briefly to continue from the saved iPhone checkpoint…"
-        Self.commissioningTrace(
-          "CAPTURE_TRANSFER_RECOVERED source=partial-local-evidence recorder=active action=pause-continue-and-auto-resume"
-        )
         do {
           try writeFrame(
             type: .captureLogRequest,
@@ -2471,6 +2532,12 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
           )
         }
         return
+      }
+      if !captureSyncSuspendedForOTA, try await hasIncompleteLocalCapture(for: index) {
+        setCaptureHistoryRecoveryAvailable(true)
+        Self.commissioningTrace(
+          "CAPTURE_TRANSFER_AVAILABLE source=partial-local-evidence action=owner-triggered-only"
+        )
       }
       switch CaptureSyncPolicy.mode(
         recorderIsLogging: index.logging,
@@ -2490,19 +2557,25 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
           captureHistoryTransferActive = false
           persistCaptureHistoryTransferPhase(nil)
           captureSyncMessage =
-            "Gateway history is synchronized on this iPhone and passive recording has resumed."
+            captureHistoryRecoveryAvailable
+            ? "Passive recording resumed. Interrupted history remains saved for an explicit retry from Evidence."
+            : "Gateway history is synchronized on this iPhone and passive recording has resumed."
           Self.commissioningTrace(
             "CAPTURE_TRANSFER_COMPLETE recorder=resumed local_sessions=\(captureSessions.count)"
           )
         } else {
           captureSyncMessage =
-            "Gateway inventory refreshed. History download is deferred while CAN recording is active to protect live capture and BLE stability."
+            captureHistoryRecoveryAvailable
+            ? "Gateway inventory refreshed. An incomplete checkpoint is available; history download starts only when you request it."
+            : "Gateway inventory refreshed. History download is deferred while CAN recording is active to protect live capture and BLE stability."
         }
         Self.commissioningTrace(
           "CAPTURE_SYNC_DEFERRED reason=recorder-active policy=inventory-only current_session=\(index.currentSessionID) current_records=\(index.currentRecords) previous_session=\(index.previousSessionID) previous_records=\(index.previousRecords)"
         )
       case .transferHistory:
-        if !captureHistoryTransferActive, try await hasIncompleteLocalCapture(for: index) {
+        if CaptureSyncPolicy.permitsAutomaticHistoryRecovery,
+          !captureHistoryTransferActive, try await hasIncompleteLocalCapture(for: index)
+        {
           captureAutoResumeAfterHistoryTransfer = true
           captureResumeConfirmationPending = false
           captureTransferRearmPending = false
@@ -2514,7 +2587,13 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
             "CAPTURE_TRANSFER_RECOVERED source=partial-local-evidence action=continue-and-auto-resume"
           )
         }
-        if captureHistoryTransferActive {
+        if captureResumeConfirmationPending {
+          captureSyncMessage =
+            "Waiting for passive recording to resume; no history data is being transferred."
+          Self.commissioningTrace(
+            "CAPTURE_SYNC_DEFERRED reason=resume-confirmation-pending action=no-bulk-transfer"
+          )
+        } else if captureHistoryTransferActive && captureAutoResumeAfterHistoryTransfer {
           try await beginCaptureSync(index)
         } else {
           captureSyncMessage =
@@ -2600,6 +2679,19 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       "Verified \(summary.verifiedRecords) records; appended \(summary.appendedRecords) new logical frames."
     return summary
   }
+
+  #if DEBUG
+    func importDebugPassiveCAN(from url: URL) async throws -> DebugPassiveCANImportSummary {
+      let summary = try await evidencePersistence.importDebugPassiveCAN(from: url)
+      captureSessions = try await evidencePersistence.captureSummaries()
+      if summary.appendedRecords > 0 {
+        captureSyncCompletionGeneration &+= 1
+      }
+      captureSyncMessage =
+        "Debug import decoded \(summary.decodedRecords) passive records across \(summary.sessionCount) sessions; appended \(summary.appendedRecords) new records."
+      return summary
+    }
+  #endif
 
   nonisolated static func readBoundedEvidenceSyncArchive(from url: URL) throws -> Data {
     let values = try url.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey])
@@ -2711,6 +2803,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
 
   private func finishCaptureSync() async throws {
     captureSessions = try await evidencePersistence.captureSummaries()
+    setCaptureHistoryRecoveryAvailable(false)
     captureSyncMessage = "Recent gateway logs are synchronized on this iPhone."
     let fingerprint =
       captureSessions
@@ -2741,6 +2834,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         current.recordOffset == requestOffset
       else { return }
       self.captureChunkResponseTask = nil
+      self.setCaptureHistoryRecoveryAvailable(true)
       self.captureSyncMessage =
         "Recent-log sync paused at record \(requestOffset); the live vehicle session remains connected."
       Self.commissioningTrace(
@@ -2937,14 +3031,40 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       "LINK_DISCONNECTED link_session=\(linkSession) pairing_pending=\(notificationPairingPending) system_reconnecting=\(isSystemReconnecting) error={\(failure)}"
     )
     if captureHistoryTransferActive {
-      captureTransferRearmPending = captureAutoResumeAfterHistoryTransfer
-      captureSyncMessage =
-        captureResumeConfirmationPending
-        ? "Link interrupted after download; recorder resume will retry after reconnection…"
-        : "Link interrupted; history will continue from the saved iPhone checkpoint after reconnection…"
-      Self.commissioningTrace(
-        "CAPTURE_TRANSFER_INTERRUPTED link_session=\(linkSession) phase=\(captureHistoryTransferPhase?.rawValue ?? "unknown") downloaded=\(captureDownloadedRecords) recovery=automatic"
-      )
+      let recoveryAvailableAfterDisconnect =
+        CaptureHistoryRecoveryPersistencePolicy.restoredRecoveryAvailable(
+          phase: captureHistoryTransferPhase,
+          persistedIncompleteCheckpointAvailable: captureHistoryRecoveryAvailable)
+      captureSyncTask?.cancel()
+      captureSyncTask = nil
+      captureChunkResponseTask?.cancel()
+      captureChunkResponseTask = nil
+      captureSyncTargets.removeAll()
+      // RESUMING says only that recorder confirmation is pending. It does not imply the
+      // completed history copy became incomplete again. Preserve a separately recorded
+      // checkpoint, but never manufacture one merely because the link dropped late.
+      setCaptureHistoryRecoveryAvailable(recoveryAvailableAfterDisconnect)
+      captureAutoResumeAfterHistoryTransfer = false
+      captureTransferRearmPending = false
+      if captureHistoryTransferPhase == .resuming || captureResumeConfirmationPending {
+        captureResumeConfirmationPending = true
+        captureHistoryTransferActive = true
+        persistCaptureHistoryTransferPhase(.resuming)
+        captureSyncMessage =
+          "Recorder resume is still unconfirmed. Normal BLE reconnection may retry only that resume command; bulk history remains disabled."
+        Self.commissioningTrace(
+          "CAPTURE_TRANSFER_INTERRUPTED link_session=\(linkSession) phase=resuming downloaded=\(captureDownloadedRecords) recovery=resume-only"
+        )
+      } else {
+        captureResumeConfirmationPending = false
+        captureHistoryTransferActive = false
+        persistCaptureHistoryTransferPhase(nil)
+        captureSyncMessage =
+          "History transfer stopped with the link. Its checkpoint remains available for an explicit retry; normal BLE reconnection is independent."
+        Self.commissioningTrace(
+          "CAPTURE_TRANSFER_INTERRUPTED link_session=\(linkSession) phase=cleared downloaded=\(captureDownloadedRecords) recovery=owner-triggered-only"
+        )
+      }
     }
     if userRequestedDisconnect || !automaticReconnectEnabled {
       resetConnection()
@@ -3896,6 +4016,17 @@ struct GatewayEvidenceImportResult: Sendable {
   let portableFrameCount: Int
 }
 
+struct DebugPassiveCANImportSummary: Sendable {
+  let decodedRecords: Int
+  let appendedRecords: Int
+  let sessionCount: Int
+}
+
+private struct PassiveCANImportScope: Hashable {
+  let gatewayID: String
+  let sessionID: UInt32
+}
+
 /// Exclusive serial owner of every disk-backed BLE evidence store.
 ///
 /// CoreBluetooth delegates run on the main queue. No recovery, index rebuild, historical directory
@@ -3969,6 +4100,17 @@ actor GatewayEvidencePersistenceWorker {
     try captureStore.recordCount(gatewayID: gatewayID, sessionID: sessionID)
   }
 
+  func captureObservation(
+    gatewayID: String,
+    sessionID: UInt32,
+    sourceSequence: UInt64
+  ) throws -> PassiveCANObservation? {
+    try captureStore.observation(
+      gatewayID: gatewayID,
+      sessionID: sessionID,
+      sourceSequence: sourceSequence)
+  }
+
   func captureSummaries() throws -> [CaptureSessionSummary] { try captureStore.summaries() }
 
   func appendCaptureRecords(
@@ -3989,6 +4131,32 @@ actor GatewayEvidencePersistenceWorker {
   func importBundle(from url: URL) throws -> GatewayEvidenceImportResult {
     try importBundle(GatewayBLEClient.readBoundedEvidenceSyncArchive(from: url))
   }
+
+  #if DEBUG
+    func importDebugPassiveCAN(from url: URL) throws -> DebugPassiveCANImportSummary {
+      let bytes = try GatewayBLEClient.readBoundedEvidenceSyncArchive(from: url)
+      let observations = try PassiveCANEvidenceArchive.decodeCanonicalNDJSON(bytes)
+      guard !observations.isEmpty else { throw CaptureSyncError.noStoredLogs }
+      guard observations.count <= 50_000 else { throw EvidenceSyncError.tooManyRecords }
+      let grouped = Dictionary(grouping: observations) {
+        PassiveCANImportScope(gatewayID: $0.gatewayID, sessionID: $0.sessionID)
+      }
+      var appendedRecords = 0
+      for scope in grouped.keys.sorted(by: {
+        ($0.gatewayID, $0.sessionID) < ($1.gatewayID, $1.sessionID)
+      }) {
+        guard let records = grouped[scope] else { continue }
+        appendedRecords += try captureStore.append(
+          records,
+          gatewayID: scope.gatewayID,
+          sessionID: scope.sessionID)
+      }
+      return DebugPassiveCANImportSummary(
+        decodedRecords: observations.count,
+        appendedRecords: appendedRecords,
+        sessionCount: grouped.count)
+    }
+  #endif
 }
 
 private struct CaptureSyncTarget {
@@ -4040,6 +4208,22 @@ final class CaptureLogStore {
       throw CaptureLogStoreError.capacityReached
     }
     return exact
+  }
+
+  func observation(
+    gatewayID: String,
+    sessionID: UInt32,
+    sourceSequence: UInt64
+  ) throws -> PassiveCANObservation? {
+    let url = fileURL(gatewayID: gatewayID, sessionID: sessionID)
+    guard fileManager.fileExists(atPath: url.path) else { return nil }
+    _ = try ensuredRecordIndex(gatewayID: gatewayID, sessionID: sessionID)
+    var matched: PassiveCANObservation?
+    _ = try scanLedger(at: url, gatewayID: gatewayID, sessionID: sessionID) {
+      candidate, _, _ in
+      if candidate.sourceSequence == sourceSequence { matched = candidate }
+    }
+    return matched
   }
 
   func append(

@@ -44,6 +44,10 @@ struct PreparedPassiveCANExport: Sendable {
 /// Snapshot creation opens only a bounded number of exact-length descriptors. This actor then
 /// performs every payload read, canonical decode, hash, ZIP construction, and temporary-file
 /// publication. No mutable gateway or app model is captured here.
+struct PassiveCANBatch: Sendable {
+  let observations: [PassiveCANObservation]
+}
+
 actor EvidenceWorkCoordinator {
   func prepareEvidencePage(
     _ snapshot: PortableEvidenceWorkSnapshot,
@@ -169,6 +173,16 @@ actor EvidenceWorkCoordinator {
       url: output,
       recordCount: observations.count,
       excludesEarlierCaptureBytes: snapshot.hasEarlierCaptureBytes)
+  }
+
+  func recentPassiveCAN(
+    _ snapshot: PassiveCANWorkSnapshot,
+    limit: Int = 512
+  ) async throws -> PassiveCANBatch {
+    defer { snapshot.close() }
+    guard (1...2_048).contains(limit) else { throw EvidenceSyncError.tooManyRecords }
+    let observations = try await Self.decodePassiveCAN(snapshot)
+    return PassiveCANBatch(observations: Array(observations.suffix(limit)))
   }
 
   private static func decodePassiveCAN(_ snapshot: PassiveCANWorkSnapshot) async throws

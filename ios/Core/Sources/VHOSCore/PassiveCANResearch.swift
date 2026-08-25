@@ -574,6 +574,20 @@ public enum PassiveCANEvidenceArchive {
     return sort(observations)
   }
 
+  /// Decodes an exact VHOS-generated archive without normalizing or discarding source bytes.
+  ///
+  /// Debug import may skip vehicle-state authority, but it must not silently accept unknown JSON
+  /// fields, alternate ordering, whitespace, or malformed provenance and then rewrite those bytes
+  /// into a different evidence record. Callers retain `DEBUG_UNVERIFIED` authority separately.
+  public static func decodeCanonicalNDJSON(_ bytes: Data) throws -> [PassiveCANObservation] {
+    let observations = try decodeNDJSON(bytes)
+    try observations.forEach(validateResearchProvenance)
+    guard try encodeNDJSON(observations) == bytes else {
+      throw PassiveCANArchiveError.nonCanonicalArchive
+    }
+    return observations
+  }
+
   public static func merge(
     existing: [PassiveCANObservation],
     incoming: [PassiveCANObservation]
@@ -613,6 +627,15 @@ public enum PassiveCANEvidenceArchive {
     }
   }
 
+  /// Shared provenance boundary for imported evidence that can later receive labels or markers.
+  public static func validateResearchProvenance(_ observation: PassiveCANObservation) throws {
+    try validate(observation)
+    guard DiscoveryContractValidation.isBoundedText(observation.gatewayID, maximum: 160),
+      DiscoveryContractValidation.isWallTime(observation.ingestedAt),
+      DiscoveryContractValidation.isBoundedText(observation.evidenceSource, maximum: 160)
+    else { throw PassiveCANArchiveError.invalidShape(observation.id) }
+  }
+
   private static func sortedValidated(
     _ observations: [PassiveCANObservation]
   ) throws -> [PassiveCANObservation] {
@@ -642,6 +665,7 @@ public enum PassiveCANArchiveError: Error, Equatable, LocalizedError {
   case listenOnlyProofRequired(String)
   case duplicateIdentity(String)
   case identityCollision(String)
+  case nonCanonicalArchive
   case invalidPointBudget
   case insufficientPointBudget(required: Int)
 
@@ -655,6 +679,8 @@ public enum PassiveCANArchiveError: Error, Equatable, LocalizedError {
     case .duplicateIdentity(let identity): "Passive CAN archive repeats identity \(identity)."
     case .identityCollision(let identity):
       "Passive CAN identity \(identity) has conflicting evidence bytes."
+    case .nonCanonicalArchive:
+      "Passive CAN input is not an exact canonical VHOS NDJSON archive."
     case .invalidPointBudget: "A CAN research chart requires at least 16 retained points."
     case .insufficientPointBudget(let required):
       "A CAN research chart requires at least \(required) points to preserve every session boundary."

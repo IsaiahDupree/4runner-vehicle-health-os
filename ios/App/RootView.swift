@@ -197,6 +197,7 @@ private struct EvidenceView: View {
   @State private var exportURL: URL?
   @State private var bleTraceExportURL: URL?
   @State private var importingSync = false
+  @State private var importingDebugPassiveCAN = false
   @State private var outboxEndpoint = ""
   @State private var outboxToken = ""
   @State private var referencePreset: TechstreamReferencePreset = .engineSpeed
@@ -259,16 +260,26 @@ private struct EvidenceView: View {
           Button("Download paused history and resume") {
             model.pauseDownloadAndResumeGatewayHistory()
           }
-          .disabled(model.gateway.state != .vhosConnected)
+          .disabled(!model.gateway.canStartOwnerTriggeredHistoryTransfer)
           Button("Resume passive recording now") {
             model.resumeGatewayCapture()
           }
           .disabled(model.gateway.state != .vhosConnected)
         } else {
-          Button("Pause, download, and resume") {
+          Button(
+            model.gateway.captureHistoryRecoveryAvailable
+              ? "Resume saved log transfer" : "Pause, download, and resume"
+          ) {
             model.pauseDownloadAndResumeGatewayHistory()
           }
-          .disabled(model.gateway.state != .vhosConnected)
+          .disabled(!model.gateway.canStartOwnerTriggeredHistoryTransfer)
+        }
+        if !model.gateway.hasCurrentParkedAuthority {
+          Text(
+            "Pausing or downloading from the live gateway requires a fresh verified PARKED report. Stored evidence import, replay, labeling, and analysis do not."
+          )
+          .font(.footnote)
+          .foregroundStyle(.secondary)
         }
         Text(
           "Retained coverage is the deliberate flash sampling rate, not CAN loss. Bulk transfer pauses the recorder, downloads both retained segments, and resumes recording automatically to protect the receive path."
@@ -653,6 +664,18 @@ private struct EvidenceView: View {
         )
         .font(.footnote)
         .foregroundStyle(.secondary)
+        #if DEBUG
+          if model.debugUnverifiedEvidenceModeActive {
+            Button("Import passive CAN NDJSON — Debug") {
+              importingDebugPassiveCAN = true
+            }
+            Text(
+              "DEBUG_UNVERIFIED accepts canonical listen-only PassiveCANObservation NDJSON directly. It does not require a live gateway, PARKED state, bundle manifest, or prior signal verification; malformed or active-bus records are still rejected."
+            )
+            .font(.footnote.weight(.semibold))
+            .foregroundStyle(.red)
+          }
+        #endif
       }
     }
     .navigationTitle("Evidence")
@@ -668,6 +691,20 @@ private struct EvidenceView: View {
         model.errorMessage = error.localizedDescription
       }
     }
+    #if DEBUG
+      .fileImporter(
+        isPresented: $importingDebugPassiveCAN,
+        allowedContentTypes: [.data],
+        allowsMultipleSelection: false
+      ) { result in
+        switch result {
+        case .success(let urls):
+          if let url = urls.first { model.importDebugPassiveCAN(from: url) }
+        case .failure(let error):
+          model.errorMessage = error.localizedDescription
+        }
+      }
+    #endif
     .onAppear {
       outboxEndpoint = model.evidenceOutboxEndpoint
       model.refreshCANResearch()

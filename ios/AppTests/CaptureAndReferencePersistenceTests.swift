@@ -45,6 +45,36 @@ final class GatewayRestoredLinkPolicyTests: XCTestCase {
   }
 }
 
+final class CaptureHistoryRecoveryPersistencePolicyTests: XCTestCase {
+  func testCompletedDownloadResumeOnlyDoesNotAdvertiseIncompleteHistory() {
+    XCTAssertFalse(
+      CaptureHistoryRecoveryPersistencePolicy.restoredRecoveryAvailable(
+        phase: .resuming,
+        persistedIncompleteCheckpointAvailable: false))
+  }
+
+  func testInterruptedDownloadResumeOnlyKeepsItsExplicitCheckpoint() {
+    XCTAssertTrue(
+      CaptureHistoryRecoveryPersistencePolicy.restoredRecoveryAvailable(
+        phase: .resuming,
+        persistedIncompleteCheckpointAvailable: true))
+  }
+
+  func testLegacyDownloadingPhaseMigratesToIncompleteCheckpoint() {
+    XCTAssertTrue(
+      CaptureHistoryRecoveryPersistencePolicy.restoredRecoveryAvailable(
+        phase: .downloading,
+        persistedIncompleteCheckpointAvailable: false))
+  }
+
+  func testInertCheckpointRemainsAvailableAfterBulkIntentIsCleared() {
+    XCTAssertTrue(
+      CaptureHistoryRecoveryPersistencePolicy.restoredRecoveryAvailable(
+        phase: nil,
+        persistedIncompleteCheckpointAvailable: true))
+  }
+}
+
 final class CaptureAndReferencePersistenceTests: XCTestCase {
   private let gatewayID = "esp32-9454c5b08d14"
   private let sessionID: UInt32 = 42
@@ -158,6 +188,29 @@ final class CaptureAndReferencePersistenceTests: XCTestCase {
       try store.append(
         [captureObservation(sequence: 9_999)], gatewayID: gatewayID, sessionID: sessionID),
       0)
+  }
+
+  func testActiveDebugRunCanReacquireItsExactStartAfterCacheEvictionAndRestart() throws {
+    let root = try temporaryDirectory(named: "capture-debug-run-pin")
+    defer { try? FileManager.default.removeItem(at: root) }
+    var store: CaptureLogStore? = CaptureLogStore(root: root)
+    let records = (1...600).map { captureObservation(sequence: UInt64($0)) }
+    XCTAssertEqual(
+      try store?.append(records, gatewayID: gatewayID, sessionID: sessionID),
+      600)
+    store = nil
+
+    let restarted = CaptureLogStore(root: root)
+    let pinned = try restarted.observation(
+      gatewayID: gatewayID,
+      sessionID: sessionID,
+      sourceSequence: 1)
+    XCTAssertEqual(pinned, records[0])
+    XCTAssertNil(
+      try restarted.observation(
+        gatewayID: gatewayID,
+        sessionID: sessionID,
+        sourceSequence: 601))
   }
 
   func testReferenceCrashTailPreservesExactBytesAndRecoversCanonicalPrefix() async throws {

@@ -24,6 +24,9 @@ struct DiscoveryView: View {
     ScrollView {
       VStack(alignment: .leading, spacing: 20) {
         DiscoveryAuthorityBanner()
+        #if DEBUG
+          DebugUnverifiedEvidenceModeCard()
+        #endif
         DiscoveryEngineeringGateBanner(
           motion: model.gateway.health?.vehicleMotion ?? .unknown,
           currentParkedAuthority: model.gateway.hasCurrentParkedAuthority)
@@ -199,6 +202,116 @@ struct DiscoveryView: View {
     return ByteCountFormatter.string(fromByteCount: Int64(free), countStyle: .file) + " free"
   }
 }
+
+#if DEBUG
+  private struct DebugUnverifiedEvidenceModeCard: View {
+    @Environment(AppModel.self) private var model
+    @State private var labelText = ""
+    @State private var noteText = ""
+    @State private var selectedObservationID = ""
+
+    private var observations: [PassiveCANObservation] {
+      Array(model.availableDebugEvidenceObservations.prefix(200))
+    }
+
+    private var effectiveObservationID: String {
+      if observations.contains(where: { $0.id == selectedObservationID }) {
+        return selectedObservationID
+      }
+      return observations.first?.id ?? ""
+    }
+
+    var body: some View {
+      VStack(alignment: .leading, spacing: 10) {
+        Label("DEBUG_UNVERIFIED", systemImage: "exclamationmark.triangle.fill")
+          .font(.headline)
+          .foregroundStyle(.red)
+        Text(
+          model.debugUnverifiedEvidenceModeActive
+            ? "Evidence entry gates are disabled for app-local development work."
+            : "Use an unrestricted Debug-only workspace for real saved evidence."
+        )
+        .font(.footnote)
+        .foregroundStyle(.secondary)
+        Button(
+          model.debugUnverifiedEvidenceModeActive
+            ? "Restore normal evidence gates" : "Disable evidence entry gates"
+        ) {
+          model.setDebugUnverifiedEvidenceMode(!model.debugUnverifiedEvidenceModeActive)
+        }
+        .buttonStyle(.borderedProminent)
+        .tint(model.debugUnverifiedEvidenceModeActive ? .gray : .red)
+        if model.debugUnverifiedEvidenceModeActive {
+          Divider()
+          Text("Label retained CAN evidence")
+            .font(.subheadline.weight(.semibold))
+          if observations.isEmpty {
+            Text(
+              "No passive observation is available yet. Stored iPhone captures are loaded automatically when the CAN analysis opens."
+            )
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+          } else {
+            Picker("Observation", selection: $selectedObservationID) {
+              Text("Latest available").tag("")
+              ForEach(observations) { observation in
+                Text(
+                  "0x\(observation.identifierHex) · session \(observation.sessionID) · seq \(observation.sourceSequence)"
+                )
+                .tag(observation.id)
+              }
+            }
+            .pickerStyle(.menu)
+            TextField("Label, action, or observed state", text: $labelText)
+              .textFieldStyle(.roundedBorder)
+            TextField("Optional note", text: $noteText, axis: .vertical)
+              .textFieldStyle(.roundedBorder)
+            HStack {
+              Button("Append label") {
+                model.appendDebugEvidenceLabel(
+                  label: labelText,
+                  note: noteText,
+                  observationID: effectiveObservationID)
+              }
+              .buttonStyle(.borderedProminent)
+              Button("MARK EVENT") {
+                model.appendDebugEvidenceMarker(
+                  label: labelText,
+                  note: noteText,
+                  observationID: effectiveObservationID)
+              }
+              .buttonStyle(.bordered)
+            }
+            .disabled(
+              labelText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                || effectiveObservationID.isEmpty)
+            Text(model.debugEvidenceAnnotationMessage)
+              .font(.caption)
+              .foregroundStyle(.secondary)
+            ForEach(Array(model.debugEvidenceAnnotations.suffix(3).reversed())) { record in
+              VStack(alignment: .leading, spacing: 2) {
+                Text(record.label).font(.caption.weight(.semibold))
+                Text(
+                  "\(record.annotationKind.rawValue) · 0x\(record.sourceObservation.identifierHex) · seq \(record.sourceObservation.sourceSequence)"
+                )
+                .font(.caption2.monospaced())
+                .foregroundStyle(.secondary)
+              }
+            }
+          }
+        }
+        Text(
+          "Vehicle-side commands and authority remain unavailable. Canonical parsing and append-only integrity remain required."
+        )
+        .font(.caption.weight(.semibold))
+        .foregroundStyle(.red)
+      }
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .padding()
+      .background(.red.opacity(0.09), in: RoundedRectangle(cornerRadius: 16))
+    }
+  }
+#endif
 
 private struct DiscoveryEngineeringGateBanner: View {
   let motion: VehicleMotion
@@ -603,6 +716,23 @@ private struct DiscoveryTestLibraryView: View {
   }
 }
 
+private struct DebugModeBanner: View {
+  var body: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      Label("DEBUG_UNVERIFIED — LOCAL GATES OFF", systemImage: "ladybug.fill")
+        .font(.headline)
+        .foregroundStyle(.red)
+      Text(
+        "Real passive evidence may be marked, labeled, and analyzed without app entry checks. Provenance remains permanently unverified."
+      )
+      .font(.footnote)
+    }
+    .padding()
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(.red.opacity(0.1), in: RoundedRectangle(cornerRadius: 14))
+  }
+}
+
 private struct DiscoveryTestRunnerView: View {
   @Environment(AppModel.self) private var model
   let template: DiscoveryTemplatePresentation
@@ -628,7 +758,13 @@ private struct DiscoveryTestRunnerView: View {
   }
 
   private var activeRunMatchesGatewayCapture: Bool {
-    guard let activeRun, let observation = model.gateway.latestCANObservation else { return false }
+    guard let activeRun else { return false }
+    if activeRun.acquisitionAuthority == .debugUnverified {
+      return model.hasDebugEvidenceObservation(
+        gatewayID: activeRun.gatewayID,
+        sessionID: activeRun.gatewaySessionID)
+    }
+    guard let observation = model.gateway.latestCANObservation else { return false }
     return activeRun.gatewayID == observation.gatewayID
       && activeRun.gatewaySessionID == observation.sessionID
   }
@@ -637,6 +773,7 @@ private struct DiscoveryTestRunnerView: View {
     effectiveAuthority != nil
       && model.discoveryMutationLedgersAvailable
       && template.iPhoneInteractiveSupported
+      && (!debugUnverifiedRequested || model.debugUnverifiedTimelineAvailable)
       && ownerSafetyAcknowledgementReady
   }
 
@@ -648,11 +785,12 @@ private struct DiscoveryTestRunnerView: View {
     model.discoveryMutationAuthority(
       for: template.template,
       allowLocalEvidenceOnly: localEvidenceOnlyArmed || runUsesLocalEvidenceOnly,
-      allowDevelopmentEvidenceLab: developmentEvidenceLabRequested)
+      allowDevelopmentEvidenceLab: developmentEvidenceLabRequested,
+      allowUnrestrictedEvidenceWorkspace: debugUnverifiedRequested)
   }
 
   private var isUsingAppLocalEvidence: Bool {
-    runUsesLocalEvidenceOnly || runUsesDevelopmentEvidenceLab
+    runUsesLocalEvidenceOnly || runUsesDevelopmentEvidenceLab || runUsesDebugUnverified
       || effectiveAuthority?.isAppLocalEvidenceOnly == true
   }
 
@@ -662,6 +800,18 @@ private struct DiscoveryTestRunnerView: View {
 
   private var runUsesDevelopmentEvidenceLab: Bool {
     runMatchesTemplate && activeRun?.acquisitionAuthority == .developmentEvidenceLab
+  }
+
+  private var runUsesDebugUnverified: Bool {
+    runMatchesTemplate && activeRun?.acquisitionAuthority == .debugUnverified
+  }
+
+  private var debugUnverifiedRequested: Bool {
+    #if DEBUG
+      model.debugUnverifiedEvidenceModeActive || runUsesDebugUnverified
+    #else
+      false
+    #endif
   }
 
   private var developmentEvidenceLabRequested: Bool {
@@ -753,6 +903,10 @@ private struct DiscoveryTestRunnerView: View {
           .frame(maxWidth: .infinity, alignment: .leading)
           .background(.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 14))
 
+        #if DEBUG
+          if debugUnverifiedRequested { DebugModeBanner() }
+        #endif
+
         if isParkSelectorBootstrap {
           Label(
             "Evidence only: this workflow does not create or upgrade Park authority. It cannot unlock OTA, diagnostic transmission, or other parked-only controls.",
@@ -765,7 +919,9 @@ private struct DiscoveryTestRunnerView: View {
           .background(.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 14))
 
           #if DEBUG
-            if activeRun == nil || runUsesDevelopmentEvidenceLab {
+            if !debugUnverifiedRequested,
+              activeRun == nil || runUsesDevelopmentEvidenceLab
+            {
               VStack(alignment: .leading, spacing: 10) {
                 Label(
                   developmentEvidenceLabRequested
@@ -812,7 +968,7 @@ private struct DiscoveryTestRunnerView: View {
           #endif
 
           if (strictAuthority == nil || runUsesLocalEvidenceOnly)
-            && !developmentEvidenceLabRequested
+            && !developmentEvidenceLabRequested && !debugUnverifiedRequested
           {
             VStack(alignment: .leading, spacing: 10) {
               Label(
@@ -857,12 +1013,15 @@ private struct DiscoveryTestRunnerView: View {
             Label(
               runUsesDevelopmentEvidenceLab || developmentEvidenceLabRequested
                 ? "DEBUG / UNVERIFIED • local only • no PARKED claim • no gateway command"
-                : "LOCAL ONLY • no PARKED claim • no gateway command • experimental analysis only",
+                : (debugUnverifiedRequested
+                  ? "DEBUG_UNVERIFIED • all local entry gates off • no vehicle authority"
+                  : "LOCAL ONLY • no PARKED claim • no gateway command • experimental analysis only"),
               systemImage: "iphone.and.arrow.forward"
             )
             .font(.caption.weight(.bold))
             .foregroundStyle(
-              runUsesDevelopmentEvidenceLab || developmentEvidenceLabRequested ? .red : .orange)
+              runUsesDevelopmentEvidenceLab || developmentEvidenceLabRequested
+                || debugUnverifiedRequested ? .red : .orange)
           }
         }
 
@@ -900,11 +1059,15 @@ private struct DiscoveryTestRunnerView: View {
               pass: model.gateway.hasCurrentParkedAuthority)
           }
           SafetyRow(
-            label: "Fresh verified listen-only CAN timeline",
-            pass: developmentEvidenceLabRequested
-              ? model.developmentEvidenceLabTimelineAvailable
-              : (isUsingAppLocalEvidence
-                ? model.localEvidenceTimelineCurrent : model.discoveryTimelineCurrent))
+            label: debugUnverifiedRequested
+              ? "Real CAN observation available for immutable lineage"
+              : "Fresh verified listen-only CAN timeline",
+            pass: debugUnverifiedRequested
+              ? model.debugUnverifiedTimelineAvailable
+              : (developmentEvidenceLabRequested
+                ? model.developmentEvidenceLabTimelineAvailable
+                : (isUsingAppLocalEvidence
+                  ? model.localEvidenceTimelineCurrent : model.discoveryTimelineCurrent)))
           SafetyRow(
             label: "Required gateway capabilities",
             pass: template.template.requiredGatewayCapabilities.allSatisfy {
@@ -983,11 +1146,13 @@ private struct DiscoveryTestRunnerView: View {
               Button("End Session") {
                 model.endDiscoveryTestRun()
               }
-                .buttonStyle(.borderedProminent)
-                .disabled(
-                  !evidenceReady || !activeRunMatchesGatewayCapture
-                    || (isParkSelectorBootstrap && !bootstrapComplete)
-                    || (isParkSelectorBootstrap && bootstrapDwellRemainingMicroseconds > 0))
+              .buttonStyle(.borderedProminent)
+              .disabled(
+                !evidenceReady || !activeRunMatchesGatewayCapture
+                  || (isParkSelectorBootstrap && !debugUnverifiedRequested && !bootstrapComplete)
+                  || (isParkSelectorBootstrap && !debugUnverifiedRequested
+                    && bootstrapDwellRemainingMicroseconds > 0)
+              )
               Button("Abort") { model.abortDiscoveryTestRun() }
                 .buttonStyle(.bordered)
                 .tint(.red)
@@ -1040,13 +1205,15 @@ private struct DiscoveryTestRunnerView: View {
             .buttonStyle(.borderedProminent)
             .disabled(
               !markerReady
-                || (isParkSelectorBootstrap
+                || (isParkSelectorBootstrap && !debugUnverifiedRequested
                   && nextBootstrapMarker
                     != DiscoveryOrderedMarkerRequirement(kind: action.kind, label: action.label))
-                || (isParkSelectorBootstrap && bootstrapDwellRemainingMicroseconds > 0))
+                || (isParkSelectorBootstrap && !debugUnverifiedRequested
+                  && bootstrapDwellRemainingMicroseconds > 0)
+            )
           }
 
-          if !isParkSelectorBootstrap {
+          if !isParkSelectorBootstrap || debugUnverifiedRequested {
             Button {
               model.recordDiscoveryMarker(
                 template: template.template,
@@ -1457,10 +1624,18 @@ private struct DiscoveryCaptureReviewView: View {
         Text(model.gateway.captureSyncMessage).font(.footnote).foregroundStyle(.secondary)
         Button("Refresh capture inventory") { model.gateway.refreshCaptureLogIndex() }
           .disabled(model.gateway.state != .vhosConnected)
-        Button("Pause, download, and resume") { model.pauseDownloadAndResumeGatewayHistory() }
-          .disabled(
-            model.gateway.state != .vhosConnected || model.gateway.captureHistoryTransferActive
-              || !model.gateway.hasCurrentParkedAuthority)
+        Button(
+          model.gateway.captureHistoryRecoveryAvailable
+            ? "Resume saved log transfer" : "Pause, download, and resume"
+        ) { model.pauseDownloadAndResumeGatewayHistory() }
+        .disabled(!model.gateway.canStartOwnerTriggeredHistoryTransfer)
+        if !model.gateway.hasCurrentParkedAuthority {
+          Text(
+            "Gateway recorder control requires a fresh verified PARKED report. Debug import, replay, labels, markers, and analysis remain available without it."
+          )
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+        }
       }
 
       Section("Stored sessions on iPhone") {

@@ -30,8 +30,8 @@ final class DiscoveryEvidenceStoreTests: XCTestCase {
     }
   }
 
-  func testStrictRunOffloadRequiresASealedAuthorityAndAbortSessionMatch() {
-    XCTAssertTrue(
+  func testTerminalTransitionsNeverInitiateAutomaticGatewayOffload() {
+    XCTAssertFalse(
       DiscoveryGatewayOffloadPolicy.permits(
         transitionState: .ended,
         acquisitionAuthority: .parked,
@@ -41,7 +41,7 @@ final class DiscoveryEvidenceStoreTests: XCTestCase {
         transitionState: .aborted,
         acquisitionAuthority: .parked,
         hasMatchingRecorderSession: false))
-    XCTAssertTrue(
+    XCTAssertFalse(
       DiscoveryGatewayOffloadPolicy.permits(
         transitionState: .aborted,
         acquisitionAuthority: .passiveParkSelectorBootstrap,
@@ -2124,6 +2124,84 @@ final class DiscoveryEvidenceStoreTests: XCTestCase {
     await fulfillment(of: [heartbeat], timeout: 0.5)
     await fulfillment(of: [completed], timeout: 10)
   }
+
+  #if DEBUG
+    func testDebugPassiveCANImportAcceptsCanonicalNDJSONAndDeduplicatesExactEvidence()
+      async throws
+    {
+      let directory = try makePortableStorageDirectory()
+      defer { try? FileManager.default.removeItem(at: directory) }
+      let archiveURL = directory.appendingPathComponent("field-return.ndjson")
+      let captureDirectory = directory.appendingPathComponent("PassiveCAN", isDirectory: true)
+      let worker = GatewayEvidencePersistenceWorker(
+        portableFrameStore: PortableFrameStore(
+          fileManager: .default,
+          root: directory.appendingPathComponent("Portable", isDirectory: true)),
+        captureStore: CaptureLogStore(fileManager: .default, root: captureDirectory))
+      let first = makeDiscoveryObservation(sequence: 41, monotonicMicroseconds: 4_100)
+      let second = PassiveCANObservation(
+        gatewayID: "esp32-second",
+        sessionID: 99,
+        sourceSequence: 42,
+        monotonicMicroseconds: 4_200,
+        bitrateBps: 500_000,
+        identifier: 0x2C4,
+        extended: false,
+        remoteRequest: false,
+        listenOnly: true,
+        dataLength: 8,
+        data: [0x15, 0x6C, 0, 0, 0, 0, 0, 0],
+        evidenceSource: "VHOS_GATEWAY",
+        ingestedAt: startedAt)
+      try PassiveCANEvidenceArchive.encodeNDJSON([first, second]).write(
+        to: archiveURL, options: .atomic)
+
+      let imported = try await worker.importDebugPassiveCAN(from: archiveURL)
+      XCTAssertEqual(imported.decodedRecords, 2)
+      XCTAssertEqual(imported.appendedRecords, 2)
+      XCTAssertEqual(imported.sessionCount, 2)
+
+      let duplicate = try await worker.importDebugPassiveCAN(from: archiveURL)
+      XCTAssertEqual(duplicate.decodedRecords, 2)
+      XCTAssertEqual(duplicate.appendedRecords, 0)
+      XCTAssertEqual(duplicate.sessionCount, 2)
+      let firstCount = try await worker.captureRecordCount(gatewayID: gatewayID, sessionID: 42)
+      let secondCount = try await worker.captureRecordCount(
+        gatewayID: "esp32-second", sessionID: 99)
+      XCTAssertEqual(firstCount, 1)
+      XCTAssertEqual(secondCount, 1)
+
+      let restoredObservation = try await worker.captureObservation(
+        gatewayID: "esp32-second",
+        sessionID: 99,
+        sourceSequence: second.sourceSequence)
+      let importedObservation = try XCTUnwrap(restoredObservation)
+      let annotationStore = DebugEvidenceAnnotationStore(
+        storageDirectory: directory.appendingPathComponent("Annotations", isDirectory: true))
+      let label = try annotationStore.appendLabel(
+        appendedAt: startedAt,
+        label: "Imported selector evidence",
+        observation: importedObservation)
+      XCTAssertEqual(label.sourceObservation, second)
+      XCTAssertEqual(label.sourceObservation.evidenceSource, "VHOS_GATEWAY")
+      XCTAssertEqual(label.acquisitionAuthority, .debugUnverified)
+      XCTAssertFalse(label.promotionAllowed)
+
+      let noncanonicalURL = directory.appendingPathComponent("noncanonical-field-return.ndjson")
+      var noncanonical = try PassiveCANEvidenceArchive.encodeNDJSON([second])
+      noncanonical.insert(0x20, at: noncanonical.startIndex)
+      try noncanonical.write(to: noncanonicalURL, options: .atomic)
+      do {
+        _ = try await worker.importDebugPassiveCAN(from: noncanonicalURL)
+        XCTFail("Expected normalized or rewritten input to fail before import")
+      } catch let error as PassiveCANArchiveError {
+        XCTAssertEqual(error, .nonCanonicalArchive)
+      }
+      let countAfterRejectedImport = try await worker.captureRecordCount(
+        gatewayID: "esp32-second", sessionID: 99)
+      XCTAssertEqual(countAfterRejectedImport, 1)
+    }
+  #endif
 
   func testConcurrentBootstrapMarkerSubmissionsCommitExactlyOneFirstMarker() async throws {
     let directory = try makeStorageDirectory()
