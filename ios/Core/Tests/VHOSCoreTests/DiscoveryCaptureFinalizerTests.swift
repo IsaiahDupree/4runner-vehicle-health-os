@@ -212,6 +212,33 @@ private struct FinalizerEndedDraftFixture: Codable {
   }
 }
 
+@Test func terminalRunPreservesDebugUnverifiedProvenanceForAnyValidEvidenceTemplate() throws {
+  let canonical = try finalizerEndedDraftBytes(
+    templateID: "discovery.brakes.offline-labeling",
+    templateVersion: "1.0.0",
+    acquisitionAuthority: .debugUnverified,
+    ownerSafetyAcknowledgedAt: nil)
+  let terminal = try DiscoveryCaptureTerminalRun(canonicalEndedDraft: canonical)
+
+  #expect(terminal.acquisitionAuthority == .debugUnverified)
+  #expect(terminal.acquisitionAuthority.rawValue == "DEBUG_UNVERIFIED")
+  #expect(terminal.acquisitionAuthority.isAppLocalEvidenceOnly)
+  #expect(!terminal.acquisitionAuthority.permitsGatewayCaptureControl)
+  #expect(!terminal.acquisitionAuthority.claimsParkedAuthority)
+  #expect(!terminal.acquisitionAuthority.permitsSignalPromotion)
+  #expect(terminal.ownerSafetyAcknowledgedAt == nil)
+  try terminal.validateContract()
+
+  #expect(throws: DiscoveryCaptureFinalizationError.invalidTerminalRun) {
+    try DiscoveryCaptureTerminalRun(
+      canonicalEndedDraft: finalizerEndedDraftBytes(
+        templateID: "discovery.brakes.offline-labeling",
+        templateVersion: "1.0.0",
+        acquisitionAuthority: .debugUnverified,
+        ownerSafetyAcknowledgedAt: "2026-08-24T21:00:00Z"))
+  }
+}
+
 @Test func finalizerRejectsCommitTimeBeforeArchiveEndWithoutPublishingEvidence() throws {
   let directory = finalizerTemporaryDirectory()
   defer { try? FileManager.default.removeItem(at: directory) }

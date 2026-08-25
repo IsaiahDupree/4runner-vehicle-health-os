@@ -32,8 +32,9 @@ public struct ExperimentalCandidateCaptureProvenance: Codable, Equatable, Sendab
   public let retainedRecordCount: Int
   public let firstSourceSequence: UInt64
   public let lastSourceSequence: UInt64
-  /// Acquisition scope resolved from the exact finalized manifest. Development-lab evidence stays
-  /// visibly DEBUG/UNVERIFIED throughout candidate review instead of being hidden behind a hash.
+  /// Acquisition scope resolved from the exact finalized manifest. Development-lab and
+  /// DEBUG_UNVERIFIED evidence stay visibly unverified throughout candidate review instead of
+  /// being hidden behind a hash.
   public let acquisitionAuthority: DiscoveryMutationAuthority
   public let testTemplateID: String?
   public let testTemplateVersion: String?

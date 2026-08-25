@@ -200,14 +200,94 @@ import Testing
   #endif
 }
 
+@Test func unrestrictedEvidenceWorkspaceBypassesOnlyAppLocalEvidenceEntryGates() throws {
+  let template = try unrestrictedWorkspaceTestTemplate()
+  let noLiveContext = makeMutationContext(
+    motion: .moving,
+    healthAge: 86_400,
+    observationAge: 86_400,
+    connectionState: .disconnected,
+    includeHealth: false,
+    includeHandshake: false,
+    includeObservation: false,
+    includesPassiveCapability: false)
+
+  #expect(
+    DiscoveryMutationPolicy.authority(for: template, context: noLiveContext) == nil)
+  #expect(
+    DiscoveryMutationPolicy.authority(
+      for: template,
+      context: noLiveContext,
+      allowDevelopmentEvidenceLab: true) == nil)
+  #expect(
+    DiscoveryMutationPolicy.unrestrictedEvidenceWorkspaceAuthority(requested: false) == nil)
+
+  #if DEBUG
+    #expect(DiscoveryMutationPolicy.unrestrictedEvidenceWorkspaceAvailable)
+    #expect(
+      DiscoveryMutationPolicy.unrestrictedEvidenceWorkspaceAuthority(requested: true)
+        == .debugUnverified)
+    #expect(
+      DiscoveryMutationPolicy.authority(
+        for: template,
+        context: noLiveContext,
+        allowUnrestrictedEvidenceWorkspace: true) == .debugUnverified)
+  #else
+    #expect(!DiscoveryMutationPolicy.unrestrictedEvidenceWorkspaceAvailable)
+    #expect(
+      DiscoveryMutationPolicy.unrestrictedEvidenceWorkspaceAuthority(requested: true) == nil)
+    #expect(
+      DiscoveryMutationPolicy.authority(
+        for: template,
+        context: noLiveContext,
+        allowUnrestrictedEvidenceWorkspace: true) == nil)
+    #expect(
+      DiscoveryMutationPolicy.authority(
+        for: template,
+        context: makeMutationContext(motion: .parked, parkedAuthority: true),
+        allowUnrestrictedEvidenceWorkspace: true) == nil)
+  #endif
+}
+
+@Test func debugUnverifiedWorkspaceUsesAnExactPositiveOperationAllowlist() throws {
+  let authority = try #require(
+    DiscoveryMutationAuthority(rawValue: "DEBUG_UNVERIFIED"))
+  let allowed: Set<DiscoveryEvidenceWorkspaceOperation> = [
+    .importPassiveEvidence, .replayPassiveEvidence, .appendLabel, .appendEventMarker,
+    .analyzeCandidate,
+  ]
+  let actuallyAllowed = Set(
+    DiscoveryEvidenceWorkspaceOperation.allCases.filter(
+      authority.permitsEvidenceWorkspaceOperation))
+
+  #if DEBUG
+    #expect(actuallyAllowed == allowed)
+  #else
+    #expect(actuallyAllowed.isEmpty)
+  #endif
+  #expect(!authority.permitsGatewayCaptureControl)
+  #expect(!authority.claimsParkedAuthority)
+  #expect(!authority.permitsSignalPromotion)
+  #expect(authority.isAppLocalEvidenceOnly)
+  #expect(!authority.requiresOwnerSafetyAcknowledgement)
+  #expect(
+    DiscoveryMutationAuthority.parked.permitsEvidenceWorkspaceOperation(
+      .importPassiveEvidence) == false)
+
+  let encoded = try VHOSJSON.encoder().encode(authority)
+  #expect(try VHOSJSON.decoder().decode(DiscoveryMutationAuthority.self, from: encoded) == authority)
+}
+
 @Test func discoveryAuthorityCapabilitiesFailClosedForAppLocalScopes() {
   #expect(DiscoveryMutationAuthority.parked.permitsGatewayCaptureControl)
   #expect(DiscoveryMutationAuthority.passiveParkSelectorBootstrap.permitsGatewayCaptureControl)
   #expect(!DiscoveryMutationAuthority.localEvidenceOnly.permitsGatewayCaptureControl)
   #expect(!DiscoveryMutationAuthority.developmentEvidenceLab.permitsGatewayCaptureControl)
+  #expect(!DiscoveryMutationAuthority.debugUnverified.permitsGatewayCaptureControl)
   #expect(!DiscoveryMutationAuthority.parked.requiresOwnerSafetyAcknowledgement)
   #expect(DiscoveryMutationAuthority.localEvidenceOnly.requiresOwnerSafetyAcknowledgement)
   #expect(DiscoveryMutationAuthority.developmentEvidenceLab.requiresOwnerSafetyAcknowledgement)
+  #expect(!DiscoveryMutationAuthority.debugUnverified.requiresOwnerSafetyAcknowledgement)
   #expect(
     DiscoveryMutationAuthority.passiveParkSelectorBootstrap.permitsContinuation(with: .parked))
   #expect(
@@ -218,6 +298,12 @@ import Testing
       with: .localEvidenceOnly))
   #expect(
     DiscoveryMutationAuthority.developmentEvidenceLab.permitsContinuation(
+      with: .developmentEvidenceLab) == DiscoveryMutationPolicy.developmentEvidenceLabAvailable)
+  #expect(
+    DiscoveryMutationAuthority.debugUnverified.permitsContinuation(
+      with: .debugUnverified) == DiscoveryMutationPolicy.unrestrictedEvidenceWorkspaceAvailable)
+  #expect(
+    !DiscoveryMutationAuthority.debugUnverified.permitsContinuation(
       with: .developmentEvidenceLab))
 }
 
@@ -509,4 +595,24 @@ private func makeMutationContext(
     observation: observation,
     observationAgeSeconds: observationAge,
     hasCurrentParkedAuthority: parkedAuthority)
+}
+
+private func unrestrictedWorkspaceTestTemplate() throws -> TestTemplate {
+  try TestTemplate(
+    id: "discovery.brakes.offline-labeling",
+    templateVersion: "1.0.0",
+    title: "Offline brake labeling",
+    category: .brakes,
+    hypothesis: "Saved passive evidence may be labeled without claiming a verified brake signal.",
+    requiredVehicleMotion: .parked,
+    safetyInstructions: ["App-local replay and labels only; no gateway command is permitted."],
+    requiredGatewayCapabilities: [.passiveCapture],
+    targetedValidationRequirements: [.targetVehicleCapture, .goldenReplay],
+    steps: [
+      try TestStep(
+        id: "discovery.brakes.offline-labeling.step.1",
+        sequence: 1,
+        instruction: "Append an unverified brake label.",
+        expectedMarkerKind: .brakePressed)
+    ])
 }

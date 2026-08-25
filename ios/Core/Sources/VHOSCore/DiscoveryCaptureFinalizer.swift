@@ -140,7 +140,11 @@ public struct DiscoveryCaptureTerminalRun: Codable, Equatable, Sendable, Identif
       let lastSequence = draft.lastSourceSequence,
       draft.firstSourceSequence > 0, draft.firstSourceSequence <= lastSequence
     else { throw DiscoveryCaptureFinalizationError.invalidTerminalRun }
-    if acquisitionAuthority != .parked {
+    // DEBUG_UNVERIFIED may bind any valid test template because its purpose is offline/current
+    // passive evidence labeling without pre-import gates. Its distinct persisted authority keeps
+    // the result permanently ineligible for PARKED, gateway-command, or promotion authority.
+    // All other non-PARKED scopes remain restricted to the exact selector-bootstrap procedure.
+    if acquisitionAuthority != .parked, acquisitionAuthority != .debugUnverified {
       let canonicalTemplate = try DiscoveryMutationPolicy.parkSelectorBootstrapTemplate()
       guard draft.templateID == canonicalTemplate.id,
         draft.templateVersion == canonicalTemplate.templateVersion

@@ -100,6 +100,33 @@ private struct CandidateEndedDraftFixture: Codable {
   #expect(saved.candidate.authority == .candidate)
 }
 
+@Test func debugUnverifiedCandidatePreservesImmutableScopeAndRemainsNonPromotable() throws {
+  let directory = candidateTemporaryDirectory()
+  defer { try? FileManager.default.removeItem(at: directory) }
+  let candidateStore = ExperimentalCandidateStore(storageDirectory: directory)
+  let finalized = try storedCandidateFinalizedStore(
+    root: directory,
+    acquisitionAuthority: .debugUnverified)
+  let saved = try candidateStore.save(
+    candidate: storedCandidate(capture: finalized.capture),
+    finalizedCaptureStore: finalized.store,
+    savedAt: "2026-08-24T21:00:00Z")
+
+  #expect(saved.captureProvenance[0].acquisitionAuthority == .debugUnverified)
+  #expect(
+    saved.evidenceReferences.contains(
+      "capture-acquisition-authority:DEBUG_UNVERIFIED"))
+  #expect(saved.authority == .candidate)
+  #expect(!saved.promotionAllowed)
+  #expect(saved.candidate.authority == .candidate)
+
+  let reloaded = try #require(
+    ExperimentalCandidateStore(storageDirectory: directory).list().first)
+  #expect(reloaded == saved)
+  #expect(reloaded.captureProvenance[0].acquisitionAuthority == .debugUnverified)
+  #expect(!reloaded.promotionAllowed)
+}
+
 @Test func experimentalCandidateStoreRejectsDuplicateCandidateWithoutMutatingLedger() throws {
   let directory = candidateTemporaryDirectory()
   defer { try? FileManager.default.removeItem(at: directory) }

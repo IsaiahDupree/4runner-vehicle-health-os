@@ -15,11 +15,22 @@ public enum DiscoveryMutationAuthority: String, Codable, Equatable, Sendable {
   /// acquisition or PARKED authority. Release builds may decode existing records, but the policy
   /// cannot issue this authority outside a Debug build.
   case developmentEvidenceLab = "DEVELOPMENT_EVIDENCE_LAB"
+  /// Debug-build-only authority for an app-local evidence workspace.
+  ///
+  /// Unlike `developmentEvidenceLab`, this scope is not a live-acquisition safety exception. It
+  /// exists so developers can import, replay, label, mark, and analyze already-saved or currently
+  /// observed passive evidence without first manufacturing connection, recorder, freshness,
+  /// handshake, or PARKED state. Its raw value is the immutable provenance classification: any
+  /// artifact created under this scope must remain visibly DEBUG/UNVERIFIED.
+  ///
+  /// Release builds may decode persisted evidence carrying this value, but cannot issue or
+  /// continue the authority.
+  case debugUnverified = "DEBUG_UNVERIFIED"
 
   /// App-local evidence scopes are permanently ineligible for gateway commands and authority
   /// promotion, even if recorder health or a PARKED report appears later.
   public var isAppLocalEvidenceOnly: Bool {
-    self == .localEvidenceOnly || self == .developmentEvidenceLab
+    self == .localEvidenceOnly || self == .developmentEvidenceLab || self == .debugUnverified
   }
 
   /// Positive capability allowlist for capture-control commands. Adding a future authority case
@@ -28,7 +39,7 @@ public enum DiscoveryMutationAuthority: String, Codable, Equatable, Sendable {
     switch self {
     case .parked, .passiveParkSelectorBootstrap:
       true
-    case .localEvidenceOnly, .developmentEvidenceLab:
+    case .localEvidenceOnly, .developmentEvidenceLab, .debugUnverified:
       false
     }
   }
@@ -37,9 +48,38 @@ public enum DiscoveryMutationAuthority: String, Codable, Equatable, Sendable {
     switch self {
     case .localEvidenceOnly, .developmentEvidenceLab:
       true
-    case .parked, .passiveParkSelectorBootstrap:
+    case .parked, .passiveParkSelectorBootstrap, .debugUnverified:
       false
     }
+  }
+
+  /// Only deterministic gateway PARKED authority may claim PARKED state. App-local evidence
+  /// scopes never inherit this merely because a label or candidate resembles a selector signal.
+  public var claimsParkedAuthority: Bool { self == .parked }
+
+  /// Acquisition scope alone is never sufficient to promote a signal. Promotion remains behind
+  /// the independent validation/reviewer evidence contract, and DEBUG_UNVERIFIED is permanently
+  /// ineligible.
+  public var permitsSignalPromotion: Bool { false }
+
+  /// Positive allowlist for the Debug-only, app-local evidence workspace. All vehicle-side or
+  /// authority-escalating operations are represented explicitly and denied by omission.
+  public func permitsEvidenceWorkspaceOperation(
+    _ operation: DiscoveryEvidenceWorkspaceOperation
+  ) -> Bool {
+    guard self == .debugUnverified else { return false }
+    #if DEBUG
+      return switch operation {
+      case .importPassiveEvidence, .replayPassiveEvidence, .appendLabel,
+        .appendEventMarker, .analyzeCandidate:
+        true
+      case .gatewayCommand, .gatewayCaptureControl, .ota, .diagnosticRequest, .canWrite,
+        .vehicleControl, .assertParkedAuthority, .promoteSignal:
+        false
+      }
+    #else
+      return false
+    #endif
   }
 
   /// Whether a fresh policy result may continue a run sealed with this acquisition scope.
@@ -54,10 +94,34 @@ public enum DiscoveryMutationAuthority: String, Codable, Equatable, Sendable {
       current == .passiveParkSelectorBootstrap || current == .parked
     case .localEvidenceOnly:
       current == .localEvidenceOnly
-    case .developmentEvidenceLab:
-      current == .developmentEvidenceLab
+    case .developmentEvidenceLab, .debugUnverified:
+      #if DEBUG
+        current == self
+      #else
+        false
+      #endif
     }
   }
+}
+
+/// Complete action surface considered by the app-local Debug evidence workspace.
+///
+/// Keeping denied vehicle-side operations in the same `CaseIterable` enum lets tests prove that
+/// adding a new operation fails closed until the positive allowlist is deliberately updated.
+public enum DiscoveryEvidenceWorkspaceOperation: String, Codable, CaseIterable, Sendable {
+  case importPassiveEvidence = "IMPORT_PASSIVE_EVIDENCE"
+  case replayPassiveEvidence = "REPLAY_PASSIVE_EVIDENCE"
+  case appendLabel = "APPEND_LABEL"
+  case appendEventMarker = "APPEND_EVENT_MARKER"
+  case analyzeCandidate = "ANALYZE_CANDIDATE"
+  case gatewayCommand = "GATEWAY_COMMAND"
+  case gatewayCaptureControl = "GATEWAY_CAPTURE_CONTROL"
+  case ota = "OTA"
+  case diagnosticRequest = "DIAGNOSTIC_REQUEST"
+  case canWrite = "CAN_WRITE"
+  case vehicleControl = "VEHICLE_CONTROL"
+  case assertParkedAuthority = "ASSERT_PARKED_AUTHORITY"
+  case promoteSignal = "PROMOTE_SIGNAL"
 }
 
 public struct DiscoveryOrderedMarkerRequirement: Equatable, Sendable {
@@ -133,6 +197,30 @@ public enum DiscoveryMutationPolicy {
     #endif
   }
 
+  /// The unrestricted evidence workspace is compiled out as an issuable/continuable authority in
+  /// Release. Persisted DEBUG_UNVERIFIED records remain decodable for honest provenance display.
+  public static var unrestrictedEvidenceWorkspaceAvailable: Bool {
+    #if DEBUG
+      true
+    #else
+      false
+    #endif
+  }
+
+  /// Issues the no-context, app-local evidence authority used by import/replay tooling.
+  ///
+  /// No gateway, vehicle, recorder, handshake, freshness, or pre-import verification state is
+  /// accepted because none is required and none may be converted into vehicle-side authority.
+  public static func unrestrictedEvidenceWorkspaceAuthority(
+    requested: Bool
+  ) -> DiscoveryMutationAuthority? {
+    #if DEBUG
+      requested ? .debugUnverified : nil
+    #else
+      nil
+    #endif
+  }
+
   /// Validates the explicit owner confirmation bound to an app-local acquisition scope.
   ///
   /// Equality is accepted because the canonical ISO-8601 writer records whole seconds, so a real
@@ -164,9 +252,17 @@ public enum DiscoveryMutationPolicy {
     for template: TestTemplate,
     context: DiscoveryMutationContext,
     allowLocalEvidenceOnly: Bool = false,
-    allowDevelopmentEvidenceLab: Bool = false
+    allowDevelopmentEvidenceLab: Bool = false,
+    allowUnrestrictedEvidenceWorkspace: Bool = false
   ) -> DiscoveryMutationAuthority? {
     guard (try? template.validateContract()) != nil else { return nil }
+
+    // This is intentionally separate from DEVELOPMENT_EVIDENCE_LAB. It permits app-local labels
+    // and candidate work for any valid test template without changing the existing live-evidence
+    // lab's fresh/listen-only/canonical-selector contract.
+    if allowUnrestrictedEvidenceWorkspace {
+      return unrestrictedEvidenceWorkspaceAuthority(requested: true)
+    }
 
     #if DEBUG
       // Evidence Lab deliberately relaxes connection, handshake availability,
