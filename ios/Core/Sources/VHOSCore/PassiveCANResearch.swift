@@ -269,6 +269,16 @@ public struct PassiveCANResearchSeries: Identifiable, Equatable, Sendable {
   public let points: [PassiveCANResearchPoint]
 
   public var usesCandidateTransform: Bool { candidateTransformID != nil }
+  /// The analyzer preserves each capture-session endpoint while downsampling, so the final point
+  /// remains the latest retained source observation represented by this series.
+  public var latestPoint: PassiveCANResearchPoint? { points.last }
+  public var valueAuthority: PassiveCANResearchValueAuthority {
+    if usesCandidateTransform { return .referencedCrossModelTransform }
+    if validationGate.localizedCaseInsensitiveContains("conflict") {
+      return .rawOnlyConflictingDefinition
+    }
+    return .rawOnlyUnvalidatedTransform
+  }
 }
 
 public struct PassiveCANResearchReport: Equatable, Sendable {
@@ -292,23 +302,23 @@ public enum PassiveCANResearchAnalyzer {
     try observations.forEach(PassiveCANEvidenceArchive.validate)
     let timeline = buildTimeline(observations)
     let sessionCount = Set(observations.map { "\($0.gatewayID):\($0.sessionID)" }).count
+    let projectedByDefinition = Dictionary(
+      grouping: try observations.flatMap(PassiveCANResearchProjector.project),
+      by: \.definitionID)
     let series: [PassiveCANResearchSeries] = try PassiveCANResearchCatalog.definitions.compactMap {
       definition -> PassiveCANResearchSeries? in
-      let extracted = observations.compactMap { observation -> PassiveCANResearchPoint? in
-        guard observation.identifier == definition.identifier, !observation.extended,
-          !observation.remoteRequest,
-          let time = timeline.values[observation.id],
-          let raw = extract(definition, from: observation)
+      let extracted = (projectedByDefinition[definition.id] ?? []).compactMap {
+        projection -> PassiveCANResearchPoint? in
+        guard let time = timeline.values[projection.sourceObservationID]
         else { return nil }
-        let display = definition.candidateTransform.map { raw * $0.scale + $0.offset } ?? raw
         return PassiveCANResearchPoint(
-          gatewayID: observation.gatewayID,
-          sessionID: observation.sessionID,
+          gatewayID: projection.sourceGatewayID,
+          sessionID: projection.sourceSessionID,
           sessionOrdinal: time.ordinal,
-          sourceSequence: observation.sourceSequence,
+          sourceSequence: projection.sourceSequence,
           elapsedSeconds: time.elapsed,
-          rawValue: raw,
-          displayValue: display
+          rawValue: projection.rawValue,
+          displayValue: projection.displayValue
         )
       }
       let values = extracted.sorted(by: pointOrder)
@@ -421,28 +431,6 @@ public enum PassiveCANResearchAnalyzer {
       cursor += duration + 1
     }
     return ResearchTimeline(values: result, sessions: sessions)
-  }
-
-  private static func extract(
-    _ definition: PassiveCANResearchDefinition,
-    from observation: PassiveCANObservation
-  ) -> Double? {
-    let end = definition.byteOffset + definition.byteLength
-    guard definition.byteLength > 0, definition.byteLength <= 8,
-      end <= Int(observation.dataLength), end <= observation.data.count
-    else { return nil }
-    var word: UInt64 = 0
-    for byte in observation.data[definition.byteOffset..<end] {
-      word = (word << 8) | UInt64(byte)
-    }
-    let masked = (word >> UInt64(definition.rightShift)) & definition.mask
-    if let bits = definition.signedBits, bits > 0, bits < 64 {
-      let signBit = UInt64(1) << UInt64(bits - 1)
-      if masked & signBit != 0 {
-        return Double(Int64(masked) - Int64(UInt64(1) << UInt64(bits)))
-      }
-    }
-    return Double(masked)
   }
 
   private static func downsample(

@@ -1250,24 +1250,9 @@ private struct DiscoverySignalExplorerView: View {
               NavigationLink {
                 DiscoveryCandidateDetailView(report: report, seriesID: series.id)
               } label: {
-                VStack(alignment: .leading, spacing: 5) {
-                  HStack {
-                    Text(series.label).font(.headline)
-                    Spacer()
-                    Text(series.identifierHex).font(.subheadline.monospaced())
-                  }
-                  Text(series.candidateSemantic).font(.caption.monospaced())
-                  HStack {
-                    Text("\(series.recordCount) retained records")
-                    Spacer()
-                    Text("EXPERIMENTAL CANDIDATE")
-                      .font(.caption2.weight(.bold))
-                      .foregroundStyle(.orange)
-                  }
-                  .font(.caption)
-                  .foregroundStyle(.secondary)
-                }
-                .padding(.vertical, 4)
+                DiscoveryCandidateSignalRow(
+                  series: series,
+                  reportAuthority: report.authority)
               }
             }
           } else {
@@ -1280,6 +1265,98 @@ private struct DiscoverySignalExplorerView: View {
     .toolbar {
       Button("Refresh") { model.refreshCANResearch() }
     }
+  }
+}
+
+private struct DiscoveryCandidateSignalRow: View {
+  let series: PassiveCANResearchSeries
+  let reportAuthority: String
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 7) {
+      HStack(alignment: .firstTextBaseline, spacing: 12) {
+        VStack(alignment: .leading, spacing: 2) {
+          Text(series.label).font(.headline)
+          Text("Candidate meaning · \(series.candidateSemantic)")
+            .font(.caption.monospaced())
+            .foregroundStyle(.secondary)
+        }
+        Spacer()
+        VStack(alignment: .trailing, spacing: 2) {
+          Text(series.latestValueText)
+            .font(.headline.monospacedDigit())
+          Text("LATEST RETAINED")
+            .font(.caption2.weight(.semibold))
+            .foregroundStyle(.secondary)
+        }
+      }
+      HStack(spacing: 6) {
+        Text(series.identifierHex).font(.caption.monospaced().weight(.semibold))
+        Text("·")
+        Text("\(series.recordCount) records")
+        if let point = series.latestPoint {
+          Text("·")
+          Text("seq \(point.sourceSequence)")
+        }
+      }
+      .font(.caption)
+      .foregroundStyle(.secondary)
+      Text(series.valueAuthority.displayLabel)
+        .font(.caption2.weight(.bold))
+        .foregroundStyle(series.usesCandidateTransform ? .blue : .orange)
+      Text("\(reportAuthority) · HISTORICAL REPLAY · NOT LIVE")
+        .font(.caption2.weight(.bold))
+        .foregroundStyle(.orange)
+    }
+    .padding(.vertical, 5)
+  }
+}
+
+extension PassiveCANResearchSeries {
+  fileprivate var latestValueText: String {
+    guard let latestPoint else { return "Unavailable" }
+    if valueAuthority.exposesEngineeringUnit {
+      return latestPoint.displayValue.formatted(
+        .number.precision(.fractionLength(0...2))) + " " + displayUnit
+    }
+    return latestPoint.rawValue.rawCountText
+  }
+
+  fileprivate var displayRangeText: String {
+    guard valueAuthority.exposesEngineeringUnit else { return "Unavailable" }
+    let minimum = displayMinimum.formatted(.number.precision(.fractionLength(0...2)))
+    let maximum = displayMaximum.formatted(.number.precision(.fractionLength(0...2)))
+    return "\(minimum)…\(maximum) \(displayUnit)"
+  }
+}
+
+extension PassiveCANResearchValueAuthority {
+  fileprivate var displayLabel: String {
+    switch self {
+    case .referencedCrossModelTransform:
+      "CANDIDATE UNIT · UNVERIFIED CROSS-MODEL SCALE"
+    case .rawOnlyConflictingDefinition:
+      "RAW ONLY · CONFLICTING DEFINITIONS"
+    case .rawOnlyUnvalidatedTransform:
+      "RAW ONLY · PHYSICAL UNIT NOT VALIDATED"
+    }
+  }
+
+  fileprivate var explanation: String {
+    switch self {
+    case .referencedCrossModelTransform:
+      "A source-backed candidate transform is available, but it has not been independently validated on this vehicle."
+    case .rawOnlyConflictingDefinition:
+      "Related-vehicle sources conflict on scale or meaning, so only the exact raw count is shown."
+    case .rawOnlyUnvalidatedTransform:
+      "No defensible physical-unit transform is pinned, so only the exact raw count is shown."
+    }
+  }
+}
+
+extension Double {
+  fileprivate var rawCountText: String {
+    formatted(.number.precision(.fractionLength(0...3))) + " raw count"
   }
 }
 
@@ -1302,12 +1379,36 @@ private struct DiscoveryCandidateDetailView: View {
     List {
       if let series {
         Section("Authority") {
-          Label("EXPERIMENTAL CANDIDATE", systemImage: "exclamationmark.triangle.fill")
+          Label("UNVERIFIED REPLAY CANDIDATE", systemImage: "exclamationmark.triangle.fill")
             .foregroundStyle(.orange)
+          LabeledContent("Report authority", value: report.authority)
+          LabeledContent("Value boundary", value: series.valueAuthority.displayLabel)
           Text(
-            "This cross-model hypothesis is not Vehicle Validated and cannot drive owner health."
+            "This is a historical Engineering projection from retained listen-only evidence. It is not live, Vehicle Validated, or eligible to drive owner health or promotion."
           )
           .font(.footnote)
+        }
+        Section("Latest Retained Projection") {
+          LabeledContent("Candidate meaning", value: series.candidateSemantic)
+          LabeledContent("Latest value", value: series.latestValueText)
+          if let point = series.latestPoint {
+            if series.usesCandidateTransform {
+              LabeledContent("Raw source value", value: point.rawValue.rawCountText)
+              Text(
+                "The physical unit comes from a pinned cross-model transform for Engineering comparison only. The target-vehicle scale is still unverified."
+              )
+              .font(.caption)
+              .foregroundStyle(.secondary)
+            } else {
+              Text(series.valueAuthority.explanation)
+                .font(.caption)
+                .foregroundStyle(.orange)
+            }
+            LabeledContent(
+              "Source lineage",
+              value: "Session \(point.sessionID) · sequence \(point.sourceSequence)")
+            LabeledContent("Source gateway", value: point.gatewayID)
+          }
         }
         Section("Evidence") {
           LabeledContent("CAN ID", value: series.identifierHex)
@@ -1316,7 +1417,17 @@ private struct DiscoveryCandidateDetailView: View {
           LabeledContent("Distinct raw values", value: series.distinctRawValues.formatted())
           LabeledContent(
             "Raw range", value: "\(series.rawMinimum.formatted())…\(series.rawMaximum.formatted())")
+          if series.usesCandidateTransform {
+            LabeledContent("Candidate-unit range", value: series.displayRangeText)
+            if let transformID = series.candidateTransformID {
+              LabeledContent("Candidate transform", value: transformID)
+            }
+          } else {
+            LabeledContent("Physical-unit range", value: "Unavailable")
+          }
           LabeledContent("Candidate source count", value: series.sourceCount.formatted())
+          LabeledContent(
+            "Archive SHA-256", value: String(report.generatedFromSHA256.prefix(16)) + "…")
         }
         Section("Required next evidence") {
           Text(series.validationGate)
