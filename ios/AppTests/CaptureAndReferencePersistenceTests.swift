@@ -1,8 +1,49 @@
+import CoreBluetooth
 import Foundation
 import VHOSCore
 import XCTest
 
 @testable import Vehicle_Health_OS
+
+final class GatewayRestoredLinkPolicyTests: XCTestCase {
+  func testRestoredLinkAlwaysWaitsForEvidenceAuthorityBeforeBluetoothWork() {
+    for state in [
+      CBPeripheralState.connected, .connecting, .disconnected, .disconnecting,
+    ] {
+      XCTAssertEqual(
+        GatewayRestoredLinkPolicy.action(
+          evidencePersistenceReady: false,
+          peripheralState: state),
+        .deferUntilEvidenceReady)
+    }
+  }
+
+  func testVerifiedEvidenceAdoptsExistingLinksWithoutLaunchDisconnect() {
+    XCTAssertEqual(
+      GatewayRestoredLinkPolicy.action(
+        evidencePersistenceReady: true,
+        peripheralState: .connected),
+      .adoptConnected)
+    XCTAssertEqual(
+      GatewayRestoredLinkPolicy.action(
+        evidencePersistenceReady: true,
+        peripheralState: .connecting),
+      .awaitExistingConnection)
+  }
+
+  func testVerifiedEvidenceOnlyCreatesANewConnectionWhenPeripheralIsDisconnected() {
+    XCTAssertEqual(
+      GatewayRestoredLinkPolicy.action(
+        evidencePersistenceReady: true,
+        peripheralState: .disconnected),
+      .connect)
+    XCTAssertEqual(
+      GatewayRestoredLinkPolicy.action(
+        evidencePersistenceReady: true,
+        peripheralState: .disconnecting),
+      .awaitDisconnection)
+  }
+}
 
 final class CaptureAndReferencePersistenceTests: XCTestCase {
   private let gatewayID = "esp32-9454c5b08d14"

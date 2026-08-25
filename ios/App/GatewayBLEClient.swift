@@ -166,6 +166,35 @@ struct GatewayEvidenceAuthorityGate {
   }
 }
 
+/// Launch-time ownership policy for the one handshake-verified peripheral restored by
+/// CoreBluetooth. Restoration commonly arrives before the append-only evidence store finishes
+/// verification. In that interval the inherited link must remain quiescent: cancelling it creates
+/// disconnect/connect callbacks while the app model is still being initialized, while adopting it
+/// would allow telemetry before durable evidence authority exists.
+enum GatewayRestoredLinkAction: Equatable {
+  case deferUntilEvidenceReady
+  case adoptConnected
+  case awaitExistingConnection
+  case connect
+  case awaitDisconnection
+}
+
+struct GatewayRestoredLinkPolicy {
+  static func action(
+    evidencePersistenceReady: Bool,
+    peripheralState: CBPeripheralState
+  ) -> GatewayRestoredLinkAction {
+    guard evidencePersistenceReady else { return .deferUntilEvidenceReady }
+    switch peripheralState {
+    case .connected: return .adoptConnected
+    case .connecting: return .awaitExistingConnection
+    case .disconnected: return .connect
+    case .disconnecting: return .awaitDisconnection
+    @unknown default: return .awaitDisconnection
+    }
+  }
+}
+
 @MainActor
 @Observable
 final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate {
@@ -504,9 +533,9 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       || captureTransferReconnectRequested
     reconnectIntentRequested = scanRequested
     automaticReconnectEnabled = captureTransferReconnectRequested
-    // State restoration is required for a bonded gateway, but a physical link inherited from a
-    // previous app process is retired before reuse. The saved peripheral identifier and iOS bond
-    // survive; a fresh link establishes one current-process delegate, CCCD, and VHOS contract.
+    // State restoration is required for a bonded gateway. An inherited link remains quiescent
+    // until the durable evidence store verifies, then receives one current-process delegate and
+    // renegotiates the VHOS contract without a launch-time disconnect/reconnect cycle.
     central = CBCentralManager(
       delegate: self,
       queue: .main,
@@ -705,6 +734,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     pendingStaleGATTReason = nil
     pendingWeakLinkRescan = false
     pendingWeakLinkReason = nil
+    let deferredRestoredPeripheral = pendingRestoredPeripheral
     pendingRestoredPeripheral = nil
     scanAfterRestorationCleanup = false
     userRequestedDisconnect = true
@@ -720,6 +750,13 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     flushStaleScanDiscoveryTrace(reason: "user-disconnect")
     if let peripheral {
       retireRestoredPeripheral(peripheral, reason: "user-disconnect-or-cancel")
+    } else if let deferredRestoredPeripheral {
+      // A restored CoreBluetooth link can be intentionally held quiescent while the evidence
+      // store verifies. A user handoff must still close that physical link; merely forgetting the
+      // pending reference would leave Android unable to discover the one-client gateway.
+      retireRestoredPeripheral(
+        deferredRestoredPeripheral,
+        reason: "user-disconnect-deferred-restored-link")
     }
     resetConnection()
     transportMessage =
@@ -742,6 +779,20 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         self.portableFrameIntegrityLatch.recordVerified(count: preparation.portableFrameCount)
         self.captureSessions = preparation.captureSessions
         self.evidencePersistenceReady = true
+        if let restored = self.pendingRestoredPeripheral,
+          self.retiredRestoredPeripherals.isEmpty,
+          !self.userRequestedDisconnect,
+          self.central.state == .poweredOn
+        {
+          self.pendingRestoredPeripheral = nil
+          self.scanRequested = false
+          self.scanAfterRestorationCleanup = false
+          Self.commissioningTrace(
+            "RESTORE_EVIDENCE_READY peripheral=\(self.peripheralEvidence(restored)) action=resume-without-launch-disconnect"
+          )
+          self.resumeRestoredPeripheral(restored)
+          return
+        }
         if self.scanRequested, self.central.state == .poweredOn,
           !self.userRequestedDisconnect
         {
@@ -767,6 +818,7 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       )
       return
     }
+    let deferredRestoredPeripheral = pendingRestoredPeripheral
     evidencePersistenceReady = false
     scanRequested = false
     scanAfterRestorationCleanup = false
@@ -790,6 +842,10 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     )
     if let peripheral, isActivePeripheral(peripheral) {
       retireRestoredPeripheral(peripheral, reason: "authoritative-evidence-persistence-failure")
+    } else if let deferredRestoredPeripheral {
+      retireRestoredPeripheral(
+        deferredRestoredPeripheral,
+        reason: "deferred-restoration-evidence-persistence-failure")
     }
     resetTransportSession()
     state = .degraded
@@ -1018,6 +1074,18 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
           "CLEANUP_CENTRAL_RECOVERY_READY reconnect_intent=\(scanRequested && !userRequestedDisconnect)"
         )
       }
+      if evidencePersistenceReady, let restored = pendingRestoredPeripheral,
+        retiredRestoredPeripherals.isEmpty, !userRequestedDisconnect
+      {
+        pendingRestoredPeripheral = nil
+        scanRequested = false
+        scanAfterRestorationCleanup = false
+        Self.commissioningTrace(
+          "RESTORE_RADIO_READY peripheral=\(peripheralEvidence(restored)) action=resume-without-launch-disconnect"
+        )
+        resumeRestoredPeripheral(restored)
+        return
+      }
       if scanRequested, !userRequestedDisconnect, retiredRestoredPeripherals.isEmpty {
         let skipKnownGatewayRetrieval = skipKnownGatewayRetrievalOnNextScan
         skipKnownGatewayRetrievalOnNextScan = false
@@ -1065,22 +1133,6 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     }
     let restoredPeripherals =
       (dict[CBCentralManagerRestoredStatePeripheralsKey] as? [CBPeripheral]) ?? []
-    guard evidencePersistenceReady else {
-      for restored in restoredPeripherals {
-        retireRestoredPeripheral(restored, reason: "evidence-persistence-not-ready")
-      }
-      if !restoredPeripherals.isEmpty {
-        reconnectIntentRequested = true
-        scanRequested = true
-        scanAfterRestorationCleanup = true
-      }
-      transportMessage =
-        "Verifying the local append-only evidence store before restoring the gateway link…"
-      Self.commissioningTrace(
-        "RESTORE_DEFERRED reason=evidence-persistence-not-ready count=\(restoredPeripherals.count)"
-      )
-      return
-    }
     if userRequestedDisconnect {
       for restored in restoredPeripherals {
         retireRestoredPeripheral(restored, reason: "late-restore-after-user-disconnect")
@@ -1132,6 +1184,23 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
     for extra in extras {
       retireRestoredPeripheral(extra, reason: "restore-extra")
     }
+    if GatewayRestoredLinkPolicy.action(
+      evidencePersistenceReady: evidencePersistenceReady,
+      peripheralState: restored.state
+    ) == .deferUntilEvidenceReady {
+      pendingRestoredPeripheral = restored
+      reconnectIntentRequested = true
+      automaticReconnectEnabled = true
+      scanRequested = false
+      scanAfterRestorationCleanup = false
+      state = .connecting
+      transportMessage =
+        "Verifying the local append-only evidence store before resuming the existing gateway link…"
+      Self.commissioningTrace(
+        "RESTORE_DEFERRED reason=evidence-persistence-not-ready selected=\(peripheralEvidence(restored)) cleanup=\(retiredRestoredPeripherals.count) action=preserve-link-quiescent"
+      )
+      return
+    }
     if !retiredRestoredPeripherals.isEmpty {
       pendingRestoredPeripheral = restored
       scanRequested = false
@@ -1147,43 +1216,51 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
   }
 
   private func resumeRestoredPeripheral(_ restored: CBPeripheral) {
+    let action = GatewayRestoredLinkPolicy.action(
+      evidencePersistenceReady: evidencePersistenceReady,
+      peripheralState: restored.state)
+    guard action != .deferUntilEvidenceReady else {
+      pendingRestoredPeripheral = restored
+      scanRequested = false
+      state = .connecting
+      transportMessage =
+        "Verifying the local append-only evidence store before resuming the existing gateway link…"
+      return
+    }
     reconnectIntentRequested = true
+    automaticReconnectEnabled = true
+    userRequestedDisconnect = false
+    scanRequested = false
+    scanAfterRestorationCleanup = false
     candidateNameSuggestsGateway = GatewayBLEIdentityPolicy.nameSuggestsGateway(restored.name)
     candidateAdvertisedVHOSService = false
     candidateWasPreviouslyValidated = true
-    if restored.state == .connected {
-      automaticReconnectEnabled = true
-      userRequestedDisconnect = false
-      scanRequested = true
-      scanAfterRestorationCleanup = true
-      discoveredName = restored.name
-      discoveredIdentifier = restored.identifier.uuidString
+    discoveredName = restored.name
+    discoveredIdentifier = restored.identifier.uuidString
+
+    switch action {
+    case .adoptConnected:
+      peripheral = restored
       state = .connecting
-      transportMessage =
-        "Closing the link inherited from the previous app process before reconnecting…"
+      transportMessage = "Resuming the existing encrypted gateway link…"
       Self.commissioningTrace(
-        "RESTORE_CONNECTED_RETIRED peripheral=\(peripheralEvidence(restored)) action=fresh-physical-link-preserve-bond"
+        "RESTORE_CONNECTED_ADOPTED peripheral=\(peripheralEvidence(restored)) action=install-current-process-delegate-and-renegotiate-contract"
       )
-      retireRestoredPeripheral(restored, reason: "restore-connected-from-previous-process")
-      return
-    }
-    if restored.state == .connecting {
-      automaticReconnectEnabled = true
-      userRequestedDisconnect = false
-      scanRequested = true
-      scanAfterRestorationCleanup = true
-      discoveredName = restored.name
-      discoveredIdentifier = restored.identifier.uuidString
+      beginServiceDiscovery(restored, source: "state-restoration")
+    case .awaitExistingConnection:
+      peripheral = restored
       state = .connecting
-      transportMessage =
-        "Closing the in-progress link inherited from the previous app process before reconnecting…"
+      transportMessage = "Waiting for the existing encrypted gateway connection…"
       Self.commissioningTrace(
-        "RESTORE_CONNECTING_RETIRED peripheral=\(peripheralEvidence(restored)) action=fresh-physical-link-preserve-bond"
+        "RESTORE_CONNECTING_ADOPTED peripheral=\(peripheralEvidence(restored)) action=await-current-connect-callback"
       )
-      retireRestoredPeripheral(restored, reason: "restore-connecting-from-previous-process")
-      return
-    }
-    if restored.state == .disconnecting {
+      armConnectionTimeout(restored, source: "state-restoration")
+    case .connect:
+      peripheral = restored
+      state = .connecting
+      transportMessage = "Restoring the paired gateway connection…"
+      connect(restored)
+    case .awaitDisconnection:
       scanRequested = true
       scanAfterRestorationCleanup = true
       transportMessage =
@@ -1192,22 +1269,10 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         "RESTORE_DISCONNECTING_DEFERRED peripheral=\(peripheralEvidence(restored))"
       )
       retireRestoredPeripheral(restored, reason: "restore-still-disconnecting")
-      return
+    case .deferUntilEvidenceReady:
+      // Guarded above. Keeping this branch makes future enum additions fail loudly at compile time.
+      pendingRestoredPeripheral = restored
     }
-    if scanRequested {
-      Self.commissioningTrace(
-        "RESTORE_SKIPPED_FOR_SCAN id=\(restored.identifier.uuidString) state=\(restored.state.rawValue)"
-      )
-      return
-    }
-    peripheral = restored
-    automaticReconnectEnabled = true
-    userRequestedDisconnect = false
-    discoveredName = restored.name
-    discoveredIdentifier = restored.identifier.uuidString
-    state = .connecting
-    transportMessage = "Restoring the paired gateway connection…"
-    connect(restored)
   }
 
   func centralManager(
@@ -1347,6 +1412,20 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
         "RETIRED_LINK_CONNECTED_CANCEL peripheral=\(peripheralEvidence(peripheral))"
       )
       central.cancelPeripheralConnection(peripheral)
+      return
+    }
+    if let pendingRestoredPeripheral, pendingRestoredPeripheral === peripheral,
+      !evidencePersistenceReady || !retiredRestoredPeripherals.isEmpty
+    {
+      // The inherited connection completed while durable evidence authority was still loading (or
+      // while an extra restored link was being drained). Keep the physical link intact and
+      // quiescent. `refreshPortableFrameIntegrity` / cleanup completion will adopt it exactly once.
+      state = .connecting
+      transportMessage =
+        "Existing gateway link is ready; finishing local evidence verification before resuming it…"
+      Self.commissioningTrace(
+        "RESTORE_CONNECTED_CALLBACK_DEFERRED peripheral=\(peripheralEvidence(peripheral)) evidence_ready=\(evidencePersistenceReady) cleanup=\(retiredRestoredPeripherals.count)"
+      )
       return
     }
     guard isActivePeripheral(peripheral) else {
@@ -3312,6 +3391,14 @@ final class GatewayBLEClient: NSObject, @preconcurrency CBCentralManagerDelegate
       return
     }
     if let restored = pendingRestoredPeripheral {
+      guard evidencePersistenceReady else {
+        transportMessage =
+          "Verifying the local append-only evidence store before resuming the existing gateway link…"
+        Self.commissioningTrace(
+          "RESTORE_CLEANUP_COMPLETE_DEFERRED reason=evidence-persistence-not-ready peripheral=\(peripheralEvidence(restored))"
+        )
+        return
+      }
       pendingRestoredPeripheral = nil
       resumeRestoredPeripheral(restored)
       return

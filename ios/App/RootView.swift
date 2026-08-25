@@ -155,6 +155,12 @@ private struct FirmwareView: View {
           "Update requires a current PARKED health report, stable voltage, compatible hardware, and signed A/B rollback support. The app pauses and flushes the recorder, opens a hidden one-client gateway network over encrypted BLE, uploads, then removes that network from the iPhone."
         )
         .font(.footnote)
+        Label(
+          "Trying to teach VHOS the Park/selector signal? Open Discovery → Run a Test → Park / Selector Bootstrap, then choose local evidence-only mode. Firmware safety gates are intentionally separate and cannot be overridden.",
+          systemImage: "arrow.triangle.branch"
+        )
+        .font(.footnote)
+        .foregroundStyle(.blue)
         Button("Run preflight and install") { confirmingUpdate = true }
           .disabled(model.verifiedFirmware == nil || model.updateInProgress)
         if let progress = model.uploadProgressDescription { Text(progress).font(.footnote) }

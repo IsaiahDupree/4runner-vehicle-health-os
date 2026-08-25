@@ -132,6 +132,11 @@ struct DiscoveryTestRunDraft: Codable, Equatable, Identifiable, Sendable {
   let startedAt: String
   let startMonotonicMicroseconds: UInt64
   let firstSourceSequence: UInt64
+  /// Immutable acquisition scope selected when this run began. `nil` is reserved for legacy
+  /// records written before scope binding existed and always fails closed for gateway commands.
+  let acquisitionAuthority: DiscoveryMutationAuthority?
+  /// Required only for app-local evidence acquisition; copied into every later snapshot.
+  let ownerSafetyAcknowledgedAt: String?
   let state: DiscoveryTestRunDraftState
   let endedAt: String?
   let endMonotonicMicroseconds: UInt64?
@@ -139,7 +144,8 @@ struct DiscoveryTestRunDraft: Codable, Equatable, Identifiable, Sendable {
 
   private enum CodingKeys: String, CodingKey {
     case contract, contractVersion, id, templateVersion, startedAt
-    case startMonotonicMicroseconds, firstSourceSequence, state, endedAt
+    case startMonotonicMicroseconds, firstSourceSequence, acquisitionAuthority
+    case ownerSafetyAcknowledgedAt, state, endedAt
     case endMonotonicMicroseconds, lastSourceSequence
     case templateID = "templateId"
     case captureID = "captureId"
@@ -157,6 +163,8 @@ struct DiscoveryTestRunDraft: Codable, Equatable, Identifiable, Sendable {
     startedAt: String,
     startMonotonicMicroseconds: UInt64,
     firstSourceSequence: UInt64,
+    acquisitionAuthority: DiscoveryMutationAuthority? = nil,
+    ownerSafetyAcknowledgedAt: String? = nil,
     state: DiscoveryTestRunDraftState,
     endedAt: String? = nil,
     endMonotonicMicroseconds: UInt64? = nil,
@@ -164,11 +172,21 @@ struct DiscoveryTestRunDraft: Codable, Equatable, Identifiable, Sendable {
   ) throws {
     let hasGatewayEnd = endMonotonicMicroseconds != nil && lastSourceSequence != nil
     let hasPartialGatewayEnd = (endMonotonicMicroseconds == nil) != (lastSourceSequence == nil)
+    let requiresOwnerSafetyAcknowledgement =
+      acquisitionAuthority?.requiresOwnerSafetyAcknowledgement == true
+    let localEvidenceAcknowledgementIsValid =
+      DiscoveryMutationPolicy.ownerSafetyAcknowledgementIsValid(
+        ownerSafetyAcknowledgedAt,
+        runStartedAt: startedAt,
+        required: requiresOwnerSafetyAcknowledgement)
+      && (!requiresOwnerSafetyAcknowledgement
+        || templateID == DiscoveryMutationPolicy.parkSelectorBootstrapTemplateID)
     guard DiscoveryEvidenceStoreValidation.isDomainID(id, prefix: "run"),
       DiscoveryEvidenceStoreValidation.isDomainID(captureID, prefix: "capture"),
       !templateID.isEmpty, templateID.count <= 160,
       !templateVersion.isEmpty, templateVersion.count <= 80,
       !gatewayID.isEmpty, gatewayID.count <= 160,
+      localEvidenceAcknowledgementIsValid,
       AppendOnlyEvidenceReplay.hasValidWallClockInterval(
         startedAt: startedAt, endedAt: endedAt),
       !hasPartialGatewayEnd,
@@ -189,6 +207,8 @@ struct DiscoveryTestRunDraft: Codable, Equatable, Identifiable, Sendable {
     self.startedAt = startedAt
     self.startMonotonicMicroseconds = startMonotonicMicroseconds
     self.firstSourceSequence = firstSourceSequence
+    self.acquisitionAuthority = acquisitionAuthority
+    self.ownerSafetyAcknowledgedAt = ownerSafetyAcknowledgedAt
     self.state = state
     self.endedAt = endedAt
     self.endMonotonicMicroseconds = endMonotonicMicroseconds
@@ -202,7 +222,10 @@ struct DiscoveryTestRunDraft: Codable, Equatable, Identifiable, Sendable {
       id: id, templateID: templateID, templateVersion: templateVersion,
       captureID: captureID, gatewayID: gatewayID, gatewaySessionID: gatewaySessionID,
       startedAt: startedAt, startMonotonicMicroseconds: startMonotonicMicroseconds,
-      firstSourceSequence: firstSourceSequence, state: state, endedAt: endedAt,
+      firstSourceSequence: firstSourceSequence,
+      acquisitionAuthority: acquisitionAuthority,
+      ownerSafetyAcknowledgedAt: ownerSafetyAcknowledgedAt,
+      state: state, endedAt: endedAt,
       endMonotonicMicroseconds: endMonotonicMicroseconds,
       lastSourceSequence: lastSourceSequence)
   }
@@ -514,7 +537,9 @@ final class DiscoveryEvidenceStore {
   func beginTestRun(
     template: TestTemplate,
     observation: PassiveCANObservation,
-    recordedAt: String
+    recordedAt: String,
+    acquisitionAuthority: DiscoveryMutationAuthority,
+    ownerSafetyAcknowledgedAt: String? = nil
   ) throws -> DiscoveryTestRunDraft {
     try template.validateContract()
     try PassiveCANEvidenceArchive.validate(observation)
@@ -532,6 +557,8 @@ final class DiscoveryEvidenceStore {
       startedAt: recordedAt,
       startMonotonicMicroseconds: observation.monotonicMicroseconds,
       firstSourceSequence: observation.sourceSequence,
+      acquisitionAuthority: acquisitionAuthority,
+      ownerSafetyAcknowledgedAt: ownerSafetyAcknowledgedAt,
       state: .active)
     try appendLine(draft, to: testRunsURL)
     return draft
@@ -569,6 +596,8 @@ final class DiscoveryEvidenceStore {
       startedAt: run.startedAt,
       startMonotonicMicroseconds: run.startMonotonicMicroseconds,
       firstSourceSequence: run.firstSourceSequence,
+      acquisitionAuthority: run.acquisitionAuthority,
+      ownerSafetyAcknowledgedAt: run.ownerSafetyAcknowledgedAt,
       state: state,
       endedAt: recordedAt,
       endMonotonicMicroseconds: observation?.monotonicMicroseconds,
@@ -707,6 +736,8 @@ final class DiscoveryEvidenceStore {
         && $0.startedAt == $1.startedAt
         && $0.startMonotonicMicroseconds == $1.startMonotonicMicroseconds
         && $0.firstSourceSequence == $1.firstSourceSequence
+        && $0.acquisitionAuthority == $1.acquisitionAuthority
+        && $0.ownerSafetyAcknowledgedAt == $1.ownerSafetyAcknowledgedAt
     }
     let transition: (DiscoveryTestRunDraftState, DiscoveryTestRunDraftState) -> Bool = {
       $0 == .active && ($1 == .ended || $1 == .aborted)
@@ -826,12 +857,16 @@ actor DiscoveryEvidencePersistenceWorker {
   func beginTestRun(
     template: TestTemplate,
     observation: PassiveCANObservation,
-    recordedAt: String
+    recordedAt: String,
+    acquisitionAuthority: DiscoveryMutationAuthority,
+    ownerSafetyAcknowledgedAt: String? = nil
   ) throws -> DiscoveryTestRunDraft {
     try store.beginTestRun(
       template: template,
       observation: observation,
-      recordedAt: recordedAt)
+      recordedAt: recordedAt,
+      acquisitionAuthority: acquisitionAuthority,
+      ownerSafetyAcknowledgedAt: ownerSafetyAcknowledgedAt)
   }
 
   func transitionTestRun(

@@ -1,8 +1,63 @@
 import Foundation
 
-public enum DiscoveryMutationAuthority: String, Equatable, Sendable {
+public enum DiscoveryMutationAuthority: String, Codable, Equatable, Sendable {
   case parked = "PARKED"
   case passiveParkSelectorBootstrap = "PASSIVE_PARK_SELECTOR_BOOTSTRAP"
+  /// Explicit, owner-acknowledged scope for app-local, append-only selector evidence.
+  ///
+  /// This value is deliberately not PARKED authority. Callers must never reuse it for OTA,
+  /// diagnostic transmission, gateway capture control, arbitrary CAN writes, or vehicle control.
+  case localEvidenceOnly = "LOCAL_EVIDENCE_ONLY"
+  /// Debug-build-only acquisition scope that relaxes Discovery entry/readiness gates while
+  /// retaining real, listen-only CAN lineage.
+  ///
+  /// This value is persisted so development evidence can never be mistaken for normal local
+  /// acquisition or PARKED authority. Release builds may decode existing records, but the policy
+  /// cannot issue this authority outside a Debug build.
+  case developmentEvidenceLab = "DEVELOPMENT_EVIDENCE_LAB"
+
+  /// App-local evidence scopes are permanently ineligible for gateway commands and authority
+  /// promotion, even if recorder health or a PARKED report appears later.
+  public var isAppLocalEvidenceOnly: Bool {
+    self == .localEvidenceOnly || self == .developmentEvidenceLab
+  }
+
+  /// Positive capability allowlist for capture-control commands. Adding a future authority case
+  /// fails closed until this exhaustive switch is deliberately updated.
+  public var permitsGatewayCaptureControl: Bool {
+    switch self {
+    case .parked, .passiveParkSelectorBootstrap:
+      true
+    case .localEvidenceOnly, .developmentEvidenceLab:
+      false
+    }
+  }
+
+  public var requiresOwnerSafetyAcknowledgement: Bool {
+    switch self {
+    case .localEvidenceOnly, .developmentEvidenceLab:
+      true
+    case .parked, .passiveParkSelectorBootstrap:
+      false
+    }
+  }
+
+  /// Whether a fresh policy result may continue a run sealed with this acquisition scope.
+  /// App-local scopes require an exact match. The narrow passive bootstrap may continue if the
+  /// stronger deterministic PARKED result arrives, but its persisted acquisition scope and
+  /// command permissions remain unchanged.
+  public func permitsContinuation(with current: DiscoveryMutationAuthority?) -> Bool {
+    switch self {
+    case .parked:
+      current == .parked
+    case .passiveParkSelectorBootstrap:
+      current == .passiveParkSelectorBootstrap || current == .parked
+    case .localEvidenceOnly:
+      current == .localEvidenceOnly
+    case .developmentEvidenceLab:
+      current == .developmentEvidenceLab
+    }
+  }
 }
 
 public struct DiscoveryOrderedMarkerRequirement: Equatable, Sendable {
@@ -52,6 +107,9 @@ public enum DiscoveryMutationPolicy {
   public static let parkSelectorBootstrapTemplateID =
     "discovery.transmission.selector-bootstrap"
   public static let freshnessLimitSeconds: TimeInterval = 5
+  /// A safety confirmation arms one app-local run. Its timestamp must be captured when the owner
+  /// confirms, rather than synthesized later from the run-start timestamp.
+  public static let ownerSafetyAcknowledgementValiditySeconds: TimeInterval = 300
   /// Minimum labeled dwell after each selector-position marker before the next selector marker.
   ///
   /// This uses the gateway monotonic clock, not iPhone wall time, so an app suspension, clock
@@ -65,6 +123,34 @@ public enum DiscoveryMutationPolicy {
   /// write failures were already cumulative and the retained session could not be recovered
   /// from the normal capture archive.
   public static let minimumDiscoveryStorageFreeBytes: UInt64 = 128 * 1_024
+
+  /// The relaxed Evidence Lab path is physically absent from Release policy execution.
+  public static var developmentEvidenceLabAvailable: Bool {
+    #if DEBUG
+      true
+    #else
+      false
+    #endif
+  }
+
+  /// Validates the explicit owner confirmation bound to an app-local acquisition scope.
+  ///
+  /// Equality is accepted because the canonical ISO-8601 writer records whole seconds, so a real
+  /// confirmation followed immediately by Begin can share the same encoded timestamp.
+  public static func ownerSafetyAcknowledgementIsValid(
+    _ acknowledgedAt: String?,
+    runStartedAt: String,
+    required: Bool
+  ) -> Bool {
+    guard required else { return acknowledgedAt == nil }
+    let formatter = ISO8601DateFormatter()
+    guard let acknowledgedAt, let acknowledgement = formatter.date(from: acknowledgedAt),
+      let start = formatter.date(from: runStartedAt), acknowledgement <= start
+    else { return false }
+    return start.timeIntervalSince(acknowledgement)
+      <= ownerSafetyAcknowledgementValiditySeconds
+  }
+
   public static let parkSelectorBootstrapMarkerRequirements: [DiscoveryOrderedMarkerRequirement] = [
     .init(kind: .custom, label: "SAFETY SETUP CONFIRMED"),
     .init(kind: .selectorPark, label: "SELECTOR: PARK"),
@@ -76,41 +162,83 @@ public enum DiscoveryMutationPolicy {
 
   public static func authority(
     for template: TestTemplate,
-    context: DiscoveryMutationContext
+    context: DiscoveryMutationContext,
+    allowLocalEvidenceOnly: Bool = false,
+    allowDevelopmentEvidenceLab: Bool = false
   ) -> DiscoveryMutationAuthority? {
-    guard (try? template.validateContract()) != nil,
+    guard (try? template.validateContract()) != nil else { return nil }
+
+    #if DEBUG
+      // Evidence Lab deliberately relaxes connection, handshake availability,
+      // advertised-capability, recorder, storage, and PARKED gates. It still requires a real,
+      // fresh accepted observation and fails closed on any evidence that the bus is not
+      // listen-only, the vehicle is MOVING, or a present handshake belongs to another gateway.
+      // It is limited to the exact canonical selector procedure and returns a distinct
+      // non-authority scope.
+      if allowDevelopmentEvidenceLab,
+        isCanonicalParkSelectorBootstrap(template),
+        let observation = context.observation,
+        let observationAge = context.observationAgeSeconds,
+        (0...freshnessLimitSeconds).contains(observationAge),
+        (try? PassiveCANEvidenceArchive.validate(observation)) != nil,
+        observation.listenOnly,
+        context.health?.listenOnly != false,
+        context.health?.vehicleMotion != .moving,
+        context.handshake?.listenOnly != false,
+        context.handshake.map({ $0.gatewayID == observation.gatewayID }) ?? true
+      {
+        return .developmentEvidenceLab
+      }
+    #endif
+
+    guard
       context.connectionState == .vhosConnected,
       let handshake = context.handshake,
-      let health = context.health,
-      let healthAge = context.healthAgeSeconds,
       let observation = context.observation,
       let observationAge = context.observationAgeSeconds,
-      (0...freshnessLimitSeconds).contains(healthAge),
       (0...freshnessLimitSeconds).contains(observationAge),
-      handshake.listenOnly, health.listenOnly, observation.listenOnly,
+      handshake.listenOnly, observation.listenOnly,
+      template.requiredGatewayCapabilities.allSatisfy(handshake.capabilities.contains),
+      observation.gatewayID == handshake.gatewayID
+    else { return nil }
+
+    // When the owner explicitly chose local evidence-only acquisition, keep that scope narrow and
+    // stable even if a fresh PARKED/recorder report arrives a moment later. The caller persists
+    // this returned authority in the append-only run record; it must never be silently upgraded.
+    if allowLocalEvidenceOnly,
+      isCanonicalParkSelectorBootstrap(template),
+      context.health?.vehicleMotion != .moving
+    {
+      return .localEvidenceOnly
+    }
+
+    if let health = context.health,
+      let healthAge = context.healthAgeSeconds,
+      (0...freshnessLimitSeconds).contains(healthAge),
+      health.listenOnly,
       health.captureActive,
       captureWritePathIsHealthy(health),
       captureStorageHasHeadroom(health),
-      template.requiredGatewayCapabilities.allSatisfy(handshake.capabilities.contains),
-      observation.gatewayID == handshake.gatewayID,
       let captureSessionID = health.captureSessionID,
       observation.sessionID == captureSessionID
-    else { return nil }
-
-    if template.requiredVehicleMotion == .parked,
-      context.hasCurrentParkedAuthority,
-      health.vehicleMotion == .parked
     {
-      return .parked
+      if template.requiredVehicleMotion == .parked,
+        context.hasCurrentParkedAuthority,
+        health.vehicleMotion == .parked
+      {
+        return .parked
+      }
+
+      if isCanonicalParkSelectorBootstrap(template) {
+        if !context.hasCurrentParkedAuthority, health.vehicleMotion == .unknown {
+          return .passiveParkSelectorBootstrap
+        }
+        if context.hasCurrentParkedAuthority, health.vehicleMotion == .parked {
+          return .parked
+        }
+      }
     }
 
-    guard isCanonicalParkSelectorBootstrap(template) else { return nil }
-    if !context.hasCurrentParkedAuthority, health.vehicleMotion == .unknown {
-      return .passiveParkSelectorBootstrap
-    }
-    if context.hasCurrentParkedAuthority, health.vehicleMotion == .parked {
-      return .parked
-    }
     return nil
   }
 

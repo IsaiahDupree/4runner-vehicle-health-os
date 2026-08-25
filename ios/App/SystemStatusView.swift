@@ -100,10 +100,17 @@ struct SystemStatusView: View {
 
           Spacer()
 
-          Button("Disconnect", role: .destructive) {
+          Button("Release for Android", role: .destructive) {
             gateway.disconnect()
           }
-          .disabled(!gateway.applicationSessionHealthy || gateway.connectionCleanupActive)
+          .disabled(!canReleaseGatewayForAndroid)
+        }
+        if canReleaseGatewayForAndroid {
+          Text(
+            "The deployed ESP32 accepts one BLE owner at a time. Release closes an active, restored, negotiating, or reconnecting iPhone link; then tap Start / Reacquire on Android. The iPhone will not reconnect automatically until you press Connect again."
+          )
+          .font(.caption)
+          .foregroundStyle(.secondary)
         }
         if let message = gateway.transportMessage {
           Text(message)
@@ -963,6 +970,13 @@ struct SystemStatusView: View {
       && (gateway.connectionCleanupActive || gateway.peripheralConnected || gateway.scanActive
         || gateway.automaticReconnectActive || gateway.state == .scanning
         || gateway.state == .connecting)
+  }
+
+  private var canReleaseGatewayForAndroid: Bool {
+    !gateway.connectionCleanupActive
+      && (gateway.applicationSessionHealthy || gateway.peripheralConnected
+        || gateway.scanActive || gateway.automaticReconnectActive
+        || gateway.state == .scanning || gateway.state == .connecting)
   }
 
   private var primaryConnectionControlTitle: String {

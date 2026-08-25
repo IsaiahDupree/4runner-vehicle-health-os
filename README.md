@@ -130,7 +130,7 @@ The stable device labels and separation from transport identifiers are defined i
 | `vehicle-signal-packs/` | Accepted signal/configuration packs plus separately contracted, discovery-only hypothesis packs that cannot feed owner health |
 
 Related public repositories keep runtime ownership separate: Android head unit
-[`4runner-vhos-android`](https://github.com/IsaiahDupree/4runner-vhos-android), OBD firmware
+[`4runner-vhos-android`](https://github.com/IsaiahDupree/4runner-vhos-android) ([download the current `0.1.0-dev.15` APK](https://github.com/IsaiahDupree/4runner-vhos-android/releases/download/android-v0.1.0-dev.15/app-debug.apk)), OBD firmware
 [`4runner-vhos-firmware`](https://github.com/IsaiahDupree/4runner-vhos-firmware), A/C firmware
 [`4runner-ac-telemetry-node`](https://github.com/IsaiahDupree/4runner-ac-telemetry-node), and the
 signed catalog/portal [`4runner-vhos-release-hub`](https://github.com/IsaiahDupree/4runner-vhos-release-hub).
@@ -180,6 +180,12 @@ The cross-platform Connect → Discover → Test → Capture → Validate → Pr
 roles, authority states, session records, fail-closed promotion gate, and first production slice are
 defined in
 [the Discovery subsystem architecture](docs/development/DISCOVERY-SUBSYSTEM-ARCHITECTURE-2026-08-21.md).
+The Android vendor-stack discovery fallback, one-client iPhone/Android handoff, connected-launch
+recovery, and explicitly owner-acknowledged local evidence-only selector workflow are recorded in
+[the BLE/local-evidence runbook](docs/development/BLE-DISCOVERY-CONNECTED-LAUNCH-AND-LOCAL-EVIDENCE-2026-08-24.md).
+The exact offline capture-finalization and experimental-candidate persistence boundary—and the
+remaining reason the registration button stays disabled—are recorded in
+[the offline candidate-registration gap](docs/development/OFFLINE-CANDIDATE-REGISTRATION-GAP-2026-08-24.md).
 
 ## Safety boundary
 

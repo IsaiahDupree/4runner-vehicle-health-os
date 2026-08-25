@@ -25,6 +25,12 @@ Native SwiftUI control surface for the VHOS gateway contract. Minimum deployment
   candidates. Passive network detection is shown separately from a confirmed OBD response.
 - Keychain-backed Ed25519 signing of semantic experiment approvals.
 - Safety validation requiring a current `PARKED` report, idle capture, listen-only mode, and gateway capabilities.
+- A Debug-only Evidence Lab for the canonical Park/selector bootstrap. It can relax incomplete
+  commissioning entry telemetry while retaining a mandatory real, canonical, no-more-than-five-
+  second-old listen-only CAN observation. Every run is permanently stamped
+  `DEVELOPMENT_EVIDENCE_LAB / UNVERIFIED`, remains app-local, and cannot authorize gateway commands,
+  OTA, diagnostics, CAN transmission, vehicle control, a Park claim, or signal promotion. Release
+  builds contain neither the control nor the authority-issuance path.
 - `.vhosota` parsing, Ed25519 signature/hash verification, compatibility/voltage/capability
   preflight, encrypted-BLE temporary-network activation, one-shot iOS hotspot join, authenticated
   local upload, cleanup, and rollback-status decoding.
@@ -79,6 +85,26 @@ retained-point cursor, play/pause, scrub, 0.25×–20× speed, restart, optional
 session boundaries. The playback implementation and its real-capture tests are in the
 [retained CAN playback lab record](../docs/development/IOS-RETAINED-CAN-PLAYBACK-LAB-2026-08-20.md).
 
+When the gateway has fresh, identity-matched listen-only CAN evidence but cannot yet prove Park,
+open **Discovery → Run a Test → Park / Selector Bootstrap → Use local evidence-only mode**. The
+owner acknowledgement is sealed into that run and permits only app-local append-only markers,
+replay, and analysis. End and Abort cannot issue a gateway command even if strict health later
+recovers. OTA, diagnostic reads, gateway capture control, arbitrary transmission, and signal
+promotion remain gated. Android ownership handoff, connected-launch behavior, and the complete
+scope are documented in the
+[BLE/local-evidence runbook](../docs/development/BLE-DISCOVERY-CONNECTED-LAUNCH-AND-LOCAL-EVIDENCE-2026-08-24.md).
+
+For incomplete development commissioning telemetry, install a Debug build and open **Discovery →
+Run a Test → Park / Selector Bootstrap → Use Debug Evidence Lab**. This path may ignore connection-
+state, handshake-availability, capability-advertisement, Park, recorder-health, storage, and
+capture-session entry gates. It never ignores the real fresh listen-only observation, append-only
+ledger integrity, exact gateway/session lineage, ordered markers, or gateway-monotonic dwell. The
+failed readiness rows stay visible rather than being presented as passing. The confirmation tap's
+real timestamp arms one run, must precede Begin by no more than five minutes, and is cleared as soon
+as that immutable run starts. The full operator flow,
+Release behavior, persisted provenance, and prohibited operations are in the same
+[BLE/local-evidence runbook](../docs/development/BLE-DISCOVERY-CONNECTED-LAUNCH-AND-LOCAL-EVIDENCE-2026-08-24.md).
+
 ## Status semantics
 
 - `PASS` is supported by app, gateway, or experiment evidence.
@@ -115,11 +141,12 @@ service scan. `Disconnect` is the only control that clears that intent.
 
 CoreBluetooth state restoration remains enabled under a versioned restoration identifier, but a
 service match alone is not enough to resume a restored object. The app promotes only the peripheral
-identifier that delivered a decoded, CRC-valid VHOS handshake. On a later launch, a connected or
-connecting object inherited from the previous app process is always cancelled before reuse. Its
-disconnect callback is drained, while the verified identifier and iOS bond are retained; the app
-then opens one fresh physical link with a current-process delegate, CCCD, and contract. Unverified,
-older, or additional restored objects use the same bounded cleanup boundary. The first
+identifier that delivered a decoded, CRC-valid VHOS handshake. On a later launch, that one verified
+restored object remains quiescent until append-only evidence storage passes integrity verification.
+The app then adopts an already-connected link (or waits for its one in-flight connection), installs
+a current-process delegate, and renegotiates the CCCD and VHOS contract without creating a
+launch-time disconnect/connect callback race. Unverified, older, additional, or already-
+disconnecting restored objects use the bounded cleanup boundary. The first
 `Connect` after a restoration-identifier epoch change starts from a fresh app selection while
 retaining the iOS-managed bond. If CoreBluetooth supplies an incomplete object in the current
 epoch, the app automatically retires it before scanning, without requiring Settings → Forget This

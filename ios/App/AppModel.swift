@@ -34,6 +34,29 @@ enum DiscoveryLedgerReadState: Equatable, Sendable {
   }
 }
 
+/// The acquisition authority sealed into a Discovery run controls whether a terminal transition
+/// may ever send a gateway capture-control command. In particular, recovering gateway health
+/// during a local-evidence-only run must not silently upgrade that run on End or Abort.
+enum DiscoveryGatewayOffloadPolicy {
+  static func permits(
+    transitionState: DiscoveryTestRunDraftState,
+    acquisitionAuthority: DiscoveryMutationAuthority?,
+    hasMatchingRecorderSession: Bool
+  ) -> Bool {
+    guard let acquisitionAuthority, acquisitionAuthority.permitsGatewayCaptureControl else {
+      return false
+    }
+    switch transitionState {
+    case .active:
+      return false
+    case .ended:
+      return true
+    case .aborted:
+      return hasMatchingRecorderSession
+    }
+  }
+}
+
 @MainActor
 @Observable
 final class AppModel {
@@ -124,8 +147,18 @@ final class AppModel {
     (try? currentDiscoveryObservation()) != nil
   }
 
+  var localEvidenceTimelineCurrent: Bool {
+    (try? currentDiscoveryObservation(allowLocalEvidenceOnly: true)) != nil
+  }
+
+  var developmentEvidenceLabTimelineAvailable: Bool {
+    (try? currentDiscoveryObservation(allowDevelopmentEvidenceLab: true)) != nil
+  }
+
   func discoveryMutationAuthority(
-    for template: TestTemplate
+    for template: TestTemplate,
+    allowLocalEvidenceOnly: Bool = false,
+    allowDevelopmentEvidenceLab: Bool = false
   ) -> DiscoveryMutationAuthority? {
     let now = Date()
     let healthAge = gateway.lastHealthReceivedAt.map { now.timeIntervalSince($0) }
@@ -139,7 +172,9 @@ final class AppModel {
         healthAgeSeconds: healthAge,
         observation: gateway.latestCANObservation,
         observationAgeSeconds: observationAge,
-        hasCurrentParkedAuthority: gateway.hasCurrentParkedAuthority))
+        hasCurrentParkedAuthority: gateway.hasCurrentParkedAuthority),
+      allowLocalEvidenceOnly: allowLocalEvidenceOnly,
+      allowDevelopmentEvidenceLab: allowDevelopmentEvidenceLab)
   }
 
   private init() {
@@ -389,15 +424,6 @@ final class AppModel {
   ) {
     do {
       try requireDiscoveryMutationLedgers()
-      guard gateway.state == .vhosConnected, gateway.health != nil,
-        gateway.handshake != nil
-      else {
-        throw AppModelError.gatewayHealthRequired
-      }
-      guard discoveryMutationAuthority(for: template) != nil else {
-        throw AppModelError.discoveryEvidenceAuthorityRequired
-      }
-      let observation = try currentDiscoveryObservation()
       guard let run = activeDiscoveryTestRun,
         DiscoveryMutationPolicy.testRunIdentityMatches(
           template: template,
@@ -406,6 +432,19 @@ final class AppModel {
       else {
         throw AppModelError.discoveryTestRunRequired
       }
+      let runUsesDevelopmentEvidenceLab =
+        run.acquisitionAuthority == .developmentEvidenceLab
+      let currentAuthority = discoveryMutationAuthority(
+        for: template,
+        allowLocalEvidenceOnly: run.acquisitionAuthority == .localEvidenceOnly,
+        allowDevelopmentEvidenceLab: runUsesDevelopmentEvidenceLab)
+      guard run.acquisitionAuthority?.permitsContinuation(with: currentAuthority) == true
+      else {
+        throw AppModelError.discoveryEvidenceAuthorityRequired
+      }
+      let observation = try currentDiscoveryObservation(
+        allowLocalEvidenceOnly: run.acquisitionAuthority == .localEvidenceOnly,
+        allowDevelopmentEvidenceLab: runUsesDevelopmentEvidenceLab)
       if run.templateID == DiscoveryMutationPolicy.parkSelectorBootstrapTemplateID {
         let storedMarkers = bootstrapMarkerRecords(for: run)
         let recorded = storedMarkers.map {
@@ -454,26 +493,40 @@ final class AppModel {
     }
   }
 
-  func beginDiscoveryTestRun(template: TestTemplate) {
+  func beginDiscoveryTestRun(
+    template: TestTemplate,
+    allowLocalEvidenceOnly: Bool = false,
+    allowDevelopmentEvidenceLab: Bool = false,
+    ownerSafetyAcknowledgedAt: String?
+  ) {
     do {
       try requireDiscoveryMutationLedgers()
-      guard gateway.state == .vhosConnected, gateway.health != nil,
-        gateway.handshake != nil
+      guard
+        let acquisitionAuthority = discoveryMutationAuthority(
+          for: template,
+          allowLocalEvidenceOnly: allowLocalEvidenceOnly,
+          allowDevelopmentEvidenceLab: allowDevelopmentEvidenceLab)
       else {
-        throw AppModelError.gatewayHealthRequired
-      }
-      guard discoveryMutationAuthority(for: template) != nil else {
         throw AppModelError.discoveryEvidenceAuthorityRequired
       }
-      let observation = try currentDiscoveryObservation()
+      let observation = try currentDiscoveryObservation(
+        allowLocalEvidenceOnly: allowLocalEvidenceOnly,
+        allowDevelopmentEvidenceLab: allowDevelopmentEvidenceLab)
       let recordedAt = Self.timestamp()
+      guard DiscoveryMutationPolicy.ownerSafetyAcknowledgementIsValid(
+        ownerSafetyAcknowledgedAt,
+        runStartedAt: recordedAt,
+        required: acquisitionAuthority.requiresOwnerSafetyAcknowledgement)
+      else { throw AppModelError.discoveryOwnerSafetyAcknowledgementRequired }
       Task { @MainActor [weak self] in
         guard let self else { return }
         do {
           let run = try await self.discoveryEvidence.beginTestRun(
             template: template,
             observation: observation,
-            recordedAt: recordedAt)
+            recordedAt: recordedAt,
+            acquisitionAuthority: acquisitionAuthority,
+            ownerSafetyAcknowledgedAt: ownerSafetyAcknowledgedAt)
           self.discoveryEvidenceFullyQueued = false
           await self.reloadDiscoveryEvidence()
           self.noticeMessage =
@@ -503,7 +556,13 @@ final class AppModel {
       guard let run = activeDiscoveryTestRun else {
         throw AppModelError.discoveryTestRunRequired
       }
-      let endObservation = state == .ended ? try currentDiscoveryObservation() : nil
+      let runUsesDevelopmentEvidenceLab =
+        run.acquisitionAuthority == .developmentEvidenceLab
+      let endObservation = state == .ended
+        ? try currentDiscoveryObservation(
+          allowLocalEvidenceOnly: run.acquisitionAuthority == .localEvidenceOnly,
+          allowDevelopmentEvidenceLab: runUsesDevelopmentEvidenceLab) : nil
+      var discoveryAuthority: DiscoveryMutationAuthority?
       if state == .ended {
         if run.templateID == DiscoveryMutationPolicy.parkSelectorBootstrapTemplateID {
           let template = try DiscoveryMutationPolicy.parkSelectorBootstrapTemplate()
@@ -513,7 +572,13 @@ final class AppModel {
               templateID: run.templateID,
               templateVersion: run.templateVersion)
           else { throw AppModelError.discoveryTestRunRequired }
-          guard discoveryMutationAuthority(for: template) != nil else {
+          discoveryAuthority = discoveryMutationAuthority(
+            for: template,
+            allowLocalEvidenceOnly: run.acquisitionAuthority == .localEvidenceOnly,
+            allowDevelopmentEvidenceLab: runUsesDevelopmentEvidenceLab)
+          guard
+            run.acquisitionAuthority?.permitsContinuation(with: discoveryAuthority) == true
+          else {
             throw AppModelError.discoveryEvidenceAuthorityRequired
           }
           guard
@@ -554,7 +619,21 @@ final class AppModel {
           self.discoveryMarkerMessage =
             "Test run draft \(updated.id) is \(updated.state.rawValue)."
           await self.queueDiscoveryDraftEvidenceForAI()
-          if state == .ended {
+          let hasMatchingRecorderSession =
+            self.gateway.state == .vhosConnected
+            && self.gateway.hasCurrentGatewayHealth
+            && self.gateway.handshake?.gatewayID == run.gatewayID
+            && self.gateway.health?.captureSessionID == run.gatewaySessionID
+          if state == .ended, run.acquisitionAuthority?.isAppLocalEvidenceOnly == true {
+            self.noticeMessage =
+              "App-local evidence test ended. Append-only iPhone frames and markers are retained and queued for experimental analysis; no gateway command or PARKED claim was issued. Recover gateway history later from Evidence."
+            self.errorMessage = nil
+          } else if state == .ended,
+            DiscoveryGatewayOffloadPolicy.permits(
+              transitionState: state,
+              acquisitionAuthority: run.acquisitionAuthority,
+              hasMatchingRecorderSession: hasMatchingRecorderSession)
+          {
             do {
               try self.gateway.pauseCaptureAndDownloadHistory()
               self.noticeMessage =
@@ -565,10 +644,20 @@ final class AppModel {
                 "Test ended and its append-only markers are retained, but automatic CAN-history offload could not start."
               self.errorMessage = error.localizedDescription
             }
-          } else if self.gateway.state == .vhosConnected,
-            self.gateway.hasCurrentGatewayHealth,
-            self.gateway.handshake?.gatewayID == run.gatewayID,
-            self.gateway.health?.captureSessionID == run.gatewaySessionID
+          } else if state == .ended {
+            self.noticeMessage =
+              "Legacy test ended with all append-only markers retained. Its pre-upgrade acquisition scope was not recorded, so the app issued no gateway command; recover history manually from Evidence."
+            self.errorMessage = nil
+          } else if state == .aborted,
+            run.acquisitionAuthority?.isAppLocalEvidenceOnly == true
+          {
+            self.noticeMessage =
+              "App-local evidence test aborted. Previously recorded iPhone frames and markers remain append-only evidence; no gateway command or PARKED claim was issued."
+            self.errorMessage = nil
+          } else if DiscoveryGatewayOffloadPolicy.permits(
+            transitionState: state,
+            acquisitionAuthority: run.acquisitionAuthority,
+            hasMatchingRecorderSession: hasMatchingRecorderSession)
           {
             do {
               try self.gateway.pauseCaptureAndDownloadHistory()
@@ -719,18 +808,43 @@ final class AppModel {
     }
   }
 
-  private func currentDiscoveryObservation() throws -> PassiveCANObservation {
-    guard gateway.hasCurrentGatewayHealth, gateway.state == .vhosConnected,
+  private func currentDiscoveryObservation(
+    allowLocalEvidenceOnly: Bool = false,
+    allowDevelopmentEvidenceLab: Bool = false
+  ) throws -> PassiveCANObservation {
+    #if DEBUG
+      if allowDevelopmentEvidenceLab {
+        guard let observation = gateway.latestCANObservation,
+          observation.listenOnly,
+          (try? PassiveCANEvidenceArchive.validate(observation)) != nil,
+          let receivedAt = gateway.latestCANObservationReceivedAt,
+          (0...DiscoveryMutationPolicy.freshnessLimitSeconds).contains(
+            Date().timeIntervalSince(receivedAt)),
+          gateway.health?.listenOnly != false,
+          gateway.health?.vehicleMotion != .moving,
+          gateway.handshake?.listenOnly != false,
+          gateway.handshake.map({ $0.gatewayID == observation.gatewayID }) ?? true
+        else { throw AppModelError.discoveryCurrentTimelineRequired }
+        return observation
+      }
+    #endif
+
+    guard gateway.state == .vhosConnected,
       let handshake = gateway.handshake,
-      let health = gateway.health, handshake.listenOnly, health.listenOnly,
+      handshake.listenOnly,
       let observation = gateway.latestCANObservation,
       observation.gatewayID == handshake.gatewayID, observation.listenOnly,
-      let currentSessionID = health.captureSessionID,
-      observation.sessionID == currentSessionID,
       let receivedAt = gateway.latestCANObservationReceivedAt
     else { throw AppModelError.discoveryCurrentTimelineRequired }
     let age = Date().timeIntervalSince(receivedAt)
     guard age >= 0, age <= 5 else { throw AppModelError.discoveryCurrentTimelineRequired }
+    if allowLocalEvidenceOnly { return observation }
+    guard gateway.hasCurrentGatewayHealth,
+      let health = gateway.health,
+      health.listenOnly,
+      let currentSessionID = health.captureSessionID,
+      observation.sessionID == currentSessionID
+    else { throw AppModelError.discoveryCurrentTimelineRequired }
     return observation
   }
 
@@ -1220,6 +1334,7 @@ enum AppModelError: Error, LocalizedError {
   case discoveryCurrentTimelineRequired
   case discoveryCapabilityRequired
   case discoveryEvidenceAuthorityRequired
+  case discoveryOwnerSafetyAcknowledgementRequired
   case discoveryMarkerSequenceRequired
   case discoveryMarkerDwellRequired(Int)
   case discoveryTestIncomplete
@@ -1265,6 +1380,8 @@ enum AppModelError: Error, LocalizedError {
       "The verified gateway does not advertise every capability required by this versioned Discovery test template."
     case .discoveryEvidenceAuthorityRequired:
       "This test requires either fresh deterministic PARKED authority or the exact passive Park-selector bootstrap with current listen-only capture evidence."
+    case .discoveryOwnerSafetyAcknowledgementRequired:
+      "Confirm the physical safety setup and begin this app-local evidence run within five minutes. The confirmation is single-use and cannot be synthesized by the run."
     case .discoveryMarkerSequenceRequired:
       "The Park-selector bootstrap accepts one exact marker at a time in the required P/R/N/D/P sequence. Abort and restart if the retained sequence is not canonical."
     case .discoveryMarkerDwellRequired(let seconds):

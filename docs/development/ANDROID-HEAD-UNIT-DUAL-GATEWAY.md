@@ -1,6 +1,6 @@
 # Android head-unit dual-ESP32 architecture and connection requirements
 
-Status: public Android `0.1.0-dev.4` prerelease, first OBD/CAN vertical slice, transactional
+Status: public Android `0.1.0-dev.15` prerelease, first OBD/CAN vertical slice, transactional
 Android/iPhone evidence-bundle sync, and signed cross-target Release Hub implemented; physical
 head-unit acceptance and A/C node BLE/OTA implementation pending
 
@@ -31,7 +31,7 @@ it.
 
 | Device | Present role | Current connectivity | Android readiness |
 | --- | --- | --- | --- |
-| `VHOS-4R-OBD-B08D14` | Development OBD/CAN gateway; classic ESP32 with MrDIY CAN Shield v1.3+ | VHOS BLE service is implemented and physically enumerated; CAN is forced listen-only; normal Wi-Fi SoftAP is disabled | Android dev.4 client is build/release verified; physical head-unit BLE acceptance remains open |
+| `VHOS-4R-OBD-B08D14` | Development OBD/CAN gateway; classic ESP32 with MrDIY CAN Shield v1.3+ | VHOS BLE service is implemented and physically enumerated; CAN is forced listen-only; normal Wi-Fi SoftAP is disabled | Android dev.15 client is build/release verified and includes bounded vendor BLE scanner recovery; sustained physical head-unit BLE acceptance remains open |
 | A/C ESP32-S3, base MAC `20:6e:f1:98:bd:20` | Future ADC, pressure, temperature, power, POST/BIT, and storage node | Current `EMPTY_RECOVERY` image reports identity/health only over USB serial; BLE, Wi-Fi, ADC, and sensors are deliberately disabled | Not connectable from Android until the sensor-node BLE milestone is implemented |
 
 This distinction must remain visible in tickets and UI. The Android app can be proven against the
@@ -280,7 +280,7 @@ A future controller-lease message may automate this handoff, but it requires a v
 contract and firmware implementation. Multi-central BLE support is not an MVP assumption.
 
 Historical transfer is already independent of BLE ownership. The iPhone can create a checksummed
-`.vhossync` archive and Android dev.4 can import it append-only. Android verifies the ZIP/manifest,
+`.vhossync` archive and Android dev.15 can import it append-only. Android verifies the ZIP/manifest,
 segment and envelope hashes, outer VHOS CRC32C, persistent-record inner CRC32C, and listen-only proof
 before materializing imported CAN observations in the same transaction. Direct background transfer
 over the iPhone hotspot is not implemented yet; the present handoff uses an owner-selected file
@@ -552,7 +552,7 @@ The Android head-unit client is not complete until physical evidence proves:
 The available Settings evidence identifies the head unit as model `Q91-A4-CPL`, reporting Android
 13.0, security patch level 2020-02-01, kernel 4.14.116, and build/custom build
 `android-trunk-p0`. Those labels are not sufficient acceptance proof. The next action is to install
-the public dev.4 APK through the iPhone-hotspot release portal and record package-install behavior,
+the public dev.15 APK through the iPhone-hotspot release portal and record package-install behavior,
 actual BLE-central operation, ABI/RAM/storage, ignition sleep/resume, and USB-debugging posture on
 that physical unit.
 

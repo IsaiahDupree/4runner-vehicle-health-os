@@ -14,6 +14,45 @@ final class DiscoveryEvidenceStoreTests: XCTestCase {
   private let gatewayID = "esp32-9454c5b08d14"
   private let gatewaySessionID: UInt32 = 42
 
+  func testLocalEvidenceOnlyRunNeverPermitsGatewayOffloadOnEndOrAbort() {
+    for authority in [
+      DiscoveryMutationAuthority.localEvidenceOnly,
+      .developmentEvidenceLab,
+    ] {
+      for state in [DiscoveryTestRunDraftState.ended, .aborted] {
+        XCTAssertFalse(
+          DiscoveryGatewayOffloadPolicy.permits(
+            transitionState: state,
+            acquisitionAuthority: authority,
+            hasMatchingRecorderSession: true),
+          "A recovered matching gateway session must not upgrade a sealed app-local run")
+      }
+    }
+  }
+
+  func testStrictRunOffloadRequiresASealedAuthorityAndAbortSessionMatch() {
+    XCTAssertTrue(
+      DiscoveryGatewayOffloadPolicy.permits(
+        transitionState: .ended,
+        acquisitionAuthority: .parked,
+        hasMatchingRecorderSession: false))
+    XCTAssertFalse(
+      DiscoveryGatewayOffloadPolicy.permits(
+        transitionState: .aborted,
+        acquisitionAuthority: .parked,
+        hasMatchingRecorderSession: false))
+    XCTAssertTrue(
+      DiscoveryGatewayOffloadPolicy.permits(
+        transitionState: .aborted,
+        acquisitionAuthority: .passiveParkSelectorBootstrap,
+        hasMatchingRecorderSession: true))
+    XCTAssertFalse(
+      DiscoveryGatewayOffloadPolicy.permits(
+        transitionState: .ended,
+        acquisitionAuthority: nil,
+        hasMatchingRecorderSession: true))
+  }
+
   func testStaleDiscoveryCallbackStormProducesBoundedFirstAndSummaryEvidence() {
     var coalescer = BLETraceBurstCoalescer(
       event: "STALE_SCAN_DISCOVERY_IGNORED",
@@ -297,6 +336,200 @@ final class DiscoveryEvidenceStoreTests: XCTestCase {
     let runs = try DiscoveryEvidenceStore(storageDirectory: directory).testRuns()
 
     XCTAssertEqual(runs, [try makeDraft()])
+  }
+
+  func testLocalEvidenceScopeAndAcknowledgementRemainBoundAcrossTerminalSnapshot() throws {
+    let directory = try makeStorageDirectory()
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let store = DiscoveryEvidenceStore(storageDirectory: directory)
+    let template = try DiscoveryMutationPolicy.parkSelectorBootstrapTemplate()
+    let start = makeDiscoveryObservation(sequence: 10, monotonicMicroseconds: 1_000)
+    let end = makeDiscoveryObservation(sequence: 20, monotonicMicroseconds: 2_000)
+
+    let active = try store.beginTestRun(
+      template: template,
+      observation: start,
+      recordedAt: startedAt,
+      acquisitionAuthority: .localEvidenceOnly,
+      ownerSafetyAcknowledgedAt: startedAt)
+    let ended = try store.transitionTestRun(
+      active,
+      to: .ended,
+      observation: end,
+      recordedAt: "2026-08-22T16:00:10Z")
+
+    XCTAssertEqual(active.acquisitionAuthority, .localEvidenceOnly)
+    XCTAssertEqual(ended.acquisitionAuthority, .localEvidenceOnly)
+    XCTAssertEqual(active.ownerSafetyAcknowledgedAt, startedAt)
+    XCTAssertEqual(ended.ownerSafetyAcknowledgedAt, startedAt)
+    XCTAssertEqual(try store.testRuns(), [ended])
+    let ledger = try String(
+      contentsOf: directory.appendingPathComponent("test-run-drafts.ndjson"),
+      encoding: .utf8)
+    XCTAssertEqual(
+      ledger.components(separatedBy: "\n").filter { !$0.isEmpty }.count,
+      2)
+    XCTAssertEqual(
+      ledger.components(separatedBy: "\"acquisition_authority\":\"LOCAL_EVIDENCE_ONLY\"")
+        .count - 1,
+      2)
+  }
+
+  func testLocalEvidenceScopeRequiresCanonicalTemplateAndOwnerAcknowledgement() throws {
+    XCTAssertThrowsError(
+      try DiscoveryTestRunDraft(
+        id: runID,
+        templateID: templateID,
+        templateVersion: "1.0.0",
+        captureID: captureID,
+        gatewayID: gatewayID,
+        gatewaySessionID: gatewaySessionID,
+        startedAt: startedAt,
+        startMonotonicMicroseconds: 1_000,
+        firstSourceSequence: 10,
+        acquisitionAuthority: .localEvidenceOnly,
+        state: .active))
+    XCTAssertThrowsError(
+      try DiscoveryTestRunDraft(
+        id: runID,
+        templateID: "discovery.brakes.pulse",
+        templateVersion: "1.0.0",
+        captureID: captureID,
+        gatewayID: gatewayID,
+        gatewaySessionID: gatewaySessionID,
+        startedAt: startedAt,
+        startMonotonicMicroseconds: 1_000,
+        firstSourceSequence: 10,
+        acquisitionAuthority: .localEvidenceOnly,
+        ownerSafetyAcknowledgedAt: startedAt,
+        state: .active))
+    XCTAssertThrowsError(
+      try DiscoveryTestRunDraft(
+        id: runID,
+        templateID: templateID,
+        templateVersion: "1.0.0",
+        captureID: captureID,
+        gatewayID: gatewayID,
+        gatewaySessionID: gatewaySessionID,
+        startedAt: startedAt,
+        startMonotonicMicroseconds: 1_000,
+        firstSourceSequence: 10,
+        acquisitionAuthority: .localEvidenceOnly,
+        ownerSafetyAcknowledgedAt: "2026-08-22T16:00:01Z",
+        state: .active))
+    XCTAssertThrowsError(
+      try DiscoveryTestRunDraft(
+        id: runID,
+        templateID: templateID,
+        templateVersion: "1.0.0",
+        captureID: captureID,
+        gatewayID: gatewayID,
+        gatewaySessionID: gatewaySessionID,
+        startedAt: startedAt,
+        startMonotonicMicroseconds: 1_000,
+        firstSourceSequence: 10,
+        acquisitionAuthority: .localEvidenceOnly,
+        ownerSafetyAcknowledgedAt: "2026-08-22T15:54:59Z",
+        state: .active))
+  }
+
+  func testDevelopmentEvidenceLabScopeIsPersistedAndRequiresCanonicalAcknowledgement() throws {
+    let directory = try makeStorageDirectory()
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let store = DiscoveryEvidenceStore(storageDirectory: directory)
+    let template = try DiscoveryMutationPolicy.parkSelectorBootstrapTemplate()
+    let start = makeDiscoveryObservation(sequence: 30, monotonicMicroseconds: 3_000)
+    let end = makeDiscoveryObservation(sequence: 40, monotonicMicroseconds: 4_000)
+
+    let active = try store.beginTestRun(
+      template: template,
+      observation: start,
+      recordedAt: startedAt,
+      acquisitionAuthority: .developmentEvidenceLab,
+      ownerSafetyAcknowledgedAt: startedAt)
+    let ended = try store.transitionTestRun(
+      active,
+      to: .ended,
+      observation: end,
+      recordedAt: "2026-08-22T16:00:10Z")
+
+    XCTAssertEqual(ended.acquisitionAuthority, .developmentEvidenceLab)
+    XCTAssertEqual(ended.ownerSafetyAcknowledgedAt, startedAt)
+    let ledger = try String(
+      contentsOf: directory.appendingPathComponent("test-run-drafts.ndjson"),
+      encoding: .utf8)
+    XCTAssertEqual(
+      ledger.components(separatedBy: "\"acquisition_authority\":\"DEVELOPMENT_EVIDENCE_LAB\"")
+        .count - 1,
+      2)
+
+    XCTAssertThrowsError(
+      try DiscoveryTestRunDraft(
+        id: runID,
+        templateID: templateID,
+        templateVersion: template.templateVersion,
+        captureID: captureID,
+        gatewayID: gatewayID,
+        gatewaySessionID: gatewaySessionID,
+        startedAt: startedAt,
+        startMonotonicMicroseconds: 1_000,
+        firstSourceSequence: 10,
+        acquisitionAuthority: .developmentEvidenceLab,
+        state: .active))
+    XCTAssertThrowsError(
+      try DiscoveryTestRunDraft(
+        id: runID,
+        templateID: "discovery.brakes.pulse",
+        templateVersion: "1.0.0",
+        captureID: captureID,
+        gatewayID: gatewayID,
+        gatewaySessionID: gatewaySessionID,
+        startedAt: startedAt,
+        startMonotonicMicroseconds: 1_000,
+        firstSourceSequence: 10,
+        acquisitionAuthority: .developmentEvidenceLab,
+        ownerSafetyAcknowledgedAt: startedAt,
+        state: .active))
+  }
+
+  func testDevelopmentEvidenceLabScopeCannotBeRelabeledByATerminalSnapshot() throws {
+    let directory = try makeStorageDirectory()
+    defer { try? FileManager.default.removeItem(at: directory) }
+    try writeBinding(to: directory)
+    let active = try DiscoveryTestRunDraft(
+      id: runID,
+      templateID: templateID,
+      templateVersion: "1.0.0",
+      captureID: captureID,
+      gatewayID: gatewayID,
+      gatewaySessionID: gatewaySessionID,
+      startedAt: startedAt,
+      startMonotonicMicroseconds: 1_000,
+      firstSourceSequence: 10,
+      acquisitionAuthority: .developmentEvidenceLab,
+      ownerSafetyAcknowledgedAt: startedAt,
+      state: .active)
+    let relabeledTerminal = try DiscoveryTestRunDraft(
+      id: runID,
+      templateID: templateID,
+      templateVersion: "1.0.0",
+      captureID: captureID,
+      gatewayID: gatewayID,
+      gatewaySessionID: gatewaySessionID,
+      startedAt: startedAt,
+      startMonotonicMicroseconds: 1_000,
+      firstSourceSequence: 10,
+      acquisitionAuthority: .parked,
+      state: .ended,
+      endedAt: "2026-08-22T16:00:10Z",
+      endMonotonicMicroseconds: 2_000,
+      lastSourceSequence: 20)
+    let ledgerURL = directory.appendingPathComponent("test-run-drafts.ndjson")
+    let committedBytes = try ndjson([active, relabeledTerminal])
+    try committedBytes.write(to: ledgerURL, options: [.atomic])
+
+    XCTAssertThrowsError(try DiscoveryEvidenceStore(storageDirectory: directory).testRuns())
+    XCTAssertEqual(try Data(contentsOf: ledgerURL), committedBytes)
   }
 
   func testStoreLoadsExactFieldIncidentLedgerWithoutChangingBytes() throws {
@@ -1912,7 +2145,10 @@ final class DiscoveryEvidenceStoreTests: XCTestCase {
       evidenceSource: "VHOS_GATEWAY",
       ingestedAt: startedAt)
     let run = try await worker.beginTestRun(
-      template: template, observation: observation, recordedAt: startedAt)
+      template: template,
+      observation: observation,
+      recordedAt: startedAt,
+      acquisitionAuthority: .passiveParkSelectorBootstrap)
     let tasks = (0..<2).map { _ in
       Task {
         try await worker.append(
@@ -1950,6 +2186,26 @@ final class DiscoveryEvidenceStoreTests: XCTestCase {
       gatewayID: gatewayID,
       gatewaySessionID: gatewaySessionID,
       createdAt: startedAt)
+  }
+
+  private func makeDiscoveryObservation(
+    sequence: UInt64,
+    monotonicMicroseconds: UInt64
+  ) -> PassiveCANObservation {
+    PassiveCANObservation(
+      gatewayID: gatewayID,
+      sessionID: gatewaySessionID,
+      sourceSequence: sequence,
+      monotonicMicroseconds: monotonicMicroseconds,
+      bitrateBps: 500_000,
+      identifier: 0x224,
+      extended: false,
+      remoteRequest: false,
+      listenOnly: true,
+      dataLength: 8,
+      data: [0, 0, 0, 0, 0, 0, 0, 0],
+      evidenceSource: "VHOS_GATEWAY",
+      ingestedAt: startedAt)
   }
 
   private func makeDraft(

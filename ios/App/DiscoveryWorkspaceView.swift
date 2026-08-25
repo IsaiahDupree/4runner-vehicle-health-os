@@ -606,6 +606,14 @@ private struct DiscoveryTestLibraryView: View {
 private struct DiscoveryTestRunnerView: View {
   @Environment(AppModel.self) private var model
   let template: DiscoveryTemplatePresentation
+  @State private var localEvidenceOnlyArmed = false
+  @State private var localEvidenceOnlyAcknowledgedAt: String?
+  @State private var confirmingLocalEvidenceOnly = false
+  #if DEBUG
+    @State private var developmentEvidenceLabArmed = false
+    @State private var developmentEvidenceLabAcknowledgedAt: String?
+    @State private var confirmingDevelopmentEvidenceLab = false
+  #endif
 
   private var activeRun: DiscoveryTestRunDraft? {
     model.activeDiscoveryTestRun
@@ -626,9 +634,63 @@ private struct DiscoveryTestRunnerView: View {
   }
 
   private var evidenceReady: Bool {
-    model.discoveryMutationAuthority(for: template.template) != nil
+    effectiveAuthority != nil
       && model.discoveryMutationLedgersAvailable
       && template.iPhoneInteractiveSupported
+      && ownerSafetyAcknowledgementReady
+  }
+
+  private var strictAuthority: DiscoveryMutationAuthority? {
+    model.discoveryMutationAuthority(for: template.template)
+  }
+
+  private var effectiveAuthority: DiscoveryMutationAuthority? {
+    model.discoveryMutationAuthority(
+      for: template.template,
+      allowLocalEvidenceOnly: localEvidenceOnlyArmed || runUsesLocalEvidenceOnly,
+      allowDevelopmentEvidenceLab: developmentEvidenceLabRequested)
+  }
+
+  private var isUsingAppLocalEvidence: Bool {
+    runUsesLocalEvidenceOnly || runUsesDevelopmentEvidenceLab
+      || effectiveAuthority?.isAppLocalEvidenceOnly == true
+  }
+
+  private var runUsesLocalEvidenceOnly: Bool {
+    runMatchesTemplate && activeRun?.acquisitionAuthority == .localEvidenceOnly
+  }
+
+  private var runUsesDevelopmentEvidenceLab: Bool {
+    runMatchesTemplate && activeRun?.acquisitionAuthority == .developmentEvidenceLab
+  }
+
+  private var developmentEvidenceLabRequested: Bool {
+    #if DEBUG
+      developmentEvidenceLabArmed || runUsesDevelopmentEvidenceLab
+    #else
+      false
+    #endif
+  }
+
+  private var pendingOwnerSafetyAcknowledgedAt: String? {
+    #if DEBUG
+      if developmentEvidenceLabArmed { return developmentEvidenceLabAcknowledgedAt }
+    #endif
+    return localEvidenceOnlyArmed ? localEvidenceOnlyAcknowledgedAt : nil
+  }
+
+  private var ownerSafetyAcknowledgementReady: Bool {
+    guard effectiveAuthority?.requiresOwnerSafetyAcknowledgement == true else { return true }
+    if let activeRun, runMatchesTemplate {
+      return DiscoveryMutationPolicy.ownerSafetyAcknowledgementIsValid(
+        activeRun.ownerSafetyAcknowledgedAt,
+        runStartedAt: activeRun.startedAt,
+        required: true)
+    }
+    return DiscoveryMutationPolicy.ownerSafetyAcknowledgementIsValid(
+      pendingOwnerSafetyAcknowledgedAt,
+      runStartedAt: AppModel.timestamp(),
+      required: true)
   }
 
   private var isParkSelectorBootstrap: Bool {
@@ -701,10 +763,118 @@ private struct DiscoveryTestRunnerView: View {
           .padding()
           .frame(maxWidth: .infinity, alignment: .leading)
           .background(.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 14))
+
+          #if DEBUG
+            if activeRun == nil || runUsesDevelopmentEvidenceLab {
+              VStack(alignment: .leading, spacing: 10) {
+                Label(
+                  developmentEvidenceLabRequested
+                    ? "DEBUG EVIDENCE LAB ARMED" : "Development gate override",
+                  systemImage: developmentEvidenceLabRequested
+                    ? "exclamationmark.triangle.fill" : "wrench.and.screwdriver.fill"
+                )
+                .font(.headline)
+                .foregroundStyle(.red)
+                Text(
+                  "Debug builds can ignore connection-state, handshake-availability, PARKED, recorder-health, storage, capture-session, and capability-advertisement entry gates for this canonical selector test. A real accepted listen-only CAN observation no more than five seconds old is still mandatory. MOVING or any non-listen-only evidence still blocks the run."
+                )
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                Text(
+                  "The resulting run is permanently stamped DEVELOPMENT_EVIDENCE_LAB / UNVERIFIED. It cannot send gateway commands, run OTA or diagnostics, transmit CAN, control the vehicle, claim PARKED, or promote a signal."
+                )
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.red)
+                if runUsesDevelopmentEvidenceLab {
+                  Text(
+                    "This Debug acquisition scope is sealed into the append-only run and remains local-only after navigation, reconnect, or a later healthy PARKED report."
+                  )
+                  .font(.caption)
+                  .foregroundStyle(.secondary)
+                } else if developmentEvidenceLabArmed {
+                  Button("Disable Debug Evidence Lab") {
+                    developmentEvidenceLabArmed = false
+                    developmentEvidenceLabAcknowledgedAt = nil
+                  }
+                  .buttonStyle(.bordered)
+                } else {
+                  Button("Use Debug Evidence Lab") {
+                    confirmingDevelopmentEvidenceLab = true
+                  }
+                  .buttonStyle(.borderedProminent)
+                  .tint(.red)
+                }
+              }
+              .padding()
+              .frame(maxWidth: .infinity, alignment: .leading)
+              .background(.red.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
+            }
+          #endif
+
+          if (strictAuthority == nil || runUsesLocalEvidenceOnly)
+            && !developmentEvidenceLabRequested
+          {
+            VStack(alignment: .leading, spacing: 10) {
+              Label(
+                localEvidenceOnlyArmed || runUsesLocalEvidenceOnly
+                  ? "LOCAL EVIDENCE-ONLY MODE ARMED" : "Need to label selector evidence now?",
+                systemImage: localEvidenceOnlyArmed || runUsesLocalEvidenceOnly
+                  ? "record.circle.fill" : "exclamationmark.arrow.triangle.2.circlepath"
+              )
+              .font(.headline)
+              .foregroundStyle(
+                localEvidenceOnlyArmed || runUsesLocalEvidenceOnly ? .orange : .blue)
+              Text(
+                "This mode bypasses PARKED, gateway-recorder health, storage, and capture-session checks only for this canonical passive selector test. It still requires a fresh accepted listen-only CAN frame. Results stay experimental and cannot authorize OTA, diagnostics, CAN transmission, or vehicle control."
+              )
+              .font(.footnote)
+              .foregroundStyle(.secondary)
+              if runUsesLocalEvidenceOnly {
+                Text(
+                  "This acquisition scope is sealed into the append-only run and cannot be upgraded by a later PARKED or recorder-health report. End and marker actions will remain local-only after navigation or reconnection."
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+              } else if localEvidenceOnlyArmed {
+                Button("Disable local evidence-only mode") {
+                  localEvidenceOnlyArmed = false
+                  localEvidenceOnlyAcknowledgedAt = nil
+                }
+                .buttonStyle(.bordered)
+              } else {
+                Button("Use local evidence-only mode") {
+                  confirmingLocalEvidenceOnly = true
+                }
+                .buttonStyle(.borderedProminent)
+              }
+            }
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.orange.opacity(0.09), in: RoundedRectangle(cornerRadius: 14))
+          }
+
+          if isUsingAppLocalEvidence {
+            Label(
+              runUsesDevelopmentEvidenceLab || developmentEvidenceLabRequested
+                ? "DEBUG / UNVERIFIED • local only • no PARKED claim • no gateway command"
+                : "LOCAL ONLY • no PARKED claim • no gateway command • experimental analysis only",
+              systemImage: "iphone.and.arrow.forward"
+            )
+            .font(.caption.weight(.bold))
+            .foregroundStyle(
+              runUsesDevelopmentEvidenceLab || developmentEvidenceLabRequested ? .red : .orange)
+          }
         }
 
         VStack(alignment: .leading, spacing: 10) {
           Text("Evidence readiness").font(.headline)
+          if developmentEvidenceLabRequested {
+            Text(
+              "DEBUG override active: failed entry rows remain visible for diagnosis but do not block this local evidence run. Ledger integrity and a real, fresh listen-only observation are never bypassed."
+            )
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(.red)
+          }
           SafetyRow(label: "VHOS gateway contract", pass: model.gateway.state == .vhosConnected)
           SafetyRow(
             label: "Passive recorder active", pass: model.gateway.health?.captureActive == true)
@@ -731,7 +901,10 @@ private struct DiscoveryTestRunnerView: View {
           }
           SafetyRow(
             label: "Fresh verified listen-only CAN timeline",
-            pass: model.discoveryTimelineCurrent)
+            pass: developmentEvidenceLabRequested
+              ? model.developmentEvidenceLabTimelineAvailable
+              : (isUsingAppLocalEvidence
+                ? model.localEvidenceTimelineCurrent : model.discoveryTimelineCurrent))
           SafetyRow(
             label: "Required gateway capabilities",
             pass: template.template.requiredGatewayCapabilities.allSatisfy {
@@ -807,7 +980,9 @@ private struct DiscoveryTestRunnerView: View {
 
           if runMatchesTemplate {
             HStack {
-              Button("End Session") { model.endDiscoveryTestRun() }
+              Button("End Session") {
+                model.endDiscoveryTestRun()
+              }
                 .buttonStyle(.borderedProminent)
                 .disabled(
                   !evidenceReady || !activeRunMatchesGatewayCapture
@@ -819,7 +994,11 @@ private struct DiscoveryTestRunnerView: View {
             }
           } else {
             Button("Begin Session") {
-              model.beginDiscoveryTestRun(template: template.template)
+              model.beginDiscoveryTestRun(
+                template: template.template,
+                allowLocalEvidenceOnly: localEvidenceOnlyArmed,
+                allowDevelopmentEvidenceLab: developmentEvidenceLabRequested,
+                ownerSafetyAcknowledgedAt: pendingOwnerSafetyAcknowledgedAt)
             }
             .buttonStyle(.borderedProminent)
             .disabled(!evidenceReady || activeRun != nil)
@@ -895,6 +1074,54 @@ private struct DiscoveryTestRunnerView: View {
     }
     .navigationTitle("Run Test")
     .navigationBarTitleDisplayMode(.inline)
+    .onChange(of: activeRun?.id) { _, runID in
+      guard runID != nil else { return }
+      // A confirmation arms one run only. The immutable run now owns the timestamp.
+      localEvidenceOnlyArmed = false
+      localEvidenceOnlyAcknowledgedAt = nil
+      #if DEBUG
+        developmentEvidenceLabArmed = false
+        developmentEvidenceLabAcknowledgedAt = nil
+      #endif
+    }
+    .confirmationDialog(
+      "Arm local evidence-only mode?",
+      isPresented: $confirmingLocalEvidenceOnly,
+      titleVisibility: .visible
+    ) {
+      Button("Arm local evidence-only mode") {
+        localEvidenceOnlyAcknowledgedAt = AppModel.timestamp()
+        localEvidenceOnlyArmed = true
+        #if DEBUG
+          developmentEvidenceLabArmed = false
+          developmentEvidenceLabAcknowledgedAt = nil
+        #endif
+      }
+      Button("Cancel", role: .cancel) {}
+    } message: {
+      Text(
+        "Confirm level ground, wheels chocked, parking brake set, engine OFF, ignition ON, and foot brake held. The app will only timestamp local passive evidence and will not transmit to the vehicle or claim PARKED."
+      )
+    }
+    #if DEBUG
+      .confirmationDialog(
+        "Arm Debug Evidence Lab?",
+        isPresented: $confirmingDevelopmentEvidenceLab,
+        titleVisibility: .visible
+      ) {
+        Button("Arm Debug Evidence Lab", role: .destructive) {
+          developmentEvidenceLabAcknowledgedAt = AppModel.timestamp()
+          developmentEvidenceLabArmed = true
+          localEvidenceOnlyArmed = false
+          localEvidenceOnlyAcknowledgedAt = nil
+        }
+        Button("Cancel", role: .cancel) {}
+      } message: {
+        Text(
+          "This Debug-only override relaxes test-entry gates but never creates PARKED authority. Confirm the vehicle is physically secured. Every result remains UNVERIFIED and app-local; OTA, diagnostics, CAN transmission, capture control, and vehicle control stay unavailable."
+        )
+      }
+    #endif
   }
 }
 

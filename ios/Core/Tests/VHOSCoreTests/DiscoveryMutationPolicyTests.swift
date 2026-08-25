@@ -71,6 +71,156 @@ import Testing
   #expect(!DiscoveryMutationPolicy.captureStorageHasHeadroom(nil))
 }
 
+@Test func explicitLocalEvidenceScopeCanBypassRecorderTelemetryButNotLiveCANIdentity() throws {
+  let template = try DiscoveryMutationPolicy.parkSelectorBootstrapTemplate()
+  let context = makeMutationContext(motion: .unknown, includeHealth: false)
+
+  #expect(DiscoveryMutationPolicy.authority(for: template, context: context) == nil)
+  #expect(
+    DiscoveryMutationPolicy.authority(
+      for: template,
+      context: context,
+      allowLocalEvidenceOnly: true) == .localEvidenceOnly)
+
+  #expect(
+    DiscoveryMutationPolicy.authority(
+      for: template,
+      context: makeMutationContext(motion: .moving),
+      allowLocalEvidenceOnly: true) == nil)
+  #expect(
+    DiscoveryMutationPolicy.authority(
+      for: template,
+      context: makeMutationContext(motion: .unknown, observationAge: 5.001),
+      allowLocalEvidenceOnly: true) == nil)
+  #expect(
+    DiscoveryMutationPolicy.authority(
+      for: template,
+      context: makeMutationContext(motion: .unknown, observationGatewayID: "other-gateway"),
+      allowLocalEvidenceOnly: true) == nil)
+  #expect(
+    DiscoveryMutationPolicy.authority(
+      for: template,
+      context: makeMutationContext(motion: .unknown, observationListenOnly: false),
+      allowLocalEvidenceOnly: true) == nil)
+  #expect(
+    DiscoveryMutationPolicy.authority(
+      for: template,
+      context: makeMutationContext(motion: .unknown, handshakeListenOnly: false),
+      allowLocalEvidenceOnly: true) == nil)
+  #expect(
+    DiscoveryMutationPolicy.authority(
+      for: template,
+      context: makeMutationContext(motion: .unknown, includesPassiveCapability: false),
+      allowLocalEvidenceOnly: true) == nil)
+  #expect(
+    DiscoveryMutationPolicy.authority(
+      for: template,
+      context: makeMutationContext(
+        motion: .unknown,
+        connectionState: .disconnected,
+        includeHealth: false),
+      allowLocalEvidenceOnly: true) == nil)
+}
+
+@Test func developmentEvidenceLabRelaxesEntryGatesButPreservesLiveEvidenceIntegrity() throws {
+  let template = try DiscoveryMutationPolicy.parkSelectorBootstrapTemplate()
+  let relaxedContext = makeMutationContext(
+    motion: .unknown,
+    connectionState: .disconnected,
+    includeHealth: false,
+    includeHandshake: false,
+    includesPassiveCapability: false)
+
+  #if DEBUG
+    #expect(DiscoveryMutationPolicy.developmentEvidenceLabAvailable)
+    #expect(
+      DiscoveryMutationPolicy.authority(
+        for: template,
+        context: relaxedContext,
+        allowDevelopmentEvidenceLab: true) == .developmentEvidenceLab)
+    #expect(
+      DiscoveryMutationPolicy.authority(
+        for: template,
+        context: makeMutationContext(
+          motion: .unknown,
+          observationAge: DiscoveryMutationPolicy.freshnessLimitSeconds + 0.001,
+          connectionState: .disconnected,
+          includeHealth: false,
+          includeHandshake: false),
+        allowDevelopmentEvidenceLab: true) == nil)
+    #expect(
+      DiscoveryMutationPolicy.authority(
+        for: template,
+        context: makeMutationContext(
+          motion: .unknown,
+          connectionState: .disconnected,
+          includeHealth: false,
+          includeHandshake: false,
+          includeObservation: false),
+        allowDevelopmentEvidenceLab: true) == nil)
+    #expect(
+      DiscoveryMutationPolicy.authority(
+        for: template,
+        context: makeMutationContext(
+          motion: .unknown,
+          connectionState: .disconnected,
+          includeHealth: false,
+          includeHandshake: false,
+          observationListenOnly: false),
+        allowDevelopmentEvidenceLab: true) == nil)
+    #expect(
+      DiscoveryMutationPolicy.authority(
+        for: template,
+        context: makeMutationContext(motion: .moving),
+        allowDevelopmentEvidenceLab: true) == nil)
+    #expect(
+      DiscoveryMutationPolicy.authority(
+        for: template,
+        context: makeMutationContext(motion: .unknown, healthListenOnly: false),
+        allowDevelopmentEvidenceLab: true) == nil)
+    #expect(
+      DiscoveryMutationPolicy.authority(
+        for: template,
+        context: makeMutationContext(motion: .unknown, handshakeListenOnly: false),
+        allowDevelopmentEvidenceLab: true) == nil)
+    #expect(
+      DiscoveryMutationPolicy.authority(
+        for: template,
+        context: makeMutationContext(
+          motion: .unknown,
+          observationGatewayID: "conflicting-gateway"),
+        allowDevelopmentEvidenceLab: true) == nil)
+  #else
+    #expect(!DiscoveryMutationPolicy.developmentEvidenceLabAvailable)
+    #expect(
+      DiscoveryMutationPolicy.authority(
+        for: template,
+        context: relaxedContext,
+        allowDevelopmentEvidenceLab: true) == nil)
+  #endif
+}
+
+@Test func discoveryAuthorityCapabilitiesFailClosedForAppLocalScopes() {
+  #expect(DiscoveryMutationAuthority.parked.permitsGatewayCaptureControl)
+  #expect(DiscoveryMutationAuthority.passiveParkSelectorBootstrap.permitsGatewayCaptureControl)
+  #expect(!DiscoveryMutationAuthority.localEvidenceOnly.permitsGatewayCaptureControl)
+  #expect(!DiscoveryMutationAuthority.developmentEvidenceLab.permitsGatewayCaptureControl)
+  #expect(!DiscoveryMutationAuthority.parked.requiresOwnerSafetyAcknowledgement)
+  #expect(DiscoveryMutationAuthority.localEvidenceOnly.requiresOwnerSafetyAcknowledgement)
+  #expect(DiscoveryMutationAuthority.developmentEvidenceLab.requiresOwnerSafetyAcknowledgement)
+  #expect(
+    DiscoveryMutationAuthority.passiveParkSelectorBootstrap.permitsContinuation(with: .parked))
+  #expect(
+    !DiscoveryMutationAuthority.localEvidenceOnly.permitsContinuation(
+      with: .developmentEvidenceLab))
+  #expect(
+    !DiscoveryMutationAuthority.developmentEvidenceLab.permitsContinuation(
+      with: .localEvidenceOnly))
+  #expect(
+    DiscoveryMutationAuthority.developmentEvidenceLab.permitsContinuation(
+      with: .developmentEvidenceLab))
+}
+
 @Test func unknownMotionDoesNotOpenArbitraryDiscoveryTemplate() throws {
   let template = try TestTemplate(
     id: "discovery.transmission.not-the-bootstrap",
@@ -93,7 +243,13 @@ import Testing
   #expect(
     DiscoveryMutationPolicy.authority(
       for: template,
-      context: makeMutationContext(motion: .unknown)) == nil)
+      context: makeMutationContext(motion: .unknown),
+      allowLocalEvidenceOnly: true) == nil)
+  #expect(
+    DiscoveryMutationPolicy.authority(
+      for: template,
+      context: makeMutationContext(motion: .unknown),
+      allowDevelopmentEvidenceLab: true) == nil)
 }
 
 @Test func bootstrapCannotReuseTheCanonicalIdentityWithAlteredSafetyText() throws {
@@ -114,6 +270,53 @@ import Testing
     DiscoveryMutationPolicy.authority(
       for: altered,
       context: makeMutationContext(motion: .unknown)) == nil)
+  #expect(
+    DiscoveryMutationPolicy.authority(
+      for: altered,
+      context: makeMutationContext(
+        motion: .unknown,
+        connectionState: .disconnected,
+        includeHealth: false,
+        includeHandshake: false),
+      allowDevelopmentEvidenceLab: true) == nil)
+}
+
+@Test func appLocalSafetyAcknowledgementMustBeExplicitCurrentAndPrecedeRunStart() {
+  #expect(
+    DiscoveryMutationPolicy.ownerSafetyAcknowledgementIsValid(
+      "2026-08-24T20:59:59Z",
+      runStartedAt: "2026-08-24T21:00:00Z",
+      required: true))
+  #expect(
+    DiscoveryMutationPolicy.ownerSafetyAcknowledgementIsValid(
+      "2026-08-24T21:00:00Z",
+      runStartedAt: "2026-08-24T21:00:00Z",
+      required: true))
+  #expect(
+    !DiscoveryMutationPolicy.ownerSafetyAcknowledgementIsValid(
+      nil,
+      runStartedAt: "2026-08-24T21:00:00Z",
+      required: true))
+  #expect(
+    !DiscoveryMutationPolicy.ownerSafetyAcknowledgementIsValid(
+      "2026-08-24T21:00:01Z",
+      runStartedAt: "2026-08-24T21:00:00Z",
+      required: true))
+  #expect(
+    !DiscoveryMutationPolicy.ownerSafetyAcknowledgementIsValid(
+      "2026-08-24T20:54:59Z",
+      runStartedAt: "2026-08-24T21:00:00Z",
+      required: true))
+  #expect(
+    DiscoveryMutationPolicy.ownerSafetyAcknowledgementIsValid(
+      nil,
+      runStartedAt: "not-needed-for-parked",
+      required: false))
+  #expect(
+    !DiscoveryMutationPolicy.ownerSafetyAcknowledgementIsValid(
+      "2026-08-24T21:00:00Z",
+      runStartedAt: "2026-08-24T21:00:00Z",
+      required: false))
 }
 
 @Test func bootstrapMarkersAreExactOrderedAndComplete() {
@@ -246,10 +449,19 @@ private func makeMutationContext(
   observationSessionID: UInt32 = 42,
   storageFreeBytes: UInt64 = 1_000_000,
   captureQueueDroppedRecords: UInt64? = 0,
-  captureStorageWriteFailures: UInt64? = 0
+  captureStorageWriteFailures: UInt64? = 0,
+  connectionState: GatewayConnectionState = .vhosConnected,
+  includeHealth: Bool = true,
+  includeHandshake: Bool = true,
+  includeObservation: Bool = true,
+  handshakeListenOnly: Bool = true,
+  healthListenOnly: Bool = true,
+  observationListenOnly: Bool = true,
+  includesPassiveCapability: Bool = true,
+  observationGatewayID: String? = nil
 ) -> DiscoveryMutationContext {
   let gatewayID = "esp32-9454c5b08d14"
-  let handshake = GatewayHandshake(
+  let handshake = includeHandshake ? GatewayHandshake(
     gatewayID: gatewayID,
     hardwareRevision: "MRDIY-ESP32-V1.3",
     firmwareVersion: "0.1.0-dev.34",
@@ -257,11 +469,11 @@ private func makeMutationContext(
     protocolVersion: "1.0.0",
     activeConfigID: "toyota-4runner-2005",
     activeConfigVersion: "0.1.0",
-    listenOnly: true,
-    capabilities: [.passiveCapture],
+    listenOnly: handshakeListenOnly,
+    capabilities: includesPassiveCapability ? [.passiveCapture] : [],
     otaUploadURL: nil,
-    otaMaximumImageBytes: nil)
-  let health = GatewayHealth(
+    otaMaximumImageBytes: nil) : nil
+  let health = includeHealth ? GatewayHealth(
     observedAt: "monotonic_us:1000000",
     vehicleMotion: motion,
     supplyMillivolts: nil,
@@ -271,12 +483,12 @@ private func makeMutationContext(
     busOffCount: 0,
     storageFreeBytes: storageFreeBytes,
     captureActive: true,
-    listenOnly: true,
+    listenOnly: healthListenOnly,
     captureQueueDroppedRecords: captureQueueDroppedRecords,
     captureSessionID: 42,
-    captureStorageWriteFailures: captureStorageWriteFailures)
-  let observation = PassiveCANObservation(
-    gatewayID: gatewayID,
+    captureStorageWriteFailures: captureStorageWriteFailures) : nil
+  let observation = includeObservation ? PassiveCANObservation(
+    gatewayID: observationGatewayID ?? gatewayID,
     sessionID: observationSessionID,
     sourceSequence: 99,
     monotonicMicroseconds: 1_000_000,
@@ -284,13 +496,13 @@ private func makeMutationContext(
     identifier: 0x2C4,
     extended: false,
     remoteRequest: false,
-    listenOnly: true,
+    listenOnly: observationListenOnly,
     dataLength: 8,
     data: [0, 0, 0, 0, 0, 0, 0, 0],
     evidenceSource: "ble-live",
-    ingestedAt: "2026-08-22T14:42:25Z")
+    ingestedAt: "2026-08-22T14:42:25Z") : nil
   return DiscoveryMutationContext(
-    connectionState: .vhosConnected,
+    connectionState: connectionState,
     handshake: handshake,
     health: health,
     healthAgeSeconds: healthAge,
