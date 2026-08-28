@@ -28,6 +28,7 @@
 		E1E366592FD90918002B9210 /* catalog-development-p256-public.der.base64 in Resources */ = {isa = PBXBuildFile; fileRef = BC2698DA0773B98569959E80 /* catalog-development-p256-public.der.base64 */; };
 		E925A8B64D5731C2E092673A /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDE321369856AF54C6B7946E /* RootView.swift */; };
 		F1AF0F959A5BC7A5C2BEC8DB /* DiscoveryEvidenceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C4CB58385EA15D8DE39AA03 /* DiscoveryEvidenceStore.swift */; };
+		FD76082677C3D6DEA95ACE91 /* StoredDiscoveryMarkerLegacySessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9A2C19F0F90DE0C7BDD88D5 /* StoredDiscoveryMarkerLegacySessionTests.swift */; };
 		FEC9A6E487FA351CECDA2552 /* ReleaseHubClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21CE522109AE74B24C43B096 /* ReleaseHubClient.swift */; };
 /* End PBXBuildFile section */
 
@@ -69,6 +70,7 @@
 		EDE321369856AF54C6B7946E /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		F058478C0C2988386954DDC9 /* Core */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Core; path = Core; sourceTree = SOURCE_ROOT; };
 		F5F07524DBD012E9F39B09DB /* SynchronizedReferenceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SynchronizedReferenceStore.swift; sourceTree = "<group>"; };
+		F9A2C19F0F90DE0C7BDD88D5 /* StoredDiscoveryMarkerLegacySessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoredDiscoveryMarkerLegacySessionTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -152,6 +154,7 @@
 				9123684AD71628F377A5EB55 /* CaptureAndReferencePersistenceTests.swift */,
 				37F575257101C56C4814A332 /* DiscoveryEvidenceStoreTests.swift */,
 				6FF7D608E6C3BC6B19524A3A /* EvidenceOutboxBackgroundTests.swift */,
+				F9A2C19F0F90DE0C7BDD88D5 /* StoredDiscoveryMarkerLegacySessionTests.swift */,
 			);
 			path = AppTests;
 			sourceTree = "<group>";
@@ -256,6 +259,7 @@
 				CADDA30B1BCE3C005880874D /* CaptureAndReferencePersistenceTests.swift in Sources */,
 				B12336DDFA67B1A55A43F447 /* DiscoveryEvidenceStoreTests.swift in Sources */,
 				C32FBE14A5EF3BEEAE086A68 /* EvidenceOutboxBackgroundTests.swift in Sources */,
+				FD76082677C3D6DEA95ACE91 /* StoredDiscoveryMarkerLegacySessionTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

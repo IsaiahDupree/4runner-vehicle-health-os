@@ -178,13 +178,13 @@ final class AppModel {
       if let latest = gateway.latestCANObservation {
         observationsByID[latest.id] = latest
       }
-      return observationsByID.values.sorted {
-        if $0.sessionID != $1.sessionID { return $0.sessionID > $1.sessionID }
-        if $0.monotonicMicroseconds != $1.monotonicMicroseconds {
-          return $0.monotonicMicroseconds > $1.monotonicMicroseconds
-        }
-        return $0.sourceSequence > $1.sourceSequence
-      }
+      // Freshest-by-monotonic-clock order (2026-08-24 incident: the old
+      // "largest sessionID first" sort let a wrapped legacy session value
+      // win selection forever, stamping every marker with one frozen
+      // evidence coordinate). Session ids are opaque labels, never a
+      // recency signal; DiscoveryBindingPolicy owns the ordering rule.
+      return DiscoveryBindingPolicy.presentationOrder(
+        Array(observationsByID.values))
     #else
       []
     #endif
@@ -664,7 +664,8 @@ final class AppModel {
         allowDevelopmentEvidenceLab: runUsesDevelopmentEvidenceLab,
         allowUnrestrictedEvidenceWorkspace: runUsesDebugUnverified,
         preferredGatewayID: runUsesDebugUnverified ? run.gatewayID : nil,
-        preferredSessionID: runUsesDebugUnverified ? run.gatewaySessionID : nil)
+        preferredSessionID: runUsesDebugUnverified ? run.gatewaySessionID : nil,
+        lastRecordedMarker: lastRecordedMarkerContext(forTestRunID: run.id))
       if run.templateID == DiscoveryMutationPolicy.parkSelectorBootstrapTemplateID,
         !runUsesDebugUnverified
       {
@@ -1084,26 +1085,68 @@ final class AppModel {
     }
   }
 
+  /// The last marker already committed for a test run, as forward-progress
+  /// context for the binding policy: a second tap in the same gateway
+  /// session must land strictly later on the monotonic clock.
+  func lastRecordedMarkerContext(forTestRunID runID: String?)
+    -> DiscoveryBindingPolicy.RecordedMarkerContext?
+  {
+    guard let runID else { return nil }
+    return discoveryMarkers
+      .filter { $0.testRunID == runID && $0.hasPlausibleSession }
+      .max { $0.marker.gatewayMonotonicMicroseconds < $1.marker.gatewayMonotonicMicroseconds }
+      .map {
+        DiscoveryBindingPolicy.RecordedMarkerContext(
+          gatewaySessionID: $0.gatewaySessionID,
+          gatewayMonotonicMicroseconds: $0.marker.gatewayMonotonicMicroseconds)
+      }
+  }
+
+  /// What the next marker would bind to right now, for the active run's
+  /// authority mode — the SAME selection the writer uses, exposed so the
+  /// readiness card can never promise one binding while the ledger
+  /// records another (2026-08-24 incident: the card showed the live
+  /// observation while debug-workspace markers bound to an archive pick).
+  func discoveryBindingPreview(
+    allowLocalEvidenceOnly: Bool = false,
+    allowDevelopmentEvidenceLab: Bool = false,
+    allowUnrestrictedEvidenceWorkspace: Bool = false,
+    preferredGatewayID: String? = nil,
+    preferredSessionID: UInt32? = nil,
+    testRunID: String? = nil
+  ) -> PassiveCANObservation? {
+    try? currentDiscoveryObservation(
+      allowLocalEvidenceOnly: allowLocalEvidenceOnly,
+      allowDevelopmentEvidenceLab: allowDevelopmentEvidenceLab,
+      allowUnrestrictedEvidenceWorkspace: allowUnrestrictedEvidenceWorkspace,
+      preferredGatewayID: preferredGatewayID,
+      preferredSessionID: preferredSessionID,
+      lastRecordedMarker: lastRecordedMarkerContext(forTestRunID: testRunID))
+  }
+
   private func currentDiscoveryObservation(
     allowLocalEvidenceOnly: Bool = false,
     allowDevelopmentEvidenceLab: Bool = false,
     allowUnrestrictedEvidenceWorkspace: Bool = false,
     preferredGatewayID: String? = nil,
-    preferredSessionID: UInt32? = nil
+    preferredSessionID: UInt32? = nil,
+    lastRecordedMarker: DiscoveryBindingPolicy.RecordedMarkerContext? = nil
   ) throws -> PassiveCANObservation {
     #if DEBUG
       if allowUnrestrictedEvidenceWorkspace, !availableDebugEvidenceObservations.isEmpty {
-        if let preferredGatewayID, let preferredSessionID,
-          let bound = availableDebugEvidenceObservations.first(where: {
-            $0.gatewayID == preferredGatewayID && $0.sessionID == preferredSessionID
-          })
+        switch DiscoveryBindingPolicy.selectBindingObservation(
+          from: availableDebugEvidenceObservations,
+          preferredGatewayID: preferredGatewayID,
+          preferredSessionID: preferredSessionID,
+          lastRecordedMarker: lastRecordedMarker)
         {
-          return bound
-        }
-        guard preferredGatewayID == nil, preferredSessionID == nil else {
+        case .success(let observation):
+          return observation
+        case .failure(.timelineStalled):
+          throw AppModelError.discoveryMarkerTimelineStalled
+        case .failure:
           throw AppModelError.discoveryCurrentTimelineRequired
         }
-        return availableDebugEvidenceObservations[0]
       }
       if allowDevelopmentEvidenceLab {
         guard let observation = gateway.latestCANObservation,
@@ -1117,7 +1160,7 @@ final class AppModel {
           gateway.handshake?.listenOnly != false,
           gateway.handshake.map({ $0.gatewayID == observation.gatewayID }) ?? true
         else { throw AppModelError.discoveryCurrentTimelineRequired }
-        return observation
+        return try Self.requireForwardProgress(observation, after: lastRecordedMarker)
       }
     #endif
 
@@ -1130,13 +1173,34 @@ final class AppModel {
     else { throw AppModelError.discoveryCurrentTimelineRequired }
     let age = Date().timeIntervalSince(receivedAt)
     guard age >= 0, age <= 5 else { throw AppModelError.discoveryCurrentTimelineRequired }
-    if allowLocalEvidenceOnly { return observation }
+    if allowLocalEvidenceOnly {
+      return try Self.requireForwardProgress(observation, after: lastRecordedMarker)
+    }
     guard gateway.hasCurrentGatewayHealth,
       let health = gateway.health,
       health.listenOnly,
       let currentSessionID = health.captureSessionID,
       observation.sessionID == currentSessionID
     else { throw AppModelError.discoveryCurrentTimelineRequired }
+    return try Self.requireForwardProgress(observation, after: lastRecordedMarker)
+  }
+
+  /// Two markers may never share an evidence coordinate: within one
+  /// gateway session, each new marker must bind strictly later on the
+  /// monotonic clock than the run's previous marker. A stalled timeline
+  /// (frozen replay archive, wedged frame stream) surfaces as an error
+  /// instead of silently appending duplicate coordinates to the
+  /// append-only ledger.
+  private static func requireForwardProgress(
+    _ observation: PassiveCANObservation,
+    after lastRecordedMarker: DiscoveryBindingPolicy.RecordedMarkerContext?
+  ) throws -> PassiveCANObservation {
+    if let last = lastRecordedMarker,
+      observation.sessionID == last.gatewaySessionID,
+      observation.monotonicMicroseconds <= last.gatewayMonotonicMicroseconds
+    {
+      throw AppModelError.discoveryMarkerTimelineStalled
+    }
     return observation
   }
 
@@ -1664,6 +1728,7 @@ enum AppModelError: Error, LocalizedError {
   case discoveryTestRunRequired
   case discoveryInteractiveTestUnavailable
   case discoveryCurrentTimelineRequired
+  case discoveryMarkerTimelineStalled
   case discoveryCapabilityRequired
   case discoveryEvidenceAuthorityRequired
   case discoveryOwnerSafetyAcknowledgementRequired
@@ -1718,6 +1783,8 @@ enum AppModelError: Error, LocalizedError {
       "This procedure is not available in iPhone driver-interaction mode. A passenger-supervised workflow is required."
     case .discoveryCurrentTimelineRequired:
       "A listen-only CAN observation from the verified gateway within the last five seconds is required for Discovery timeline evidence."
+    case .discoveryMarkerTimelineStalled:
+      "The gateway evidence timeline has not advanced since this run's previous marker, so a new marker would reuse the same evidence coordinate. Wait for fresh CAN frames (or a fresh capture session) and mark again."
     case .discoveryCapabilityRequired:
       "The verified gateway does not advertise every capability required by this versioned Discovery test template."
     case .discoveryEvidenceAuthorityRequired:
