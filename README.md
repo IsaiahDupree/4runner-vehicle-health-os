@@ -167,6 +167,9 @@ The play/pause/scrub/speed/loop transport, progressive exact-point graph, sessio
 and real multi-session acceptance suite are recorded in
 [the iOS retained CAN playback lab](docs/development/IOS-RETAINED-CAN-PLAYBACK-LAB-2026-08-20.md).
 
+The authority-separated physical-unit candidates, derived statistics, rotational comparison, and
+cross-platform presentation rules are recorded in [the CAN units view](docs/development/CAN-UNITS-NOTE-2026-08-28.md).
+
 Run the complete copied-iPhone evidence recovery, delta analysis, candidate
 mapping, replay, and 15-scenario link stress lab with one command using
 [the offline field-return runbook](docs/development/OFFLINE-FIELD-RETURN-ONE-SHOT.md).

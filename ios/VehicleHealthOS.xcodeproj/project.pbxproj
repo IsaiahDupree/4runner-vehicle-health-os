@@ -18,6 +18,7 @@
 		59F8B3E961C8C753425ACF9F /* VHOSCore in Frameworks */ = {isa = PBXBuildFile; productRef = 6616D2E0F2CEB55BF90E491B /* VHOSCore */; };
 		6038918354887A1A87E7D5D7 /* DiscoveryWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DFE18956FBB741182DC169A /* DiscoveryWorkspaceView.swift */; };
 		6138196E6016992AB5F476A7 /* EvidenceOutboxStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27355F648A0C53B4EC6CF848 /* EvidenceOutboxStore.swift */; };
+		90E4621A52313C74A4ABB3D1 /* CANUnitsDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAADB0E18F0262D5D28275BF /* CANUnitsDashboardView.swift */; };
 		9AF33FDA552C5A8253A86B99 /* KeyStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6A9AAE2238B7F973C0CEA46 /* KeyStore.swift */; };
 		A556A68B0A447322A223EA70 /* EvidenceWorkCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C62FF37FA894A57174E968FB /* EvidenceWorkCoordinator.swift */; };
 		AAC7CA136BA2228F0D634559 /* SynchronizedReferenceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5F07524DBD012E9F39B09DB /* SynchronizedReferenceStore.swift */; };
@@ -71,6 +72,7 @@
 		F058478C0C2988386954DDC9 /* Core */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Core; path = Core; sourceTree = SOURCE_ROOT; };
 		F5F07524DBD012E9F39B09DB /* SynchronizedReferenceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SynchronizedReferenceStore.swift; sourceTree = "<group>"; };
 		F9A2C19F0F90DE0C7BDD88D5 /* StoredDiscoveryMarkerLegacySessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoredDiscoveryMarkerLegacySessionTests.swift; sourceTree = "<group>"; };
+		FAADB0E18F0262D5D28275BF /* CANUnitsDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CANUnitsDashboardView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -126,6 +128,7 @@
 			children = (
 				5ADD085CC4E0D7223092E39A /* AppModel.swift */,
 				C904E627AC50298F57802AB7 /* Assets.xcassets */,
+				FAADB0E18F0262D5D28275BF /* CANUnitsDashboardView.swift */,
 				1C4CB58385EA15D8DE39AA03 /* DiscoveryEvidenceStore.swift */,
 				3DFE18956FBB741182DC169A /* DiscoveryWorkspaceView.swift */,
 				27355F648A0C53B4EC6CF848 /* EvidenceOutboxStore.swift */,
@@ -268,6 +271,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				50658F6BD96177F3C72D98A4 /* AppModel.swift in Sources */,
+				90E4621A52313C74A4ABB3D1 /* CANUnitsDashboardView.swift in Sources */,
 				F1AF0F959A5BC7A5C2BEC8DB /* DiscoveryEvidenceStore.swift in Sources */,
 				6038918354887A1A87E7D5D7 /* DiscoveryWorkspaceView.swift in Sources */,
 				6138196E6016992AB5F476A7 /* EvidenceOutboxStore.swift in Sources */,

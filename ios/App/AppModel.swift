@@ -104,6 +104,8 @@ final class AppModel {
   var canResearchReport: PassiveCANResearchReport?
   var canResearchMessage = "No retained CAN evidence has been analyzed on this iPhone."
   var canResearchInProgress = false
+  var canUnitsReport: CANUnitsReport?
+  var canUnitsMessage = "No retained CAN unit analysis is available on this iPhone."
   var passiveCANPreparedExportURL: URL?
   var passiveCANExportInProgress = false
   var preparedEvidenceSyncURLs: [URL] = []
@@ -1563,8 +1565,14 @@ final class AppModel {
         }
       }
       do {
+        let currentStandardSamples = self.gateway.standardOBDSamples.filter(
+          self.gateway.isCurrentStandardOBDSample)
         let snapshot = try await self.gateway.makePassiveCANWorkSnapshot()
         let report = try await self.evidenceWorkCoordinator.analyzePassiveCAN(snapshot)
+        let unitsSnapshot = try await self.gateway.makePassiveCANWorkSnapshot()
+        let unitsReport = try await self.evidenceWorkCoordinator.analyzeCANUnits(
+          unitsSnapshot,
+          standardSamples: currentStandardSamples)
         let sampleSnapshot = try await self.gateway.makePassiveCANWorkSnapshot(
           maximumObservationCount: 2_048)
         let recent = try await self.evidenceWorkCoordinator.recentPassiveCAN(
@@ -1572,6 +1580,10 @@ final class AppModel {
           limit: 512)
         guard !Task.isCancelled, self.canResearchRevision == revision else { return }
         self.debugEvidenceObservations = recent.observations
+        self.canUnitsReport = unitsReport
+        self.canUnitsMessage =
+          "Analyzed \(unitsReport.observationCount.formatted()) retained observations across "
+          + "\(unitsReport.sessionCount.formatted()) sessions. Unit transforms and derived values remain unverified."
         self.canResearchReport = report
         self.canResearchMessage =
           report.map {
@@ -1586,6 +1598,9 @@ final class AppModel {
         if error is PortableFrameStoreError {
           self.gateway.reportPortableFrameIntegrityFailure(error)
         }
+        self.canUnitsReport = nil
+        self.canUnitsMessage =
+          "Retained CAN unit analysis failed closed: \(error.localizedDescription)"
         self.canResearchReport = nil
         self.canResearchMessage =
           "Retained CAN analysis failed closed: \(error.localizedDescription)"

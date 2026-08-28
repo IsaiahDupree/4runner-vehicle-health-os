@@ -175,6 +175,17 @@ actor EvidenceWorkCoordinator {
       excludesEarlierCaptureBytes: snapshot.hasEarlierCaptureBytes)
   }
 
+  func analyzeCANUnits(
+    _ snapshot: PassiveCANWorkSnapshot,
+    standardSamples: [J1979StandardSample]
+  ) async throws -> CANUnitsReport {
+    defer { snapshot.close() }
+    let observations = try await Self.decodePassiveCAN(snapshot)
+    return try CANUnitsAnalyzer.analyze(
+      observations: observations,
+      standardSamples: standardSamples)
+  }
+
   func recentPassiveCAN(
     _ snapshot: PassiveCANWorkSnapshot,
     limit: Int = 512

@@ -110,6 +110,16 @@ struct DiscoveryView: View {
           .opacity(engineeringUnlocked ? 1 : 0.55)
 
           NavigationLink {
+            CANUnitsDashboardView()
+          } label: {
+            DiscoveryActionLabel(
+              title: "CAN Data & Units",
+              subtitle: "View physical units, derived evidence, lineage, and replay",
+              systemImage: "gauge.with.dots.needle.50percent")
+          }
+          .buttonStyle(.plain)
+
+          NavigationLink {
             DiscoverySignalExplorerView()
           } label: {
             DiscoveryActionLabel(
