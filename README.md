@@ -130,7 +130,7 @@ The stable device labels and separation from transport identifiers are defined i
 | `vehicle-signal-packs/` | Accepted signal/configuration packs plus separately contracted, discovery-only hypothesis packs that cannot feed owner health |
 
 Related public repositories keep runtime ownership separate: Android head unit
-[`4runner-vhos-android`](https://github.com/IsaiahDupree/4runner-vhos-android) ([download the current `0.1.0-dev.15` APK](https://github.com/IsaiahDupree/4runner-vhos-android/releases/download/android-v0.1.0-dev.15/app-debug.apk)), OBD firmware
+[`4runner-vhos-android`](https://github.com/IsaiahDupree/4runner-vhos-android) ([download the current `0.1.0-dev.16` APK](https://github.com/IsaiahDupree/4runner-vhos-android/releases/download/android-v0.1.0-dev.16/app-debug.apk)), OBD firmware
 [`4runner-vhos-firmware`](https://github.com/IsaiahDupree/4runner-vhos-firmware), A/C firmware
 [`4runner-ac-telemetry-node`](https://github.com/IsaiahDupree/4runner-ac-telemetry-node), and the
 signed catalog/portal [`4runner-vhos-release-hub`](https://github.com/IsaiahDupree/4runner-vhos-release-hub).
