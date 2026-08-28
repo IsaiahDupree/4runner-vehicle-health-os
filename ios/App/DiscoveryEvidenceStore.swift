@@ -62,6 +62,15 @@ struct StoredDiscoveryMarker: Codable, Equatable, Identifiable, Sendable {
   let testRunID: String?
   let gatewayID: String
   let gatewaySessionID: UInt32
+  /// The record's original session value when it does not fit the current
+  /// 32-bit gateway session contract (records written by builds predating
+  /// the type, including the wrapped 2^64-range value from the 2026-08-24
+  /// incident). Preserved verbatim for canonical-byte fidelity and shown
+  /// as quarantined; `gatewaySessionID` is 0 for these records, which the
+  /// binding policy treats as implausible — they can never win selection,
+  /// bind a new marker, or feed correlation. The append-only ledger keeps
+  /// them; the app just stops believing them.
+  let legacyOutOfRangeSessionValue: UInt64?
   let marker: EventMarker
 
   private enum CodingKeys: String, CodingKey {
@@ -72,10 +81,51 @@ struct StoredDiscoveryMarker: Codable, Equatable, Identifiable, Sendable {
     case gatewaySessionID = "gatewaySessionId"
   }
 
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    contract = try container.decode(String.self, forKey: .contract)
+    contractVersion = try container.decode(String.self, forKey: .contractVersion)
+    templateID = try container.decode(String.self, forKey: .templateID)
+    testRunID = try container.decodeIfPresent(String.self, forKey: .testRunID)
+    gatewayID = try container.decode(String.self, forKey: .gatewayID)
+    marker = try container.decode(EventMarker.self, forKey: .marker)
+    let rawSession = try container.decode(UInt64.self, forKey: .gatewaySessionID)
+    if let session = UInt32(exactly: rawSession),
+      DiscoveryBindingPolicy.sessionValueIsPlausible(session)
+    {
+      gatewaySessionID = session
+      legacyOutOfRangeSessionValue = nil
+    } else {
+      gatewaySessionID = 0
+      legacyOutOfRangeSessionValue = rawSession
+    }
+  }
+
+  func encode(to encoder: Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+    try container.encode(contract, forKey: .contract)
+    try container.encode(contractVersion, forKey: .contractVersion)
+    try container.encode(templateID, forKey: .templateID)
+    try container.encodeIfPresent(testRunID, forKey: .testRunID)
+    try container.encode(gatewayID, forKey: .gatewayID)
+    // Round-trip the original bytes: a quarantined record re-encodes its
+    // raw historical value, never a repaired one.
+    if let legacyOutOfRangeSessionValue {
+      try container.encode(legacyOutOfRangeSessionValue, forKey: .gatewaySessionID)
+    } else {
+      try container.encode(gatewaySessionID, forKey: .gatewaySessionID)
+    }
+    try container.encode(marker, forKey: .marker)
+  }
+
   var id: String { marker.id }
   var label: String { marker.label }
   var captureSessionID: UInt32 { gatewaySessionID }
   var sourceSequence: UInt64 { marker.nearestCANSequence ?? 0 }
+  var hasPlausibleSession: Bool {
+    legacyOutOfRangeSessionValue == nil
+      && DiscoveryBindingPolicy.sessionValueIsPlausible(gatewaySessionID)
+  }
 
   init(
     templateID: String,
@@ -97,6 +147,7 @@ struct StoredDiscoveryMarker: Codable, Equatable, Identifiable, Sendable {
     self.testRunID = testRunID
     self.gatewayID = gatewayID
     self.gatewaySessionID = gatewaySessionID
+    self.legacyOutOfRangeSessionValue = nil
     self.marker = marker
   }
 

@@ -467,8 +467,8 @@ private struct DiscoveryTemplatePresentation: Identifiable, Sendable {
         hypothesis: "Label OFF, accessory, ignition-on, crank, and running transitions.",
         safety: "Vehicle parked; transmission in Park.",
         actions: [
-          ("OFF", .ignitionOff), ("ACCESSORY", .custom), ("IGNITION ON", .ignitionOn),
-          ("CRANK", .custom), ("RUNNING", .engineStarted),
+          ("OFF", .ignitionOff), ("ACCESSORY", .accessory), ("IGNITION ON", .ignitionOn),
+          ("CRANK", .crank), ("RUNNING", .engineStarted),
         ]),
       make(
         id: "discovery.engine.cold-start", title: "Cold Start", category: .engine,
@@ -1079,12 +1079,30 @@ private struct DiscoveryTestRunnerView: View {
           SafetyRow(
             label: "Append-only marker ledger readable",
             pass: model.discoveryMarkerLedgerReadState.isAvailable)
-          if let observation = model.gateway.latestCANObservation {
+          // The SAME selection the marker writer uses — never the raw live
+          // observation, which diverges from the actual binding in the
+          // debug evidence workspace (2026-08-24: this card promised the
+          // live session while markers bound to an archive pick).
+          if let observation = model.discoveryBindingPreview(
+            allowLocalEvidenceOnly: isUsingAppLocalEvidence
+              || activeRun?.acquisitionAuthority == .localEvidenceOnly,
+            allowDevelopmentEvidenceLab: developmentEvidenceLabRequested,
+            allowUnrestrictedEvidenceWorkspace: debugUnverifiedRequested,
+            preferredGatewayID: debugUnverifiedRequested ? activeRun?.gatewayID : nil,
+            preferredSessionID: debugUnverifiedRequested ? activeRun?.gatewaySessionID : nil,
+            testRunID: activeRun?.id)
+          {
             Text(
               "Markers will bind to gateway session \(observation.sessionID), sequence \(observation.sourceSequence), and monotonic time \(observation.monotonicMicroseconds) µs."
             )
             .font(.caption)
             .foregroundStyle(.secondary)
+          } else {
+            Text(
+              "No marker binding is currently available: the next marker has no fresh, plausible gateway observation to bind to."
+            )
+            .font(.caption)
+            .foregroundStyle(.orange)
           }
           if let failure = model.discoveryLedgerFailureDetail {
             VStack(alignment: .leading, spacing: 8) {
@@ -1322,11 +1340,19 @@ private struct DiscoveryMarkerLedgerView: View {
             Image(systemName: "bookmark.fill").foregroundStyle(.orange)
             VStack(alignment: .leading, spacing: 2) {
               Text(marker.label).font(.subheadline.weight(.semibold))
-              Text(
-                "Gateway session \(marker.captureSessionID) · sequence \(marker.sourceSequence)"
-              )
-              .font(.caption.monospacedDigit())
-              .foregroundStyle(.secondary)
+              if let legacy = marker.legacyOutOfRangeSessionValue {
+                Text(
+                  "Legacy session value \(legacy) is outside the 32-bit gateway session contract — quarantined from correlation and binding."
+                )
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(.orange)
+              } else {
+                Text(
+                  "Gateway session \(marker.captureSessionID) · sequence \(marker.sourceSequence)"
+                )
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(.secondary)
+              }
               Text(marker.marker.kind.rawValue)
                 .font(.caption2.monospaced())
                 .foregroundStyle(.secondary)

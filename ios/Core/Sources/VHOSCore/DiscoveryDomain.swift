@@ -25,6 +25,13 @@ public enum DiscoveryTestCategory: String, Codable, CaseIterable, Sendable {
 public enum DiscoveryMarkerKind: String, Codable, CaseIterable, Sendable {
   case ignitionOn = "IGNITION_ON"
   case ignitionOff = "IGNITION_OFF"
+  /// Key/power at ACC: accessories powered, ignition circuits off.
+  /// Typed (not .custom) so ignition-cycle analysis can distinguish the
+  /// ACC step from an arbitrary user annotation.
+  case accessory = "ACCESSORY"
+  /// Starter engaged, engine not yet running. Typed for the same
+  /// reason: CRANK is the transition ignition analysis pivots on.
+  case crank = "CRANK"
   case engineStarted = "ENGINE_STARTED"
   case brakePressed = "BRAKE_PRESSED"
   case brakeReleased = "BRAKE_RELEASED"
