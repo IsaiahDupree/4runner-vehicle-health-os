@@ -1,0 +1,214 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/vehicle-lifecycle-common.schema.json",
+  "title": "VHOS vehicle lifecycle common definitions v1",
+  "$defs": {
+    "vehicleId": {"type": "string", "pattern": "^veh_[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
+    "vehicleRevisionId": {"type": "string", "pattern": "^vehrev_[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
+    "maintenanceRecordId": {"type": "string", "pattern": "^maintenance_[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
+    "maintenanceRevisionId": {"type": "string", "pattern": "^maintrev_[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
+    "maintenanceAuditId": {"type": "string", "pattern": "^audit_[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
+    "componentId": {"type": "string", "pattern": "^component_[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
+    "componentRevisionId": {"type": "string", "pattern": "^comprev_[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
+    "lineItemId": {"type": "string", "pattern": "^lineitem_[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
+    "measurementId": {"type": "string", "pattern": "^measurement_[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
+    "attachmentId": {"type": "string", "pattern": "^attachment_[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
+    "actorId": {"type": "string", "pattern": "^actor_[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
+    "requirementId": {"type": "string", "pattern": "^requirement_[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
+    "maintenanceTaskId": {"type": "string", "pattern": "^mainttask_[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
+    "maintenanceRuleId": {"type": "string", "pattern": "^maintrule_[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
+    "maintenanceDueId": {"type": "string", "pattern": "^maintdue_[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
+    "maintenanceBaselineId": {"type": "string", "pattern": "^maintbaseline_[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
+    "maintenanceSourceManifestId": {"type": "string", "pattern": "^maintsource_[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
+    "sourceDocumentId": {"type": "string", "pattern": "^source_[0-7][0-9A-HJKMNP-TV-Z]{25}$"},
+    "canonicalKey": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "decimalString": {
+      "type": "string",
+      "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:E[+-]?[0-9]+)?$",
+      "maxLength": 80
+    },
+    "odometer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "unit"],
+      "properties": {
+        "value": {"type": "integer", "minimum": 0, "maximum": 20000000},
+        "unit": {"enum": ["MILES", "KILOMETERS"]}
+      }
+    },
+    "occurrence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["precision", "date", "instant"],
+      "properties": {
+        "precision": {"enum": ["DATE_ONLY", "INSTANT"]},
+        "date": {"type": "string", "format": "date"},
+        "instant": {
+          "anyOf": [
+            {"$ref": "common.schema.json#/$defs/wallTime"},
+            {"type": "null"}
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"precision": {"const": "DATE_ONLY"}}, "required": ["precision"]},
+          "then": {"properties": {"instant": {"type": "null"}}}
+        },
+        {
+          "if": {"properties": {"precision": {"const": "INSTANT"}}, "required": ["precision"]},
+          "then": {"properties": {"instant": {"$ref": "common.schema.json#/$defs/wallTime"}}}
+        }
+      ]
+    },
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "actor_id", "display_name"],
+      "properties": {
+        "source": {"enum": ["OWNER", "TECHNICIAN", "IMPORT", "SYSTEM"]},
+        "actor_id": {"$ref": "#/$defs/actorId"},
+        "display_name": {"type": "string", "minLength": 1, "maxLength": 160}
+      }
+    },
+    "systemRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["knowledge", "system_key", "display_name"],
+      "properties": {
+        "knowledge": {"enum": ["KNOWN", "UNKNOWN"]},
+        "system_key": {"anyOf": [{"$ref": "#/$defs/canonicalKey"}, {"type": "null"}]},
+        "display_name": {"type": ["string", "null"], "minLength": 1, "maxLength": 160}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"knowledge": {"const": "KNOWN"}}, "required": ["knowledge"]},
+          "then": {
+            "properties": {
+              "system_key": {"$ref": "#/$defs/canonicalKey"},
+              "display_name": {"type": "string", "minLength": 1}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"knowledge": {"const": "UNKNOWN"}}, "required": ["knowledge"]},
+          "then": {"properties": {"system_key": {"type": "null"}, "display_name": {"type": "null"}}}
+        }
+      ]
+    },
+    "componentRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component_knowledge", "component_id", "display_name",
+        "system_knowledge", "system_key", "parent_component_id"
+      ],
+      "properties": {
+        "component_knowledge": {"enum": ["KNOWN", "UNKNOWN"]},
+        "component_id": {"anyOf": [{"$ref": "#/$defs/componentId"}, {"type": "null"}]},
+        "display_name": {"type": ["string", "null"], "minLength": 1, "maxLength": 200},
+        "system_knowledge": {"enum": ["KNOWN", "UNKNOWN"]},
+        "system_key": {"anyOf": [{"$ref": "#/$defs/canonicalKey"}, {"type": "null"}]},
+        "parent_component_id": {"anyOf": [{"$ref": "#/$defs/componentId"}, {"type": "null"}]}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"component_knowledge": {"const": "KNOWN"}}, "required": ["component_knowledge"]},
+          "then": {
+            "properties": {
+              "component_id": {"$ref": "#/$defs/componentId"},
+              "display_name": {"type": "string", "minLength": 1}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"component_knowledge": {"const": "UNKNOWN"}}, "required": ["component_knowledge"]},
+          "then": {
+            "properties": {
+              "component_id": {"type": "null"},
+              "display_name": {"type": "null"},
+              "parent_component_id": {"type": "null"}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"system_knowledge": {"const": "KNOWN"}}, "required": ["system_knowledge"]},
+          "then": {"properties": {"system_key": {"$ref": "#/$defs/canonicalKey"}}}
+        },
+        {
+          "if": {"properties": {"system_knowledge": {"const": "UNKNOWN"}}, "required": ["system_knowledge"]},
+          "then": {"properties": {"system_key": {"type": "null"}}}
+        }
+      ]
+    },
+    "money": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["currency_code", "minor_units"],
+      "properties": {
+        "currency_code": {"type": "string", "pattern": "^[A-Z]{3}$"},
+        "minor_units": {"type": "integer", "minimum": 0, "maximum": 9000000000000}
+      }
+    },
+    "customField": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field_id", "label", "type", "value", "unit"],
+      "properties": {
+        "field_id": {"$ref": "#/$defs/canonicalKey"},
+        "label": {"type": "string", "minLength": 1, "maxLength": 200},
+        "type": {"enum": ["TEXT", "DECIMAL", "INTEGER", "BOOLEAN", "DATE", "INSTANT", "CHOICE"]},
+        "value": {"type": "string", "minLength": 1, "maxLength": 10000},
+        "unit": {"type": ["string", "null"], "minLength": 1, "maxLength": 80}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"type": {"const": "DECIMAL"}}, "required": ["type"]},
+          "then": {"properties": {"value": {"$ref": "#/$defs/decimalString"}}}
+        },
+        {
+          "if": {"properties": {"type": {"const": "INTEGER"}}, "required": ["type"]},
+          "then": {"properties": {"value": {"pattern": "^-?(?:0|[1-9][0-9]*)$"}}}
+        },
+        {
+          "if": {"properties": {"type": {"const": "BOOLEAN"}}, "required": ["type"]},
+          "then": {"properties": {"value": {"enum": ["true", "false"]}}}
+        },
+        {
+          "if": {"properties": {"type": {"const": "DATE"}}, "required": ["type"]},
+          "then": {"properties": {"value": {"format": "date"}}}
+        },
+        {
+          "if": {"properties": {"type": {"const": "INSTANT"}}, "required": ["type"]},
+          "then": {"properties": {"value": {"$ref": "common.schema.json#/$defs/wallTime"}}}
+        },
+        {
+          "if": {"properties": {"type": {"enum": ["TEXT", "BOOLEAN", "DATE", "INSTANT", "CHOICE"]}}, "required": ["type"]},
+          "then": {"properties": {"unit": {"type": "null"}}}
+        }
+      ]
+    },
+    "sourceLocator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_document_id", "locator_key", "section_label",
+        "printed_page_start", "printed_page_end", "pdf_page_start", "pdf_page_end"
+      ],
+      "properties": {
+        "source_document_id": {"$ref": "#/$defs/sourceDocumentId"},
+        "locator_key": {"$ref": "#/$defs/canonicalKey"},
+        "section_label": {"type": "string", "minLength": 1, "maxLength": 300},
+        "printed_page_start": {"type": ["integer", "null"], "minimum": 1},
+        "printed_page_end": {"type": ["integer", "null"], "minimum": 1},
+        "pdf_page_start": {"type": "integer", "minimum": 1},
+        "pdf_page_end": {"type": "integer", "minimum": 1}
+      }
+    }
+  }
+}

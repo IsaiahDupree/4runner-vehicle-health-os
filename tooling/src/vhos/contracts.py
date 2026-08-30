@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 import hashlib
 import struct
+from datetime import date
+from decimal import Decimal, InvalidOperation
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
@@ -13,6 +15,11 @@ from referencing import Registry, Resource
 
 class ContractError(ValueError):
     pass
+
+
+ISO_4217_CODES = frozenset(
+    "AED AFN ALL AMD ANG AOA ARS AUD AWG AZN BAM BBD BDT BGN BHD BIF BMD BND BOB BOV BRL BSD BTN BWP BYN BZD CAD CDF CHE CHF CHW CLF CLP CNY COP COU CRC CUC CUP CVE CZK DJF DKK DOP DZD EGP ERN ETB EUR FJD FKP GBP GEL GHS GIP GMD GNF GTQ GYD HKD HNL HTG HUF IDR ILS INR IQD IRR ISK JMD JOD JPY KES KGS KHR KMF KPW KRW KWD KYD KZT LAK LBP LKR LRD LSL LYD MAD MDL MGA MKD MMK MNT MOP MRU MUR MVR MWK MXN MXV MYR MZN NAD NGN NIO NOK NPR NZD OMR PAB PEN PGK PHP PKR PLN PYG QAR RON RSD RUB RWF SAR SBD SCR SDG SEK SGD SHP SLE SLL SOS SRD SSP STN SVC SYP SZL THB TJS TMT TND TOP TRY TTD TWD TZS UAH UGX USD USN UYI UYU UYW UZS VED VES VND VUV WST XAF XAG XAU XBA XBB XBC XBD XCD XDR XOF XPD XPF XPT XSU XTS XUA XXX YER ZAR ZMW ZWL".split()
+)
 
 
 SCHEMA_BY_CONTRACT = {
@@ -53,6 +60,12 @@ SCHEMA_BY_CONTRACT = {
     "signal.definition": "signal-definition.schema.json",
     "signal.sample": "signal-sample.schema.json",
     "vehicle.configuration-profile": "vehicle-profile.schema.json",
+    "vehicle.asset": "vehicle-asset.schema.json",
+    "vehicle.component-registry-entry": "vehicle-component-revision.schema.json",
+    "vehicle.maintenance-record": "maintenance-record-revision.schema.json",
+    "vehicle.maintenance-audit-event": "maintenance-audit-event.schema.json",
+    "vehicle.maintenance-requirement": "maintenance-requirement.schema.json",
+    "vehicle.maintenance-source-manifest": "maintenance-source-manifest.schema.json",
     "vehicle.digital-twin.snapshot": "vehicle-digital-twin-snapshot.schema.json",
     "vehicle.health-assessment": "vehicle-health-assessment.schema.json",
 }
@@ -168,6 +181,37 @@ def _validate_contract_semantics(contract: str, document: dict[str, Any]) -> Non
 
     if contract == "can.discovery.report":
         _validate_recovered_discovery_provenance(document)
+        return
+
+    if contract == "vehicle.asset":
+        if document["revision_id"] == document["supersedes_revision_id"]:
+            raise ContractError(
+                f"{contract} semantic validation failed: revision cannot supersede itself"
+            )
+        _validate_vehicle_asset(document)
+        return
+
+    if contract == "vehicle.component-registry-entry":
+        _validate_component_revision(document)
+        return
+
+    if contract == "vehicle.maintenance-record":
+        _validate_maintenance_record(document)
+        return
+
+    if contract == "vehicle.maintenance-audit-event":
+        if document["revision_id"] == document["prior_revision_id"]:
+            raise ContractError(
+                f"{contract} semantic validation failed: revision cannot be its own prior revision"
+            )
+        return
+
+    if contract == "vehicle.maintenance-requirement":
+        _validate_maintenance_requirement(document)
+        return
+
+    if contract == "vehicle.maintenance-source-manifest":
+        _validate_maintenance_source_manifest(document)
         return
 
     if contract != "vhos.discovery.capture-session":
@@ -322,6 +366,264 @@ def _validate_recovered_discovery_provenance(document: dict[str, Any]) -> None:
                     "can.discovery.report semantic validation failed: recovered v2 source ledger "
                     "cross-link is invalid"
                 )
+
+
+def _validate_vehicle_asset(document: dict[str, Any]) -> None:
+    contract = "vehicle.asset"
+    _validate_trimmed_text(document, contract)
+    attributes = document["configuration"]["attributes"]
+    _require_unique(attributes, "key", contract, "configuration attributes")
+    severe_use = document["severe_use_conditions"]
+    _require_unique(severe_use, "condition_key", contract, "severe-use conditions")
+    if document["configuration"]["resolution_status"] == "RESOLVED" and any(
+        item["state"] == "UNKNOWN" for item in attributes
+    ):
+        raise ContractError(
+            f"{contract} semantic validation failed: resolved configuration contains UNKNOWN"
+        )
+    active_pack = document["active_vehicle_pack"]
+    if active_pack is not None and active_pack["matched_vehicle_revision_id"] != document["revision_id"]:
+        raise ContractError(
+            f"{contract} semantic validation failed: active pack is not bound to this vehicle revision"
+        )
+
+
+def _validate_component_revision(document: dict[str, Any]) -> None:
+    contract = "vehicle.component-registry-entry"
+    _validate_trimmed_text(document, contract)
+    if document["revision_id"] == document["supersedes_revision_id"]:
+        raise ContractError(f"{contract} semantic validation failed: revision cannot supersede itself")
+    if document["component_id"] == document["parent_component_id"]:
+        raise ContractError(f"{contract} semantic validation failed: component cannot parent itself")
+    _require_unique(document["custom_fields"], "field_id", contract, "custom_fields")
+    _validate_custom_fields(document["custom_fields"], contract)
+    installed = document["installed_occurrence"]
+    retired = document["retired_occurrence"]
+    if installed is not None and retired is not None and retired["date"] < installed["date"]:
+        raise ContractError(f"{contract} semantic validation failed: retirement precedes installation")
+
+
+def _validate_maintenance_record(document: dict[str, Any]) -> None:
+    contract = "vehicle.maintenance-record"
+    if document["revision_id"] == document["supersedes_revision_id"]:
+        raise ContractError(
+            f"{contract} semantic validation failed: revision cannot supersede itself"
+        )
+
+    _validate_trimmed_text(document, contract)
+    unique_keys = (
+        ("line_items", "line_item_id"),
+        ("measurements", "measurement_id"),
+        ("custom_fields", "field_id"),
+        ("attachments", "attachment_id"),
+    )
+    for collection_name, identity_key in unique_keys:
+        identities = [item[identity_key] for item in document[collection_name]]
+        if len(identities) != len(set(identities)):
+            raise ContractError(
+                f"{contract} semantic validation failed: duplicate {collection_name} identity"
+            )
+
+    known_systems = [item["system_key"] for item in document["systems"] if item["knowledge"] == "KNOWN"]
+    if len(known_systems) != len(set(known_systems)):
+        raise ContractError(f"{contract} semantic validation failed: duplicate known system reference")
+    known_components = [item["component_id"] for item in document["components"] if item["component_knowledge"] == "KNOWN"]
+    if len(known_components) != len(set(known_components)):
+        raise ContractError(f"{contract} semantic validation failed: duplicate known component reference")
+    if any(
+        item["system_knowledge"] == "KNOWN" and item["system_key"] not in set(known_systems)
+        for item in document["components"]
+    ):
+        raise ContractError(
+            f"{contract} semantic validation failed: component references an undeclared system"
+        )
+    if any(
+        item["component_id"] is not None
+        and item["component_id"] == item["parent_component_id"]
+        for item in document["components"]
+    ):
+        raise ContractError(f"{contract} semantic validation failed: component cannot parent itself")
+
+    attachment_ids = {item["attachment_id"] for item in document["attachments"]}
+    warranty = document["warranty"]
+    if warranty is not None and any(
+        identity not in attachment_ids
+        for identity in warranty["document_attachment_ids"]
+    ):
+        raise ContractError(
+            f"{contract} semantic validation failed: warranty references an absent attachment"
+        )
+
+    if document["engine_hours"] is not None:
+        _canonical_decimal(document["engine_hours"], "engine_hours", contract, nonnegative=True)
+    for item in document["line_items"]:
+        _canonical_decimal(item["quantity"], "line_items.quantity", contract, positive=True)
+        if item["cost"] is not None:
+            _validate_money(item["cost"], contract)
+    if document["total_cost"] is not None:
+        _validate_money(document["total_cost"], contract)
+    for item in document["measurements"]:
+        if item["value_type"] == "DECIMAL":
+            _canonical_decimal(item["value"], "measurements.value", contract)
+    _validate_custom_fields(document["custom_fields"], contract)
+    warranty = document["warranty"]
+    if warranty is not None and warranty["expires_on"] is not None:
+        if date.fromisoformat(warranty["expires_on"]) < date.fromisoformat(warranty["starts_on"]):
+            raise ContractError(f"{contract} semantic validation failed: warranty expiry precedes start")
+
+    completion_refs = document["completion_references"]
+    completion_keys = [
+        (item["requirement_id"], item["requirement_version"], item["task_id"], item["rule_id"], item["due_instance_id"], item["baseline_id"])
+        for item in completion_refs
+    ]
+    if len(completion_keys) != len(set(completion_keys)):
+        raise ContractError(f"{contract} semantic validation failed: duplicate completion reference")
+    for item in completion_refs:
+        role = item["completion_role"]
+        due = item["due_instance_id"]
+        baseline = item["baseline_id"]
+        effect = item["effect"]
+        if role == "DUE_INSTANCE" and (due is None or baseline is not None):
+            raise ContractError(f"{contract} semantic validation failed: DUE_INSTANCE reference shape is invalid")
+        if role == "BASELINE_ESTABLISHMENT" and (baseline is None or due is not None):
+            raise ContractError(f"{contract} semantic validation failed: BASELINE_ESTABLISHMENT reference shape is invalid")
+        if role == "DUE_AND_BASELINE" and (due is None or baseline is None):
+            raise ContractError(f"{contract} semantic validation failed: DUE_AND_BASELINE requires both references")
+        if role == "NON_COMPLETION" and (due is not None or baseline is not None or effect not in {"INSPECTION_ONLY", "DOES_NOT_SATISFY", "UNKNOWN"}):
+            raise ContractError(f"{contract} semantic validation failed: NON_COMPLETION cannot satisfy a due/baseline")
+
+
+def _validate_maintenance_requirement(document: dict[str, Any]) -> None:
+    contract = "vehicle.maintenance-requirement"
+    _validate_trimmed_text(document, contract)
+    locators = document["source_locators"]
+    _require_unique(locators, "locator_key", contract, "source locators")
+    for locator in locators:
+        _validate_locator(locator, contract)
+    rule = document["rule"]
+    for threshold_name in ("initial_due", "recurrence"):
+        threshold = rule[threshold_name]
+        if threshold is not None and all(threshold[key] is None for key in ("distance", "elapsed_months", "engine_hours")):
+            raise ContractError(f"{contract} semantic validation failed: {threshold_name} has no threshold")
+        if threshold is not None and threshold["engine_hours"] is not None:
+            _canonical_decimal(threshold["engine_hours"], f"rule.{threshold_name}.engine_hours", contract, positive=True)
+    if rule["schedule_policy"] == "ONE_TIME" and rule["recurrence"] is not None:
+        raise ContractError(f"{contract} semantic validation failed: one-time rule has recurrence")
+    for predicate in document["applicability"]["predicates"]:
+        values = predicate["values"]
+        if predicate["operator"] in {"EQUALS", "NOT_EQUALS"} and len(values) != 1:
+            raise ContractError(f"{contract} semantic validation failed: equality predicate requires one value")
+        if predicate["operator"] == "IN" and not values:
+            raise ContractError(f"{contract} semantic validation failed: IN predicate requires values")
+        if predicate["operator"] in {"IS_YES", "IS_NO"} and values:
+            raise ContractError(f"{contract} semantic validation failed: Boolean predicate cannot carry values")
+
+
+def _validate_maintenance_source_manifest(document: dict[str, Any]) -> None:
+    contract = "vehicle.maintenance-source-manifest"
+    _validate_trimmed_text(document, contract)
+    documents = document["source_documents"]
+    _require_unique(documents, "source_document_id", contract, "source documents")
+    document_ids = {item["source_document_id"] for item in documents}
+    scopes = document["review_scope"]
+    _require_unique(scopes, "locator_key", contract, "review scope locators")
+    locator_keys = {item["locator_key"] for item in scopes}
+    for scope in scopes:
+        if scope["source_document_id"] not in document_ids:
+            raise ContractError(f"{contract} semantic validation failed: review scope references absent source")
+        _validate_locator(scope, contract)
+        if scope["review_status"] == "REVIEWED" and (scope["reviewed_by"] is None or scope["reviewed_at"] is None):
+            raise ContractError(f"{contract} semantic validation failed: reviewed scope lacks reviewer receipt")
+        if scope["review_status"] == "NOT_REVIEWED" and (scope["reviewed_by"] is not None or scope["reviewed_at"] is not None):
+            raise ContractError(f"{contract} semantic validation failed: unreviewed scope has review receipt")
+    candidates = document["normalized_rule_candidates"]
+    _require_unique(candidates, "requirement_id", contract, "rule candidates")
+    _require_unique(candidates, "candidate_key", contract, "candidate keys")
+    for candidate in candidates:
+        if any(locator not in locator_keys for locator in candidate["source_locators"]):
+            raise ContractError(f"{contract} semantic validation failed: candidate references absent locator")
+
+    if document["activated"]:
+        if any(item["review_status"] != "REVIEWED" for item in scopes if item["required"]):
+            raise ContractError(f"{contract} semantic validation failed: active manifest has unreviewed scope")
+        if any(item["reuse_status"] != "APPROVED_FOR_NORMALIZED_FACTS" for item in documents):
+            raise ContractError(f"{contract} semantic validation failed: active manifest lacks reuse approval")
+        if any(item["status"] != "REVIEWED" for item in candidates):
+            raise ContractError(f"{contract} semantic validation failed: active manifest has unreviewed candidates")
+    elif document["status"] == "ACTIVE":
+        raise ContractError(f"{contract} semantic validation failed: inactive manifest claims ACTIVE status")
+
+
+def _validate_locator(locator: dict[str, Any], contract: str) -> None:
+    if locator["pdf_page_start"] > locator["pdf_page_end"]:
+        raise ContractError(f"{contract} semantic validation failed: reversed PDF page locator")
+    printed_start = locator["printed_page_start"]
+    printed_end = locator["printed_page_end"]
+    if (printed_start is None) != (printed_end is None) or (
+        printed_start is not None and printed_start > printed_end
+    ):
+        raise ContractError(f"{contract} semantic validation failed: invalid printed-page locator")
+
+
+def _validate_custom_fields(fields: list[dict[str, Any]], contract: str) -> None:
+    for item in fields:
+        if item["type"] == "DECIMAL":
+            _canonical_decimal(item["value"], "custom_fields.value", contract)
+        elif item["type"] == "INTEGER":
+            try:
+                value = int(item["value"])
+            except ValueError as exc:
+                raise ContractError(f"{contract} semantic validation failed: custom integer is invalid") from exc
+            if not -(2**63) <= value <= 2**63 - 1:
+                raise ContractError(f"{contract} semantic validation failed: custom integer exceeds signed 64-bit range")
+
+
+def _canonical_decimal(value: str, field: str, contract: str, *, positive: bool = False, nonnegative: bool = False) -> Decimal:
+    try:
+        parsed = Decimal(value)
+    except InvalidOperation as exc:
+        raise ContractError(f"{contract} semantic validation failed: {field} is not decimal") from exc
+    if not parsed.is_finite() or str(parsed) != value:
+        raise ContractError(f"{contract} semantic validation failed: {field} is not canonical decimal")
+    if positive and parsed <= 0:
+        raise ContractError(f"{contract} semantic validation failed: {field} must be greater than zero")
+    if nonnegative and parsed < 0:
+        raise ContractError(f"{contract} semantic validation failed: {field} must not be negative")
+    return parsed
+
+
+def _validate_money(money: dict[str, Any], contract: str) -> None:
+    if money["currency_code"] not in ISO_4217_CODES:
+        raise ContractError(f"{contract} semantic validation failed: currency is not a recognized ISO 4217 code")
+
+
+def _require_unique(items: list[dict[str, Any]], key: str, contract: str, label: str) -> None:
+    values = [item[key] for item in items]
+    if len(values) != len(set(values)):
+        raise ContractError(f"{contract} semantic validation failed: duplicate {label}")
+
+
+TRIMMED_TEXT_KEYS = frozenset(
+    {
+        "display_name", "title", "name", "description", "manufacturer", "part_number",
+        "specification", "quantity_unit", "method", "condition_grade", "provider", "terms",
+        "notes", "label", "storage_key", "section_label", "summary", "publisher",
+        "publication_title", "publication_number", "amendment_reason", "reason", "phone",
+        "email", "address", "invoice_number", "serial_number"
+    }
+)
+
+
+def _validate_trimmed_text(value: Any, contract: str, key: str | None = None) -> None:
+    if isinstance(value, dict):
+        for child_key, child in value.items():
+            _validate_trimmed_text(child, contract, child_key)
+    elif isinstance(value, list):
+        for child in value:
+            _validate_trimmed_text(child, contract, key)
+    elif isinstance(value, str) and key in TRIMMED_TEXT_KEYS:
+        if value != value.strip() or not value:
+            raise ContractError(f"{contract} semantic validation failed: {key} has surrounding whitespace or is blank")
 
 
 def _format_error(path: Iterable[Any], message: str) -> str:

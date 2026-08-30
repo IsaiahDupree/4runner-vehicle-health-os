@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/maintenance-source-manifest.schema.json",
+  "title": "VHOS executable maintenance source manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract", "contract_version", "manifest_id", "pack_id", "proposed_pack_version",
+    "status", "activated", "source_documents", "review_scope", "required_applicability_keys",
+    "normalized_rule_candidates", "activation_gates", "activation_blockers"
+  ],
+  "properties": {
+    "contract": {"const": "vehicle.maintenance-source-manifest"},
+    "contract_version": {"const": "1.0.0"},
+    "manifest_id": {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/maintenanceSourceManifestId"},
+    "pack_id": {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/canonicalKey"},
+    "proposed_pack_version": {"$ref": "common.schema.json#/$defs/semanticVersion"},
+    "status": {"enum": ["SOURCE_REVIEW_REQUIRED", "READY_FOR_ACTIVATION", "ACTIVE", "RETIRED"]},
+    "activated": {"type": "boolean"},
+    "source_documents": {"type": "array", "minItems": 1, "maxItems": 20, "items": {"$ref": "#/$defs/source_document"}},
+    "review_scope": {"type": "array", "minItems": 1, "maxItems": 100, "items": {"$ref": "#/$defs/review_scope"}},
+    "required_applicability_keys": {"type": "array", "minItems": 1, "maxItems": 200, "uniqueItems": true, "items": {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/canonicalKey"}},
+    "normalized_rule_candidates": {"type": "array", "maxItems": 2000, "items": {"$ref": "#/$defs/candidate"}},
+    "activation_gates": {"$ref": "#/$defs/activation_gates"},
+    "activation_blockers": {"type": "array", "maxItems": 100, "items": {"type": "string", "minLength": 1, "maxLength": 1000}}
+  },
+  "$defs": {
+    "source_document": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source_document_id", "publisher", "publication_title", "publication_number", "canonical_vehicle_page", "source_url", "market", "language", "document_sha256", "retrieved_at", "reuse_status"],
+      "properties": {
+        "source_document_id": {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/sourceDocumentId"},
+        "publisher": {"type": "string", "minLength": 1, "maxLength": 300},
+        "publication_title": {"type": "string", "minLength": 1, "maxLength": 500},
+        "publication_number": {"type": "string", "minLength": 1, "maxLength": 200},
+        "canonical_vehicle_page": {"type": "string", "format": "uri", "maxLength": 2000},
+        "source_url": {"type": "string", "format": "uri", "maxLength": 2000},
+        "market": {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/canonicalKey"},
+        "language": {"type": "string", "pattern": "^[a-z]{2}(?:-[A-Z]{2})?$"},
+        "document_sha256": {"$ref": "common.schema.json#/$defs/sha256"},
+        "retrieved_at": {"$ref": "common.schema.json#/$defs/wallTime"},
+        "reuse_status": {"enum": ["LEGAL_REVIEW_REQUIRED", "APPROVED_FOR_NORMALIZED_FACTS", "PROHIBITED"]}
+      }
+    },
+    "review_scope": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source_document_id", "locator_key", "section_label", "printed_page_start", "printed_page_end", "pdf_page_start", "pdf_page_end", "required", "review_status", "reviewed_by", "reviewed_at"],
+      "properties": {
+        "source_document_id": {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/sourceDocumentId"},
+        "locator_key": {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/canonicalKey"},
+        "section_label": {"type": "string", "minLength": 1, "maxLength": 300},
+        "printed_page_start": {"type": ["integer", "null"], "minimum": 1},
+        "printed_page_end": {"type": ["integer", "null"], "minimum": 1},
+        "pdf_page_start": {"type": "integer", "minimum": 1},
+        "pdf_page_end": {"type": "integer", "minimum": 1},
+        "required": {"type": "boolean"},
+        "review_status": {"enum": ["NOT_REVIEWED", "REVIEWED"]},
+        "reviewed_by": {"anyOf": [{"$ref": "vehicle-lifecycle-common.schema.json#/$defs/actorId"}, {"type": "null"}]},
+        "reviewed_at": {"anyOf": [{"$ref": "common.schema.json#/$defs/wallTime"}, {"type": "null"}]}
+      }
+    },
+    "candidate": {
+      "type": "object", "additionalProperties": false,
+      "required": ["requirement_id", "candidate_key", "summary", "status", "source_locators"],
+      "properties": {
+        "requirement_id": {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/requirementId"},
+        "candidate_key": {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/canonicalKey"},
+        "summary": {"type": "string", "minLength": 1, "maxLength": 500},
+        "status": {"enum": ["AWAITING_PAGE_LEVEL_REVIEW", "REVIEWED", "REJECTED"]},
+        "source_locators": {"type": "array", "minItems": 1, "maxItems": 20, "items": {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/canonicalKey"}}
+      }
+    },
+    "activation_gates": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source_hashes_verified", "review_scope_complete", "every_rule_has_locator", "applicability_complete", "legal_reuse_approved", "independent_review_complete", "regression_tests_passed", "pack_signed", "reviewed_by", "activated_at", "promoted_pack_sha256", "signature_sha256"],
+      "properties": {
+        "source_hashes_verified": {"type": "boolean"},
+        "review_scope_complete": {"type": "boolean"},
+        "every_rule_has_locator": {"type": "boolean"},
+        "applicability_complete": {"type": "boolean"},
+        "legal_reuse_approved": {"type": "boolean"},
+        "independent_review_complete": {"type": "boolean"},
+        "regression_tests_passed": {"type": "boolean"},
+        "pack_signed": {"type": "boolean"},
+        "reviewed_by": {"type": "array", "maxItems": 20, "uniqueItems": true, "items": {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/actorId"}},
+        "activated_at": {"anyOf": [{"$ref": "common.schema.json#/$defs/wallTime"}, {"type": "null"}]},
+        "promoted_pack_sha256": {"anyOf": [{"$ref": "common.schema.json#/$defs/sha256"}, {"type": "null"}]},
+        "signature_sha256": {"anyOf": [{"$ref": "common.schema.json#/$defs/sha256"}, {"type": "null"}]}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"activated": {"const": true}}, "required": ["activated"]},
+      "then": {
+        "properties": {
+          "status": {"const": "ACTIVE"},
+          "activation_blockers": {"maxItems": 0},
+          "activation_gates": {
+            "properties": {
+              "source_hashes_verified": {"const": true}, "review_scope_complete": {"const": true},
+              "every_rule_has_locator": {"const": true}, "applicability_complete": {"const": true},
+              "legal_reuse_approved": {"const": true}, "independent_review_complete": {"const": true},
+              "regression_tests_passed": {"const": true}, "pack_signed": {"const": true},
+              "reviewed_by": {"minItems": 2}, "activated_at": {"$ref": "common.schema.json#/$defs/wallTime"},
+              "promoted_pack_sha256": {"$ref": "common.schema.json#/$defs/sha256"},
+              "signature_sha256": {"$ref": "common.schema.json#/$defs/sha256"}
+            }
+          }
+        }
+      }
+    }
+  ]
+}

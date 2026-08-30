@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/maintenance-audit-event.schema.json",
+  "title": "VHOS maintenance audit event v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract", "contract_version", "audit_event_id", "vehicle_id",
+    "record_id", "revision_id", "prior_revision_id", "action", "actor",
+    "recorded_at", "reason"
+  ],
+  "properties": {
+    "contract": {"const": "vehicle.maintenance-audit-event"},
+    "contract_version": {"const": "1.0.0"},
+    "audit_event_id": {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/maintenanceAuditId"},
+    "vehicle_id": {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/vehicleId"},
+    "record_id": {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/maintenanceRecordId"},
+    "revision_id": {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/maintenanceRevisionId"},
+    "prior_revision_id": {
+      "anyOf": [{"$ref": "vehicle-lifecycle-common.schema.json#/$defs/maintenanceRevisionId"}, {"type": "null"}]
+    },
+    "action": {"enum": ["CREATED", "AMENDED", "VOIDED"]},
+    "actor": {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/actor"},
+    "recorded_at": {"$ref": "common.schema.json#/$defs/wallTime"},
+    "reason": {"type": ["string", "null"], "minLength": 1, "maxLength": 2000}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"action": {"const": "CREATED"}}, "required": ["action"]},
+      "then": {
+        "properties": {
+          "prior_revision_id": {"type": "null"},
+          "reason": {"type": "null"}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"action": {"enum": ["AMENDED", "VOIDED"]}}, "required": ["action"]},
+      "then": {
+        "properties": {
+          "prior_revision_id": {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/maintenanceRevisionId"},
+          "reason": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  ]
+}

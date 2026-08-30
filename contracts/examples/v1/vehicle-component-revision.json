@@ -1,0 +1,27 @@
+{
+  "contract": "vehicle.component-registry-entry",
+  "contract_version": "1.0.0",
+  "vehicle_id": "veh_00000000000000000000000001",
+  "component_id": "component_00000000000000000000000005",
+  "revision_id": "comprev_00000000000000000000000006",
+  "supersedes_revision_id": null,
+  "system": {"knowledge": "KNOWN", "system_key": "brakes", "display_name": "Brakes"},
+  "display_name": "Front brake pads",
+  "parent_component_id": null,
+  "state": "ACTIVE",
+  "manufacturer": null,
+  "part_number": null,
+  "serial_number": null,
+  "installed_occurrence": null,
+  "retired_occurrence": null,
+  "installed_by_record_revision_id": null,
+  "retired_by_record_revision_id": null,
+  "custom_fields": [],
+  "actor": {
+    "source": "OWNER",
+    "actor_id": "actor_00000000000000000000000007",
+    "display_name": "Vehicle owner"
+  },
+  "created_at": "2026-08-30T12:00:00Z",
+  "amendment_reason": null
+}

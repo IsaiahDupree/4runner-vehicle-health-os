@@ -1,0 +1,69 @@
+{
+  "contract": "vehicle.maintenance-record",
+  "contract_version": "1.0.0",
+  "record_id": "maintenance_00000000000000000000000003",
+  "revision_id": "maintrev_00000000000000000000000004",
+  "supersedes_revision_id": null,
+  "vehicle_id": "veh_00000000000000000000000001",
+  "vehicle_asset_revision_id": "vehrev_00000000000000000000000002",
+  "state": "ACTIVE",
+  "event_type": "INSPECTION",
+  "title": "Front brake inspection",
+  "occurrence": {"precision": "DATE_ONLY", "date": "2026-08-30", "instant": null},
+  "odometer": {
+    "value": 154000,
+    "unit": "MILES"
+  },
+  "engine_hours": null,
+  "systems": [
+    {
+      "knowledge": "KNOWN",
+      "system_key": "brakes",
+      "display_name": "Brakes"
+    }
+  ],
+  "components": [
+    {
+      "component_knowledge": "KNOWN",
+      "component_id": "component_00000000000000000000000005",
+      "display_name": "Front brake pads",
+      "system_knowledge": "KNOWN",
+      "system_key": "brakes",
+      "parent_component_id": null
+    }
+  ],
+  "provider": null,
+  "total_cost": null,
+  "line_items": [],
+  "measurements": [
+    {
+      "measurement_id": "measurement_00000000000000000000000006",
+      "name": "Pad thickness",
+      "value_type": "DECIMAL",
+      "value": "7.5",
+      "unit": "mm",
+      "method": "Manual gauge",
+      "condition_grade": null
+    }
+  ],
+  "warranty": null,
+  "notes": "Owner-entered physical measurement; no health inference applied.",
+  "custom_fields": [
+    {
+      "field_id": "inspection.wheel_removed",
+      "label": "Wheel removed",
+      "type": "BOOLEAN",
+      "value": "true",
+      "unit": null
+    }
+  ],
+  "attachments": [],
+  "completion_references": [],
+  "actor": {
+    "source": "OWNER",
+    "actor_id": "actor_00000000000000000000000007",
+    "display_name": "Vehicle owner"
+  },
+  "created_at": "2026-08-30T12:16:00Z",
+  "amendment_reason": null
+}

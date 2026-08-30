@@ -44,3 +44,31 @@ Interop examples in `examples/v1/discovery-*.json` are bound to the retained
 cross-model candidates only; they are not a 2005 4Runner signal authority pack.
 
 Run `vhos contracts check` after any schema change.
+
+## Maintenance ledger v1
+
+`vehicle.asset`, `vehicle.component-registry-entry`, `vehicle.maintenance-record`,
+`vehicle.maintenance-audit-event`, `vehicle.maintenance-requirement`, and
+`vehicle.maintenance-source-manifest` define the vehicle-agnostic lifecycle and
+maintenance boundary shared by the Android truth store and future companion sync. The
+existing `vehicle.configuration-profile@1.0.0` remains the immutable 2005
+4Runner configuration contract; a generic asset does not inherit those
+pack-specific constants.
+
+Maintenance records are revision chains. A correction appends a revision with
+`supersedes_revision_id` and `amendment_reason`; a user-facing delete appends a
+`VOIDED` revision. Implementations must never physically update or delete a
+record revision or audit event. Attachment bytes remain in private object
+storage while the contract retains their hashes, type, size, availability, and
+storage key.
+
+All new lifecycle identities are typed ULIDs under ADR-0002. A maintenance occurrence states
+whether the evidence is an exact instant or only a calendar date; a date-only receipt is never
+assigned a fabricated time. Unknown system or component identity is represented explicitly rather
+than guessed. A completion that claims to satisfy an OEM requirement binds the exact pack,
+manifest hash, requirement version, task, rule hash, and due/baseline identity.
+
+Source manifests are executable activation gates, not prose checklists. An active manifest must
+have complete reviewed locators, applicability and independent review, legal approval for
+normalized facts, regression evidence, and a signed promoted-pack digest. Draft manifests cannot
+produce due state.
