@@ -43,6 +43,21 @@ Discovery links to CAN Units & Derived Data: eligible J1979 values, candidate-un
 
 The iPhone and Android views preserve source hashes, sessions, raw values, transform IDs, and authority. Import never upgrades a candidate.
 
+## Live identifier coverage
+
+The live view is not restricted to the five identifiers that currently have pinned candidate fields.
+Every current-session, persisted, listen-only `RAW_CAN_FRAME` identifier may appear in the raw bus
+lane. The checked-in real corpus currently contains these 17 identifiers:
+
+`0x020`, `0x022`, `0x023`, `0x025`, `0x223`, `0x224`, `0x2C1`, `0x2C4`, `0x2D0`, `0x2D2`,
+`0x3D0`, `0x420`, `0x423`, `0x4C1`, `0x4C3`, `0x4C6`, and `0x4C7`.
+
+Pinned fields may additionally show the explicitly recorded candidate transform and unit. All other
+identifiers remain `RAW ONLY` and expose only evidence that arrived from the gateway: identifier,
+DLC, payload bytes, source sequence, age/freshness, observation count/rate where defensibly
+measured, and byte changes. An identifier name, physical unit, or vehicle meaning is never inferred
+from presence or visual shape alone. Missing identifiers remain absent rather than appearing as zero.
+
 ## Source records
 
 - `vehicle-signal-packs/standards/j1979-mode01-obdb-d3259214.v1.json`

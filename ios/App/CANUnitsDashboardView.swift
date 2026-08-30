@@ -4,6 +4,9 @@ import VHOSCore
 struct CANUnitsDashboardView: View {
   @Environment(AppModel.self) private var model
   @State private var selectedReplaySeriesID = "toyota.2c4.engine-speed.be16"
+  @State private var selectedLiveChannelID: String?
+  /// One-second tick so freshness decays visibly without new frames.
+  private let liveClock = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
   private var report: CANUnitsReport? { model.canUnitsReport }
 
@@ -30,6 +33,7 @@ struct CANUnitsDashboardView: View {
     ScrollView {
       LazyVStack(alignment: .leading, spacing: 20) {
         boundaryCard
+        CANLiveUnitsSection(selectedChannelID: $selectedLiveChannelID)
         standardValues
         engineeringValues
         derivedValues
@@ -41,6 +45,21 @@ struct CANUnitsDashboardView: View {
     }
     .navigationTitle("CAN Data & Units")
     .navigationBarTitleDisplayMode(.inline)
+    // Drain the bounded recent window rather than only the last rendered
+    // value. SwiftUI may coalesce several high-rate frame changes.
+    .onChange(of: model.gateway.latestCANObservation?.id) { _, _ in
+      model.ingestLiveCANObservations(model.gateway.recentCANObservations)
+    }
+    .onChange(of: model.gateway.health?.captureSessionID) { _, _ in
+      model.ingestLiveCANObservations(model.gateway.recentCANObservations)
+    }
+    .onChange(of: model.gateway.state) { _, _ in
+      model.ingestLiveCANObservations(model.gateway.recentCANObservations)
+    }
+    // Freshness must decay on its own: a bus that goes quiet has to show
+    // STALE rather than sit frozen at its last value.
+    .onReceive(liveClock) { _ in model.tickLiveCANClock() }
+    .onAppear { model.ingestLiveCANObservations(model.gateway.recentCANObservations) }
   }
 
 }
@@ -74,7 +93,7 @@ extension CANUnitsDashboardView {
         CANUnitsUnavailable(
           title: "Standard OBD values unavailable",
           detail:
-            "No fresh sample has passed the response, enumeration, payload, identity, capture, and freshness gates. Missing evidence is never shown as zero.")
+            "The gateway is listen-only: it never requests a PID, so SAE J1979 values appear here only while another tool on the bus is polling. Without that traffic this lane stays empty by design — see Live Engineering Units above for values derived from passive frames. Missing evidence is never shown as zero.")
       } else {
         ForEach(latestStandardSamples) { sample in
           NavigationLink {

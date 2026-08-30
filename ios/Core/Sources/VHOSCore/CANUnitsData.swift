@@ -314,6 +314,62 @@ public enum CANUnitsAnalyzer {
     else { throw CANUnitsError.invalidObservation(observation.id) }
   }
 
+  /// The pinned candidate-field catalog, exposed for live rendering.
+  ///
+  /// The live lane and the retained-analysis lane MUST share one copy of
+  /// the extraction and transform math. Two implementations of the same
+  /// formula is how a dashboard ends up showing a number the analysis
+  /// disagrees with, so live consumers project through
+  /// `projectLive(_:)` below rather than reimplementing scale/offset.
+  public static var candidateFields: [CANLiveFieldDescriptor] {
+    definitions.map {
+      CANLiveFieldDescriptor(
+        id: $0.id,
+        label: $0.label,
+        signalID: $0.signalID,
+        identifier: $0.identifier,
+        unit: $0.transform?.unit,
+        source: "Passive CAN 0x"
+          + String(format: "%03X", $0.identifier) + " · " + extractionFormula($0),
+        authority: authority(for: $0),
+        definitionStatus: $0.status,
+        validationGate: $0.validationGate)
+    }
+  }
+
+  /// Apply the pinned catalog to a single live observation.
+  ///
+  /// Returns one reading per catalog field the frame satisfies (a frame
+  /// can feed several fields — 0x2C4 carries both engine speed and intake
+  /// air temperature). Returns an empty array for frames no pinned field
+  /// claims; it never guesses.
+  public static func projectLive(
+    _ observation: PassiveCANObservation
+  ) -> [CANLiveReading] {
+    definitions.compactMap { definition in
+      guard observation.identifier == definition.identifier, !observation.extended,
+        !observation.remoteRequest, let raw = extract(definition, observation)
+      else { return nil }
+      return CANLiveReading(
+        fieldID: definition.id,
+        signalID: definition.signalID,
+        label: definition.label,
+        rawValue: raw,
+        displayValue: definition.transform.map { raw * $0.scale + $0.offset } ?? raw,
+        unit: definition.transform?.unit,
+        authority: authority(for: definition),
+        gatewayID: observation.gatewayID,
+        sessionID: observation.sessionID,
+        sourceSequence: observation.sourceSequence,
+        monotonicMicroseconds: observation.monotonicMicroseconds,
+        observedAt: observation.ingestedAt)
+    }
+  }
+
+  private static func authority(for definition: FieldDefinition) -> CANUnitsAuthority {
+    definition.transform == nil ? .rawOnlyCandidate : .unverifiedCandidateUnit
+  }
+
   private static func project(
     _ observations: [PassiveCANObservation]
   ) -> [ValueProjection] {

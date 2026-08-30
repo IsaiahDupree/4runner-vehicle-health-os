@@ -23,6 +23,7 @@
 		A556A68B0A447322A223EA70 /* EvidenceWorkCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C62FF37FA894A57174E968FB /* EvidenceWorkCoordinator.swift */; };
 		AAC7CA136BA2228F0D634559 /* SynchronizedReferenceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5F07524DBD012E9F39B09DB /* SynchronizedReferenceStore.swift */; };
 		B12336DDFA67B1A55A43F447 /* DiscoveryEvidenceStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37F575257101C56C4814A332 /* DiscoveryEvidenceStoreTests.swift */; };
+		B95B3BB8FE9E1967A721187A /* CANLiveUnitsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = E210DB4EDB637662A1FE3436 /* CANLiveUnitsSection.swift */; };
 		BBD00956AAD1B1F75DD26F8C /* PassiveCANPlaybackLab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33368A105329E710051228F4 /* PassiveCANPlaybackLab.swift */; };
 		C32FBE14A5EF3BEEAE086A68 /* EvidenceOutboxBackgroundTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FF7D608E6C3BC6B19524A3A /* EvidenceOutboxBackgroundTests.swift */; };
 		CADDA30B1BCE3C005880874D /* CaptureAndReferencePersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9123684AD71628F377A5EB55 /* CaptureAndReferencePersistenceTests.swift */; };
@@ -67,6 +68,7 @@
 		C62FF37FA894A57174E968FB /* EvidenceWorkCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceWorkCoordinator.swift; sourceTree = "<group>"; };
 		C904E627AC50298F57802AB7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D6A9AAE2238B7F973C0CEA46 /* KeyStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyStore.swift; sourceTree = "<group>"; };
+		E210DB4EDB637662A1FE3436 /* CANLiveUnitsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CANLiveUnitsSection.swift; sourceTree = "<group>"; };
 		E5A8090F593B5656A6B680E3 /* VehicleHealthOSTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = VehicleHealthOSTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		EDE321369856AF54C6B7946E /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		F058478C0C2988386954DDC9 /* Core */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Core; path = Core; sourceTree = SOURCE_ROOT; };
@@ -128,6 +130,7 @@
 			children = (
 				5ADD085CC4E0D7223092E39A /* AppModel.swift */,
 				C904E627AC50298F57802AB7 /* Assets.xcassets */,
+				E210DB4EDB637662A1FE3436 /* CANLiveUnitsSection.swift */,
 				FAADB0E18F0262D5D28275BF /* CANUnitsDashboardView.swift */,
 				1C4CB58385EA15D8DE39AA03 /* DiscoveryEvidenceStore.swift */,
 				3DFE18956FBB741182DC169A /* DiscoveryWorkspaceView.swift */,
@@ -271,6 +274,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				50658F6BD96177F3C72D98A4 /* AppModel.swift in Sources */,
+				B95B3BB8FE9E1967A721187A /* CANLiveUnitsSection.swift in Sources */,
 				90E4621A52313C74A4ABB3D1 /* CANUnitsDashboardView.swift in Sources */,
 				F1AF0F959A5BC7A5C2BEC8DB /* DiscoveryEvidenceStore.swift in Sources */,
 				6038918354887A1A87E7D5D7 /* DiscoveryWorkspaceView.swift in Sources */,

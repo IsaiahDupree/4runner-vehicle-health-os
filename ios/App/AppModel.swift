@@ -106,6 +106,19 @@ final class AppModel {
   var canResearchInProgress = false
   var canUnitsReport: CANUnitsReport?
   var canUnitsMessage = "No retained CAN unit analysis is available on this iPhone."
+  /// Rolling live windows per pinned candidate field, fed by the passive
+  /// CAN stream. Separate from `canUnitsReport`, which analyzes RETAINED
+  /// evidence: the live lane answers "what is on the bus now", the report
+  /// answers "what was in the archive". They share their transform math
+  /// (CANUnitsAnalyzer.projectLive) so they can never disagree.
+  private(set) var canLiveUnits = CANLiveUnitsAccumulator()
+  /// Bumped on every accepted live sample so SwiftUI re-renders; the
+  /// accumulator itself is a value type held privately.
+  private(set) var canLiveUnitsRevision: UInt64 = 0
+  /// Ticks while the live section is visible so freshness decays visibly
+  /// even when the bus goes quiet.
+  private(set) var canLiveUnitsClock = Date()
+  private var canLiveUnitsSessionKey: String?
   var passiveCANPreparedExportURL: URL?
   var passiveCANExportInProgress = false
   var preparedEvidenceSyncURLs: [URL] = []
@@ -1548,6 +1561,83 @@ final class AppModel {
         self.errorMessage = error.localizedDescription
       }
     }
+  }
+
+  /// Feed the newest passive CAN observation into the live windows.
+  ///
+  /// Only listen-only frames from the connected gateway's CURRENT capture
+  /// session are accepted, and a session change clears every window —
+  /// blending two capture sessions into one rolling graph would present a
+  /// discontinuity as if it were vehicle behavior.
+  func ingestLiveCANObservation(_ observation: PassiveCANObservation?) {
+    ingestLiveCANObservations(observation.map { [$0] } ?? [])
+  }
+
+  /// Drain an arrival-ordered recent gateway window into the live channels.
+  ///
+  /// This is intentionally idempotent. The gateway retains a bounded recent
+  /// window, so processing the whole window on navigation and after a
+  /// coalesced UI update cannot lose a matching frame or double-count one.
+  func ingestLiveCANObservations(_ observations: [PassiveCANObservation]) {
+    guard gateway.state == .vhosConnected,
+      let gatewayID = gateway.handshake?.gatewayID,
+      let sessionID = gateway.health?.captureSessionID
+    else {
+      resetLiveCANContext()
+      return
+    }
+    let sessionKey = "\(gatewayID):\(sessionID)"
+    if canLiveUnitsSessionKey != sessionKey {
+      let hadSamples = canLiveUnits.hasSamples
+      canLiveUnits.reset()
+      canLiveUnitsSessionKey = sessionKey
+      if hadSamples {
+        canLiveUnitsRevision &+= 1
+        canLiveUnitsClock = Date()
+      }
+    }
+    let updated = canLiveUnits.ingestCurrentSession(
+      observations, gatewayID: gatewayID, sessionID: sessionID)
+    guard !updated.isEmpty else { return }
+    canLiveUnitsRevision &+= 1
+    canLiveUnitsClock = Date()
+  }
+
+  private func resetLiveCANContext() {
+    guard canLiveUnitsSessionKey != nil || canLiveUnits.hasSamples else { return }
+    canLiveUnits.reset()
+    canLiveUnitsSessionKey = nil
+    canLiveUnitsRevision &+= 1
+    canLiveUnitsClock = Date()
+  }
+
+  /// Advance the freshness clock so a quiet bus visibly decays to STALE
+  /// rather than sitting frozen at its last value.
+  func tickLiveCANClock() { canLiveUnitsClock = Date() }
+
+  /// Candidate fields that have actually produced a live sample, in
+  /// catalog order — the selectable set.
+  var liveCANFields: [CANLiveFieldDescriptor] {
+    _ = canLiveUnitsRevision
+    return canLiveUnits.observedFields
+  }
+
+  /// Recently observed exact raw identifiers, including identifiers that
+  /// also feed separate pinned candidate fields. Raw frames never acquire a
+  /// signal name or unit.
+  var liveRawCANIdentifiers: [CANLiveRawIdentifierDescriptor] {
+    _ = canLiveUnitsRevision
+    return canLiveUnits.observedRawIdentifiers
+  }
+
+  func liveCANChannel(for fieldID: String) -> CANLiveChannel? {
+    _ = canLiveUnitsRevision
+    return canLiveUnits.channel(for: fieldID, now: canLiveUnitsClock)
+  }
+
+  func liveRawCANChannel(for identifierID: String) -> CANLiveRawChannel? {
+    _ = canLiveUnitsRevision
+    return canLiveUnits.rawChannel(for: identifierID, now: canLiveUnitsClock)
   }
 
   func refreshCANResearch() {
