@@ -10,12 +10,16 @@ import Testing
 private func frame(
   identifier: UInt32 = 0x2C4,
   data: [UInt8],
+  gatewayID: String = "esp32-9454c5b08d14",
   sessionID: UInt32 = 1_007_674_331,
   sourceSequence: UInt64,
-  monotonicMicroseconds: UInt64 = 1_000
+  monotonicMicroseconds: UInt64 = 1_000,
+  listenOnly: Bool = true,
+  evidenceSource: String = "ble-live",
+  ingestedAt: String = "2026-08-28T15:00:00Z"
 ) -> PassiveCANObservation {
   PassiveCANObservation(
-    gatewayID: "esp32-9454c5b08d14",
+    gatewayID: gatewayID,
     sessionID: sessionID,
     sourceSequence: sourceSequence,
     monotonicMicroseconds: monotonicMicroseconds,
@@ -23,11 +27,11 @@ private func frame(
     identifier: identifier,
     extended: false,
     remoteRequest: false,
-    listenOnly: true,
+    listenOnly: listenOnly,
     dataLength: 8,
     data: data,
-    evidenceSource: "ble-live",
-    ingestedAt: "2026-08-28T15:00:00Z")
+    evidenceSource: evidenceSource,
+    ingestedAt: ingestedAt)
 }
 
 // 997 counts × 0.78125 rpm/count = 778.90625 rpm — the exact value on the
@@ -87,9 +91,9 @@ private let engineSpeed997: [UInt8] = [0x03, 0xE5, 0, 0, 0, 0, 0, 0]
   // the source sequence within a session is not a second observation.
   var accumulator = CANLiveUnitsAccumulator()
   let now = Date(timeIntervalSince1970: 1_800_000_000)
-  accumulator.ingest(frame(data: engineSpeed997, sourceSequence: 7), receivedAt: now)
-  accumulator.ingest(frame(data: engineSpeed997, sourceSequence: 7), receivedAt: now)
-  accumulator.ingest(frame(data: engineSpeed997, sourceSequence: 6), receivedAt: now)
+  #expect(!accumulator.ingest(frame(data: engineSpeed997, sourceSequence: 7), receivedAt: now).isEmpty)
+  #expect(accumulator.ingest(frame(data: engineSpeed997, sourceSequence: 7), receivedAt: now).isEmpty)
+  #expect(accumulator.ingest(frame(data: engineSpeed997, sourceSequence: 6), receivedAt: now).isEmpty)
 
   let channel = try #require(
     accumulator.channel(for: "toyota.2c4.engine-speed.be16", now: now))
@@ -135,6 +139,59 @@ private let engineSpeed997: [UInt8] = [0x03, 0xE5, 0, 0, 0, 0, 0, 0]
   #expect(updated.isEmpty)
   #expect(!accumulator.hasSamples)
   #expect(accumulator.observedFields.isEmpty)
+}
+
+@Test func recentBatchFindsPinnedFrameBeforeUnclaimedTailAndPreservesItsAge() throws {
+  var accumulator = CANLiveUnitsAccumulator()
+  let observations = [
+    frame(
+      data: engineSpeed997, sourceSequence: 10, monotonicMicroseconds: 1_000,
+      ingestedAt: "2026-08-28T15:00:00Z"),
+    frame(
+      identifier: 0x7FE, data: [1, 2, 3, 4, 5, 6, 7, 8], sourceSequence: 11,
+      monotonicMicroseconds: 2_000, ingestedAt: "2026-08-28T15:00:08Z"),
+  ]
+
+  let updated = accumulator.ingestCurrentSession(
+    observations, gatewayID: "esp32-9454c5b08d14", sessionID: 1_007_674_331)
+
+  #expect(updated.contains("toyota.2c4.engine-speed.be16"))
+  let now = try #require(ISO8601DateFormatter().date(from: "2026-08-28T15:00:09Z"))
+  let channel = try #require(
+    accumulator.channel(for: "toyota.2c4.engine-speed.be16", now: now))
+  #expect(channel.latest?.sourceSequence == 10)
+  #expect(channel.latest?.rawValue == 997)
+  #expect(channel.ageSeconds == 9)
+  #expect(channel.freshness == .stale)
+}
+
+@Test func recentBatchAcceptsOnlyCurrentListenOnlyBLESession() throws {
+  var accumulator = CANLiveUnitsAccumulator()
+  let observations = [
+    frame(data: engineSpeed997, sourceSequence: 1),
+    frame(
+      data: [0x10, 0, 0, 0, 0, 0, 0, 0], gatewayID: "other-gateway",
+      sourceSequence: 2),
+    frame(
+      data: [0x20, 0, 0, 0, 0, 0, 0, 0], sessionID: 77,
+      sourceSequence: 3),
+    frame(
+      data: [0x30, 0, 0, 0, 0, 0, 0, 0], sourceSequence: 4,
+      listenOnly: false),
+    frame(
+      data: [0x40, 0, 0, 0, 0, 0, 0, 0], sourceSequence: 5,
+      evidenceSource: "gateway-flash"),
+  ]
+
+  _ = accumulator.ingestCurrentSession(
+    observations, gatewayID: "esp32-9454c5b08d14", sessionID: 1_007_674_331)
+
+  let now = try #require(ISO8601DateFormatter().date(from: "2026-08-28T15:00:01Z"))
+  let channel = try #require(
+    accumulator.channel(for: "toyota.2c4.engine-speed.be16", now: now))
+  #expect(channel.sampleCount == 1)
+  #expect(channel.latest?.sourceSequence == 1)
+  #expect(channel.latest?.rawValue == 997)
 }
 
 @Test func onlyFieldsWithLiveEvidenceBecomeSelectable() throws {

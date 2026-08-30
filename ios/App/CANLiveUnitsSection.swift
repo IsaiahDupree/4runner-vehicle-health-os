@@ -36,10 +36,8 @@ struct CANLiveUnitsSection: View {
 
       if fields.isEmpty {
         CANLiveUnavailable(
-          title: "No live candidate fields yet",
-          detail: model.gateway.state == .vhosConnected
-            ? "Connected, but no passive frame has matched a pinned candidate field yet. Values appear as the vehicle's modules transmit."
-            : "Connect the VHOS gateway over Bluetooth to stream live passive CAN values.")
+          title: "No matching live values yet",
+          detail: emptyStateDetail)
       } else {
         picker
         if let channel, let selection {
@@ -61,6 +59,59 @@ struct CANLiveUnitsSection: View {
     }
     .pickerStyle(.menu)
     .tint(.blue)
+  }
+
+  private var emptyStateDetail: String {
+    var details = ["Gateway: \(gatewayStateLabel)."]
+    if let observation = model.gateway.latestCANObservation {
+      let age = model.gateway.latestCANObservationReceivedAt.map {
+        max(0, model.canLiveUnitsClock.timeIntervalSince($0))
+      }
+      let ageText = age.map { $0 < 1 ? "<1s ago" : "\(Int($0))s ago" } ?? "age unavailable"
+      details.append(
+        "Latest accepted raw frame: 0x\(observation.identifierHex), \(ageText).")
+    } else {
+      details.append("No current-session raw CAN frame has passed the gateway evidence gates.")
+    }
+    let identifiers = recentPinnedIdentifiers
+      .map { "0x" + String(format: "%03X", $0) }
+      .joined(separator: ", ")
+    details.append(
+      identifiers.isEmpty
+        ? "Pinned IDs seen in the recent accepted window: none."
+        : "Pinned IDs seen in the recent accepted window: \(identifiers).")
+    if model.gateway.state != .vhosConnected {
+      details.append("Connect the VHOS gateway over Bluetooth to stream live values.")
+    } else {
+      details.append("Waiting for a standard, non-RTR frame with enough bytes for a pinned field.")
+    }
+    return details.joined(separator: " ")
+  }
+
+  private var recentPinnedIdentifiers: [UInt32] {
+    guard let gatewayID = model.gateway.handshake?.gatewayID,
+      let sessionID = model.gateway.health?.captureSessionID
+    else { return [] }
+    let pinned = Set(CANUnitsAnalyzer.candidateFields.map(\.identifier))
+    return Set(
+      model.gateway.recentCANObservations.lazy.filter {
+        $0.gatewayID == gatewayID && $0.sessionID == sessionID && $0.listenOnly
+          && $0.evidenceSource == "ble-live" && pinned.contains($0.identifier)
+      }.map(\.identifier)
+    ).sorted()
+  }
+
+  private var gatewayStateLabel: String {
+    switch model.gateway.state {
+    case .disconnected: "disconnected"
+    case .scanning: "scanning"
+    case .connecting: "connecting"
+    case .factoryCompatible: "factory-compatible firmware"
+    case .vhosConnected: "VHOS connected"
+    case .degraded: "degraded"
+    case .updating: "updating"
+    case .failed: "failed"
+    }
   }
 
   @ViewBuilder

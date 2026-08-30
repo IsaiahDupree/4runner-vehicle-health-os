@@ -1570,13 +1570,25 @@ final class AppModel {
   /// blending two capture sessions into one rolling graph would present a
   /// discontinuity as if it were vehicle behavior.
   func ingestLiveCANObservation(_ observation: PassiveCANObservation?) {
-    guard let observation, observation.listenOnly else { return }
-    let sessionKey = "\(observation.gatewayID):\(observation.sessionID)"
+    ingestLiveCANObservations(observation.map { [$0] } ?? [])
+  }
+
+  /// Drain an arrival-ordered recent gateway window into the live channels.
+  ///
+  /// This is intentionally idempotent. The gateway retains a bounded recent
+  /// window, so processing the whole window on navigation and after a
+  /// coalesced UI update cannot lose a matching frame or double-count one.
+  func ingestLiveCANObservations(_ observations: [PassiveCANObservation]) {
+    guard let gatewayID = gateway.handshake?.gatewayID,
+      let sessionID = gateway.health?.captureSessionID
+    else { return }
+    let sessionKey = "\(gatewayID):\(sessionID)"
     if canLiveUnitsSessionKey != sessionKey {
       canLiveUnits.reset()
       canLiveUnitsSessionKey = sessionKey
     }
-    let updated = canLiveUnits.ingest(observation, receivedAt: Date())
+    let updated = canLiveUnits.ingestCurrentSession(
+      observations, gatewayID: gatewayID, sessionID: sessionID)
     guard !updated.isEmpty else { return }
     canLiveUnitsRevision &+= 1
     canLiveUnitsClock = Date()

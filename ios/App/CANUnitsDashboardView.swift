@@ -45,14 +45,15 @@ struct CANUnitsDashboardView: View {
     }
     .navigationTitle("CAN Data & Units")
     .navigationBarTitleDisplayMode(.inline)
-    // Every accepted passive frame feeds the live windows.
-    .onChange(of: model.gateway.latestCANObservation) { _, observation in
-      model.ingestLiveCANObservation(observation)
+    // Drain the bounded recent window rather than only the last rendered
+    // value. SwiftUI may coalesce several high-rate frame changes.
+    .onChange(of: model.gateway.latestCANObservation?.id) { _, _ in
+      model.ingestLiveCANObservations(model.gateway.recentCANObservations)
     }
     // Freshness must decay on its own: a bus that goes quiet has to show
     // STALE rather than sit frozen at its last value.
     .onReceive(liveClock) { _ in model.tickLiveCANClock() }
-    .onAppear { model.ingestLiveCANObservation(model.gateway.latestCANObservation) }
+    .onAppear { model.ingestLiveCANObservations(model.gateway.recentCANObservations) }
   }
 
 }

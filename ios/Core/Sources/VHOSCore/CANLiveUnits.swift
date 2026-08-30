@@ -172,6 +172,7 @@ public struct CANLiveUnitsAccumulator: Sendable {
     receivedAt: Date
   ) -> [String] {
     let readings = CANUnitsAnalyzer.projectLive(observation)
+    var updatedFieldIDs: [String] = []
     for reading in readings {
       var samples = samplesByField[reading.fieldID] ?? []
       // Guard against replayed or duplicated frames: within one session the
@@ -185,8 +186,35 @@ public struct CANLiveUnitsAccumulator: Sendable {
       samples.append(Sample(reading: reading, receivedAt: receivedAt))
       if samples.count > capacity { samples.removeFirst(samples.count - capacity) }
       samplesByField[reading.fieldID] = samples
+      updatedFieldIDs.append(reading.fieldID)
     }
-    return readings.map(\.fieldID)
+    return updatedFieldIDs
+  }
+
+  /// Ingest a bounded arrival-ordered window from the gateway.
+  ///
+  /// The dashboard can be opened after frames have already arrived, and
+  /// SwiftUI may coalesce several high-rate `latestCANObservation` changes
+  /// into one render. Replaying the gateway's recent window closes both
+  /// gaps. Exact gateway/session and live-source gates prevent a retained or
+  /// previous-session observation from being relabeled as current. The
+  /// observation's original phone-ingest wall time is retained so opening
+  /// the screen cannot make an old frame look fresh.
+  @discardableResult
+  public mutating func ingestCurrentSession(
+    _ observations: [PassiveCANObservation],
+    gatewayID: String,
+    sessionID: UInt32
+  ) -> [String] {
+    var updatedFieldIDs: [String] = []
+    for observation in observations {
+      guard observation.gatewayID == gatewayID, observation.sessionID == sessionID,
+        observation.listenOnly, observation.evidenceSource == "ble-live",
+        let receivedAt = Self.receivedAt(from: observation.ingestedAt)
+      else { continue }
+      updatedFieldIDs.append(contentsOf: ingest(observation, receivedAt: receivedAt))
+    }
+    return updatedFieldIDs
   }
 
   /// Drop everything. Used when the gateway session changes: a window may
@@ -225,6 +253,14 @@ public struct CANLiveUnitsAccumulator: Sendable {
 
   public func channels(now: Date) -> [CANLiveChannel] {
     observedFields.compactMap { channel(for: $0.id, now: now) }
+  }
+
+  private static func receivedAt(from value: String) -> Date? {
+    let plain = ISO8601DateFormatter()
+    if let date = plain.date(from: value) { return date }
+    let fractional = ISO8601DateFormatter()
+    fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    return fractional.date(from: value)
   }
 
   static func statistics(_ values: [Double]) -> CANDescriptiveStatistics? {
