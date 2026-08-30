@@ -14,7 +14,10 @@ private func frame(
   sessionID: UInt32 = 1_007_674_331,
   sourceSequence: UInt64,
   monotonicMicroseconds: UInt64 = 1_000,
+  extended: Bool = false,
+  remoteRequest: Bool = false,
   listenOnly: Bool = true,
+  dataLength: UInt8 = 8,
   evidenceSource: String = "ble-live",
   ingestedAt: String = "2026-08-28T15:00:00Z"
 ) -> PassiveCANObservation {
@@ -25,10 +28,10 @@ private func frame(
     monotonicMicroseconds: monotonicMicroseconds,
     bitrateBps: 500_000,
     identifier: identifier,
-    extended: false,
-    remoteRequest: false,
+    extended: extended,
+    remoteRequest: remoteRequest,
     listenOnly: listenOnly,
-    dataLength: 8,
+    dataLength: dataLength,
     data: data,
     evidenceSource: evidenceSource,
     ingestedAt: ingestedAt)
@@ -129,16 +132,152 @@ private let engineSpeed997: [UInt8] = [0x03, 0xE5, 0, 0, 0, 0, 0, 0]
   #expect(readings.contains { $0.signalID == "engine.intake-air-temperature" })
 }
 
-@Test func unclaimedIdentifiersAreIgnoredNotGuessedAt() {
+@Test func pinnedIdentifierAlsoKeepsAnExactUnitlessRawFrameChannel() throws {
+  var accumulator = CANLiveUnitsAccumulator()
+  let now = Date(timeIntervalSince1970: 1_800_000_000)
+  let payload: [UInt8] = [0x03, 0xE5, 0xAA, 0x5A, 0x10, 0x20, 0x30, 0x40]
+
+  _ = accumulator.ingest(
+    frame(identifier: 0x2C4, data: payload, sourceSequence: 1), receivedAt: now)
+
+  #expect(accumulator.observedFields.contains { $0.signalID == "engine.speed" })
+  let raw = try #require(
+    accumulator.observedRawIdentifiers.first { $0.identifier == 0x2C4 })
+  #expect(raw.unit == nil)
+  #expect(raw.authority == .rawOnlyCandidate)
+  let rawChannel = try #require(accumulator.rawChannel(for: raw.id, now: now))
+  #expect(rawChannel.latest.data == payload)
+  #expect(rawChannel.latest.dataHex == "03 E5 AA 5A 10 20 30 40")
+}
+
+@Test func unknownIdentifierIsVisibleOnlyAsExactRawEvidence() throws {
   var accumulator = CANLiveUnitsAccumulator()
   let now = Date(timeIntervalSince1970: 1_800_000_000)
   let updated = accumulator.ingest(
-    frame(identifier: 0x7FE, data: [1, 2, 3, 4, 5, 6, 7, 8], sourceSequence: 1),
+    frame(
+      identifier: 0x023, data: [0x02, 0x00, 0x02, 0x11, 0x38, 0x00, 0x77, 0xFF],
+      sourceSequence: 1, dataLength: 7),
     receivedAt: now)
 
-  #expect(updated.isEmpty)
-  #expect(!accumulator.hasSamples)
+  let descriptor = try #require(accumulator.observedRawIdentifiers.first)
+  #expect(updated == [descriptor.id])
+  #expect(accumulator.hasSamples)
   #expect(accumulator.observedFields.isEmpty)
+  #expect(descriptor.identifier == 0x023)
+  #expect(descriptor.label == "CAN 0x023")
+  #expect(descriptor.authority == .rawOnlyCandidate)
+  #expect(descriptor.unit == nil)
+  #expect(!descriptor.authority.exposesEngineeringUnit)
+  let channel = try #require(accumulator.rawChannel(for: descriptor.id, now: now))
+  #expect(channel.latest.dataLength == 7)
+  #expect(channel.latest.data == [0x02, 0x00, 0x02, 0x11, 0x38, 0x00, 0x77])
+  #expect(channel.latest.dataHex == "02 00 02 11 38 00 77")
+}
+
+@Test func rawIdentifierInventoryIsBoundedByLeastRecentUpdate() {
+  var accumulator = CANLiveUnitsAccumulator(rawIdentifierCapacity: 2)
+  let now = Date(timeIntervalSince1970: 1_800_000_000)
+  accumulator.ingest(
+    frame(identifier: 0x600, data: [1, 0, 0, 0, 0, 0, 0, 0], sourceSequence: 1),
+    receivedAt: now)
+  accumulator.ingest(
+    frame(identifier: 0x601, data: [2, 0, 0, 0, 0, 0, 0, 0], sourceSequence: 2),
+    receivedAt: now)
+  // Refresh 0x600 so 0x601 is the least-recently-updated identifier.
+  accumulator.ingest(
+    frame(identifier: 0x600, data: [3, 0, 0, 0, 0, 0, 0, 0], sourceSequence: 3),
+    receivedAt: now)
+  accumulator.ingest(
+    frame(identifier: 0x602, data: [4, 0, 0, 0, 0, 0, 0, 0], sourceSequence: 4),
+    receivedAt: now)
+
+  let identifiers = Set(accumulator.observedRawIdentifiers.map(\.identifier))
+  #expect(accumulator.observedRawIdentifiers.count == 2)
+  #expect(identifiers == [0x600, 0x602])
+}
+
+@Test func rawIdentifierUpdatesAreExactAndDuplicateSequencesDoNotCount() throws {
+  var accumulator = CANLiveUnitsAccumulator()
+  let now = Date(timeIntervalSince1970: 1_800_000_000)
+  let first = frame(
+    identifier: 0x223, data: [0x10, 0x20, 0x30, 0, 0, 0, 0, 0], sourceSequence: 10)
+  let second = frame(
+    identifier: 0x223, data: [0x10, 0x21, 0x30, 0, 0, 0, 0, 0], sourceSequence: 11)
+  #expect(!accumulator.ingest(first, receivedAt: now).isEmpty)
+  #expect(!accumulator.ingest(second, receivedAt: now.addingTimeInterval(1)).isEmpty)
+  #expect(accumulator.ingest(second, receivedAt: now.addingTimeInterval(2)).isEmpty)
+
+  let descriptor = try #require(accumulator.observedRawIdentifiers.first)
+  let channel = try #require(
+    accumulator.rawChannel(for: descriptor.id, now: now.addingTimeInterval(2)))
+  #expect(channel.sampleCount == 2)
+  #expect(channel.latest.sourceSequence == 11)
+  #expect(channel.latest.dataHex == "10 21 30 00 00 00 00 00")
+  #expect(channel.changedByteIndices == [1])
+  #expect(!channel.dataLengthChanged)
+}
+
+@Test func rawIdentifierExpiresAndSessionResetRemovesOldInventory() throws {
+  var accumulator = CANLiveUnitsAccumulator()
+  let start = Date(timeIntervalSince1970: 1_800_000_000)
+  accumulator.ingest(
+    frame(identifier: 0x3D0, data: [1, 2, 3, 4, 5, 6, 7, 8], sourceSequence: 1),
+    receivedAt: start)
+  let descriptor = try #require(accumulator.observedRawIdentifiers.first)
+  #expect(
+    accumulator.rawChannel(for: descriptor.id, now: start.addingTimeInterval(1))?.freshness
+      == .live)
+  #expect(
+    accumulator.rawChannel(for: descriptor.id, now: start.addingTimeInterval(9))?.freshness
+      == .stale)
+  #expect(
+    accumulator.rawChannel(for: descriptor.id, now: start.addingTimeInterval(31))?.freshness
+      == .expired)
+
+  accumulator.reset()
+  #expect(accumulator.observedRawIdentifiers.isEmpty)
+  #expect(accumulator.rawChannel(for: descriptor.id, now: start) == nil)
+  accumulator.ingest(
+    frame(
+      identifier: 0x420, data: [9, 8, 7, 6, 5, 4, 3, 2], sessionID: 2,
+      sourceSequence: 1),
+    receivedAt: start)
+  #expect(accumulator.observedRawIdentifiers.map(\.identifier) == [0x420])
+}
+
+@Test func standardAndExtendedRawIdentifiersNeverCollide() {
+  var accumulator = CANLiveUnitsAccumulator()
+  let now = Date(timeIntervalSince1970: 1_800_000_000)
+  accumulator.ingest(
+    frame(identifier: 0x600, data: [1, 0, 0, 0, 0, 0, 0, 0], sourceSequence: 1),
+    receivedAt: now)
+  accumulator.ingest(
+    frame(
+      identifier: 0x600, data: [2, 0, 0, 0, 0, 0, 0, 0], sourceSequence: 2,
+      extended: true),
+    receivedAt: now)
+
+  let descriptors = accumulator.observedRawIdentifiers
+  #expect(descriptors.count == 2)
+  #expect(Set(descriptors.map(\.id)).count == 2)
+  #expect(Set(descriptors.map(\.extended)) == [false, true])
+}
+
+@Test func remoteRequestDLCNeverBecomesZeroFilledPayload() throws {
+  var accumulator = CANLiveUnitsAccumulator()
+  let now = Date(timeIntervalSince1970: 1_800_000_000)
+  accumulator.ingest(
+    frame(
+      identifier: 0x600, data: [0, 0, 0, 0, 0, 0, 0, 0], sourceSequence: 1,
+      remoteRequest: true, dataLength: 7),
+    receivedAt: now)
+
+  let descriptor = try #require(accumulator.observedRawIdentifiers.first)
+  let channel = try #require(accumulator.rawChannel(for: descriptor.id, now: now))
+  #expect(channel.latest.remoteRequest)
+  #expect(channel.latest.dataLength == 7)
+  #expect(channel.latest.data.isEmpty)
+  #expect(channel.latest.dataHex.isEmpty)
 }
 
 @Test func recentBatchFindsPinnedFrameBeforeUnclaimedTailAndPreservesItsAge() throws {

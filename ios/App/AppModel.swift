@@ -1579,17 +1579,34 @@ final class AppModel {
   /// window, so processing the whole window on navigation and after a
   /// coalesced UI update cannot lose a matching frame or double-count one.
   func ingestLiveCANObservations(_ observations: [PassiveCANObservation]) {
-    guard let gatewayID = gateway.handshake?.gatewayID,
+    guard gateway.state == .vhosConnected,
+      let gatewayID = gateway.handshake?.gatewayID,
       let sessionID = gateway.health?.captureSessionID
-    else { return }
+    else {
+      resetLiveCANContext()
+      return
+    }
     let sessionKey = "\(gatewayID):\(sessionID)"
     if canLiveUnitsSessionKey != sessionKey {
+      let hadSamples = canLiveUnits.hasSamples
       canLiveUnits.reset()
       canLiveUnitsSessionKey = sessionKey
+      if hadSamples {
+        canLiveUnitsRevision &+= 1
+        canLiveUnitsClock = Date()
+      }
     }
     let updated = canLiveUnits.ingestCurrentSession(
       observations, gatewayID: gatewayID, sessionID: sessionID)
     guard !updated.isEmpty else { return }
+    canLiveUnitsRevision &+= 1
+    canLiveUnitsClock = Date()
+  }
+
+  private func resetLiveCANContext() {
+    guard canLiveUnitsSessionKey != nil || canLiveUnits.hasSamples else { return }
+    canLiveUnits.reset()
+    canLiveUnitsSessionKey = nil
     canLiveUnitsRevision &+= 1
     canLiveUnitsClock = Date()
   }
@@ -1605,9 +1622,22 @@ final class AppModel {
     return canLiveUnits.observedFields
   }
 
+  /// Recently observed exact raw identifiers, including identifiers that
+  /// also feed separate pinned candidate fields. Raw frames never acquire a
+  /// signal name or unit.
+  var liveRawCANIdentifiers: [CANLiveRawIdentifierDescriptor] {
+    _ = canLiveUnitsRevision
+    return canLiveUnits.observedRawIdentifiers
+  }
+
   func liveCANChannel(for fieldID: String) -> CANLiveChannel? {
     _ = canLiveUnitsRevision
     return canLiveUnits.channel(for: fieldID, now: canLiveUnitsClock)
+  }
+
+  func liveRawCANChannel(for identifierID: String) -> CANLiveRawChannel? {
+    _ = canLiveUnitsRevision
+    return canLiveUnits.rawChannel(for: identifierID, now: canLiveUnitsClock)
   }
 
   func refreshCANResearch() {

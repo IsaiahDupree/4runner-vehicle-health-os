@@ -1,7 +1,8 @@
 import SwiftUI
 import VHOSCore
 
-/// Live engineering values from the passive CAN stream.
+/// Live pinned engineering candidates and exact raw CAN identifiers from the
+/// passive stream.
 ///
 /// Deliberately styled apart from the retained sections: a live number and
 /// an archived number must never be mistaken for one another. The value
@@ -10,38 +11,54 @@ import VHOSCore
 /// never as a frozen current reading.
 struct CANLiveUnitsSection: View {
   @Environment(AppModel.self) private var model
-  @Binding var selectedFieldID: String?
+  @Binding var selectedChannelID: String?
 
   private var fields: [CANLiveFieldDescriptor] { model.liveCANFields }
-
-  private var selection: CANLiveFieldDescriptor? {
-    if let selectedFieldID, let match = fields.first(where: { $0.id == selectedFieldID }) {
-      return match
+  private var rawIdentifiers: [CANLiveRawIdentifierDescriptor] {
+    model.liveRawCANIdentifiers.sorted {
+      if $0.extended != $1.extended { return !$0.extended }
+      return $0.identifier < $1.identifier
     }
-    return fields.first
   }
 
-  private var channel: CANLiveChannel? {
-    selection.flatMap { model.liveCANChannel(for: $0.id) }
+  private var options: [CANLiveSelectionOption] {
+    fields.map { CANLiveSelectionOption(kind: .field($0)) }
+      + rawIdentifiers.map { CANLiveSelectionOption(kind: .rawIdentifier($0)) }
+  }
+
+  private var selection: CANLiveSelectionOption? {
+    if let selectedChannelID, let match = options.first(where: { $0.id == selectedChannelID }) {
+      return match
+    }
+    return options.first
   }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
       VStack(alignment: .leading, spacing: 2) {
-        Text("Live Engineering Units").font(.title3.bold())
-        Text("Streaming from the connected gateway · pinned formulas, unvalidated scale")
+        Text("Live CAN Values").font(.title3.bold())
+        Text("Pinned candidate units plus exact raw-only identifiers from the connected gateway")
           .font(.caption)
           .foregroundStyle(.secondary)
       }
 
-      if fields.isEmpty {
+      if options.isEmpty {
         CANLiveUnavailable(
-          title: "No matching live values yet",
+          title: "No live CAN identifiers yet",
           detail: emptyStateDetail)
       } else {
         picker
-        if let channel, let selection {
-          liveCard(channel: channel, field: selection)
+        if let selection {
+          switch selection.kind {
+          case .field(let field):
+            if let channel = model.liveCANChannel(for: field.id) {
+              liveCard(channel: channel, field: field)
+            }
+          case .rawIdentifier(let descriptor):
+            if let channel = model.liveRawCANChannel(for: descriptor.id) {
+              rawCard(channel: channel)
+            }
+          }
         }
       }
     }
@@ -49,12 +66,23 @@ struct CANLiveUnitsSection: View {
   }
 
   private var picker: some View {
-    Picker("Live field", selection: Binding(
+    Picker("Live CAN channel", selection: Binding(
       get: { selection?.id ?? "" },
-      set: { selectedFieldID = $0 }
+      set: { selectedChannelID = $0 }
     )) {
-      ForEach(fields) { field in
-        Text(field.label).tag(field.id)
+      if !fields.isEmpty {
+        Section("Pinned candidate fields") {
+          ForEach(fields) { field in
+            Text(field.label).tag(field.id)
+          }
+        }
+      }
+      if !rawIdentifiers.isEmpty {
+        Section("Raw frame inventory · \(rawIdentifiers.count)") {
+          ForEach(rawIdentifiers) { descriptor in
+            Text("\(descriptor.label) · RAW FRAME").tag(descriptor.id)
+          }
+        }
       }
     }
     .pickerStyle(.menu)
@@ -83,7 +111,8 @@ struct CANLiveUnitsSection: View {
     if model.gateway.state != .vhosConnected {
       details.append("Connect the VHOS gateway over Bluetooth to stream live values.")
     } else {
-      details.append("Waiting for a standard, non-RTR frame with enough bytes for a pinned field.")
+      details.append(
+        "Waiting for a current-session listen-only BLE frame that passes the evidence contract.")
     }
     return details.joined(separator: " ")
   }
@@ -132,7 +161,7 @@ struct CANLiveUnitsSection: View {
             .foregroundStyle(tone)
             .contentTransition(.numericText())
             .animation(.easeOut(duration: 0.18), value: channel.latest?.displayValue)
-          Text(freshnessLabel(channel))
+          Text(freshnessLabel(channel.freshness, ageSeconds: channel.ageSeconds))
             .font(.caption2.weight(.semibold))
             .foregroundStyle(tone)
         }
@@ -183,6 +212,94 @@ struct CANLiveUnitsSection: View {
         .strokeBorder(tone.opacity(channel.freshness == .live ? 0.35 : 0.18), lineWidth: 1))
   }
 
+  private func rawCard(channel: CANLiveRawChannel) -> some View {
+    let tone = freshnessTone(channel.freshness)
+    let latest = channel.latest
+    return VStack(alignment: .leading, spacing: 12) {
+      HStack(alignment: .firstTextBaseline) {
+        VStack(alignment: .leading, spacing: 3) {
+          Text(channel.descriptor.label).font(.headline.monospaced())
+          Text(
+            channel.descriptor.extended
+              ? "29-bit extended identifier" : "11-bit standard identifier"
+          )
+          .font(.caption2)
+          .foregroundStyle(.secondary)
+        }
+        Spacer()
+        VStack(alignment: .trailing, spacing: 3) {
+          CANLiveBadge(text: "RAW ONLY", color: .orange)
+          Text(freshnessLabel(channel.freshness, ageSeconds: channel.ageSeconds))
+            .font(.caption2.weight(.semibold))
+            .foregroundStyle(tone)
+        }
+      }
+
+      CANLiveRawByteStrip(
+        data: latest.data,
+        changedByteIndices: Set(channel.changedByteIndices))
+
+      Text(rawPayloadText(latest))
+        .font(.footnote.monospaced())
+        .textSelection(.enabled)
+
+      HStack(alignment: .top, spacing: 18) {
+        rawMetric("DLC", latest.dataLength.formatted())
+        rawMetric("BITRATE", "\(latest.bitrateBps / 1_000) kbit/s")
+        rawMetric("WINDOW", "\(channel.sampleCount) updates")
+      }
+
+      Text(rawChangeSummary(channel))
+        .font(.caption2)
+        .foregroundStyle(channel.changedByteIndices.isEmpty ? Color.secondary : Color.orange)
+
+      VStack(alignment: .leading, spacing: 3) {
+        Text("session \(latest.sessionID) · seq \(latest.sourceSequence)")
+          .font(.caption2.monospaced())
+        Text("observed \(latest.observedAt)")
+          .font(.caption2.monospaced())
+      }
+      .foregroundStyle(.secondary)
+
+      Text(
+        "No signal meaning, formula, or physical unit is inferred for this identifier. Exact raw evidence cannot drive owner health."
+      )
+      .font(.caption2)
+      .foregroundStyle(.secondary)
+    }
+    .padding()
+    .background(.orange.opacity(0.06), in: RoundedRectangle(cornerRadius: 18))
+    .overlay(
+      RoundedRectangle(cornerRadius: 18)
+        .strokeBorder(tone.opacity(channel.freshness == .live ? 0.35 : 0.18), lineWidth: 1))
+  }
+
+  private func rawMetric(_ label: String, _ value: String) -> some View {
+    VStack(alignment: .leading, spacing: 2) {
+      Text(label).font(.caption2).foregroundStyle(.secondary)
+      Text(value).font(.footnote.weight(.semibold).monospacedDigit())
+    }
+  }
+
+  private func rawPayloadText(_ reading: CANLiveRawReading) -> String {
+    if reading.remoteRequest {
+      return "Payload: — · RTR carries no payload"
+    }
+    return reading.data.isEmpty ? "Payload: — · DLC 0" : "Payload: \(reading.dataHex)"
+  }
+
+  private func rawChangeSummary(_ channel: CANLiveRawChannel) -> String {
+    guard channel.sampleCount > 1 else { return "First observed payload; no prior update to compare." }
+    let bytes = channel.changedByteIndices.map { "B\($0)" }.joined(separator: ", ")
+    if bytes.isEmpty {
+      return channel.dataLengthChanged
+        ? "DLC changed; no current payload byte differs in the shared range."
+        : "No payload byte changed since the previous update."
+    }
+    return "Changed since previous update: \(bytes)"
+      + (channel.dataLengthChanged ? " · DLC also changed" : "")
+  }
+
   private func liveStat(
     _ label: String, _ value: Double, _ field: CANLiveFieldDescriptor
   ) -> some View {
@@ -200,11 +317,14 @@ struct CANLiveUnitsSection: View {
     return "\(number) \(field.unit ?? "counts")"
   }
 
-  private func freshnessLabel(_ channel: CANLiveChannel) -> String {
-    switch channel.freshness {
+  private func freshnessLabel(
+    _ freshness: CANLiveUnits.Freshness,
+    ageSeconds: TimeInterval?
+  ) -> String {
+    switch freshness {
     case .live: "LIVE"
     case .stale:
-      channel.ageSeconds.map { "STALE · \(Int($0))s since last frame" } ?? "STALE"
+      ageSeconds.map { "STALE · \(Int($0))s since last frame" } ?? "STALE"
     case .expired: "NO RECENT FRAMES"
     }
   }
@@ -214,6 +334,29 @@ struct CANLiveUnitsSection: View {
     case .live: .blue
     case .stale: .orange
     case .expired: .secondary
+    }
+  }
+}
+
+private struct CANLiveSelectionOption: Identifiable {
+  enum Kind {
+    case field(CANLiveFieldDescriptor)
+    case rawIdentifier(CANLiveRawIdentifierDescriptor)
+  }
+
+  let kind: Kind
+
+  var id: String {
+    switch kind {
+    case .field(let field): field.id
+    case .rawIdentifier(let descriptor): descriptor.id
+    }
+  }
+
+  var label: String {
+    switch kind {
+    case .field(let field): field.label
+    case .rawIdentifier(let descriptor): "\(descriptor.label) · RAW FRAME"
     }
   }
 }
@@ -277,6 +420,48 @@ private struct CANLiveSparkline: View {
       return CGPoint(
         x: CGFloat(index) * stepX,
         y: size.height - inset - CGFloat(ratio) * usable)
+    }
+  }
+}
+
+/// Exact payload bytes with only direct byte-to-byte change highlighted.
+/// No endianness, scalar, scale, or semantic meaning is inferred.
+private struct CANLiveRawByteStrip: View {
+  let data: [UInt8]
+  let changedByteIndices: Set<Int>
+
+  var body: some View {
+    if data.isEmpty {
+      Text("— no payload bytes —")
+        .font(.caption.monospaced())
+        .foregroundStyle(.secondary)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 8)
+    } else {
+      HStack(spacing: 4) {
+        ForEach(data.indices, id: \.self) { index in
+          let changed = changedByteIndices.contains(index)
+          VStack(spacing: 2) {
+            Text("B\(index)")
+              .font(.system(size: 8, weight: .medium, design: .monospaced))
+              .foregroundStyle(.secondary)
+            Text(String(format: "%02X", data[index]))
+              .font(.system(size: 12, weight: .bold, design: .monospaced))
+          }
+          .frame(maxWidth: .infinity)
+          .padding(.vertical, 6)
+          .background(
+            changed ? Color.orange.opacity(0.2) : Color.secondary.opacity(0.08),
+            in: RoundedRectangle(cornerRadius: 7))
+          .overlay(
+            RoundedRectangle(cornerRadius: 7)
+              .strokeBorder(changed ? Color.orange.opacity(0.55) : .clear, lineWidth: 1))
+        }
+      }
+      .accessibilityLabel(
+        "Raw payload bytes "
+          + data.enumerated().map { "byte \($0.offset) \(String(format: "%02X", $0.element))" }
+            .joined(separator: ", "))
     }
   }
 }

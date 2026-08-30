@@ -4,7 +4,7 @@ import VHOSCore
 struct CANUnitsDashboardView: View {
   @Environment(AppModel.self) private var model
   @State private var selectedReplaySeriesID = "toyota.2c4.engine-speed.be16"
-  @State private var selectedLiveFieldID: String?
+  @State private var selectedLiveChannelID: String?
   /// One-second tick so freshness decays visibly without new frames.
   private let liveClock = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
@@ -33,7 +33,7 @@ struct CANUnitsDashboardView: View {
     ScrollView {
       LazyVStack(alignment: .leading, spacing: 20) {
         boundaryCard
-        CANLiveUnitsSection(selectedFieldID: $selectedLiveFieldID)
+        CANLiveUnitsSection(selectedChannelID: $selectedLiveChannelID)
         standardValues
         engineeringValues
         derivedValues
@@ -48,6 +48,12 @@ struct CANUnitsDashboardView: View {
     // Drain the bounded recent window rather than only the last rendered
     // value. SwiftUI may coalesce several high-rate frame changes.
     .onChange(of: model.gateway.latestCANObservation?.id) { _, _ in
+      model.ingestLiveCANObservations(model.gateway.recentCANObservations)
+    }
+    .onChange(of: model.gateway.health?.captureSessionID) { _, _ in
+      model.ingestLiveCANObservations(model.gateway.recentCANObservations)
+    }
+    .onChange(of: model.gateway.state) { _, _ in
       model.ingestLiveCANObservations(model.gateway.recentCANObservations)
     }
     // Freshness must decay on its own: a bus that goes quiet has to show

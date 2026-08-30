@@ -40,6 +40,11 @@ public enum CANLiveUnits {
   public static let expiryWindowSeconds: TimeInterval = 30
   /// Maximum samples retained per field for the rolling sparkline.
   public static let defaultWindowCapacity = 240
+  /// Maximum unpinned CAN identifiers retained at once. The gateway's
+  /// in-memory recent window is also capped at 100 observations, so this can
+  /// represent every distinct identifier in one complete bootstrap window
+  /// while keeping long-running state bounded.
+  public static let defaultRawIdentifierCapacity = 100
 
   public static func freshness(
     ageSeconds: TimeInterval
@@ -139,6 +144,65 @@ public struct CANLiveChannel: Identifiable, Equatable, Sendable {
   public var exposesEngineeringUnit: Bool { field.authority.exposesEngineeringUnit }
 }
 
+/// Exact identity of an observed raw CAN frame. It deliberately contains no
+/// semantic signal name or engineering unit, even when the same identifier
+/// also feeds one or more separately displayed pinned candidate fields.
+public struct CANLiveRawIdentifierDescriptor: Identifiable, Codable, Equatable, Sendable {
+  public let identifier: UInt32
+  public let extended: Bool
+
+  public init(identifier: UInt32, extended: Bool) {
+    self.identifier = identifier
+    self.extended = extended
+  }
+
+  public var id: String {
+    "raw:\(extended ? "extended" : "standard"):\(String(identifier, radix: 16))"
+  }
+  public var identifierHex: String {
+    String(format: extended ? "%08X" : "%03X", identifier)
+  }
+  public var label: String { "CAN 0x\(identifierHex)" }
+  public var authority: CANUnitsAuthority { .rawOnlyCandidate }
+  public var unit: String? { nil }
+}
+
+/// One exact raw observation for any accepted identifier, including one that
+/// also feeds a separately presented pinned candidate field.
+public struct CANLiveRawReading: Identifiable, Codable, Equatable, Sendable {
+  public let descriptor: CANLiveRawIdentifierDescriptor
+  public let remoteRequest: Bool
+  public let dataLength: UInt8
+  /// Exact payload prefix only; padding outside DLC is never displayed.
+  public let data: [UInt8]
+  public let bitrateBps: UInt32
+  public let gatewayID: String
+  public let sessionID: UInt32
+  public let sourceSequence: UInt64
+  public let monotonicMicroseconds: UInt64
+  public let observedAt: String
+
+  public var id: String { "\(descriptor.id):\(sessionID):\(sourceSequence)" }
+  public var dataHex: String {
+    data.map { String(format: "%02X", $0) }.joined(separator: " ")
+  }
+}
+
+/// Latest exact bytes and bounded update history for one raw identifier.
+public struct CANLiveRawChannel: Identifiable, Equatable, Sendable {
+  public let descriptor: CANLiveRawIdentifierDescriptor
+  public let latest: CANLiveRawReading
+  public let freshness: CANLiveUnits.Freshness
+  public let ageSeconds: TimeInterval
+  public let sampleCount: Int
+  /// Current payload byte positions that differ from the previous update.
+  /// Empty means either first observation or no byte changed.
+  public let changedByteIndices: [Int]
+  public let dataLengthChanged: Bool
+
+  public var id: String { descriptor.id }
+}
+
 /// Accumulates live observations into per-field rolling windows.
 ///
 /// Pure and synchronous: callers push observations in, read channels out.
@@ -151,26 +215,38 @@ public struct CANLiveUnitsAccumulator: Sendable {
     let receivedAt: Date
   }
 
+  private struct RawSample: Sendable {
+    let reading: CANLiveRawReading
+    let receivedAt: Date
+  }
+
   private var samplesByField: [String: [Sample]] = [:]
+  private var rawSamplesByIdentifier: [String: [RawSample]] = [:]
+  /// Least-recently-updated first; bounded eviction removes index zero.
+  private var rawIdentifierRecency: [String] = []
   private let capacity: Int
+  private let rawIdentifierCapacity: Int
   public let fields: [CANLiveFieldDescriptor]
 
   public init(
     fields: [CANLiveFieldDescriptor] = CANUnitsAnalyzer.candidateFields,
-    capacity: Int = CANLiveUnits.defaultWindowCapacity
+    capacity: Int = CANLiveUnits.defaultWindowCapacity,
+    rawIdentifierCapacity: Int = CANLiveUnits.defaultRawIdentifierCapacity
   ) {
     self.fields = fields
     self.capacity = max(1, capacity)
+    self.rawIdentifierCapacity = max(1, rawIdentifierCapacity)
   }
 
-  /// Ingest one live observation. Returns the field ids it updated (empty
-  /// when no pinned field claims this frame — unknown identifiers are
-  /// ignored, never guessed at).
+  /// Ingest one live observation. Returns the pinned-field and raw-channel
+  /// ids it actually updated. An unknown identifier updates only its exact
+  /// raw channel; no signal meaning or unit is guessed.
   @discardableResult
   public mutating func ingest(
     _ observation: PassiveCANObservation,
     receivedAt: Date
   ) -> [String] {
+    guard Self.isAdmissibleLiveObservation(observation) else { return [] }
     let readings = CANUnitsAnalyzer.projectLive(observation)
     var updatedFieldIDs: [String] = []
     for reading in readings {
@@ -187,6 +263,9 @@ public struct CANLiveUnitsAccumulator: Sendable {
       if samples.count > capacity { samples.removeFirst(samples.count - capacity) }
       samplesByField[reading.fieldID] = samples
       updatedFieldIDs.append(reading.fieldID)
+    }
+    if let rawIdentifierID = ingestRaw(observation, receivedAt: receivedAt) {
+      updatedFieldIDs.append(rawIdentifierID)
     }
     return updatedFieldIDs
   }
@@ -219,13 +298,29 @@ public struct CANLiveUnitsAccumulator: Sendable {
 
   /// Drop everything. Used when the gateway session changes: a window may
   /// never blend samples from two capture sessions.
-  public mutating func reset() { samplesByField.removeAll() }
+  public mutating func reset() {
+    samplesByField.removeAll()
+    rawSamplesByIdentifier.removeAll()
+    rawIdentifierRecency.removeAll()
+  }
 
-  public var hasSamples: Bool { samplesByField.values.contains { !$0.isEmpty } }
+  public var hasSamples: Bool {
+    samplesByField.values.contains { !$0.isEmpty }
+      || rawSamplesByIdentifier.values.contains { !$0.isEmpty }
+  }
 
   /// Fields that have produced at least one live sample, in catalog order.
   public var observedFields: [CANLiveFieldDescriptor] {
     fields.filter { !(samplesByField[$0.id] ?? []).isEmpty }
+  }
+
+  /// Raw identifiers that have produced at least one accepted update,
+  /// least-recently-updated first. Pinned candidate fields and raw frames are
+  /// intentionally separate views of the same evidence.
+  public var observedRawIdentifiers: [CANLiveRawIdentifierDescriptor] {
+    rawIdentifierRecency.compactMap {
+      rawSamplesByIdentifier[$0]?.last?.reading.descriptor
+    }
   }
 
   public func channel(
@@ -253,6 +348,94 @@ public struct CANLiveUnitsAccumulator: Sendable {
 
   public func channels(now: Date) -> [CANLiveChannel] {
     observedFields.compactMap { channel(for: $0.id, now: now) }
+  }
+
+  public func rawChannel(
+    for identifierID: String,
+    now: Date
+  ) -> CANLiveRawChannel? {
+    guard let samples = rawSamplesByIdentifier[identifierID], let last = samples.last else {
+      return nil
+    }
+    let previous = samples.dropLast().last?.reading
+    let changedByteIndices: [Int]
+    if let previous {
+      changedByteIndices = last.reading.data.indices.filter { index in
+        index >= previous.data.count || previous.data[index] != last.reading.data[index]
+      }
+    } else {
+      changedByteIndices = []
+    }
+    let age = now.timeIntervalSince(last.receivedAt)
+    return CANLiveRawChannel(
+      descriptor: last.reading.descriptor,
+      latest: last.reading,
+      freshness: CANLiveUnits.freshness(ageSeconds: age),
+      ageSeconds: age,
+      sampleCount: samples.count,
+      changedByteIndices: changedByteIndices,
+      dataLengthChanged: previous.map { $0.dataLength != last.reading.dataLength } ?? false)
+  }
+
+  public func rawChannels(now: Date) -> [CANLiveRawChannel] {
+    observedRawIdentifiers.compactMap { rawChannel(for: $0.id, now: now) }
+  }
+
+  private mutating func ingestRaw(
+    _ observation: PassiveCANObservation,
+    receivedAt: Date
+  ) -> String? {
+    let descriptor = CANLiveRawIdentifierDescriptor(
+      identifier: observation.identifier, extended: observation.extended)
+    var samples = rawSamplesByIdentifier[descriptor.id] ?? []
+    if let last = samples.last?.reading,
+      last.sessionID == observation.sessionID,
+      observation.sourceSequence <= last.sourceSequence
+    {
+      return nil
+    }
+    // Remote-request frames carry a DLC but no payload. Never render the
+    // record's padding bytes as if they were observed data.
+    let payload = observation.remoteRequest
+      ? [] : Array(observation.data.prefix(Int(observation.dataLength)))
+    samples.append(
+      RawSample(
+        reading: CANLiveRawReading(
+          descriptor: descriptor,
+          remoteRequest: observation.remoteRequest,
+          dataLength: observation.dataLength,
+          data: payload,
+          bitrateBps: observation.bitrateBps,
+          gatewayID: observation.gatewayID,
+          sessionID: observation.sessionID,
+          sourceSequence: observation.sourceSequence,
+          monotonicMicroseconds: observation.monotonicMicroseconds,
+          observedAt: observation.ingestedAt),
+        receivedAt: receivedAt))
+    if samples.count > capacity { samples.removeFirst(samples.count - capacity) }
+    if rawSamplesByIdentifier[descriptor.id] == nil,
+      rawSamplesByIdentifier.count >= rawIdentifierCapacity,
+      let evicted = rawIdentifierRecency.first
+    {
+      rawIdentifierRecency.removeFirst()
+      rawSamplesByIdentifier.removeValue(forKey: evicted)
+    }
+    rawSamplesByIdentifier[descriptor.id] = samples
+    rawIdentifierRecency.removeAll { $0 == descriptor.id }
+    rawIdentifierRecency.append(descriptor.id)
+    return descriptor.id
+  }
+
+  private static func isAdmissibleLiveObservation(_ observation: PassiveCANObservation) -> Bool {
+    observation.contract == "gateway.passive-can-observation"
+      && observation.contractVersion == "1.0.0"
+      && observation.listenOnly
+      && observation.evidenceSource == "ble-live"
+      && observation.sourceSequence > 0
+      && observation.dataLength <= 8
+      && observation.data.count >= Int(observation.dataLength)
+      && observation.identifier <= (observation.extended ? 0x1FFF_FFFF : 0x7FF)
+      && (observation.bitrateBps == 250_000 || observation.bitrateBps == 500_000)
   }
 
   private static func receivedAt(from value: String) -> Date? {
