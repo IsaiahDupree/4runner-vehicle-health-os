@@ -4,6 +4,9 @@ import VHOSCore
 struct CANUnitsDashboardView: View {
   @Environment(AppModel.self) private var model
   @State private var selectedReplaySeriesID = "toyota.2c4.engine-speed.be16"
+  @State private var selectedLiveFieldID: String?
+  /// One-second tick so freshness decays visibly without new frames.
+  private let liveClock = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
   private var report: CANUnitsReport? { model.canUnitsReport }
 
@@ -30,6 +33,7 @@ struct CANUnitsDashboardView: View {
     ScrollView {
       LazyVStack(alignment: .leading, spacing: 20) {
         boundaryCard
+        CANLiveUnitsSection(selectedFieldID: $selectedLiveFieldID)
         standardValues
         engineeringValues
         derivedValues
@@ -41,6 +45,14 @@ struct CANUnitsDashboardView: View {
     }
     .navigationTitle("CAN Data & Units")
     .navigationBarTitleDisplayMode(.inline)
+    // Every accepted passive frame feeds the live windows.
+    .onChange(of: model.gateway.latestCANObservation) { _, observation in
+      model.ingestLiveCANObservation(observation)
+    }
+    // Freshness must decay on its own: a bus that goes quiet has to show
+    // STALE rather than sit frozen at its last value.
+    .onReceive(liveClock) { _ in model.tickLiveCANClock() }
+    .onAppear { model.ingestLiveCANObservation(model.gateway.latestCANObservation) }
   }
 
 }
@@ -74,7 +86,7 @@ extension CANUnitsDashboardView {
         CANUnitsUnavailable(
           title: "Standard OBD values unavailable",
           detail:
-            "No fresh sample has passed the response, enumeration, payload, identity, capture, and freshness gates. Missing evidence is never shown as zero.")
+            "The gateway is listen-only: it never requests a PID, so SAE J1979 values appear here only while another tool on the bus is polling. Without that traffic this lane stays empty by design — see Live Engineering Units above for values derived from passive frames. Missing evidence is never shown as zero.")
       } else {
         ForEach(latestStandardSamples) { sample in
           NavigationLink {
