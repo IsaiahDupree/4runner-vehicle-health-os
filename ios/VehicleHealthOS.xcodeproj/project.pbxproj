@@ -7,9 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0166122FFBBE3AFF77ACD6EF /* MechanicWorkspaceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C2D4F2DC842D65B199ADAD0 /* MechanicWorkspaceTests.swift */; };
+		1F8C34C7318A19AC1B605F18 /* MechanicWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADEF920548CFAED6EC8E4B97 /* MechanicWorkspaceView.swift */; };
 		2C20803C92A290014B149A91 /* PortableFrameStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A437465A0DC4C5D9113216 /* PortableFrameStore.swift */; };
 		34F29EA8693AF238BC815DDD /* SystemStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76F08CC4DD741600B7E20C23 /* SystemStatusView.swift */; };
 		3C6B7A855B68467F9973731A /* mrdiy-v13-development-release-ed25519.base64 in Resources */ = {isa = PBXBuildFile; fileRef = 40D58B872E56EED4853D20F3 /* mrdiy-v13-development-release-ed25519.base64 */; };
+		3E8D5AD3A3606C96D408A984 /* MechanicCaseArtifactTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D046C561211F2E90B078AE7 /* MechanicCaseArtifactTests.swift */; };
 		3F0163358C8856B35F097E02 /* VehicleHealthOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54BDEF8D2B05D75290A9451 /* VehicleHealthOSApp.swift */; };
 		433AA4BFB3B8C40F2468E476 /* GatewayBLEClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E12062579AEB4902B49940D /* GatewayBLEClient.swift */; };
 		4BB0541FC93F4D149039411A /* WiFiOTAUploader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 435E1D682EF6B8A4DE0B86F7 /* WiFiOTAUploader.swift */; };
@@ -19,6 +22,7 @@
 		6038918354887A1A87E7D5D7 /* DiscoveryWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DFE18956FBB741182DC169A /* DiscoveryWorkspaceView.swift */; };
 		6138196E6016992AB5F476A7 /* EvidenceOutboxStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27355F648A0C53B4EC6CF848 /* EvidenceOutboxStore.swift */; };
 		90E4621A52313C74A4ABB3D1 /* CANUnitsDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAADB0E18F0262D5D28275BF /* CANUnitsDashboardView.swift */; };
+		91E2D34C4A70119D5BE7A474 /* MechanicCaseArtifacts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A8A8B885363EFC027E3D44A /* MechanicCaseArtifacts.swift */; };
 		9AF33FDA552C5A8253A86B99 /* KeyStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6A9AAE2238B7F973C0CEA46 /* KeyStore.swift */; };
 		A556A68B0A447322A223EA70 /* EvidenceWorkCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C62FF37FA894A57174E968FB /* EvidenceWorkCoordinator.swift */; };
 		AAC7CA136BA2228F0D634559 /* SynchronizedReferenceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5F07524DBD012E9F39B09DB /* SynchronizedReferenceStore.swift */; };
@@ -28,6 +32,7 @@
 		C32FBE14A5EF3BEEAE086A68 /* EvidenceOutboxBackgroundTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FF7D608E6C3BC6B19524A3A /* EvidenceOutboxBackgroundTests.swift */; };
 		CADDA30B1BCE3C005880874D /* CaptureAndReferencePersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9123684AD71628F377A5EB55 /* CaptureAndReferencePersistenceTests.swift */; };
 		E1E366592FD90918002B9210 /* catalog-development-p256-public.der.base64 in Resources */ = {isa = PBXBuildFile; fileRef = BC2698DA0773B98569959E80 /* catalog-development-p256-public.der.base64 */; };
+		E7B91FDF903EF10B9198988B /* MechanicWorkspaceModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75A929BDE9D7DF6BB16DE192 /* MechanicWorkspaceModel.swift */; };
 		E925A8B64D5731C2E092673A /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDE321369856AF54C6B7946E /* RootView.swift */; };
 		F1AF0F959A5BC7A5C2BEC8DB /* DiscoveryEvidenceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C4CB58385EA15D8DE39AA03 /* DiscoveryEvidenceStore.swift */; };
 		FD76082677C3D6DEA95ACE91 /* StoredDiscoveryMarkerLegacySessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9A2C19F0F90DE0C7BDD88D5 /* StoredDiscoveryMarkerLegacySessionTests.swift */; };
@@ -46,6 +51,7 @@
 
 /* Begin PBXFileReference section */
 		1C4CB58385EA15D8DE39AA03 /* DiscoveryEvidenceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoveryEvidenceStore.swift; sourceTree = "<group>"; };
+		1D046C561211F2E90B078AE7 /* MechanicCaseArtifactTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MechanicCaseArtifactTests.swift; sourceTree = "<group>"; };
 		21CE522109AE74B24C43B096 /* ReleaseHubClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReleaseHubClient.swift; sourceTree = "<group>"; };
 		27355F648A0C53B4EC6CF848 /* EvidenceOutboxStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceOutboxStore.swift; sourceTree = "<group>"; };
 		2E12062579AEB4902B49940D /* GatewayBLEClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayBLEClient.swift; sourceTree = "<group>"; };
@@ -57,12 +63,16 @@
 		435E1D682EF6B8A4DE0B86F7 /* WiFiOTAUploader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiOTAUploader.swift; sourceTree = "<group>"; };
 		46A437465A0DC4C5D9113216 /* PortableFrameStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortableFrameStore.swift; sourceTree = "<group>"; };
 		5ADD085CC4E0D7223092E39A /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		5C2D4F2DC842D65B199ADAD0 /* MechanicWorkspaceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MechanicWorkspaceTests.swift; sourceTree = "<group>"; };
 		6B2F2160F66500ABD58B9A93 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		6FF7D608E6C3BC6B19524A3A /* EvidenceOutboxBackgroundTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceOutboxBackgroundTests.swift; sourceTree = "<group>"; };
+		75A929BDE9D7DF6BB16DE192 /* MechanicWorkspaceModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MechanicWorkspaceModel.swift; sourceTree = "<group>"; };
 		76F08CC4DD741600B7E20C23 /* SystemStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemStatusView.swift; sourceTree = "<group>"; };
 		7A2574A71F2C1668EC16FF99 /* VehicleHealthOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = VehicleHealthOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8A8A8B885363EFC027E3D44A /* MechanicCaseArtifacts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MechanicCaseArtifacts.swift; sourceTree = "<group>"; };
 		8B675922141EC2E868CE86B9 /* VehicleHealthOSCommissioning.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = VehicleHealthOSCommissioning.entitlements; sourceTree = "<group>"; };
 		9123684AD71628F377A5EB55 /* CaptureAndReferencePersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureAndReferencePersistenceTests.swift; sourceTree = "<group>"; };
+		ADEF920548CFAED6EC8E4B97 /* MechanicWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MechanicWorkspaceView.swift; sourceTree = "<group>"; };
 		BC2698DA0773B98569959E80 /* catalog-development-p256-public.der.base64 */ = {isa = PBXFileReference; path = "catalog-development-p256-public.der.base64"; sourceTree = "<group>"; };
 		C54BDEF8D2B05D75290A9451 /* VehicleHealthOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleHealthOSApp.swift; sourceTree = "<group>"; };
 		C62FF37FA894A57174E968FB /* EvidenceWorkCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceWorkCoordinator.swift; sourceTree = "<group>"; };
@@ -139,6 +149,9 @@
 				2E12062579AEB4902B49940D /* GatewayBLEClient.swift */,
 				6B2F2160F66500ABD58B9A93 /* Info.plist */,
 				D6A9AAE2238B7F973C0CEA46 /* KeyStore.swift */,
+				8A8A8B885363EFC027E3D44A /* MechanicCaseArtifacts.swift */,
+				75A929BDE9D7DF6BB16DE192 /* MechanicWorkspaceModel.swift */,
+				ADEF920548CFAED6EC8E4B97 /* MechanicWorkspaceView.swift */,
 				33368A105329E710051228F4 /* PassiveCANPlaybackLab.swift */,
 				46A437465A0DC4C5D9113216 /* PortableFrameStore.swift */,
 				21CE522109AE74B24C43B096 /* ReleaseHubClient.swift */,
@@ -160,6 +173,8 @@
 				9123684AD71628F377A5EB55 /* CaptureAndReferencePersistenceTests.swift */,
 				37F575257101C56C4814A332 /* DiscoveryEvidenceStoreTests.swift */,
 				6FF7D608E6C3BC6B19524A3A /* EvidenceOutboxBackgroundTests.swift */,
+				1D046C561211F2E90B078AE7 /* MechanicCaseArtifactTests.swift */,
+				5C2D4F2DC842D65B199ADAD0 /* MechanicWorkspaceTests.swift */,
 				F9A2C19F0F90DE0C7BDD88D5 /* StoredDiscoveryMarkerLegacySessionTests.swift */,
 			);
 			path = AppTests;
@@ -265,6 +280,8 @@
 				CADDA30B1BCE3C005880874D /* CaptureAndReferencePersistenceTests.swift in Sources */,
 				B12336DDFA67B1A55A43F447 /* DiscoveryEvidenceStoreTests.swift in Sources */,
 				C32FBE14A5EF3BEEAE086A68 /* EvidenceOutboxBackgroundTests.swift in Sources */,
+				3E8D5AD3A3606C96D408A984 /* MechanicCaseArtifactTests.swift in Sources */,
+				0166122FFBBE3AFF77ACD6EF /* MechanicWorkspaceTests.swift in Sources */,
 				FD76082677C3D6DEA95ACE91 /* StoredDiscoveryMarkerLegacySessionTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -282,6 +299,9 @@
 				A556A68B0A447322A223EA70 /* EvidenceWorkCoordinator.swift in Sources */,
 				433AA4BFB3B8C40F2468E476 /* GatewayBLEClient.swift in Sources */,
 				9AF33FDA552C5A8253A86B99 /* KeyStore.swift in Sources */,
+				91E2D34C4A70119D5BE7A474 /* MechanicCaseArtifacts.swift in Sources */,
+				E7B91FDF903EF10B9198988B /* MechanicWorkspaceModel.swift in Sources */,
+				1F8C34C7318A19AC1B605F18 /* MechanicWorkspaceView.swift in Sources */,
 				BBD00956AAD1B1F75DD26F8C /* PassiveCANPlaybackLab.swift in Sources */,
 				2C20803C92A290014B149A91 /* PortableFrameStore.swift in Sources */,
 				FEC9A6E487FA351CECDA2552 /* ReleaseHubClient.swift in Sources */,

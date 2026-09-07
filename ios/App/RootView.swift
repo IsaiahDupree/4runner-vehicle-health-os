@@ -6,16 +6,16 @@ struct RootView: View {
 
   var body: some View {
     TabView {
+      NavigationStack { MechanicWorkspaceView() }
+        .tabItem { Label("Cases", systemImage: "wrench.and.screwdriver.fill") }
       NavigationStack { SystemStatusView() }
         .tabItem { Label("Status", systemImage: "gauge.with.dots.needle.50percent") }
       NavigationStack { DiscoveryView() }
         .tabItem { Label("Discovery", systemImage: "wave.3.right.circle") }
-      NavigationStack { FirmwareView() }
-        .tabItem { Label("Firmware", systemImage: "arrow.triangle.2.circlepath") }
       NavigationStack { EvidenceView() }
         .tabItem { Label("Evidence", systemImage: "doc.text.magnifyingglass") }
-      NavigationStack { ReleaseHubView() }
-        .tabItem { Label("Releases", systemImage: "shippingbox.and.arrow.backward") }
+      NavigationStack { SystemToolsView() }
+        .tabItem { Label("System", systemImage: "gearshape.2") }
     }
     .safeAreaInset(edge: .bottom) {
       if let error = model.errorMessage {
@@ -35,6 +35,33 @@ struct RootView: View {
           .onTapGesture { model.noticeMessage = nil }
       }
     }
+  }
+}
+
+private struct SystemToolsView: View {
+  var body: some View {
+    List {
+      Section("Gateway lifecycle") {
+        NavigationLink {
+          FirmwareView()
+        } label: {
+          Label("Firmware", systemImage: "arrow.triangle.2.circlepath")
+        }
+        NavigationLink {
+          ReleaseHubView()
+        } label: {
+          Label("Release Hub", systemImage: "shippingbox.and.arrow.backward")
+        }
+      }
+      Section {
+        Text(
+          "Firmware and release operations retain their existing parked, signature, compatibility, and rollback gates. Diagnostic drafts never grant vehicle-control authority."
+        )
+        .font(.footnote)
+        .foregroundStyle(.secondary)
+      }
+    }
+    .navigationTitle("System")
   }
 }
 

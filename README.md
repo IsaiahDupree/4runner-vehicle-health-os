@@ -43,6 +43,9 @@ E0 plus the first native iOS control slice are implemented here:
 - a buildable native SwiftUI app with handshake-verified CoreBluetooth restoration,
   encrypted-bond reconnection, WiCAN factory detection, gateway health, signed semantic experiments,
   private-network OTA, and evidence export;
+- a local-first technician diagnostic-case workspace with immutable revisions, typed evidence and
+  hypotheses, hash-verified private attachments, verification/void history, and deterministic
+  privacy-selected draft reports that cannot mutate canonical maintenance history;
 - a signed public Release Hub consumed by iPhone and Android for target-aware Android, OBD ESP32,
   and A/C recovery artifact discovery and verified staging;
 - a public WiCAN Pro ESP32-S3 firmware fork with passive/listen-only enforcement, framed BLE health reporting, OTA A/B partitions, and rollback self-tests;
@@ -169,6 +172,10 @@ and real multi-session acceptance suite are recorded in
 
 The authority-separated physical-unit candidates, derived statistics, rotational comparison, and
 cross-platform presentation rules are recorded in [the CAN units view](docs/development/CAN-UNITS-NOTE-2026-08-28.md).
+
+The authority boundary and delivered local iOS technician workflow are recorded in
+[ADR-0005](docs/architecture/decisions/0005-technician-diagnostic-case-drafts.md) and the
+[mechanic diagnostic-case implementation record](docs/development/MECHANIC-DIAGNOSTIC-CASE-MVP-2026-09-07.md).
 
 Run the complete copied-iPhone evidence recovery, delta analysis, candidate
 mapping, replay, and 15-scenario link stress lab with one command using

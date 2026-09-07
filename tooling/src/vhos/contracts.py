@@ -57,6 +57,7 @@ SCHEMA_BY_CONTRACT = {
     "obd.j1979-supported-pids": "j1979-supported-pids.schema.json",
     "sensor.node.post": "sensor-node-post.schema.json",
     "sensor.node.telemetry": "sensor-node-telemetry.schema.json",
+    "service.diagnostic-case-draft": "diagnostic-case-draft.schema.json",
     "signal.definition": "signal-definition.schema.json",
     "signal.sample": "signal-sample.schema.json",
     "vehicle.configuration-profile": "vehicle-profile.schema.json",
@@ -212,6 +213,10 @@ def _validate_contract_semantics(contract: str, document: dict[str, Any]) -> Non
 
     if contract == "vehicle.maintenance-source-manifest":
         _validate_maintenance_source_manifest(document)
+        return
+
+    if contract == "service.diagnostic-case-draft":
+        _validate_diagnostic_case_draft(document)
         return
 
     if contract != "vhos.discovery.capture-session":
@@ -554,6 +559,116 @@ def _validate_maintenance_source_manifest(document: dict[str, Any]) -> None:
         raise ContractError(f"{contract} semantic validation failed: inactive manifest claims ACTIVE status")
 
 
+def _validate_diagnostic_case_draft(document: dict[str, Any]) -> None:
+    contract = "service.diagnostic-case-draft"
+    _validate_trimmed_text(document, contract)
+
+    if document["revision_id"] == document["supersedes_revision_id"]:
+        raise ContractError(
+            f"{contract} semantic validation failed: revision cannot supersede itself"
+        )
+
+    transition = document["transition"]
+    if transition["to_status"] != document["status"]:
+        raise ContractError(
+            f"{contract} semantic validation failed: transition destination does not match status"
+        )
+
+    allowed_transitions = {
+        ("CREATED", None, "INTAKE"),
+        ("AMENDED", "INTAKE", "INTAKE"),
+        ("AMENDED", "INSPECTION", "INSPECTION"),
+        ("AMENDED", "FINDINGS", "FINDINGS"),
+        ("AMENDED", "VERIFY", "VERIFY"),
+        ("AMENDED", "CLOSED", "CLOSED"),
+        ("INSPECTION_STARTED", "INTAKE", "INSPECTION"),
+        ("FINDINGS_RECORDED", "INSPECTION", "FINDINGS"),
+        ("VERIFICATION_STARTED", "FINDINGS", "VERIFY"),
+        ("CLOSED", "VERIFY", "CLOSED"),
+        ("VOIDED", "INTAKE", "VOIDED"),
+        ("VOIDED", "INSPECTION", "VOIDED"),
+        ("VOIDED", "FINDINGS", "VOIDED"),
+        ("VOIDED", "VERIFY", "VOIDED"),
+        ("VOIDED", "CLOSED", "VOIDED"),
+    }
+    transition_key = (
+        transition["action"],
+        transition["from_status"],
+        transition["to_status"],
+    )
+    if transition_key not in allowed_transitions:
+        raise ContractError(
+            f"{contract} semantic validation failed: transition is not allowed"
+        )
+
+    if transition["action"] in {"AMENDED", "VOIDED"} and transition["reason"] is None:
+        raise ContractError(
+            f"{contract} semantic validation failed: transition reason is required"
+        )
+
+    if document["actor"]["source"] != "TECHNICIAN":
+        raise ContractError(
+            f"{contract} semantic validation failed: case actor must be a technician"
+        )
+
+    evidence = document["evidence"]
+    evidence_ids = [item["evidence_id"] for item in evidence]
+    if len(evidence_ids) != len(set(evidence_ids)):
+        raise ContractError(
+            f"{contract} semantic validation failed: duplicate evidence identity"
+        )
+    evidence_id_set = set(evidence_ids)
+
+    attachment_ids = [
+        item["attachment"]["attachment_id"]
+        for item in evidence
+        if item["attachment"] is not None
+    ]
+    if len(attachment_ids) != len(set(attachment_ids)):
+        raise ContractError(
+            f"{contract} semantic validation failed: duplicate attachment identity"
+        )
+
+    for item in evidence:
+        if item["value"] is not None:
+            _canonical_decimal(
+                item["value"], "evidence.value", contract
+            )
+
+    hypotheses = document["hypotheses"]
+    hypothesis_ids = [item["hypothesis_id"] for item in hypotheses]
+    if len(hypothesis_ids) != len(set(hypothesis_ids)):
+        raise ContractError(
+            f"{contract} semantic validation failed: duplicate hypothesis identity"
+        )
+    for hypothesis in hypotheses:
+        linked_evidence = [
+            item["evidence_id"] for item in hypothesis["evidence_links"]
+        ]
+        if len(linked_evidence) != len(set(linked_evidence)):
+            raise ContractError(
+                f"{contract} semantic validation failed: hypothesis repeats evidence identity"
+            )
+        if any(identity not in evidence_id_set for identity in linked_evidence):
+            raise ContractError(
+                f"{contract} semantic validation failed: hypothesis references absent evidence"
+            )
+
+    finding = document["finding"]
+    if finding is not None and finding["actor"]["source"] != "TECHNICIAN":
+        raise ContractError(
+            f"{contract} semantic validation failed: finding actor must be a technician"
+        )
+
+    verification = document["verification"]
+    if verification is not None and any(
+        identity not in evidence_id_set for identity in verification["evidence_ids"]
+    ):
+        raise ContractError(
+            f"{contract} semantic validation failed: verification references absent evidence"
+        )
+
+
 def _validate_locator(locator: dict[str, Any], contract: str) -> None:
     if locator["pdf_page_start"] > locator["pdf_page_end"]:
         raise ContractError(f"{contract} semantic validation failed: reversed PDF page locator")
@@ -609,7 +724,10 @@ TRIMMED_TEXT_KEYS = frozenset(
         "specification", "quantity_unit", "method", "condition_grade", "provider", "terms",
         "notes", "label", "storage_key", "section_label", "summary", "publisher",
         "publication_title", "publication_number", "amendment_reason", "reason", "phone",
-        "email", "address", "invoice_number", "serial_number"
+        "email", "address", "invoice_number", "serial_number", "make", "model", "trim",
+        "statement", "conclusion", "limitations", "next_action", "license_plate",
+        "operating_conditions", "prior_work", "test_point", "expected_result",
+        "expected_result_source"
     }
 )
 
