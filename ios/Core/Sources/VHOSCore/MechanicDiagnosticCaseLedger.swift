@@ -1,4 +1,94 @@
+import CryptoKit
 import Foundation
+
+private enum MechanicDiagnosticCaseLedgerEntryError: Error {
+  case unsupportedEnvelope
+  case revisionDigestMismatch
+  case predecessorDigestMismatch
+}
+
+/// The private persistence boundary for one case revision.
+///
+/// The revision digest binds the exact canonical encoding of `revision`. The predecessor digest
+/// binds this entry to the prior committed revision for the same case, even when cases are
+/// interleaved in the NDJSON ledger.
+private struct MechanicDiagnosticCaseLedgerEntry: Codable, Sendable {
+  static let currentContract = "vhos.mechanic-diagnostic-case-ledger-entry"
+  static let currentContractVersion = "1.0.0"
+
+  let contract: String
+  let contractVersion: String
+  let revisionSHA256: String
+  let predecessorRevisionSHA256: String?
+  let revision: MechanicDiagnosticCaseRevision
+
+  private enum CodingKeys: String, CodingKey {
+    case contract, contractVersion
+    case revisionSHA256 = "revisionSha256"
+    case predecessorRevisionSHA256 = "predecessorRevisionSha256"
+    case revision
+  }
+
+  init(
+    revision: MechanicDiagnosticCaseRevision,
+    predecessorRevisionSHA256: String?
+  ) throws {
+    contract = Self.currentContract
+    contractVersion = Self.currentContractVersion
+    revisionSHA256 = try Self.digest(revision)
+    self.predecessorRevisionSHA256 = predecessorRevisionSHA256
+    self.revision = revision
+  }
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    guard container.contains(.contract), container.contains(.contractVersion),
+      container.contains(.revisionSHA256), container.contains(.predecessorRevisionSHA256),
+      container.contains(.revision)
+    else {
+      throw MechanicDiagnosticCaseLedgerEntryError.unsupportedEnvelope
+    }
+    contract = try container.decode(String.self, forKey: .contract)
+    contractVersion = try container.decode(String.self, forKey: .contractVersion)
+    revisionSHA256 = try container.decode(String.self, forKey: .revisionSHA256)
+    predecessorRevisionSHA256 = try container.decodeIfPresent(
+      String.self, forKey: .predecessorRevisionSHA256)
+    revision = try container.decode(MechanicDiagnosticCaseRevision.self, forKey: .revision)
+  }
+
+  func encode(to encoder: Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+    try container.encode(contract, forKey: .contract)
+    try container.encode(contractVersion, forKey: .contractVersion)
+    try container.encode(revisionSHA256, forKey: .revisionSHA256)
+    if let predecessorRevisionSHA256 {
+      try container.encode(predecessorRevisionSHA256, forKey: .predecessorRevisionSHA256)
+    } else {
+      try container.encodeNil(forKey: .predecessorRevisionSHA256)
+    }
+    try container.encode(revision, forKey: .revision)
+  }
+
+  func validate(expectedPredecessorRevisionSHA256: String?) throws {
+    guard contract == Self.currentContract, contractVersion == Self.currentContractVersion else {
+      throw MechanicDiagnosticCaseLedgerEntryError.unsupportedEnvelope
+    }
+    guard revisionSHA256 == (try Self.digest(revision)) else {
+      throw MechanicDiagnosticCaseLedgerEntryError.revisionDigestMismatch
+    }
+    guard predecessorRevisionSHA256 == expectedPredecessorRevisionSHA256 else {
+      throw MechanicDiagnosticCaseLedgerEntryError.predecessorDigestMismatch
+    }
+  }
+
+  static func digest(_ revision: MechanicDiagnosticCaseRevision) throws -> String {
+    SHA256.hash(data: try revision.encoded()).map { String(format: "%02x", $0) }.joined()
+  }
+
+  func encoded() throws -> Data {
+    try VHOSJSON.encoder().encode(self)
+  }
+}
 
 public struct MechanicDiagnosticCaseLedgerLoadResult: Equatable, Sendable {
   public let revisionCount: Int
@@ -126,8 +216,17 @@ public final class MechanicDiagnosticCaseLedger: @unchecked Sendable {
       throw MechanicDiagnosticCaseLedgerError.revisionIdentityCollision(revision.revisionID)
     }
     try Self.validateAppend(revision, against: revisions)
+    let predecessorRevisionSHA256: String?
+    if let predecessor = revisions.last(where: { $0.caseID == revision.caseID }) {
+      predecessorRevisionSHA256 = try MechanicDiagnosticCaseLedgerEntry.digest(predecessor)
+    } else {
+      predecessorRevisionSHA256 = nil
+    }
+    let entry = try MechanicDiagnosticCaseLedgerEntry(
+      revision: revision,
+      predecessorRevisionSHA256: predecessorRevisionSHA256)
     try DurableEvidenceFile.appendCommittedLine(
-      encoded, to: ledgerURL, fileManager: fileManager)
+      try entry.encoded(), to: ledgerURL, fileManager: fileManager)
     try Self.applyCompleteFileProtection(to: [ledgerURL], fileManager: fileManager)
     revisions.append(revision)
     return true
@@ -153,20 +252,25 @@ public final class MechanicDiagnosticCaseLedger: @unchecked Sendable {
 
   private func loadLocked() throws -> MechanicDiagnosticCaseLedgerLoadResult {
     var validated: [MechanicDiagnosticCaseRevision] = []
-    let loaded: AppendOnlyNDJSONLoadResult<MechanicDiagnosticCaseRevision> =
+    var latestRevisionSHA256ByCase: [String: String] = [:]
+    let loaded: AppendOnlyNDJSONLoadResult<MechanicDiagnosticCaseLedgerEntry> =
       try AppendOnlyNDJSONLedger.load(
         from: ledgerURL,
         quarantineDirectory: quarantineDirectory,
         fileManager: fileManager
-      ) { record in
+      ) { entry in
+        let record = entry.revision
+        try entry.validate(
+          expectedPredecessorRevisionSHA256: latestRevisionSHA256ByCase[record.caseID])
         try record.validateContract()
         guard !validated.contains(where: { $0.revisionID == record.revisionID }) else {
           throw MechanicDiagnosticCaseLedgerError.revisionIdentityCollision(record.revisionID)
         }
         try Self.validateAppend(record, against: validated)
         validated.append(record)
+        latestRevisionSHA256ByCase[record.caseID] = entry.revisionSHA256
       }
-    revisions = loaded.records
+    revisions = loaded.records.map(\.revision)
     recovery = loaded.recovery
     var protectedURLs = [storageDirectory, quarantineDirectory]
     if fileManager.fileExists(atPath: ledgerURL.path) { protectedURLs.append(ledgerURL) }

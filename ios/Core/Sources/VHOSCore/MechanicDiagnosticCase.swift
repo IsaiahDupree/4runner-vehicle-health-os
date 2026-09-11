@@ -980,6 +980,13 @@ public enum MechanicDiagnosticCaseError: Error, Equatable, LocalizedError {
 }
 
 private enum MechanicDiagnosticCaseValidation {
+  // These are the 64-bit decimal.MAX_EMAX and decimal.MIN_ETINY bounds used by the existing
+  // Python contract validator.
+  // The contract validator additionally requires `str(Decimal(value)) == value`, so merely
+  // matching the JSON Schema's decimal grammar is not sufficient.
+  private static let maximumDecimalAdjustedExponent: Int64 = 999_999_999_999_999_999
+  private static let minimumDecimalExponent: Int64 = -1_999_999_999_999_999_997
+
   static func requireID(_ value: String, prefix: String, field: String) throws {
     let escaped = NSRegularExpression.escapedPattern(for: prefix)
     guard
@@ -1020,11 +1027,9 @@ private enum MechanicDiagnosticCaseValidation {
     }
     if let value = evidence.value {
       try requireText(value, maximum: 80, field: "evidence.value")
-      guard
-        value.range(
-          of: "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:E[+-]?[0-9]+)?$",
-          options: .regularExpression) != nil
-      else { throw MechanicDiagnosticCaseError.invalidField("evidence.value") }
+      guard isCanonicalDecimal(value) else {
+        throw MechanicDiagnosticCaseError.invalidField("evidence.value")
+      }
     }
     try validateOptionalText(evidence.method, maximum: 5_000, field: "evidence.method")
     try validateOptionalText(evidence.testPoint, maximum: 1_000, field: "evidence.test_point")
@@ -1060,6 +1065,78 @@ private enum MechanicDiagnosticCaseValidation {
       throw MechanicDiagnosticCaseError.invalidField("evidence.dtc_code")
     }
     if let attachment = evidence.attachment { try validate(attachment) }
+  }
+
+  /// Mirrors `str(Decimal(value)) == value` for strings admitted by the shared decimal schema.
+  /// This is lexical by design: Foundation.Decimal has a much smaller precision and exponent
+  /// range than Python Decimal, and accepting a rounded Foundation value would split contract
+  /// semantics across runtimes.
+  private static func isCanonicalDecimal(_ value: String) -> Bool {
+    guard
+      value.range(
+        of: "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:E[+-]?[0-9]+)?$",
+        options: .regularExpression) != nil
+    else { return false }
+
+    let isNegative = value.hasPrefix("-")
+    let unsignedValue = isNegative ? String(value.dropFirst()) : value
+    let exponentParts = unsignedValue.split(
+      separator: "E", maxSplits: 1, omittingEmptySubsequences: false)
+    let significand = String(exponentParts[0])
+    let significandParts = significand.split(
+      separator: ".", maxSplits: 1, omittingEmptySubsequences: false)
+    let integerDigits = String(significandParts[0])
+    let fractionalDigits = significandParts.count == 2 ? String(significandParts[1]) : ""
+    let fractionalDigitCount = Int64(fractionalDigits.utf8.count)
+
+    var explicitExponent: Int64 = 0
+    if exponentParts.count == 2 {
+      var exponentText = String(exponentParts[1])
+      let exponentIsNegative = exponentText.hasPrefix("-")
+      if exponentIsNegative || exponentText.hasPrefix("+") {
+        exponentText.removeFirst()
+      }
+      guard let magnitude = Int64(exponentText) else { return false }
+      explicitExponent = exponentIsNegative ? -magnitude : magnitude
+    }
+
+    // Python Decimal stores the exponent after accounting for fractional coefficient digits.
+    // Check before subtracting so even schema-valid, many-digit exponents fail without overflow.
+    guard
+      explicitExponent >= minimumDecimalExponent + fractionalDigitCount,
+      explicitExponent <= maximumDecimalAdjustedExponent + fractionalDigitCount
+    else { return false }
+    let exponent = explicitExponent - fractionalDigitCount
+
+    let coefficient = integerDigits + fractionalDigits
+    let nonzeroStart = coefficient.firstIndex(where: { $0 != "0" })
+    let digits = nonzeroStart.map { String(coefficient[$0...]) } ?? "0"
+    let digitCount = Int64(digits.utf8.count)
+    guard exponent <= maximumDecimalAdjustedExponent - (digitCount - 1) else { return false }
+    let adjustedExponent = exponent + digitCount - 1
+
+    let renderedMagnitude: String
+    if exponent <= 0, adjustedExponent >= -6 {
+      if exponent == 0 {
+        renderedMagnitude = digits
+      } else {
+        let decimalPoint = digits.utf8.count + Int(exponent)
+        if decimalPoint > 0 {
+          let split = digits.index(digits.startIndex, offsetBy: decimalPoint)
+          renderedMagnitude = "\(digits[..<split]).\(digits[split...])"
+        } else {
+          renderedMagnitude = "0.\(String(repeating: "0", count: -decimalPoint))\(digits)"
+        }
+      }
+    } else {
+      let first = digits.first!
+      let remainder = digits.dropFirst()
+      let coefficientText = remainder.isEmpty ? String(first) : "\(first).\(remainder)"
+      let exponentSign = adjustedExponent >= 0 ? "+" : ""
+      renderedMagnitude = "\(coefficientText)E\(exponentSign)\(adjustedExponent)"
+    }
+
+    return value == (isNegative ? "-\(renderedMagnitude)" : renderedMagnitude)
   }
 
   static func validate(_ attachment: MechanicDiagnosticAttachment) throws {

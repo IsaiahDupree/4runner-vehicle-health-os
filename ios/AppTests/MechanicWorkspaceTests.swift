@@ -6,6 +6,40 @@ import XCTest
 
 @MainActor
 final class MechanicWorkspaceTests: XCTestCase {
+  func testInterruptedUncommittedTailIsSurfacedByNewWorkspaceModel() throws {
+    let root = temporaryDirectory("interrupted-tail")
+    defer { try? FileManager.default.removeItem(at: root) }
+    let clock = try XCTUnwrap(ISO8601DateFormatter().date(from: "2026-09-07T13:30:00Z"))
+    let workspace = MechanicWorkspaceModel(storageDirectory: root, now: { clock })
+    let caseID = try workspace.createCase(from: intake())
+    let committed = try XCTUnwrap(workspace.caseRevision(caseID))
+    let interruptedTail = Data(#"{"revision_id":"interrupted""#.utf8)
+    let ledgerURL = root.appendingPathComponent("diagnostic-case-revisions.ndjson")
+    let handle = try FileHandle(forWritingTo: ledgerURL)
+    try handle.seekToEnd()
+    try handle.write(contentsOf: interruptedTail)
+    try handle.close()
+
+    let reopened = MechanicWorkspaceModel(storageDirectory: root, now: { clock })
+
+    guard case .recoveredInterruptedWrite(let detail) = reopened.loadState else {
+      return XCTFail("Expected the workspace to surface interrupted-tail recovery.")
+    }
+    XCTAssertTrue(detail.contains("Recovered an interrupted final write"))
+    XCTAssertEqual(reopened.caseRevision(caseID), committed)
+    XCTAssertTrue(reopened.loadState.allowsMutation)
+
+    let quarantineDirectory = root.appendingPathComponent("quarantine", isDirectory: true)
+    let quarantined = try FileManager.default.contentsOfDirectory(
+      at: quarantineDirectory,
+      includingPropertiesForKeys: nil
+    )
+    let recoveryFile = try XCTUnwrap(
+      quarantined.first { (try? Data(contentsOf: $0)) == interruptedTail }
+    )
+    XCTAssertTrue(detail.contains(recoveryFile.lastPathComponent))
+  }
+
   func testOfflineCaseFlowsFromIntakeThroughVerifiedCloseAndReload() throws {
     let root = temporaryDirectory("complete-case")
     defer { try? FileManager.default.removeItem(at: root) }
@@ -121,6 +155,86 @@ final class MechanicWorkspaceTests: XCTestCase {
       "The available evidence is insufficient to identify a root cause.")
   }
 
+  func testMissingPersistedAttachmentMakesNewWorkspaceUnavailableAndBlocksMutation() throws {
+    let root = temporaryDirectory("missing-attachment")
+    defer { try? FileManager.default.removeItem(at: root) }
+    let clock = try XCTUnwrap(ISO8601DateFormatter().date(from: "2026-09-07T15:40:00Z"))
+    let (workspace, caseID, storedURL) = try workspaceWithAttachment(root: root, clock: clock)
+    let before = try XCTUnwrap(workspace.caseRevision(caseID))
+    try FileManager.default.removeItem(at: storedURL)
+
+    let reopened = MechanicWorkspaceModel(storageDirectory: root, now: { clock })
+
+    guard case .unavailable(let detail) = reopened.loadState else {
+      return XCTFail("Expected a missing persisted attachment to fail the workspace closed.")
+    }
+    XCTAssertTrue(detail.contains("Stored attachment is missing"))
+    XCTAssertFalse(reopened.loadState.allowsMutation)
+    XCTAssertThrowsError(try reopened.createCase(from: intake())) { error in
+      XCTAssertEqual(error as? MechanicWorkspaceError, .storeUnavailable)
+    }
+    XCTAssertEqual(
+      try MechanicDiagnosticCaseLedger(storageDirectory: root).latest(caseID: caseID), before)
+  }
+
+  func testTamperedPersistedAttachmentMakesNewWorkspaceUnavailableAndBlocksMutation() throws {
+    let root = temporaryDirectory("tampered-attachment")
+    defer { try? FileManager.default.removeItem(at: root) }
+    let clock = try XCTUnwrap(ISO8601DateFormatter().date(from: "2026-09-07T15:45:00Z"))
+    let (workspace, caseID, storedURL) = try workspaceWithAttachment(root: root, clock: clock)
+    let before = try XCTUnwrap(workspace.caseRevision(caseID))
+    try Data("tampered persisted attachment".utf8).write(to: storedURL)
+
+    let reopened = MechanicWorkspaceModel(storageDirectory: root, now: { clock })
+
+    guard case .unavailable(let detail) = reopened.loadState else {
+      return XCTFail("Expected a tampered persisted attachment to fail the workspace closed.")
+    }
+    XCTAssertTrue(detail.contains("failed its byte-count or SHA-256 check"))
+    XCTAssertFalse(reopened.loadState.allowsMutation)
+    XCTAssertThrowsError(try reopened.createCase(from: intake())) { error in
+      XCTAssertEqual(error as? MechanicWorkspaceError, .storeUnavailable)
+    }
+    XCTAssertEqual(
+      try MechanicDiagnosticCaseLedger(storageDirectory: root).latest(caseID: caseID), before)
+  }
+
+  func testAddAttachmentEvidenceRejectsUnverifiedMetadataWithoutLedgerMutation() throws {
+    let root = temporaryDirectory("unverified-attachment")
+    defer { try? FileManager.default.removeItem(at: root) }
+    let clock = try XCTUnwrap(ISO8601DateFormatter().date(from: "2026-09-07T15:50:00Z"))
+    let workspace = MechanicWorkspaceModel(storageDirectory: root, now: { clock })
+    let caseID = try workspace.createCase(from: intake())
+    let before = try XCTUnwrap(workspace.caseRevision(caseID))
+    let unverified = MechanicDiagnosticAttachment(
+      attachmentID: "attachment_00000000000000000000000009",
+      displayName: "caller-supplied.jpg",
+      mediaType: "image/jpeg",
+      byteCount: 128,
+      sha256: String(repeating: "a", count: 64),
+      storageKey: "Attachments/\(String(repeating: "a", count: 64))",
+      availability: .available,
+      capturedAt: "2026-09-07T15:50:00Z"
+    )
+
+    XCTAssertThrowsError(
+      try workspace.addAttachmentEvidence(
+        attachment: unverified,
+        type: .photo,
+        description: "Caller-supplied metadata without verified local bytes.",
+        caseID: caseID
+      )
+    ) { error in
+      guard case MechanicCaseArtifactError.storedAttachmentMissing = error else {
+        return XCTFail("Unexpected error: \(error)")
+      }
+    }
+
+    XCTAssertEqual(workspace.caseRevision(caseID), before)
+    XCTAssertEqual(
+      try MechanicDiagnosticCaseLedger(storageDirectory: root).revisions(caseID: caseID).count, 1)
+  }
+
   func testVoidIsARevisionAndNeverDisappearsOnReload() throws {
     let root = temporaryDirectory("void")
     defer { try? FileManager.default.removeItem(at: root) }
@@ -153,6 +267,24 @@ final class MechanicWorkspaceTests: XCTestCase {
       reporter: .customer,
       operatingConditions: "After approximately 30 minutes of driving."
     )
+  }
+
+  private func workspaceWithAttachment(root: URL, clock: Date) throws
+    -> (workspace: MechanicWorkspaceModel, caseID: String, storedURL: URL)
+  {
+    let workspace = MechanicWorkspaceModel(storageDirectory: root, now: { clock })
+    let caseID = try workspace.createCase(from: intake())
+    let sourceURL = root.appendingPathComponent("inspection-photo.jpg")
+    try Data("real persisted attachment bytes".utf8).write(to: sourceURL)
+    try workspace.importAttachmentEvidence(
+      from: sourceURL,
+      mediaType: "image/jpeg",
+      type: .photo,
+      description: "Imported inspection photo",
+      caseID: caseID
+    )
+    let attachment = try XCTUnwrap(workspace.caseRevision(caseID)?.evidence.first?.attachment)
+    return (workspace, caseID, root.appendingPathComponent(attachment.storageKey))
   }
 
   private func temporaryDirectory(_ name: String) -> URL {

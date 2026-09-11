@@ -204,6 +204,52 @@ import Testing
   }
 }
 
+@Test func mechanicDiagnosticCaseAcceptsPythonCanonicalDecimalEvidenceValues() throws {
+  let canonicalValues = [
+    "0",
+    "-0",
+    "0.000000",
+    "-0.0",
+    "12.1",
+    "1E+1",
+    "1.0E+2",
+    "1E-7",
+    "1.20E-7",
+    "0E+1",
+    "-0E-7",
+    "1E+999999999999999999",
+    "1E-1999999999999999997",
+  ]
+
+  for value in canonicalValues {
+    let revision = try makeDiagnosticCase(
+      evidence: [diagnosticMeasurement(value: value)])
+    #expect(revision.evidence[0].value == value)
+  }
+}
+
+@Test func mechanicDiagnosticCaseRejectsNoncanonicalOrOutOfBoundsDecimalEvidenceValues() {
+  let rejectedValues = [
+    "1E+01",
+    "1E01",
+    "0E1",
+    "1E-0",
+    "1E+0",
+    "1E-1",
+    "0.0000001",
+    "12E+1",
+    "1E+1000000000000000000",
+    "1E-1999999999999999998",
+  ]
+
+  for value in rejectedValues {
+    #expect(throws: MechanicDiagnosticCaseError.invalidField("evidence.value")) {
+      try makeDiagnosticCase(
+        evidence: [diagnosticMeasurement(value: value)])
+    }
+  }
+}
+
 @Test func mechanicDiagnosticCaseTypedULIDsHaveStrictPrefixesAndMonotonicBodies() throws {
   let instant = try #require(ISO8601DateFormatter().date(from: "2026-09-07T12:00:00Z"))
   let first = try MechanicDiagnosticCaseIDGenerator.make(.diagnosticCase, at: instant)
@@ -324,6 +370,19 @@ private func diagnosticEvidence() -> [MechanicDiagnosticEvidence] {
         storageKey: "sha256/aa/report",
         availability: .available)),
   ]
+}
+
+private func diagnosticMeasurement(value: String) -> MechanicDiagnosticEvidence {
+  MechanicDiagnosticEvidence(
+    evidenceID: diagnosticID("evidence", "C"),
+    type: .measurement,
+    source: .technicianMeasured,
+    quality: .verified,
+    description: "Recorded measurement.",
+    recordedAt: "2026-09-07T12:01:00Z",
+    value: value,
+    unit: "V",
+    method: "Measure with a calibrated meter.")
 }
 
 private func diagnosticID(_ prefix: String, _ suffix: String) -> String {

@@ -65,27 +65,33 @@ Committed-prefix corruption is terminal and fail-closed. Recovery may quarantine
 uncommitted trailing write and must retain its exact bytes and recovery receipt.
 
 The first concrete serialized contract, typed identity prefixes, and local append-only storage are
-implemented by the 2026-09-07 iOS pilot slice. Any schema evolution and migration sequence remain
-governed by ADR-0002.
+implemented by the 2026-09-07 iOS pilot slice. A 2026-09-10 integrity follow-up wraps every private
+ledger row in a versioned envelope containing the exact canonical revision SHA-256 and the prior
+revision digest for that case. Any schema evolution and migration sequence remain governed by
+ADR-0002.
 
 ## Report and export boundary
 
-A case report is a projection of one exact committed case revision. Report generation does not
-change the case's authority. The export must include:
+A case report is a privacy-selected projection of one exact committed case revision. Report
+generation does not change the case's authority. The export must include:
 
 - a human-readable report that requires no VHOS account to open;
-- the exact machine-readable case revision used to render it;
-- referenced attachment and evidence inventory, subject to explicit inclusion choices;
+- a machine-readable report snapshot whose recorded source-revision digest binds it to the exact
+  committed revision used to render it;
+- referenced attachment and evidence inventory, with packaged attachment bytes permitted only by
+  an explicit future inclusion control;
 - app, case-contract, renderer, and relevant evidence-version identifiers;
 - a manifest containing the path, media type, byte count, and SHA-256 of every included artifact;
 - the applied privacy/redaction choices; and
-- a report-generation receipt that binds the report bytes to the case revision and manifest.
+- generation metadata in the manifest that binds the report bytes to the source-revision digest.
 
 Raw high-volume captures, VIN, registration, customer contact details, precise location, and free-form
 notes are excluded unless the technician deliberately includes the applicable class. Export does not
 grant the recipient write authority over the originating store. Import, acknowledgement, countersign,
 or promotion into canonical maintenance history requires a future contract and is outside this
-decision.
+decision. The current local slice does not export the unredacted raw revision or package referenced
+attachment bytes. A shared report/manifest JSON Schema, package importer/verifier, explicit
+raw-revision option, and attachment-selection control remain future work.
 
 ## Gateway and AI evidence
 
@@ -93,10 +99,12 @@ The existing VHOS gateway is an optional evidence source, not a prerequisite for
 persistence, or report generation. A case can consist entirely of technician-authored concern,
 inspection, measurement, attachment, and hypothesis evidence.
 
-When gateway material is attached, the case records the exact bundle/observation identity, hash,
-source kind, firmware/configuration versions, quality, freshness, and authority. Simulator and replay
-sources retain their source labels. Discovery candidates and recovered portable CAN evidence remain
-non-authoritative. Gateway or transport degradation is not a vehicle fault.
+Before gateway material can be treated as fully reproducible case evidence, a future provenance
+contract must record the exact bundle/observation identity, hash, source kind,
+firmware/configuration versions, quality, freshness, and authority. Simulator and replay sources must
+retain their source labels. The current slice supports bounded gateway-reference fields but does not
+yet model the complete bundle/version provenance set. Discovery candidates and recovered portable CAN
+evidence remain non-authoritative. Gateway or transport degradation is not a vehicle fault.
 
 AI is optional. AI-authored text remains an evidence-bound, non-authoritative claim and is visually
 distinct from technician-authored material. AI cannot silently edit a case revision, approve a
@@ -128,9 +136,10 @@ write authority and selects no cloud vendor.
 
 The 2026-09-07 implementation delivers the diagnostic-case schema/example, matching Swift Core
 model, append-only local ledger, five-screen iOS workflow, bounded content-addressed attachment
-store, and deterministic privacy-selected PDF/JSON/manifest generation. Automated contract, Core,
-app-model, persistence, corruption, and artifact tests are recorded in
-`docs/development/MECHANIC-DIAGNOSTIC-CASE-MVP-2026-09-07.md`.
+store, and deterministic privacy-selected PDF/JSON plus versioned Swift manifest generation. The
+JSON report snapshot records the exact source-revision digest; it is not an unredacted copy of the
+stored revision. Automated contract, Core, app-model, persistence, corruption, and artifact tests
+are recorded in `docs/development/MECHANIC-DIAGNOSTIC-CASE-MVP-2026-09-07.md`.
 
 This ADR does not claim delivery of cloud/team synchronization, an export-package importer,
 selected attachment packaging, Android maintenance import, customer authorization/payment flows,

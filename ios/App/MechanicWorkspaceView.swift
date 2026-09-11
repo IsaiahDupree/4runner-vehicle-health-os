@@ -346,7 +346,8 @@ private struct MechanicCaseDetailView: View {
             } label: {
               WorkflowLinkLabel(
                 title: "Verification & report",
-                detail: revision.finding == nil ? "Finding required" : "Generate from exact revision",
+                detail: revision.finding == nil
+                  ? "Finding required" : "Generate from exact revision",
                 image: "doc.richtext")
             }
             .disabled(

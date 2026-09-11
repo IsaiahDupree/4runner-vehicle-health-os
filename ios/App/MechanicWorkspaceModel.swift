@@ -172,8 +172,6 @@ final class MechanicWorkspaceModel {
     guard current.status != .closed, current.status != .voided else {
       throw MechanicWorkspaceError.caseIsTerminal
     }
-    guard let attachmentStore else { throw MechanicWorkspaceError.storeUnavailable }
-    _ = try attachmentStore.validate(attachment)
     let timestamp = now()
     let evidence = MechanicDiagnosticEvidence(
       evidenceID: try MechanicDiagnosticCaseIDGenerator.make(.evidence, at: timestamp),
@@ -210,6 +208,8 @@ final class MechanicWorkspaceModel {
     guard current.status != .closed, current.status != .voided else {
       throw MechanicWorkspaceError.caseIsTerminal
     }
+    guard let attachmentStore else { throw MechanicWorkspaceError.storeUnavailable }
+    _ = try attachmentStore.validate(attachment)
     let timestamp = now()
     let evidence = MechanicDiagnosticEvidence(
       evidenceID: try MechanicDiagnosticCaseIDGenerator.make(.evidence, at: timestamp),

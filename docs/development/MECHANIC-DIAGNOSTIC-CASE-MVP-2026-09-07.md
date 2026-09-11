@@ -100,14 +100,18 @@ Acceptance intent:
 
 ### 5. Report
 
-The technician previews the exact committed revision, selects privacy and attachment inclusion,
-generates the report/package, and invokes the system share surface. Preview shows the same draft
-label, evidence distinctions, versions, and redactions present in exported bytes.
+The technician reviews the committed finding and verification summary, selects the implemented
+customer-contact, VIN, plate, and prior-work privacy options, generates PDF/JSON/manifest artifacts
+from that exact committed revision, and invokes the system share surface. The exported report and
+machine-readable snapshot preserve the draft label; the snapshot records the exact source-revision
+digest. The current UI is not a full byte-for-byte report preview and does not offer attachment-byte
+inclusion.
 
 Acceptance intent:
 
 - the human-readable report opens offline without an account;
-- the package manifest verifies every included artifact and binds the report to one case revision;
+- the manifest inventories and hashes every generated artifact and binds the report to one source
+  revision digest; package verification remains a future importer responsibility;
 - report generation does not mutate the case, Android ledger, findings, or lifecycle baselines; and
 - cancelling or failing export publishes no partial package and loses no case data.
 
@@ -121,9 +125,9 @@ Included in the intended MVP:
 - manual intake, observations, measurements, DTC facts, notes, and bounded attachments;
 - optional references to existing VHOS evidence without requiring a gateway;
 - explicit fact, hypothesis, unknown, recommendation, and source/authority labels;
-- deterministic report preview and checksum-verifiable offline export;
+- deterministic offline report artifacts with a checksum manifest;
 - explicit privacy/redaction controls; and
-- local acceptance receipts sufficient to reproduce the tested case and report.
+- automated local test evidence plus report-generation metadata for the tested case and report.
 
 Excluded from the current slice:
 
@@ -151,11 +155,11 @@ useful subset is implemented and tested but the complete acceptance procedure ha
 | Contract | Attempt to mark a technician draft as canonical maintenance history or an authorized vehicle finding. | Validation fails closed; no artifact or store mutation occurs. | PASS — schema constants and Swift semantic validation reject authority escalation. |
 | Contract | Mix observation, hypothesis, recommendation, unknown, simulator/replay, and optional gateway evidence in one case. | Every item retains exact source, authority, quality, time, and evidence reference through render/export. | PARTIAL — typed technician/imported/gateway evidence and `SUPPORTS`/`CONTRADICTS`/`UNKNOWN` links exist; exact gateway bundle/version and simulator/replay provenance are not yet modeled. |
 | Persistence | Create, amend, assess, report, and void a case across process restarts. | Current projection and complete revision/audit sequence reconstruct exactly with no in-place rewrite. | PARTIAL — complete close/reload and void/reload paths pass; one combined report-and-void restart fixture remains. |
-| Persistence | Attach a photo/document, then revoke the transient provider URL. | App-private bytes still hash-match metadata and remain available or are explicitly marked missing. | PARTIAL — private copy, deduplication, and post-copy hash validation pass; provider-revocation UI testing is not run. |
+| Persistence | Attach a photo/document, then revoke the transient provider URL. | App-private bytes still hash-match metadata and remain available or are explicitly marked missing. | PARTIAL — private copy, deduplication, commit/restart hash validation, and fail-closed missing/tampered handling pass; provider-revocation UI testing is not run. |
 | Offline/app-kill | In airplane mode, kill the app after each durable boundary in the five-screen flow and relaunch. | No committed data is lost or duplicated; no network dependency blocks intake, assessment, or report generation. | NOT RUN — the simulator exercises the network-independent workflow, but the physical airplane-mode/app-kill matrix remains. |
 | Offline/app-kill | Kill during attachment copy, revision commit, report render, and final package publication. | Recovery is deterministic; incomplete work is not presented as committed or exported. | NOT RUN |
-| Corrupt tail | Truncate each append-only ledger at every byte position in its final record. | Only a provably uncommitted tail is quarantined with exact bytes/receipt; committed prefix remains unchanged. | PARTIAL — a representative uncommitted tail is quarantined with a receipt; every-byte truncation coverage remains. |
-| Corrupt tail | Corrupt an interior committed record or its index. | Store and report generation fail closed; UI does not present an empty/healthy case list. | PASS — committed-record corruption is terminal and the model exposes a blocking unavailable state. |
+| Corrupt tail | Truncate each append-only ledger at every byte position in its final record. | Only a provably uncommitted tail is quarantined with exact bytes/receipt; committed prefix remains unchanged. | PARTIAL — a representative uncommitted tail is quarantined with exact bytes and surfaced by the workspace; every-byte truncation coverage remains. |
+| Corrupt tail | Corrupt an interior committed record or its index. | Store and report generation fail closed; UI does not present an empty/healthy case list. | PASS — malformed records, semantic rewrites with stale digests, and predecessor-chain rebinding fail closed; the model exposes a blocking unavailable state. |
 | Stale revision | Two editors open revision N; one commits N+1 and the other submits against N. | Second write receives a visible conflict and appends nothing until deliberately reconciled. | PASS |
 | Export | Generate twice from the same fixed case revision and privacy selection. | Canonical case/report content and artifact hashes are reproducible; manifest covers every included file. | PASS — fixed revision, privacy selection, and generation time produce byte-identical report artifacts and manifest digests. |
 | Export | Change, remove, add, rename, symlink, or path-traverse an exported artifact. | Verification rejects the package before display/import; no partial trust is granted. | NOT IMPLEMENTED — a package importer/verifier is outside this local generation slice. |
@@ -166,15 +170,17 @@ useful subset is implemented and tested but the complete acceptance procedure ha
 
 ## Automated verification recorded for this slice
 
-On 2026-09-07, the checked-in implementation passed:
+The initial slice was delivered on 2026-09-07. After the 2026-09-10 integrity follow-up, the
+checked-in implementation passed:
 
 - all 52 versioned JSON Schemas through `vhos contracts check`;
 - all 217 Python tests, including the diagnostic-case example and semantic failure cases;
-- all 227 `VHOSCore` Swift tests, including workflow, authority, stale-write, restart, corruption,
-  tail-recovery, and no-resurrection coverage;
+- all 231 `VHOSCore` Swift tests, including workflow, authority, Swift/Python decimal-contract
+  parity, stale-write, restart, digest-chain corruption, tail-recovery, and no-resurrection coverage;
 - a generic iOS Simulator build; and
-- all 104 iOS application tests on an iPhone 17 Pro Max simulator, including the local five-screen
-  model flow and report/attachment artifact tests.
+- all 108 iOS application tests on an iPhone 17 Pro Max simulator, including the local five-screen
+  model flow, surfaced tail recovery, restart attachment verification, and report/attachment artifact
+  tests.
 
 These automated results are prerequisites, not substitutes for the unrun physical-device and paid
 pilot gates.
