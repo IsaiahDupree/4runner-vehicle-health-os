@@ -10,6 +10,7 @@
 		0166122FFBBE3AFF77ACD6EF /* MechanicWorkspaceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C2D4F2DC842D65B199ADAD0 /* MechanicWorkspaceTests.swift */; };
 		1F8C34C7318A19AC1B605F18 /* MechanicWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADEF920548CFAED6EC8E4B97 /* MechanicWorkspaceView.swift */; };
 		2C20803C92A290014B149A91 /* PortableFrameStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A437465A0DC4C5D9113216 /* PortableFrameStore.swift */; };
+		302EA13BD9B9318607E9D94C /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 26B6A5883C0C9AD969908A25 /* PrivacyInfo.xcprivacy */; };
 		34F29EA8693AF238BC815DDD /* SystemStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76F08CC4DD741600B7E20C23 /* SystemStatusView.swift */; };
 		3C6B7A855B68467F9973731A /* mrdiy-v13-development-release-ed25519.base64 in Resources */ = {isa = PBXBuildFile; fileRef = 40D58B872E56EED4853D20F3 /* mrdiy-v13-development-release-ed25519.base64 */; };
 		3E8D5AD3A3606C96D408A984 /* MechanicCaseArtifactTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D046C561211F2E90B078AE7 /* MechanicCaseArtifactTests.swift */; };
@@ -53,6 +54,7 @@
 		1C4CB58385EA15D8DE39AA03 /* DiscoveryEvidenceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoveryEvidenceStore.swift; sourceTree = "<group>"; };
 		1D046C561211F2E90B078AE7 /* MechanicCaseArtifactTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MechanicCaseArtifactTests.swift; sourceTree = "<group>"; };
 		21CE522109AE74B24C43B096 /* ReleaseHubClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReleaseHubClient.swift; sourceTree = "<group>"; };
+		26B6A5883C0C9AD969908A25 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		27355F648A0C53B4EC6CF848 /* EvidenceOutboxStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceOutboxStore.swift; sourceTree = "<group>"; };
 		2E12062579AEB4902B49940D /* GatewayBLEClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayBLEClient.swift; sourceTree = "<group>"; };
 		33368A105329E710051228F4 /* PassiveCANPlaybackLab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PassiveCANPlaybackLab.swift; sourceTree = "<group>"; };
@@ -154,6 +156,7 @@
 				ADEF920548CFAED6EC8E4B97 /* MechanicWorkspaceView.swift */,
 				33368A105329E710051228F4 /* PassiveCANPlaybackLab.swift */,
 				46A437465A0DC4C5D9113216 /* PortableFrameStore.swift */,
+				26B6A5883C0C9AD969908A25 /* PrivacyInfo.xcprivacy */,
 				21CE522109AE74B24C43B096 /* ReleaseHubClient.swift */,
 				EDE321369856AF54C6B7946E /* RootView.swift */,
 				F5F07524DBD012E9F39B09DB /* SynchronizedReferenceStore.swift */,
@@ -265,6 +268,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4DC09285503568BD059B6630 /* Assets.xcassets in Resources */,
+				302EA13BD9B9318607E9D94C /* PrivacyInfo.xcprivacy in Resources */,
 				E1E366592FD90918002B9210 /* catalog-development-p256-public.der.base64 in Resources */,
 				3C6B7A855B68467F9973731A /* mrdiy-v13-development-release-ed25519.base64 in Resources */,
 			);
