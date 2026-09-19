@@ -17,6 +17,7 @@ targets:
       - package: VHOSCore
     settings:
       base:
+        CURRENT_PROJECT_VERSION: 35
         MARKETING_VERSION: "0.3.27"
         PRODUCT_BUNDLE_IDENTIFIER: com.isaiahdupree.VehicleHealthOS
         PRODUCT_NAME: Vehicle Health OS
@@ -36,7 +37,6 @@ targets:
       properties:
         CFBundleDisplayName: Vehicle Health OS
         CFBundleShortVersionString: "0.3.27"
-        CFBundleVersion: "35"
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
