@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.1.0",
+  "release": "v0.1.0-dev.13",
+  "channel": "development",
+  "publishedAt": "2026-08-17T13:11:05Z",
+  "chipFamily": "ESP32",
+  "hardwareFamily": "MRDIY-CAN-SHIELD",
+  "hardwareRevision": "v1.3+ (RX GPIO 4, TX GPIO 5)",
+  "upstreamTag": "main",
+  "sourceCommit": "f82f8b93926ddfbb1869f8928761a5f188dec971",
+  "firmwareCommit": "f82f8b93926ddfbb1869f8928761a5f188dec971",
+  "espIdfVersion": "5.5.3",
+  "artifact": {
+    "url": "/firmware/vhos-mrdiy-esp32-v13-v0.1.0-dev.13-merged.bin",
+    "address": 0,
+    "byteCount": 1114100,
+    "sha256": "d12241e3bc05ed3b4a3a9e3bd84be5d51259d1096b46502dc4eb75af73c0eba1"
+  },
+  "segments": [
+    {
+      "label": "Bootloader",
+      "url": "/firmware/vhos-mrdiy-esp32-v13-v0.1.0-dev.13-bootloader.bin",
+      "address": 4096,
+      "byteCount": 26256,
+      "sha256": "f4d34730edb5d2ba5519860fe8c314f40defb7783328107b904ceafd26c97279"
+    },
+    {
+      "label": "Partition table",
+      "url": "/firmware/vhos-mrdiy-esp32-v13-v0.1.0-dev.13-partition-table.bin",
+      "address": 32768,
+      "byteCount": 3072,
+      "sha256": "b1765a4417dac811ba35276d7b52e1c9defb38dc129617e3d88d8237037353e5"
+    },
+    {
+      "label": "OTA selection data",
+      "url": "/firmware/vhos-mrdiy-esp32-v13-v0.1.0-dev.13-ota-data-initial.bin",
+      "address": 53248,
+      "byteCount": 8192,
+      "sha256": "7d2c7ac4888bfd75cd5f56e8d61f69595121183afc81556c876732fd3782c62f"
+    },
+    {
+      "label": "VHOS application",
+      "url": "/firmware/vhos-mrdiy-esp32-v13-v0.1.0-dev.13-app.bin",
+      "address": 65536,
+      "byteCount": 1048564,
+      "sha256": "2d5aa02c8b32ced449829959f10347dac10257475fe8c4acf6a27bbd0f8c553f"
+    }
+  ],
+  "protectedRanges": [
+    {
+      "label": "BLE bond and Wi-Fi NVS",
+      "address": 36864,
+      "byteCount": 16384
+    }
+  ]
+}

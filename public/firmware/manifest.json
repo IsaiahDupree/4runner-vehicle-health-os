@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0.0",
+  "targets": [
+    {
+      "id": "mrdiy-esp32-v13",
+      "manifestUrl": "/firmware/manifest-mrdiy-esp32-v13.json"
+    },
+    {
+      "id": "wican-pro-esp32s3",
+      "manifestUrl": "/firmware/manifest-wican-pro-esp32s3.json"
+    },
+    {
+      "id": "ac-sensor-node-esp32s3",
+      "manifestUrl": "/firmware/manifest-ac-sensor-node-esp32s3.json"
+    }
+  ]
+}
