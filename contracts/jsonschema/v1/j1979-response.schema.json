@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/j1979-response.schema.json",
+  "title": "VHOS SAE J1979 response evidence v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "contract_version",
+    "gateway_id",
+    "capture_id",
+    "observed_at",
+    "gateway_monotonic_microseconds",
+    "source_sequence",
+    "transport",
+    "ecu_address",
+    "request_mode",
+    "request_pid",
+    "response_payload_hex"
+  ],
+  "properties": {
+    "contract": {"const": "obd.j1979-response"},
+    "contract_version": {"const": "1.0.0"},
+    "gateway_id": {"type": "string", "pattern": "^[A-Za-z0-9._-]{1,128}$"},
+    "capture_id": {"type": "string", "pattern": "^[A-Za-z0-9._-]{1,160}$"},
+    "observed_at": {"$ref": "common.schema.json#/$defs/wallTime"},
+    "gateway_monotonic_microseconds": {"type": "integer", "minimum": 0},
+    "source_sequence": {"type": "integer", "minimum": 0},
+    "transport": {
+      "type": "string",
+      "enum": ["ISO_15765_11_500", "ISO_15765_29_500", "ISO_15765_11_250", "ISO_15765_29_250", "ISO_9141_2", "ISO_14230", "SAE_J1850_PWM", "SAE_J1850_VPW"]
+    },
+    "ecu_address": {"type": "string", "pattern": "^0x[0-9A-F]{3,8}$"},
+    "request_mode": {"const": 1},
+    "request_pid": {"type": "integer", "minimum": 0, "maximum": 255},
+    "response_payload_hex": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{4,510}$"
+    }
+  }
+}

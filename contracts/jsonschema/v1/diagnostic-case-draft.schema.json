@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/diagnostic-case-draft.schema.json",
+  "title": "VHOS immutable commercial diagnostic case draft revision v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "contract_version",
+    "case_id",
+    "revision_id",
+    "supersedes_revision_id",
+    "revision_number",
+    "authority",
+    "vehicle_claims_authorized",
+    "maintenance_history_authorized",
+    "organization",
+    "customer",
+    "vehicle",
+    "actor",
+    "status",
+    "transition",
+    "complaint",
+    "evidence",
+    "hypotheses",
+    "finding",
+    "verification",
+    "created_at"
+  ],
+  "properties": {
+    "contract": {"const": "service.diagnostic-case-draft"},
+    "contract_version": {"const": "1.0.0"},
+    "case_id": {"$ref": "mechanic-common.schema.json#/$defs/caseId"},
+    "revision_id": {"$ref": "mechanic-common.schema.json#/$defs/caseRevisionId"},
+    "supersedes_revision_id": {
+      "anyOf": [
+        {"$ref": "mechanic-common.schema.json#/$defs/caseRevisionId"},
+        {"type": "null"}
+      ]
+    },
+    "revision_number": {"type": "integer", "minimum": 1, "maximum": 2147483647},
+    "authority": {"const": "TECHNICIAN_LOCAL_DRAFT"},
+    "vehicle_claims_authorized": {"const": false},
+    "maintenance_history_authorized": {"const": false},
+    "organization": {"$ref": "mechanic-common.schema.json#/$defs/organizationSnapshot"},
+    "customer": {"$ref": "mechanic-common.schema.json#/$defs/customerSnapshot"},
+    "vehicle": {"$ref": "mechanic-common.schema.json#/$defs/vehicleSnapshot"},
+    "actor": {
+      "allOf": [
+        {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/actor"},
+        {"properties": {"source": {"const": "TECHNICIAN"}}}
+      ]
+    },
+    "status": {"$ref": "mechanic-common.schema.json#/$defs/caseStatus"},
+    "transition": {"$ref": "mechanic-common.schema.json#/$defs/transition"},
+    "complaint": {"$ref": "mechanic-common.schema.json#/$defs/complaint"},
+    "evidence": {
+      "type": "array",
+      "maxItems": 5000,
+      "items": {"$ref": "mechanic-common.schema.json#/$defs/evidence"}
+    },
+    "hypotheses": {
+      "type": "array",
+      "maxItems": 1000,
+      "items": {"$ref": "mechanic-common.schema.json#/$defs/hypothesis"}
+    },
+    "finding": {
+      "anyOf": [
+        {"$ref": "mechanic-common.schema.json#/$defs/technicianFinding"},
+        {"type": "null"}
+      ]
+    },
+    "verification": {
+      "anyOf": [
+        {"$ref": "mechanic-common.schema.json#/$defs/verification"},
+        {"type": "null"}
+      ]
+    },
+    "created_at": {"$ref": "common.schema.json#/$defs/wallTime"}
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"revision_number": {"const": 1}},
+        "required": ["revision_number"]
+      },
+      "then": {
+        "properties": {
+          "supersedes_revision_id": {"type": "null"},
+          "status": {"const": "INTAKE"},
+          "transition": {
+            "allOf": [
+              {"$ref": "mechanic-common.schema.json#/$defs/transition"},
+              {
+                "properties": {
+                  "action": {"const": "CREATED"},
+                  "from_status": {"type": "null"},
+                  "to_status": {"const": "INTAKE"},
+                  "reason": {"type": "null"}
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"revision_number": {"minimum": 2}},
+        "required": ["revision_number"]
+      },
+      "then": {
+        "properties": {
+          "supersedes_revision_id": {
+            "$ref": "mechanic-common.schema.json#/$defs/caseRevisionId"
+          },
+          "transition": {
+            "allOf": [
+              {"$ref": "mechanic-common.schema.json#/$defs/transition"},
+              {"properties": {"action": {"not": {"const": "CREATED"}}}}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"supersedes_revision_id": {"type": "null"}},
+        "required": ["supersedes_revision_id"]
+      },
+      "then": {"properties": {"revision_number": {"const": 1}}}
+    },
+    {
+      "if": {
+        "properties": {"supersedes_revision_id": {"type": "string"}},
+        "required": ["supersedes_revision_id"]
+      },
+      "then": {"properties": {"revision_number": {"minimum": 2}}}
+    },
+    {
+      "if": {
+        "properties": {"status": {"enum": ["VERIFY", "CLOSED"]}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "finding": {"$ref": "mechanic-common.schema.json#/$defs/technicianFinding"}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "CLOSED"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "verification": {"$ref": "mechanic-common.schema.json#/$defs/verification"}
+        }
+      }
+    }
+  ]
+}

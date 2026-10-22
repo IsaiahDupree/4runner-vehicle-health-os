@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/can-marker-correlation-report.schema.json",
+  "title": "VHOS CAN/event-marker correlation report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract", "contract_version", "status", "authority", "parameters", "source_files", "test_runs", "ranked_candidates", "promotion_allowed"],
+  "properties": {
+    "contract": {"const": "can.marker-correlation-report"},
+    "contract_version": {"const": "1.0.0"},
+    "status": {"const": "DISCOVERY_CANDIDATE"},
+    "authority": {"type": "string", "minLength": 1, "maxLength": 1200},
+    "parameters": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["settle_microseconds", "window_microseconds"],
+      "properties": {
+        "settle_microseconds": {"type": "integer", "minimum": 0, "maximum": 1000000},
+        "window_microseconds": {"type": "integer", "minimum": 100000, "maximum": 10000000}
+      }
+    },
+    "source_files": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 1100,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["role", "name", "sha256", "byte_count", "record_count"],
+        "properties": {
+          "role": {"type": "string", "enum": ["PASSIVE_CAN", "EVENT_MARKER"]},
+          "name": {"type": "string", "minLength": 1, "maxLength": 1024},
+          "sha256": {"$ref": "common.schema.json#/$defs/sha256"},
+          "byte_count": {"type": "integer", "minimum": 1},
+          "record_count": {"type": "integer", "minimum": 1}
+        }
+      }
+    },
+    "test_runs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["test_run_id", "template_id", "capture_id", "gateway_id", "gateway_session_id", "marker_count", "marker_kinds", "can_records_in_session", "candidate_count"],
+        "properties": {
+          "test_run_id": {"type": "string", "minLength": 1, "maxLength": 160},
+          "template_id": {"type": "string", "minLength": 1, "maxLength": 160},
+          "capture_id": {"$ref": "common.schema.json#/$defs/captureId"},
+          "gateway_id": {"type": "string", "minLength": 1, "maxLength": 160},
+          "gateway_session_id": {"type": "integer", "minimum": 0, "maximum": 4294967295},
+          "marker_count": {"type": "integer", "minimum": 3},
+          "marker_kinds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1, "maxLength": 80}},
+          "can_records_in_session": {"type": "integer", "minimum": 0},
+          "candidate_count": {"type": "integer", "minimum": 0, "maximum": 100}
+        }
+      }
+    },
+    "ranked_candidates": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["test_run_id", "identifier", "extended", "field", "behavior_shape", "marker_samples", "window_observations", "minimum_window_observations", "evidence_density", "within_window_stability", "return_state_repeatability", "transition_fraction", "state_distinctness", "association_score", "score", "signature", "ambiguous_marker_kinds", "status"],
+        "properties": {
+          "test_run_id": {"type": "string", "minLength": 1, "maxLength": 160},
+          "identifier": {"type": "string", "pattern": "^0x(?:[0-9A-F]{3}|[0-9A-F]{8})$"},
+          "extended": {"type": "boolean"},
+          "field": {"type": "string", "pattern": "^(?:byte[0-7]|bit[0-7]_[0-7]|be16_[0-6]|le16_[0-6])$"},
+          "behavior_shape": {"type": "string", "enum": ["BOOLEAN", "STATE_CODE"]},
+          "marker_samples": {"type": "integer", "minimum": 3},
+          "window_observations": {"type": "integer", "minimum": 3},
+          "minimum_window_observations": {"type": "integer", "minimum": 1},
+          "evidence_density": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+          "within_window_stability": {"type": "number", "minimum": 0, "maximum": 1},
+          "return_state_repeatability": {"type": "number", "minimum": 0, "maximum": 1},
+          "transition_fraction": {"type": "number", "minimum": 0, "maximum": 1},
+          "state_distinctness": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+          "association_score": {"type": "number", "minimum": 0, "maximum": 1},
+          "score": {"type": "number", "minimum": 0, "maximum": 1},
+          "signature": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["marker_id", "label", "kind", "value", "mode_fraction", "observations"],
+              "properties": {
+                "marker_id": {"type": "string", "minLength": 1, "maxLength": 160},
+                "label": {"type": "string", "minLength": 1, "maxLength": 160},
+                "kind": {"type": "string", "minLength": 1, "maxLength": 80},
+                "value": {"type": "integer", "minimum": 0, "maximum": 4294967295},
+                "mode_fraction": {"type": "number", "minimum": 0, "maximum": 1},
+                "observations": {"type": "integer", "minimum": 1}
+              }
+            }
+          },
+          "ambiguous_marker_kinds": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {"type": "array", "minItems": 2, "uniqueItems": true, "items": {"type": "string", "minLength": 1, "maxLength": 80}}
+          },
+          "status": {"const": "DISCOVERY_CANDIDATE"}
+        }
+      }
+    },
+    "promotion_allowed": {"const": false}
+  }
+}

@@ -1,0 +1,168 @@
+{
+  "contract": "service.diagnostic-case-draft",
+  "contract_version": "1.0.0",
+  "case_id": "case_00000000000000000000000001",
+  "revision_id": "caserev_00000000000000000000000005",
+  "supersedes_revision_id": "caserev_00000000000000000000000004",
+  "revision_number": 5,
+  "authority": "TECHNICIAN_LOCAL_DRAFT",
+  "vehicle_claims_authorized": false,
+  "maintenance_history_authorized": false,
+  "organization": {
+    "organization_id": "org_00000000000000000000000002",
+    "display_name": "Independent diagnostic service"
+  },
+  "customer": {
+    "customer_id": "customer_00000000000000000000000003",
+    "display_name": "Sample customer",
+    "phone": null,
+    "email": null
+  },
+  "vehicle": {
+    "vehicle_id": "veh_00000000000000000000000004",
+    "display_name": "Customer vehicle",
+    "vin": null,
+    "model_year": 2005,
+    "make": "Toyota",
+    "model": "4Runner",
+    "trim": null,
+    "license_plate": null,
+    "odometer": {
+      "value": 154000,
+      "unit": "MILES"
+    }
+  },
+  "actor": {
+    "source": "TECHNICIAN",
+    "actor_id": "actor_00000000000000000000000005",
+    "display_name": "Sample technician"
+  },
+  "status": "CLOSED",
+  "transition": {
+    "action": "CLOSED",
+    "from_status": "VERIFY",
+    "to_status": "CLOSED",
+    "reason": null
+  },
+  "complaint": {
+    "description": "Customer reports an intermittent no-start after overnight parking.",
+    "operating_conditions": "The vehicle was parked overnight before the reported event.",
+    "prior_work": null,
+    "reported_by": "CUSTOMER",
+    "reported_at": "2026-09-07T13:00:00Z"
+  },
+  "evidence": [
+    {
+      "evidence_id": "evidence_00000000000000000000000006",
+      "type": "MEASUREMENT",
+      "source": "TECHNICIAN_MEASURED",
+      "quality": "VERIFIED",
+      "description": "Battery terminal voltage before the first start attempt.",
+      "method": "Measure across the battery terminals with a calibrated digital multimeter.",
+      "test_point": "Battery positive and negative terminals",
+      "expected_result": null,
+      "expected_result_source": null,
+      "recorded_at": "2026-09-07T13:15:00Z",
+      "value": "12.1",
+      "unit": "V",
+      "dtc_code": null,
+      "attachment": null
+    },
+    {
+      "evidence_id": "evidence_00000000000000000000000007",
+      "type": "DTC",
+      "source": "VEHICLE_GATEWAY",
+      "quality": "VERIFIED",
+      "description": "Diagnostic trouble code retained in the imported scan result.",
+      "method": null,
+      "test_point": null,
+      "expected_result": null,
+      "expected_result_source": null,
+      "recorded_at": "2026-09-07T13:20:00Z",
+      "value": null,
+      "unit": null,
+      "dtc_code": "P0300",
+      "attachment": null
+    },
+    {
+      "evidence_id": "evidence_00000000000000000000000008",
+      "type": "SCAN_REPORT",
+      "source": "IMPORTED",
+      "quality": "VERIFIED",
+      "description": "Original scan-tool report retained as a content-addressed object.",
+      "method": null,
+      "test_point": null,
+      "expected_result": null,
+      "expected_result_source": null,
+      "recorded_at": "2026-09-07T13:21:00Z",
+      "value": null,
+      "unit": null,
+      "dtc_code": null,
+      "attachment": {
+        "attachment_id": "attachment_00000000000000000000000009",
+        "display_name": "scan-report.pdf",
+        "media_type": "application/pdf",
+        "byte_count": 2048,
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "storage_key": "sha256/aa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "availability": "AVAILABLE",
+        "captured_at": "2026-09-07T13:20:00Z"
+      }
+    },
+    {
+      "evidence_id": "evidence_0000000000000000000000000A",
+      "type": "OBSERVATION",
+      "source": "TECHNICIAN_OBSERVED",
+      "quality": "VERIFIED",
+      "description": "The reported symptom did not recur during the documented post-repair verification attempt.",
+      "method": "Repeat the customer-reported start procedure.",
+      "test_point": null,
+      "expected_result": "Engine starts without reproducing the reported symptom.",
+      "expected_result_source": "Customer-reported expected behavior",
+      "recorded_at": "2026-09-07T15:30:00Z",
+      "value": null,
+      "unit": null,
+      "dtc_code": null,
+      "attachment": null
+    }
+  ],
+  "hypotheses": [
+    {
+      "hypothesis_id": "hypothesis_0000000000000000000000000B",
+      "statement": "Low available battery voltage may contribute to the reported no-start condition.",
+      "evidence_links": [
+        {
+          "evidence_id": "evidence_00000000000000000000000006",
+          "relationship": "SUPPORTS"
+        },
+        {
+          "evidence_id": "evidence_00000000000000000000000007",
+          "relationship": "UNKNOWN"
+        }
+      ]
+    }
+  ],
+  "finding": {
+    "conclusion": "The technician recorded a battery-voltage concern for repair follow-up.",
+    "limitations": [
+      "The intermittent symptom was not reproduced during the initial inspection."
+    ],
+    "next_action": "Inspect the battery and starting circuit using approved service information before replacing components.",
+    "actor": {
+      "source": "TECHNICIAN",
+      "actor_id": "actor_00000000000000000000000005",
+      "display_name": "Sample technician"
+    },
+    "recorded_at": "2026-09-07T14:00:00Z"
+  },
+  "verification": {
+    "outcome": "NOT_REPRODUCED",
+    "method": "Repeat the customer-reported start procedure after the documented repair follow-up.",
+    "reason": null,
+    "evidence_ids": [
+      "evidence_0000000000000000000000000A"
+    ],
+    "recorded_at": "2026-09-07T15:30:00Z"
+  },
+  "created_at": "2026-09-07T15:31:00Z"
+}

@@ -1,0 +1,41 @@
+{
+  "contract": "vehicle.maintenance-requirement",
+  "contract_version": "1.0.0",
+  "requirement_id": "requirement_00000000000000000000000008",
+  "requirement_key": "engine.oil_and_filter.replace",
+  "requirement_version": "1.0.0",
+  "vehicle_pack_id": "toyota.4runner.2005.us",
+  "vehicle_pack_version": "1.0.0",
+  "source_manifest_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "authority": "DRAFT",
+  "task": {
+    "task_id": "mainttask_00000000000000000000000009",
+    "task_key": "replace.engine_oil_and_filter",
+    "action": "REPLACE",
+    "title": "Replace engine oil and oil filter",
+    "system": {"knowledge": "KNOWN", "system_key": "engine.lubrication", "display_name": "Engine lubrication"},
+    "component_key": "engine.oil_and_filter"
+  },
+  "rule": {
+    "rule_id": "maintrule_0000000000000000000000000A",
+    "rule_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "schedule_policy": "WHICHEVER_OCCURS_FIRST",
+    "initial_due": {"distance": {"value": 5000, "unit": "MILES"}, "elapsed_months": 6, "engine_hours": null},
+    "recurrence": {"distance": {"value": 5000, "unit": "MILES"}, "elapsed_months": 6, "engine_hours": null},
+    "baseline_policy": "LAST_SATISFYING_COMPLETION"
+  },
+  "applicability": {
+    "expression_language": "vhos-applicability-1",
+    "unknown_result": "BLOCKED",
+    "predicates": [{"configuration_key": "market", "operator": "EQUALS", "values": ["US"]}]
+  },
+  "source_locators": [{
+    "source_document_id": "source_0000000000000000000000000B",
+    "locator_key": "guide.miles_or_months",
+    "section_label": "Using the Maintenance Log Charts — Miles or Months?",
+    "printed_page_start": 3,
+    "printed_page_end": 3,
+    "pdf_page_start": 5,
+    "pdf_page_end": 5
+  }]
+}

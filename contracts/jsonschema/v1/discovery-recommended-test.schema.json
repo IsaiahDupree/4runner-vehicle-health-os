@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/discovery-recommended-test.schema.json",
+  "title": "VHOS Discovery recommended next test v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract", "contract_version", "id", "candidate_id", "template_id", "template_version", "generated_at", "recommendation_algorithm_id", "recommendation_algorithm_version", "reason", "addressed_requirements", "competing_template_ids", "source_evidence_references", "authority"],
+  "properties": {
+    "contract": {"const": "vhos.discovery.recommended-test"},
+    "contract_version": {"const": "1.0.0"},
+    "id": {"type": "string", "pattern": "^recommendation_[0-9A-HJKMNP-TV-Z]{26}$"},
+    "candidate_id": {"type": "string", "pattern": "^candidate_[0-9A-HJKMNP-TV-Z]{26}$"},
+    "template_id": {"$ref": "common.schema.json#/$defs/semanticId"},
+    "template_version": {"$ref": "common.schema.json#/$defs/semanticVersion"},
+    "generated_at": {"$ref": "common.schema.json#/$defs/wallTime"},
+    "recommendation_algorithm_id": {"$ref": "common.schema.json#/$defs/semanticId"},
+    "recommendation_algorithm_version": {"$ref": "common.schema.json#/$defs/semanticVersion"},
+    "reason": {"type": "string", "minLength": 1, "maxLength": 1000},
+    "addressed_requirements": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "discovery-common.schema.json#/$defs/validationRequirement"}},
+    "competing_template_ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/semanticId"}},
+    "source_evidence_references": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "discovery-common.schema.json#/$defs/evidenceReference"}},
+    "authority": {"const": "EXPERIMENTAL_CANDIDATE"}
+  }
+}

@@ -1,0 +1,397 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/field-return-analysis.schema.json",
+  "title": "VHOS offline iPhone field-return analysis v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "contract_version",
+    "analysis_id",
+    "created_at",
+    "status",
+    "source_classification",
+    "vehicle_claims_authorized",
+    "required_display_label",
+    "parameters",
+    "inputs",
+    "append_comparison",
+    "direct_passive_can",
+    "analysis_scopes",
+    "artifacts",
+    "summary_path",
+    "authority"
+  ],
+  "properties": {
+    "contract": {"const": "vhos.field-return-analysis"},
+    "contract_version": {"const": "1.0.0"},
+    "analysis_id": {"type": "string", "pattern": "^field-return-[a-f0-9]{24}$"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "status": {"const": "PASS"},
+    "source_classification": {"const": "RECOVERED_PORTABLE_EVIDENCE"},
+    "vehicle_claims_authorized": {"const": false},
+    "required_display_label": {"const": "OFFLINE FIELD EVIDENCE • NOT LIVE"},
+    "parameters": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["soak_cycles", "marker_settle_microseconds", "marker_window_microseconds"],
+      "properties": {
+        "soak_cycles": {"type": "integer", "minimum": 1, "maximum": 1000},
+        "marker_settle_microseconds": {"type": "integer", "minimum": 0, "maximum": 1000000},
+        "marker_window_microseconds": {"type": "integer", "minimum": 100000, "maximum": 10000000}
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["current_root", "baseline_root", "source_files"],
+      "properties": {
+        "current_root": {"type": "string", "minLength": 1, "maxLength": 4096},
+        "baseline_root": {
+          "oneOf": [
+            {"type": "string", "minLength": 1, "maxLength": 4096},
+            {"type": "null"}
+          ]
+        },
+        "source_files": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 20000,
+          "items": {"$ref": "#/$defs/sourceFile"}
+        }
+      }
+    },
+    "append_comparison": {"$ref": "#/$defs/appendComparison"},
+    "direct_passive_can": {"$ref": "#/$defs/directPassiveCAN"},
+    "analysis_scopes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["full", "appended"],
+      "properties": {
+        "full": {"$ref": "#/$defs/scope"},
+        "appended": {
+          "oneOf": [
+            {"$ref": "#/$defs/scope"},
+            {"$ref": "#/$defs/noCANScope"},
+            {"type": "null"}
+          ]
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20000,
+      "items": {"$ref": "#/$defs/artifact"}
+    },
+    "summary_path": {"const": "SUMMARY.md"},
+    "authority": {"type": "string", "minLength": 1, "maxLength": 1000}
+  },
+  "$defs": {
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+    },
+    "identifierList": {
+      "type": "array",
+      "maxItems": 536870912,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^0x(?:[0-9A-F]{3}|[0-9A-F]{8})$"}
+    },
+    "messageTypes": {
+      "oneOf": [
+        {
+          "type": "object",
+          "propertyNames": {"pattern": "^(?:[0-9]|[1-9][0-9]{1,2})$"},
+          "additionalProperties": {"type": "integer", "minimum": 1}
+        },
+        {"type": "null"}
+      ]
+    },
+    "sourceFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["input_role", "path", "sha256", "byte_count", "record_count"],
+      "properties": {
+        "input_role": {"enum": ["CURRENT", "BASELINE"]},
+        "path": {"$ref": "#/$defs/relativePath"},
+        "sha256": {"$ref": "common.schema.json#/$defs/sha256"},
+        "byte_count": {"type": "integer", "minimum": 0},
+        "record_count": {
+          "oneOf": [
+            {"type": "integer", "minimum": 0},
+            {"type": "null"}
+          ]
+        }
+      }
+    },
+    "appendComparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "baseline_portable_records",
+        "current_portable_records",
+        "appended_portable_records",
+        "current_message_types",
+        "baseline_message_types",
+        "appended_message_types",
+        "appended_can_observations",
+        "new_identifiers",
+        "continued_identifiers",
+        "current_can_observations",
+        "baseline_can_observations",
+        "current_identifiers",
+        "identifiers_absent_from_current"
+      ],
+      "properties": {
+        "status": {"enum": ["NOT_REQUESTED", "EXACT_PREFIX"]},
+        "baseline_portable_records": {"$ref": "#/$defs/nullableCount"},
+        "current_portable_records": {"type": "integer", "minimum": 1},
+        "appended_portable_records": {"$ref": "#/$defs/nullableCount"},
+        "current_message_types": {"$ref": "#/$defs/messageTypes"},
+        "baseline_message_types": {"$ref": "#/$defs/messageTypes"},
+        "appended_message_types": {"$ref": "#/$defs/messageTypes"},
+        "appended_can_observations": {"$ref": "#/$defs/nullableCount"},
+        "new_identifiers": {"$ref": "#/$defs/identifierList"},
+        "continued_identifiers": {"$ref": "#/$defs/identifierList"},
+        "current_can_observations": {"type": "integer", "minimum": 1},
+        "baseline_can_observations": {"$ref": "#/$defs/nullableCount"},
+        "current_identifiers": {"$ref": "#/$defs/identifierList"},
+        "identifiers_absent_from_current": {"$ref": "#/$defs/identifierList"}
+      }
+    },
+    "nullableCount": {
+      "oneOf": [
+        {"type": "integer", "minimum": 0},
+        {"type": "null"}
+      ]
+    },
+    "directPassiveCAN": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "files", "records"],
+          "properties": {
+            "status": {"const": "NOT_AVAILABLE"},
+            "files": {"const": 0},
+            "records": {"const": 0}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "files",
+            "records",
+            "sessions",
+            "matching_portable_identities",
+            "identities_not_in_portable_ledger",
+            "supplemental_replay_records",
+            "source_files"
+          ],
+          "properties": {
+            "status": {"const": "VALIDATED"},
+            "files": {"type": "integer", "minimum": 1},
+            "records": {"type": "integer", "minimum": 1},
+            "sessions": {"type": "integer", "minimum": 1},
+            "matching_portable_identities": {"type": "integer", "minimum": 0},
+            "identities_not_in_portable_ledger": {"type": "integer", "minimum": 0},
+            "supplemental_replay_records": {"type": "integer", "minimum": 0},
+            "source_files": {"type": "array", "minItems": 1, "items": {"type": "object"}}
+          }
+        }
+      ]
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "recovery_path",
+        "replay_input_paths",
+        "records",
+        "portable_recovered_records",
+        "supplemental_direct_records",
+        "sessions",
+        "unique_identifiers",
+        "discovery_path",
+        "checksum_candidates",
+        "relationship_candidates",
+        "hypotheses_path",
+        "hypothesis_pack_sha256",
+        "hypothesis_pack_version",
+        "dynamic_hypotheses",
+        "accepted_signal_definitions",
+        "marker_correlation",
+        "corpus_path",
+        "corpus_id",
+        "semantic_digest",
+        "replay_path",
+        "live_replay_status",
+        "history_replay_status",
+        "reliability_path",
+        "reliability_status",
+        "reliability_scenarios",
+        "soak_cycles"
+      ],
+      "properties": {
+        "status": {"const": "PASS"},
+        "recovery_path": {"$ref": "#/$defs/relativePath"},
+        "replay_input_paths": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/relativePath"}
+        },
+        "records": {"type": "integer", "minimum": 1},
+        "portable_recovered_records": {"type": "integer", "minimum": 1},
+        "supplemental_direct_records": {"type": "integer", "minimum": 0},
+        "sessions": {"type": "integer", "minimum": 1},
+        "unique_identifiers": {"type": "integer", "minimum": 1},
+        "discovery_path": {"$ref": "#/$defs/relativePath"},
+        "checksum_candidates": {"type": "integer", "minimum": 0},
+        "relationship_candidates": {"type": "integer", "minimum": 0},
+        "hypotheses_path": {"$ref": "#/$defs/relativePath"},
+        "hypothesis_pack_sha256": {"$ref": "common.schema.json#/$defs/sha256"},
+        "hypothesis_pack_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+        "dynamic_hypotheses": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/dynamicHypothesis"}
+        },
+        "accepted_signal_definitions": {"const": 0},
+        "marker_correlation": {"$ref": "#/$defs/markerResult"},
+        "corpus_path": {"$ref": "#/$defs/relativePath"},
+        "corpus_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,127}$"},
+        "semantic_digest": {"$ref": "common.schema.json#/$defs/sha256"},
+        "replay_path": {"$ref": "#/$defs/relativePath"},
+        "live_replay_status": {"const": "PASS"},
+        "history_replay_status": {"const": "PASS"},
+        "reliability_path": {"$ref": "#/$defs/relativePath"},
+        "reliability_status": {"const": "PASS"},
+        "reliability_scenarios": {"const": 15},
+        "soak_cycles": {"type": "integer", "minimum": 1, "maximum": 1000},
+        "portable_path": {"$ref": "#/$defs/relativePath"}
+      }
+    },
+    "noCANScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "portable_path", "portable_records"],
+      "properties": {
+        "status": {"const": "NO_CAN_OBSERVATIONS"},
+        "portable_path": {"$ref": "#/$defs/relativePath"},
+        "portable_records": {"type": "integer", "minimum": 1}
+      }
+    },
+    "dynamicHypothesis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["hypothesis_id", "identifier_hex", "candidate_semantic", "records"],
+      "properties": {
+        "hypothesis_id": {"type": "string", "minLength": 1, "maxLength": 200},
+        "identifier_hex": {"type": "string", "pattern": "^0x(?:[0-9A-F]{3}|[0-9A-F]{8})$"},
+        "candidate_semantic": {"type": "string", "minLength": 1, "maxLength": 300},
+        "records": {"type": "integer", "minimum": 1}
+      }
+    },
+    "markerResult": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {"enum": ["NOT_AVAILABLE", "NOT_APPLICABLE", "COMPLETE"]},
+        "reason": {"type": "string", "minLength": 1, "maxLength": 500},
+        "marker_records": {"type": "integer", "minimum": 1},
+        "source_sha256": {"$ref": "common.schema.json#/$defs/sha256"},
+        "report_path": {"$ref": "#/$defs/relativePath"},
+        "test_runs": {"type": "integer", "minimum": 1},
+        "applicable_test_run_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1, "maxLength": 200}
+        },
+        "ranked_candidates": {"type": "integer", "minimum": 0},
+        "candidate_highlights": {
+          "type": "array",
+          "maxItems": 5,
+          "items": {"$ref": "#/$defs/markerHighlight"}
+        },
+        "promotion_allowed": {"const": false},
+        "coverage_note": {"type": "string", "minLength": 1, "maxLength": 500}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "NOT_AVAILABLE"}}},
+          "then": {"required": ["reason"]}
+        },
+        {
+          "if": {"properties": {"status": {"const": "NOT_APPLICABLE"}}},
+          "then": {"required": ["reason", "marker_records", "source_sha256"]}
+        },
+        {
+          "if": {"properties": {"status": {"const": "COMPLETE"}}},
+          "then": {
+            "required": [
+              "report_path",
+              "test_runs",
+              "applicable_test_run_ids",
+              "ranked_candidates",
+              "candidate_highlights",
+              "promotion_allowed",
+              "coverage_note"
+            ]
+          }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "markerHighlight": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "identifier",
+        "field",
+        "score",
+        "evidence_density",
+        "minimum_window_observations",
+        "signature",
+        "ambiguous_marker_kinds"
+      ],
+      "properties": {
+        "identifier": {"type": "string", "pattern": "^0x(?:[0-9A-F]{3}|[0-9A-F]{8})$"},
+        "field": {"type": "string", "minLength": 1, "maxLength": 100},
+        "score": {"type": "number", "minimum": 0, "maximum": 1},
+        "evidence_density": {"type": "number", "minimum": 0, "maximum": 1},
+        "minimum_window_observations": {"type": "integer", "minimum": 1},
+        "signature": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 3, "maxLength": 200}
+        },
+        "ambiguous_marker_kinds": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "minItems": 2,
+            "uniqueItems": true,
+            "items": {"type": "string", "minLength": 1, "maxLength": 100}
+          }
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "byte_count"],
+      "properties": {
+        "path": {"$ref": "#/$defs/relativePath"},
+        "sha256": {"$ref": "common.schema.json#/$defs/sha256"},
+        "byte_count": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

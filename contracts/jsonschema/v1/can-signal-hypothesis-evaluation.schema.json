@@ -1,0 +1,187 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/can-signal-hypothesis-evaluation.schema.json",
+  "title": "CAN Signal Hypothesis Evaluation v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "contract_version",
+    "status",
+    "promotion_allowed",
+    "accepted_signal_definitions",
+    "pack",
+    "source_files",
+    "capture_summary",
+    "hypothesis_evaluations",
+    "relationship_evaluations",
+    "display_policy"
+  ],
+  "properties": {
+    "contract": {"const": "can.signal-hypothesis-evaluation"},
+    "contract_version": {"const": "1.0.0"},
+    "status": {"const": "DISCOVERY_ONLY"},
+    "promotion_allowed": {"const": false},
+    "accepted_signal_definitions": {"const": 0},
+    "pack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pack_id", "pack_version", "sha256"],
+      "properties": {
+        "pack_id": {"type": "string", "minLength": 1, "maxLength": 160},
+        "pack_version": {"$ref": "common.schema.json#/$defs/semanticVersion"},
+        "sha256": {"$ref": "common.schema.json#/$defs/sha256"}
+      }
+    },
+    "source_files": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "byte_count", "record_count", "sha256"],
+        "properties": {
+          "name": {"type": "string", "minLength": 1, "maxLength": 255},
+          "byte_count": {"type": "integer", "minimum": 1},
+          "record_count": {"type": "integer", "minimum": 1},
+          "sha256": {"$ref": "common.schema.json#/$defs/sha256"}
+        }
+      }
+    },
+    "capture_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["records", "sessions", "gateways", "unique_identifiers", "listen_only_records"],
+      "properties": {
+        "records": {"type": "integer", "minimum": 1},
+        "sessions": {"type": "integer", "minimum": 1},
+        "gateways": {"type": "integer", "minimum": 1},
+        "unique_identifiers": {"type": "integer", "minimum": 1},
+        "listen_only_records": {"type": "integer", "minimum": 1}
+      }
+    },
+    "hypothesis_evaluations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/hypothesisEvaluation"}
+    },
+    "relationship_evaluations": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/relationshipEvaluation"}
+    },
+    "display_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required_badge", "allowed_surface", "blocked_surfaces", "statement"],
+      "properties": {
+        "required_badge": {"const": "UNVERIFIED CROSS-MODEL HYPOTHESIS"},
+        "allowed_surface": {"const": "ENGINEERING_RESEARCH"},
+        "blocked_surfaces": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1, "maxLength": 80}
+        },
+        "statement": {"type": "string", "minLength": 20, "maxLength": 1000}
+      }
+    }
+  },
+  "$defs": {
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["count", "minimum", "maximum", "mean", "standard_deviation"],
+      "properties": {
+        "count": {"type": "integer", "minimum": 1},
+        "minimum": {"type": "number"},
+        "maximum": {"type": "number"},
+        "mean": {"type": "number"},
+        "standard_deviation": {"type": "number", "minimum": 0}
+      }
+    },
+    "transformEvaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["transform_id", "unit", "summary", "source_ids"],
+      "properties": {
+        "transform_id": {"type": "string", "minLength": 1, "maxLength": 160},
+        "unit": {"type": "string", "minLength": 1, "maxLength": 40},
+        "summary": {"$ref": "#/$defs/summary"},
+        "source_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1, "maxLength": 160}
+        }
+      }
+    },
+    "hypothesisEvaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hypothesis_id",
+        "identifier",
+        "identifier_hex",
+        "candidate_semantic",
+        "hypothesis_status",
+        "target_evidence_status",
+        "records",
+        "sessions",
+        "field_values",
+        "transform_evaluations",
+        "production_value_display_allowed",
+        "limitations"
+      ],
+      "properties": {
+        "hypothesis_id": {"type": "string", "minLength": 1, "maxLength": 160},
+        "identifier": {"type": "integer", "minimum": 0, "maximum": 536870911},
+        "identifier_hex": {"type": "string", "pattern": "^0x[0-9A-F]{3,8}$"},
+        "candidate_semantic": {"type": ["string", "null"], "maxLength": 160},
+        "hypothesis_status": {"type": "string", "minLength": 1, "maxLength": 80},
+        "target_evidence_status": {
+          "type": "string",
+          "enum": ["ABSENT", "ID_PRESENT", "FIELD_PRESENT_STATIC", "FIELD_PRESENT_DYNAMIC"]
+        },
+        "records": {"type": "integer", "minimum": 0},
+        "sessions": {"type": "integer", "minimum": 0},
+        "field_values": {"oneOf": [{"$ref": "#/$defs/summary"}, {"type": "null"}]},
+        "transform_evaluations": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/transformEvaluation"}
+        },
+        "production_value_display_allowed": {"const": false},
+        "limitations": {"type": "string", "minLength": 10, "maxLength": 1000}
+      }
+    },
+    "relationshipEvaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "relationship_id",
+        "left_hypothesis_id",
+        "right_hypothesis_id",
+        "pairs",
+        "pearson_correlation",
+        "mean_absolute_difference",
+        "root_mean_square_difference",
+        "median_right_to_left_ratio",
+        "maximum_pairing_delta_us",
+        "status",
+        "interpretation",
+        "production_value_display_allowed"
+      ],
+      "properties": {
+        "relationship_id": {"type": "string", "minLength": 1, "maxLength": 160},
+        "left_hypothesis_id": {"type": "string", "minLength": 1, "maxLength": 160},
+        "right_hypothesis_id": {"type": "string", "minLength": 1, "maxLength": 160},
+        "pairs": {"type": "integer", "minimum": 0},
+        "pearson_correlation": {"type": ["number", "null"], "minimum": -1, "maximum": 1},
+        "mean_absolute_difference": {"type": ["number", "null"], "minimum": 0},
+        "root_mean_square_difference": {"type": ["number", "null"], "minimum": 0},
+        "median_right_to_left_ratio": {"type": ["number", "null"]},
+        "maximum_pairing_delta_us": {"type": ["integer", "null"], "minimum": 0},
+        "status": {"type": "string", "enum": ["NO_PAIRED_EVIDENCE", "RAW_RELATIONSHIP_PRESENT"]},
+        "interpretation": {"type": "string", "minLength": 10, "maxLength": 1000},
+        "production_value_display_allowed": {"const": false}
+      }
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "contract": "vehicle.maintenance-audit-event",
+  "contract_version": "1.0.0",
+  "audit_event_id": "audit_00000000000000000000000008",
+  "vehicle_id": "veh_00000000000000000000000001",
+  "record_id": "maintenance_00000000000000000000000003",
+  "revision_id": "maintrev_00000000000000000000000004",
+  "prior_revision_id": null,
+  "action": "CREATED",
+  "actor": {
+    "source": "OWNER",
+    "actor_id": "actor_00000000000000000000000007",
+    "display_name": "Vehicle owner"
+  },
+  "recorded_at": "2026-08-30T12:16:00Z",
+  "reason": null
+}

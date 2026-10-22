@@ -1,0 +1,116 @@
+{
+  "contract": "vehicle.maintenance-source-manifest",
+  "contract_version": "1.0.0",
+  "manifest_id": "maintsource_0000000000000000000000000C",
+  "pack_id": "toyota.4runner.2005.us",
+  "proposed_pack_version": "0.1.0",
+  "status": "SOURCE_REVIEW_REQUIRED",
+  "activated": false,
+  "source_documents": [
+    {
+      "source_document_id": "source_0000000000000000000000000B",
+      "publisher": "Toyota Motor Sales, U.S.A., Inc.",
+      "publication_title": "Toyota 2005 Scheduled Maintenance Guide",
+      "publication_number": "05ToyAllMS_MS0001",
+      "canonical_vehicle_page": "https://www.toyota.com/owners/warranty-owners-manuals/vehicle/4runner/2005/",
+      "source_url": "https://assets.sipb.toyota.com/publications/en/omms-s/05ToyAllMS_MS0001/pdf/51r1smt.pdf",
+      "market": "us",
+      "language": "en-US",
+      "document_sha256": "f8e3cc84a78dedd3da90e2b78f03dfa2b89600024bd12ec7fa22c05f35a3d616",
+      "retrieved_at": "2026-08-30T15:36:08Z",
+      "reuse_status": "LEGAL_REVIEW_REQUIRED"
+    }
+  ],
+  "review_scope": [
+    {
+      "source_document_id": "source_0000000000000000000000000B",
+      "locator_key": "guide.usage_and_special_conditions",
+      "section_label": "Using the Maintenance Log Charts",
+      "printed_page_start": 3,
+      "printed_page_end": 3,
+      "pdf_page_start": 5,
+      "pdf_page_end": 5,
+      "required": true,
+      "review_status": "NOT_REVIEWED",
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "source_document_id": "source_0000000000000000000000000B",
+      "locator_key": "guide.suv_and_truck_schedule",
+      "section_label": "Maintenance Log: SUVs and Trucks",
+      "printed_page_start": 20,
+      "printed_page_end": 35,
+      "pdf_page_start": 22,
+      "pdf_page_end": 37,
+      "required": true,
+      "review_status": "NOT_REVIEWED",
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "source_document_id": "source_0000000000000000000000000B",
+      "locator_key": "guide.maintenance_item_explanations",
+      "section_label": "Explanation of Maintenance Items",
+      "printed_page_start": 36,
+      "printed_page_end": 39,
+      "pdf_page_start": 38,
+      "pdf_page_end": 41,
+      "required": true,
+      "review_status": "NOT_REVIEWED",
+      "reviewed_by": null,
+      "reviewed_at": null
+    }
+  ],
+  "required_applicability_keys": [
+    "engine.family", "drivetrain", "equipment.limited_slip", "market",
+    "emissions.jurisdiction", "equipment.cabin_filter", "production.date",
+    "severe_use.towing", "severe_use.dirt_or_desert", "severe_use.salted_roads",
+    "maintenance.baseline_trust"
+  ],
+  "normalized_rule_candidates": [
+    {
+      "requirement_id": "requirement_00000000000000000000000008",
+      "candidate_key": "base.interval",
+      "summary": "Base maintenance cadence candidate: 5,000 miles or six months, whichever occurs first",
+      "status": "AWAITING_PAGE_LEVEL_REVIEW",
+      "source_locators": ["guide.usage_and_special_conditions"]
+    },
+    {
+      "requirement_id": "requirement_0000000000000000000000000D",
+      "candidate_key": "engine.2uz_fe.timing_belt",
+      "summary": "2UZ-FE timing-belt replacement candidate at the 90,000-mile schedule entry",
+      "status": "AWAITING_PAGE_LEVEL_REVIEW",
+      "source_locators": ["guide.suv_and_truck_schedule"]
+    },
+    {
+      "requirement_id": "requirement_0000000000000000000000000E",
+      "candidate_key": "engine.coolant.initial",
+      "summary": "Engine-coolant replacement candidate at the 100,000-mile or 120-month schedule entry",
+      "status": "AWAITING_PAGE_LEVEL_REVIEW",
+      "source_locators": ["guide.suv_and_truck_schedule", "guide.maintenance_item_explanations"]
+    }
+  ],
+  "activation_gates": {
+    "source_hashes_verified": true,
+    "review_scope_complete": false,
+    "every_rule_has_locator": true,
+    "applicability_complete": false,
+    "legal_reuse_approved": false,
+    "independent_review_complete": false,
+    "regression_tests_passed": false,
+    "pack_signed": false,
+    "reviewed_by": [],
+    "activated_at": null,
+    "promoted_pack_sha256": null,
+    "signature_sha256": null
+  },
+  "activation_blockers": [
+    "Review printed page 3, the complete SUV/truck schedule on printed pages 20-35, and explanations on printed pages 36-39",
+    "Resolve every model, engine, equipment, jurisdiction, and operating-condition footnote",
+    "Bind each promoted rule to exact reviewed locators and target configuration predicates",
+    "Verify a trustworthy last-service baseline where recurrence depends on prior completion",
+    "Complete independent and legal/reuse review",
+    "Sign and regression-test the promoted pack"
+  ]
+}

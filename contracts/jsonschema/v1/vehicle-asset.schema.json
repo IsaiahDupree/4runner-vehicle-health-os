@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/vehicle-asset.schema.json",
+  "title": "VHOS generic vehicle asset v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract", "contract_version", "vehicle_id", "revision_id",
+    "supersedes_revision_id", "created_at", "display_name", "model_year",
+    "make", "model", "trim", "vin", "license_plate", "distance_unit",
+    "current_odometer", "configuration", "severe_use_conditions",
+    "active_vehicle_pack"
+  ],
+  "properties": {
+    "contract": {"const": "vehicle.asset"},
+    "contract_version": {"const": "1.0.0"},
+    "vehicle_id": {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/vehicleId"},
+    "revision_id": {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/vehicleRevisionId"},
+    "supersedes_revision_id": {
+      "anyOf": [
+        {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/vehicleRevisionId"},
+        {"type": "null"}
+      ]
+    },
+    "created_at": {"$ref": "common.schema.json#/$defs/wallTime"},
+    "display_name": {"type": "string", "minLength": 1, "maxLength": 160},
+    "model_year": {"type": "integer", "minimum": 1886, "maximum": 3000},
+    "make": {"type": "string", "minLength": 1, "maxLength": 120},
+    "model": {"type": "string", "minLength": 1, "maxLength": 120},
+    "trim": {"type": ["string", "null"], "minLength": 1, "maxLength": 120},
+    "vin": {"type": ["string", "null"], "pattern": "^[A-HJ-NPR-Z0-9]{17}$"},
+    "license_plate": {"type": ["string", "null"], "minLength": 1, "maxLength": 32},
+    "distance_unit": {"enum": ["MILES", "KILOMETERS"]},
+    "current_odometer": {
+      "anyOf": [
+        {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/odometer"},
+        {"type": "null"}
+      ]
+    },
+    "configuration": {"$ref": "#/$defs/configuration"},
+    "severe_use_conditions": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {"$ref": "#/$defs/severe_use_condition"}
+    },
+    "active_vehicle_pack": {
+      "anyOf": [{"$ref": "#/$defs/active_vehicle_pack"}, {"type": "null"}]
+    }
+  },
+  "$defs": {
+    "configuration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "resolution_status", "attributes"],
+      "properties": {
+        "schema_version": {"$ref": "common.schema.json#/$defs/semanticVersion"},
+        "resolution_status": {"enum": ["UNKNOWN", "PARTIAL", "RESOLVED"]},
+        "attributes": {
+          "type": "array",
+          "maxItems": 300,
+          "items": {"$ref": "#/$defs/configuration_attribute"}
+        }
+      }
+    },
+    "configuration_attribute": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "state", "value", "source", "observed_at"],
+      "properties": {
+        "key": {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/canonicalKey"},
+        "state": {"enum": ["KNOWN", "UNKNOWN", "NOT_APPLICABLE"]},
+        "value": {"type": ["string", "null"], "minLength": 1, "maxLength": 1000},
+        "source": {"enum": ["MANUAL", "VIN_DECODE", "OEM_DOCUMENT", "DIAGNOSTIC", "IMPORT", "UNKNOWN"]},
+        "observed_at": {
+          "anyOf": [{"$ref": "common.schema.json#/$defs/wallTime"}, {"type": "null"}]
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"state": {"const": "KNOWN"}}, "required": ["state"]},
+          "then": {"properties": {"value": {"type": "string", "minLength": 1}}}
+        },
+        {
+          "if": {"properties": {"state": {"enum": ["UNKNOWN", "NOT_APPLICABLE"]}}, "required": ["state"]},
+          "then": {"properties": {"value": {"type": "null"}}}
+        }
+      ]
+    },
+    "severe_use_condition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["condition_key", "status", "source", "observed_at", "notes"],
+      "properties": {
+        "condition_key": {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/canonicalKey"},
+        "status": {"enum": ["YES", "NO", "UNKNOWN"]},
+        "source": {"enum": ["OWNER", "TECHNICIAN", "IMPORT", "SYSTEM", "UNKNOWN"]},
+        "observed_at": {
+          "anyOf": [{"$ref": "common.schema.json#/$defs/wallTime"}, {"type": "null"}]
+        },
+        "notes": {"type": ["string", "null"], "minLength": 1, "maxLength": 2000}
+      }
+    },
+    "active_vehicle_pack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pack_id", "pack_version", "source_manifest_sha256", "activated_at",
+        "applicability_status", "matched_vehicle_revision_id"
+      ],
+      "properties": {
+        "pack_id": {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/canonicalKey"},
+        "pack_version": {"$ref": "common.schema.json#/$defs/semanticVersion"},
+        "source_manifest_sha256": {"$ref": "common.schema.json#/$defs/sha256"},
+        "activated_at": {"$ref": "common.schema.json#/$defs/wallTime"},
+        "applicability_status": {"const": "MATCHED"},
+        "matched_vehicle_revision_id": {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/vehicleRevisionId"}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"distance_unit": {"const": "MILES"}}, "required": ["distance_unit"]},
+      "then": {
+        "properties": {
+          "current_odometer": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/odometer"},
+                  {"properties": {"unit": {"const": "MILES"}}}
+                ]
+              },
+              {"type": "null"}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"distance_unit": {"const": "KILOMETERS"}}, "required": ["distance_unit"]},
+      "then": {
+        "properties": {
+          "current_odometer": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/odometer"},
+                  {"properties": {"unit": {"const": "KILOMETERS"}}}
+                ]
+              },
+              {"type": "null"}
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/vehicle-profile.schema.json",
+  "title": "VHOS vehicle configuration profile v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract", "contract_version", "revision_id", "supersedes_revision_id", "created_at",
+    "vehicle_pack_id", "vehicle_pack_version", "model_year", "make", "model", "vin", "engine", "timing_drive", "drivetrain",
+    "rear_suspension", "trim", "build_date", "tire_configuration", "severe_use",
+    "modification_state", "modifications", "current_mileage", "mileage_observed_at", "mileage_source"
+  ],
+  "properties": {
+    "contract": {"const": "vehicle.configuration-profile"},
+    "contract_version": {"const": "1.0.0"},
+    "revision_id": {"type": "string", "format": "uuid"},
+    "supersedes_revision_id": {"type": ["string", "null"], "format": "uuid"},
+    "created_at": {"$ref": "common.schema.json#/$defs/wallTime"},
+    "vehicle_pack_id": {"const": "toyota.4runner.2005"},
+    "vehicle_pack_version": {"const": "0.1.0"},
+    "model_year": {"const": 2005},
+    "make": {"const": "Toyota"},
+    "model": {"const": "4Runner"},
+    "vin": {"type": ["string", "null"], "pattern": "^[A-HJ-NPR-Z0-9]{17}$"},
+    "engine": {"enum": ["UNKNOWN", "V6_4_0L_1GR_FE", "V8_4_7L_2UZ_FE"]},
+    "timing_drive": {"enum": ["UNKNOWN", "TIMING_CHAIN", "TIMING_BELT"]},
+    "drivetrain": {"enum": ["UNKNOWN", "TWO_WHEEL_DRIVE", "FOUR_WHEEL_DRIVE"]},
+    "rear_suspension": {"enum": ["UNKNOWN", "CONVENTIONAL", "AIR_SUSPENSION"]},
+    "trim": {"type": ["string", "null"], "maxLength": 120},
+    "build_date": {"type": ["string", "null"], "pattern": "^20(04|05)-(0[1-9]|1[0-2])$"},
+    "tire_configuration": {"type": ["string", "null"], "maxLength": 160},
+    "severe_use": {"enum": ["UNKNOWN", "YES", "NO"]},
+    "modification_state": {"enum": ["UNKNOWN", "STOCK", "MODIFIED"]},
+    "modifications": {
+      "type": "array", "uniqueItems": true, "maxItems": 100,
+      "items": {"type": "string", "minLength": 1, "maxLength": 240}
+    },
+    "current_mileage": {"type": ["integer", "null"], "minimum": 0, "maximum": 2000000},
+    "mileage_observed_at": {
+      "anyOf": [{"$ref": "common.schema.json#/$defs/wallTime"}, {"type": "null"}]
+    },
+    "mileage_source": {"enum": ["UNKNOWN", "MANUAL_ODOMETER", "DIAGNOSTIC", "IMPORTED_SERVICE_RECORD"]}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"engine": {"const": "V6_4_0L_1GR_FE"}}},
+      "then": {"properties": {"timing_drive": {"const": "TIMING_CHAIN"}}}
+    },
+    {
+      "if": {"properties": {"engine": {"const": "V8_4_7L_2UZ_FE"}}},
+      "then": {"properties": {"timing_drive": {"const": "TIMING_BELT"}}}
+    },
+    {
+      "if": {"properties": {"engine": {"const": "UNKNOWN"}}},
+      "then": {"properties": {"timing_drive": {"const": "UNKNOWN"}}}
+    },
+    {
+      "if": {"properties": {"modification_state": {"const": "MODIFIED"}}},
+      "then": {"properties": {"modifications": {"minItems": 1}}}
+    },
+    {
+      "if": {"properties": {"modification_state": {"enum": ["UNKNOWN", "STOCK"]}}},
+      "then": {"properties": {"modifications": {"maxItems": 0}}}
+    }
+  ]
+}

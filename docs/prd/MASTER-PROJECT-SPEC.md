@@ -8,6 +8,11 @@ This specification joins two immutable subordinate baselines without rewriting e
 1. [Vehicle Health OS PRD v0.1](2005_Toyota_4Runner_Vehicle_Health_OS_PRD_v0.1.docx) governs explainability, maintenance intelligence, vehicle records, signal/equation lineage, owner workflows, security, and product acceptance.
 2. [Telemetry Build Master Spec v1](4Runner_Telemetry_Build_Master_Spec.docx) governs added-sensor hardware, A/C instrumentation, protected power, logging, self-test, PCB/manufacturing artifacts, and the hardware feedback loop.
 
+The later focused [A/C Engine-Bay Telemetry Node Spec v1.0 source record](AC-TELEMETRY-SOURCE.md)
+controls the A/C node when it is more specific, including the corrected Nano
+ESP32 VIN, independent sensor 5 V rail, and deliberately unfrozen pressure-sensor
+transfer functions and permanent refrigerant fitting geometry.
+
 [ADR-0003](../architecture/decisions/0003-ios-primary-control-surface.md) changes the primary mobile implementation from Android to native iOS. Original requirements remain preserved; iOS must satisfy their behavioral intent unless an explicit ADR says otherwise.
 
 ## Complete system boundary

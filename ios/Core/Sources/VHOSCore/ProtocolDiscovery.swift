@@ -17,6 +17,22 @@ public enum DiscoveryProtocol: String, Codable, CaseIterable, Sendable {
     default: false
     }
   }
+
+  public var canExtended: Bool? {
+    switch self {
+    case .can11Bit500K, .can11Bit250K: false
+    case .can29Bit500K, .can29Bit250K: true
+    default: nil
+    }
+  }
+
+  public var canBitrateBps: UInt32? {
+    switch self {
+    case .can11Bit500K, .can29Bit500K: 500_000
+    case .can11Bit250K, .can29Bit250K: 250_000
+    default: nil
+    }
+  }
 }
 
 public enum DiscoveryPhase: String, Codable, Sendable {

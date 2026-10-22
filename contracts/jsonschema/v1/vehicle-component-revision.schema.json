@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/vehicle-component-revision.schema.json",
+  "title": "VHOS append-only vehicle component lifecycle revision v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract", "contract_version", "vehicle_id", "component_id", "revision_id",
+    "supersedes_revision_id", "system", "display_name", "parent_component_id", "state",
+    "manufacturer", "part_number", "serial_number", "installed_occurrence",
+    "retired_occurrence", "installed_by_record_revision_id", "retired_by_record_revision_id",
+    "custom_fields", "actor", "created_at", "amendment_reason"
+  ],
+  "properties": {
+    "contract": {"const": "vehicle.component-registry-entry"},
+    "contract_version": {"const": "1.0.0"},
+    "vehicle_id": {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/vehicleId"},
+    "component_id": {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/componentId"},
+    "revision_id": {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/componentRevisionId"},
+    "supersedes_revision_id": {"anyOf": [{"$ref": "vehicle-lifecycle-common.schema.json#/$defs/componentRevisionId"}, {"type": "null"}]},
+    "system": {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/systemRef"},
+    "display_name": {"type": "string", "minLength": 1, "maxLength": 200},
+    "parent_component_id": {"anyOf": [{"$ref": "vehicle-lifecycle-common.schema.json#/$defs/componentId"}, {"type": "null"}]},
+    "state": {"enum": ["ACTIVE", "RETIRED"]},
+    "manufacturer": {"type": ["string", "null"], "minLength": 1, "maxLength": 200},
+    "part_number": {"type": ["string", "null"], "minLength": 1, "maxLength": 200},
+    "serial_number": {"type": ["string", "null"], "minLength": 1, "maxLength": 200},
+    "installed_occurrence": {"anyOf": [{"$ref": "vehicle-lifecycle-common.schema.json#/$defs/occurrence"}, {"type": "null"}]},
+    "retired_occurrence": {"anyOf": [{"$ref": "vehicle-lifecycle-common.schema.json#/$defs/occurrence"}, {"type": "null"}]},
+    "installed_by_record_revision_id": {"anyOf": [{"$ref": "vehicle-lifecycle-common.schema.json#/$defs/maintenanceRevisionId"}, {"type": "null"}]},
+    "retired_by_record_revision_id": {"anyOf": [{"$ref": "vehicle-lifecycle-common.schema.json#/$defs/maintenanceRevisionId"}, {"type": "null"}]},
+    "custom_fields": {"type": "array", "maxItems": 500, "items": {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/customField"}},
+    "actor": {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/actor"},
+    "created_at": {"$ref": "common.schema.json#/$defs/wallTime"},
+    "amendment_reason": {"type": ["string", "null"], "minLength": 1, "maxLength": 2000}
+  },
+  "allOf": [
+    {"if": {"properties": {"supersedes_revision_id": {"type": "null"}}, "required": ["supersedes_revision_id"]}, "then": {"properties": {"state": {"const": "ACTIVE"}, "amendment_reason": {"type": "null"}}}},
+    {"if": {"properties": {"supersedes_revision_id": {"type": "string"}}, "required": ["supersedes_revision_id"]}, "then": {"properties": {"amendment_reason": {"type": "string", "minLength": 1}}}},
+    {"if": {"properties": {"state": {"const": "ACTIVE"}}, "required": ["state"]}, "then": {"properties": {"retired_occurrence": {"type": "null"}, "retired_by_record_revision_id": {"type": "null"}}}},
+    {"if": {"properties": {"state": {"const": "RETIRED"}}, "required": ["state"]}, "then": {"properties": {"supersedes_revision_id": {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/componentRevisionId"}, "retired_occurrence": {"$ref": "vehicle-lifecycle-common.schema.json#/$defs/occurrence"}}}}
+  ]
+}

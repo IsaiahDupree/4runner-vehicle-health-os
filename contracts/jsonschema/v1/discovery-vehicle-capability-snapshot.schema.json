@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/discovery-vehicle-capability-snapshot.schema.json",
+  "title": "VHOS Discovery vehicle capability snapshot v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract", "contract_version", "id", "vehicle_id", "capture_id", "captured_at", "gateway_id", "obd_ecus", "standard_signal_ids", "candidate_signal_ids", "validated_signal_ids", "evidence_references", "authority"],
+  "properties": {
+    "contract": {"const": "vhos.discovery.vehicle-capability-snapshot"},
+    "contract_version": {"const": "1.0.0"},
+    "id": {"type": "string", "pattern": "^capability_[0-9A-HJKMNP-TV-Z]{26}$"},
+    "vehicle_id": {"$ref": "common.schema.json#/$defs/vehicleId"},
+    "capture_id": {"$ref": "common.schema.json#/$defs/captureId"},
+    "captured_at": {"$ref": "common.schema.json#/$defs/wallTime"},
+    "gateway_id": {"type": "string", "minLength": 1, "maxLength": 160},
+    "passive_bus": {"$ref": "discovery-common.schema.json#/$defs/passiveBusCapability"},
+    "obd_ecus": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ecu_address", "queried_base_pids", "supported_pids", "enumeration_complete"],
+        "properties": {
+          "ecu_address": {"type": "string", "minLength": 1, "maxLength": 32},
+          "queried_base_pids": {"type": "array", "uniqueItems": true, "items": {"type": "integer", "minimum": 0, "maximum": 255}},
+          "supported_pids": {"type": "array", "uniqueItems": true, "items": {"type": "integer", "minimum": 0, "maximum": 255}},
+          "enumeration_complete": {"type": "boolean"},
+          "incomplete_reason": {"type": "string", "minLength": 1, "maxLength": 1000}
+        }
+      }
+    },
+    "standard_signal_ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/semanticId"}},
+    "candidate_signal_ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/semanticId"}},
+    "validated_signal_ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/semanticId"}},
+    "evidence_references": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "discovery-common.schema.json#/$defs/evidenceReference"}},
+    "authority": {"const": "OBSERVED"}
+  }
+}

@@ -1,0 +1,1441 @@
+{
+  "acquisition": {
+    "bitrates_bps": [
+      500000
+    ],
+    "capture_duration_seconds": 140.831,
+    "estimated_observed_frames": 75899,
+    "estimated_observed_rate_fps": 538.88,
+    "extended_identifier_records": 0,
+    "gateways": 1,
+    "listen_only_records": 5176,
+    "records": 5176,
+    "remote_request_records": 0,
+    "retained_record_rate_fps": 36.753,
+    "sequence_coverage": 0.068196,
+    "sessions": 8,
+    "standard_identifier_records": 5176,
+    "unique_identifiers": 17
+  },
+  "authority": "Acquisition facts and raw statistics only. No CAN identifier, field, unit, scale, vehicle subsystem, or health meaning is accepted by this report. Source-sequence coverage describes retained evidence density; it is not a dropped-frame counter. Gateway TWAI, observer-queue, and persistence counters are required to attribute loss.",
+  "checksum_candidates": [
+    {
+      "checked": 631,
+      "identifier": "0x2C1",
+      "match_rate": 1.0,
+      "matches": 631,
+      "status": "DISCOVERY_CANDIDATE"
+    },
+    {
+      "checked": 667,
+      "identifier": "0x025",
+      "match_rate": 1.0,
+      "matches": 667,
+      "status": "DISCOVERY_CANDIDATE"
+    },
+    {
+      "checked": 659,
+      "identifier": "0x2C4",
+      "match_rate": 1.0,
+      "matches": 659,
+      "status": "DISCOVERY_CANDIDATE"
+    },
+    {
+      "checked": 682,
+      "identifier": "0x023",
+      "match_rate": 1.0,
+      "matches": 682,
+      "status": "DISCOVERY_CANDIDATE"
+    },
+    {
+      "checked": 640,
+      "identifier": "0x022",
+      "match_rate": 1.0,
+      "matches": 640,
+      "status": "DISCOVERY_CANDIDATE"
+    },
+    {
+      "checked": 626,
+      "identifier": "0x2D0",
+      "match_rate": 1.0,
+      "matches": 626,
+      "status": "DISCOVERY_CANDIDATE"
+    },
+    {
+      "checked": 134,
+      "identifier": "0x420",
+      "match_rate": 1.0,
+      "matches": 134,
+      "status": "DISCOVERY_CANDIDATE"
+    },
+    {
+      "checked": 142,
+      "identifier": "0x223",
+      "match_rate": 1.0,
+      "matches": 142,
+      "status": "DISCOVERY_CANDIDATE"
+    }
+  ],
+  "contract": "can.discovery.report",
+  "contract_version": "1.0.0",
+  "display_policy": {
+    "blocked_until_correlated": [
+      "RPM, speed, gear, throttle, steering, brake, temperature, or pressure labels",
+      "normal/abnormal thresholds and vehicle-health conclusions"
+    ],
+    "candidate_only": [
+      "checksum family matches",
+      "raw word correlations and ratios",
+      "repeated-channel agreement",
+      "counter, signedness, scale, offset, and vehicle-signal hypotheses",
+      "receive-loss attribution when gateway health counters are absent from the input"
+    ],
+    "proven_now": [
+      "capture/session/source identity",
+      "listen-only, identifier-format, RTR, bitrate, and DLC evidence",
+      "retained records, identifier population, raw payloads, and raw byte ranges",
+      "sequence-derived observed-rate estimate and explicit retained coverage",
+      "retained coverage is intentional sampling density, not proof of receive loss"
+    ]
+  },
+  "identifier_activity": [
+    {
+      "byte_ranges": [
+        {
+          "byte": 0,
+          "maximum": 8,
+          "minimum": 0
+        },
+        {
+          "byte": 1,
+          "maximum": 254,
+          "minimum": 0
+        },
+        {
+          "byte": 2,
+          "maximum": 255,
+          "minimum": 0
+        },
+        {
+          "byte": 3,
+          "maximum": 255,
+          "minimum": 0
+        },
+        {
+          "byte": 4,
+          "maximum": 255,
+          "minimum": 0
+        },
+        {
+          "byte": 5,
+          "maximum": 255,
+          "minimum": 120
+        },
+        {
+          "byte": 6,
+          "maximum": 95,
+          "minimum": 0
+        },
+        {
+          "byte": 7,
+          "maximum": 255,
+          "minimum": 0
+        }
+      ],
+      "checksum_candidate": {
+        "algorithm": "toyota-additive-id-dlc-payload-v0",
+        "candidate": true,
+        "checked": 631,
+        "match_rate": 1.0,
+        "matches": 631,
+        "status": "DISCOVERY_CANDIDATE"
+      },
+      "data_lengths": [
+        8
+      ],
+      "dynamic_byte_count": 8,
+      "dynamic_byte_positions": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "extended": false,
+      "first_big_endian_word": {
+        "bit_range": "0:16",
+        "byte_order": "BIG_ENDIAN",
+        "maximum": 2302,
+        "mean": 1962.769,
+        "minimum": 0,
+        "standard_deviation": 439.3,
+        "status": "DISCOVERY_CANDIDATE"
+      },
+      "identifier": "0x2C1",
+      "identifier_value": 705,
+      "payload_change_rate": 1.0,
+      "records": 631,
+      "sessions": 8,
+      "status": "DISCOVERY_CANDIDATE",
+      "unique_payloads": 621
+    },
+    {
+      "byte_ranges": [
+        {
+          "byte": 0,
+          "maximum": 15,
+          "minimum": 0
+        },
+        {
+          "byte": 1,
+          "maximum": 244,
+          "minimum": 11
+        },
+        {
+          "byte": 2,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 3,
+          "maximum": 13,
+          "minimum": 13
+        },
+        {
+          "byte": 4,
+          "maximum": 255,
+          "minimum": 115
+        },
+        {
+          "byte": 5,
+          "maximum": 255,
+          "minimum": 115
+        },
+        {
+          "byte": 6,
+          "maximum": 255,
+          "minimum": 115
+        },
+        {
+          "byte": 7,
+          "maximum": 224,
+          "minimum": 66
+        }
+      ],
+      "checksum_candidate": {
+        "algorithm": "toyota-additive-id-dlc-payload-v0",
+        "candidate": true,
+        "checked": 667,
+        "match_rate": 1.0,
+        "matches": 667,
+        "status": "DISCOVERY_CANDIDATE"
+      },
+      "data_lengths": [
+        8
+      ],
+      "dynamic_byte_count": 6,
+      "dynamic_byte_positions": [
+        0,
+        1,
+        4,
+        5,
+        6,
+        7
+      ],
+      "extended": false,
+      "first_big_endian_word": {
+        "bit_range": "0:16",
+        "byte_order": "BIG_ENDIAN",
+        "maximum": 4084,
+        "mean": 297.52,
+        "minimum": 11,
+        "standard_deviation": 994.001,
+        "status": "DISCOVERY_CANDIDATE"
+      },
+      "identifier": "0x025",
+      "identifier_value": 37,
+      "payload_change_rate": 0.998483,
+      "records": 667,
+      "sessions": 8,
+      "status": "DISCOVERY_CANDIDATE",
+      "unique_payloads": 53
+    },
+    {
+      "byte_ranges": [
+        {
+          "byte": 0,
+          "maximum": 22,
+          "minimum": 0
+        },
+        {
+          "byte": 1,
+          "maximum": 255,
+          "minimum": 0
+        },
+        {
+          "byte": 2,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 3,
+          "maximum": 50,
+          "minimum": 30
+        },
+        {
+          "byte": 4,
+          "maximum": 64,
+          "minimum": 0
+        },
+        {
+          "byte": 5,
+          "maximum": 128,
+          "minimum": 128
+        },
+        {
+          "byte": 6,
+          "maximum": 18,
+          "minimum": 18
+        },
+        {
+          "byte": 7,
+          "maximum": 255,
+          "minimum": 0
+        }
+      ],
+      "checksum_candidate": {
+        "algorithm": "toyota-additive-id-dlc-payload-v0",
+        "candidate": true,
+        "checked": 659,
+        "match_rate": 1.0,
+        "matches": 659,
+        "status": "DISCOVERY_CANDIDATE"
+      },
+      "data_lengths": [
+        8
+      ],
+      "dynamic_byte_count": 5,
+      "dynamic_byte_positions": [
+        0,
+        1,
+        3,
+        4,
+        7
+      ],
+      "extended": false,
+      "first_big_endian_word": {
+        "bit_range": "0:16",
+        "byte_order": "BIG_ENDIAN",
+        "maximum": 5660,
+        "mean": 1436.715,
+        "minimum": 0,
+        "standard_deviation": 652.965,
+        "status": "DISCOVERY_CANDIDATE"
+      },
+      "identifier": "0x2C4",
+      "identifier_value": 708,
+      "payload_change_rate": 1.0,
+      "records": 659,
+      "sessions": 8,
+      "status": "DISCOVERY_CANDIDATE",
+      "unique_payloads": 515
+    },
+    {
+      "byte_ranges": [
+        {
+          "byte": 0,
+          "maximum": 2,
+          "minimum": 1
+        },
+        {
+          "byte": 1,
+          "maximum": 255,
+          "minimum": 0
+        },
+        {
+          "byte": 2,
+          "maximum": 2,
+          "minimum": 2
+        },
+        {
+          "byte": 3,
+          "maximum": 29,
+          "minimum": 8
+        },
+        {
+          "byte": 4,
+          "maximum": 56,
+          "minimum": 0
+        },
+        {
+          "byte": 5,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 6,
+          "maximum": 139,
+          "minimum": 54
+        }
+      ],
+      "checksum_candidate": {
+        "algorithm": "toyota-additive-id-dlc-payload-v0",
+        "candidate": true,
+        "checked": 682,
+        "match_rate": 1.0,
+        "matches": 682,
+        "status": "DISCOVERY_CANDIDATE"
+      },
+      "data_lengths": [
+        7
+      ],
+      "dynamic_byte_count": 5,
+      "dynamic_byte_positions": [
+        0,
+        1,
+        3,
+        4,
+        6
+      ],
+      "extended": false,
+      "first_big_endian_word": {
+        "bit_range": "0:16",
+        "byte_order": "BIG_ENDIAN",
+        "maximum": 529,
+        "mean": 511.38,
+        "minimum": 505,
+        "standard_deviation": 1.788,
+        "status": "DISCOVERY_CANDIDATE"
+      },
+      "identifier": "0x023",
+      "identifier_value": 35,
+      "payload_change_rate": 1.0,
+      "records": 682,
+      "sessions": 8,
+      "status": "DISCOVERY_CANDIDATE",
+      "unique_payloads": 81
+    },
+    {
+      "byte_ranges": [
+        {
+          "byte": 0,
+          "maximum": 1,
+          "minimum": 1
+        },
+        {
+          "byte": 1,
+          "maximum": 254,
+          "minimum": 102
+        },
+        {
+          "byte": 2,
+          "maximum": 2,
+          "minimum": 1
+        },
+        {
+          "byte": 3,
+          "maximum": 255,
+          "minimum": 26
+        },
+        {
+          "byte": 4,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 5,
+          "maximum": 56,
+          "minimum": 0
+        },
+        {
+          "byte": 6,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 7,
+          "maximum": 248,
+          "minimum": 31
+        }
+      ],
+      "checksum_candidate": {
+        "algorithm": "toyota-additive-id-dlc-payload-v0",
+        "candidate": true,
+        "checked": 640,
+        "match_rate": 1.0,
+        "matches": 640,
+        "status": "DISCOVERY_CANDIDATE"
+      },
+      "data_lengths": [
+        8
+      ],
+      "dynamic_byte_count": 5,
+      "dynamic_byte_positions": [
+        1,
+        2,
+        3,
+        5,
+        7
+      ],
+      "extended": false,
+      "first_big_endian_word": {
+        "bit_range": "0:16",
+        "byte_order": "BIG_ENDIAN",
+        "maximum": 510,
+        "mean": 507.866,
+        "minimum": 358,
+        "standard_deviation": 13.078,
+        "status": "DISCOVERY_CANDIDATE"
+      },
+      "identifier": "0x022",
+      "identifier_value": 34,
+      "payload_change_rate": 1.0,
+      "records": 640,
+      "sessions": 8,
+      "status": "DISCOVERY_CANDIDATE",
+      "unique_payloads": 26
+    },
+    {
+      "byte_ranges": [
+        {
+          "byte": 0,
+          "maximum": 44,
+          "minimum": 0
+        },
+        {
+          "byte": 1,
+          "maximum": 255,
+          "minimum": 0
+        },
+        {
+          "byte": 2,
+          "maximum": 8,
+          "minimum": 0
+        },
+        {
+          "byte": 3,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 4,
+          "maximum": 32,
+          "minimum": 32
+        },
+        {
+          "byte": 5,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 6,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 7,
+          "maximum": 255,
+          "minimum": 0
+        }
+      ],
+      "checksum_candidate": {
+        "algorithm": "toyota-additive-id-dlc-payload-v0",
+        "candidate": true,
+        "checked": 626,
+        "match_rate": 1.0,
+        "matches": 626,
+        "status": "DISCOVERY_CANDIDATE"
+      },
+      "data_lengths": [
+        8
+      ],
+      "dynamic_byte_count": 4,
+      "dynamic_byte_positions": [
+        0,
+        1,
+        2,
+        7
+      ],
+      "extended": false,
+      "first_big_endian_word": {
+        "bit_range": "0:16",
+        "byte_order": "BIG_ENDIAN",
+        "maximum": 11339,
+        "mean": 2856.022,
+        "minimum": 0,
+        "standard_deviation": 1317.203,
+        "status": "DISCOVERY_CANDIDATE"
+      },
+      "identifier": "0x2D0",
+      "identifier_value": 720,
+      "payload_change_rate": 1.0,
+      "records": 626,
+      "sessions": 8,
+      "status": "DISCOVERY_CANDIDATE",
+      "unique_payloads": 481
+    },
+    {
+      "byte_ranges": [
+        {
+          "byte": 0,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 1,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 2,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 3,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 4,
+          "maximum": 253,
+          "minimum": 0
+        },
+        {
+          "byte": 5,
+          "maximum": 249,
+          "minimum": 0
+        },
+        {
+          "byte": 6,
+          "maximum": 8,
+          "minimum": 0
+        },
+        {
+          "byte": 7,
+          "maximum": 52,
+          "minimum": 34
+        }
+      ],
+      "checksum_candidate": {
+        "algorithm": "toyota-additive-id-dlc-payload-v0",
+        "candidate": true,
+        "checked": 134,
+        "match_rate": 1.0,
+        "matches": 134,
+        "status": "DISCOVERY_CANDIDATE"
+      },
+      "data_lengths": [
+        8
+      ],
+      "dynamic_byte_count": 4,
+      "dynamic_byte_positions": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "extended": false,
+      "first_big_endian_word": {
+        "bit_range": "0:16",
+        "byte_order": "BIG_ENDIAN",
+        "maximum": 0,
+        "mean": 0.0,
+        "minimum": 0,
+        "standard_deviation": 0.0,
+        "status": "DISCOVERY_CANDIDATE"
+      },
+      "identifier": "0x420",
+      "identifier_value": 1056,
+      "payload_change_rate": 0.039683,
+      "records": 134,
+      "sessions": 8,
+      "status": "DISCOVERY_CANDIDATE",
+      "unique_payloads": 2
+    },
+    {
+      "byte_ranges": [
+        {
+          "byte": 0,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 1,
+          "maximum": 40,
+          "minimum": 32
+        },
+        {
+          "byte": 2,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 3,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 4,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 5,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 6,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 7,
+          "maximum": 85,
+          "minimum": 77
+        }
+      ],
+      "checksum_candidate": {
+        "algorithm": "toyota-additive-id-dlc-payload-v0",
+        "candidate": true,
+        "checked": 142,
+        "match_rate": 1.0,
+        "matches": 142,
+        "status": "DISCOVERY_CANDIDATE"
+      },
+      "data_lengths": [
+        8
+      ],
+      "dynamic_byte_count": 2,
+      "dynamic_byte_positions": [
+        1,
+        7
+      ],
+      "extended": false,
+      "first_big_endian_word": {
+        "bit_range": "0:16",
+        "byte_order": "BIG_ENDIAN",
+        "maximum": 40,
+        "mean": 32.282,
+        "minimum": 32,
+        "standard_deviation": 1.475,
+        "status": "DISCOVERY_CANDIDATE"
+      },
+      "identifier": "0x223",
+      "identifier_value": 547,
+      "payload_change_rate": 0.037313,
+      "records": 142,
+      "sessions": 8,
+      "status": "DISCOVERY_CANDIDATE",
+      "unique_payloads": 2
+    },
+    {
+      "byte_ranges": [
+        {
+          "byte": 0,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 1,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 2,
+          "maximum": 7,
+          "minimum": 7
+        }
+      ],
+      "checksum_candidate": {
+        "algorithm": "toyota-additive-id-dlc-payload-v0",
+        "candidate": false,
+        "checked": 144,
+        "match_rate": 0.0,
+        "matches": 0,
+        "status": "DISCOVERY_CANDIDATE"
+      },
+      "data_lengths": [
+        3
+      ],
+      "dynamic_byte_count": 0,
+      "dynamic_byte_positions": [],
+      "extended": false,
+      "first_big_endian_word": {
+        "bit_range": "0:16",
+        "byte_order": "BIG_ENDIAN",
+        "maximum": 0,
+        "mean": 0.0,
+        "minimum": 0,
+        "standard_deviation": 0.0,
+        "status": "DISCOVERY_CANDIDATE"
+      },
+      "identifier": "0x020",
+      "identifier_value": 32,
+      "payload_change_rate": 0.0,
+      "records": 144,
+      "sessions": 8,
+      "status": "DISCOVERY_CANDIDATE",
+      "unique_payloads": 1
+    },
+    {
+      "byte_ranges": [
+        {
+          "byte": 0,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 1,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 2,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 3,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 4,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 5,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 6,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 7,
+          "maximum": 0,
+          "minimum": 0
+        }
+      ],
+      "checksum_candidate": {
+        "algorithm": "toyota-additive-id-dlc-payload-v0",
+        "candidate": false,
+        "checked": 143,
+        "match_rate": 0.0,
+        "matches": 0,
+        "status": "DISCOVERY_CANDIDATE"
+      },
+      "data_lengths": [
+        8
+      ],
+      "dynamic_byte_count": 0,
+      "dynamic_byte_positions": [],
+      "extended": false,
+      "first_big_endian_word": {
+        "bit_range": "0:16",
+        "byte_order": "BIG_ENDIAN",
+        "maximum": 0,
+        "mean": 0.0,
+        "minimum": 0,
+        "standard_deviation": 0.0,
+        "status": "DISCOVERY_CANDIDATE"
+      },
+      "identifier": "0x224",
+      "identifier_value": 548,
+      "payload_change_rate": 0.0,
+      "records": 143,
+      "sessions": 8,
+      "status": "DISCOVERY_CANDIDATE",
+      "unique_payloads": 1
+    },
+    {
+      "byte_ranges": [
+        {
+          "byte": 0,
+          "maximum": 16,
+          "minimum": 16
+        }
+      ],
+      "checksum_candidate": {
+        "algorithm": "toyota-additive-id-dlc-payload-v0",
+        "candidate": false,
+        "checked": 143,
+        "match_rate": 0.0,
+        "matches": 0,
+        "status": "DISCOVERY_CANDIDATE"
+      },
+      "data_lengths": [
+        1
+      ],
+      "dynamic_byte_count": 0,
+      "dynamic_byte_positions": [],
+      "extended": false,
+      "first_big_endian_word": null,
+      "identifier": "0x2D2",
+      "identifier_value": 722,
+      "payload_change_rate": 0.0,
+      "records": 143,
+      "sessions": 8,
+      "status": "DISCOVERY_CANDIDATE",
+      "unique_payloads": 1
+    },
+    {
+      "byte_ranges": [
+        {
+          "byte": 0,
+          "maximum": 0,
+          "minimum": 0
+        }
+      ],
+      "checksum_candidate": {
+        "algorithm": "toyota-additive-id-dlc-payload-v0",
+        "candidate": false,
+        "checked": 139,
+        "match_rate": 0.0,
+        "matches": 0,
+        "status": "DISCOVERY_CANDIDATE"
+      },
+      "data_lengths": [
+        1
+      ],
+      "dynamic_byte_count": 0,
+      "dynamic_byte_positions": [],
+      "extended": false,
+      "first_big_endian_word": null,
+      "identifier": "0x423",
+      "identifier_value": 1059,
+      "payload_change_rate": 0.0,
+      "records": 139,
+      "sessions": 8,
+      "status": "DISCOVERY_CANDIDATE",
+      "unique_payloads": 1
+    },
+    {
+      "byte_ranges": [
+        {
+          "byte": 0,
+          "maximum": 0,
+          "minimum": 0
+        }
+      ],
+      "checksum_candidate": {
+        "algorithm": "toyota-additive-id-dlc-payload-v0",
+        "candidate": false,
+        "checked": 116,
+        "match_rate": 0.0,
+        "matches": 0,
+        "status": "DISCOVERY_CANDIDATE"
+      },
+      "data_lengths": [
+        1
+      ],
+      "dynamic_byte_count": 0,
+      "dynamic_byte_positions": [],
+      "extended": false,
+      "first_big_endian_word": null,
+      "identifier": "0x3D0",
+      "identifier_value": 976,
+      "payload_change_rate": 0.0,
+      "records": 116,
+      "sessions": 8,
+      "status": "DISCOVERY_CANDIDATE",
+      "unique_payloads": 1
+    },
+    {
+      "byte_ranges": [
+        {
+          "byte": 0,
+          "maximum": 1,
+          "minimum": 1
+        },
+        {
+          "byte": 1,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 2,
+          "maximum": 6,
+          "minimum": 6
+        },
+        {
+          "byte": 3,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 4,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 5,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 6,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 7,
+          "maximum": 0,
+          "minimum": 0
+        }
+      ],
+      "checksum_candidate": {
+        "algorithm": "toyota-additive-id-dlc-payload-v0",
+        "candidate": false,
+        "checked": 80,
+        "match_rate": 0.0,
+        "matches": 0,
+        "status": "DISCOVERY_CANDIDATE"
+      },
+      "data_lengths": [
+        8
+      ],
+      "dynamic_byte_count": 0,
+      "dynamic_byte_positions": [],
+      "extended": false,
+      "first_big_endian_word": {
+        "bit_range": "0:16",
+        "byte_order": "BIG_ENDIAN",
+        "maximum": 256,
+        "mean": 256.0,
+        "minimum": 256,
+        "standard_deviation": 0.0,
+        "status": "DISCOVERY_CANDIDATE"
+      },
+      "identifier": "0x4C1",
+      "identifier_value": 1217,
+      "payload_change_rate": 0.0,
+      "records": 80,
+      "sessions": 8,
+      "status": "DISCOVERY_CANDIDATE",
+      "unique_payloads": 1
+    },
+    {
+      "byte_ranges": [
+        {
+          "byte": 0,
+          "maximum": 3,
+          "minimum": 3
+        },
+        {
+          "byte": 1,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 2,
+          "maximum": 3,
+          "minimum": 3
+        },
+        {
+          "byte": 3,
+          "maximum": 2,
+          "minimum": 2
+        },
+        {
+          "byte": 4,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 5,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 6,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 7,
+          "maximum": 0,
+          "minimum": 0
+        }
+      ],
+      "checksum_candidate": {
+        "algorithm": "toyota-additive-id-dlc-payload-v0",
+        "candidate": false,
+        "checked": 77,
+        "match_rate": 0.0,
+        "matches": 0,
+        "status": "DISCOVERY_CANDIDATE"
+      },
+      "data_lengths": [
+        8
+      ],
+      "dynamic_byte_count": 0,
+      "dynamic_byte_positions": [],
+      "extended": false,
+      "first_big_endian_word": {
+        "bit_range": "0:16",
+        "byte_order": "BIG_ENDIAN",
+        "maximum": 768,
+        "mean": 768.0,
+        "minimum": 768,
+        "standard_deviation": 0.0,
+        "status": "DISCOVERY_CANDIDATE"
+      },
+      "identifier": "0x4C3",
+      "identifier_value": 1219,
+      "payload_change_rate": 0.0,
+      "records": 77,
+      "sessions": 8,
+      "status": "DISCOVERY_CANDIDATE",
+      "unique_payloads": 1
+    },
+    {
+      "byte_ranges": [
+        {
+          "byte": 0,
+          "maximum": 7,
+          "minimum": 7
+        },
+        {
+          "byte": 1,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 2,
+          "maximum": 1,
+          "minimum": 1
+        },
+        {
+          "byte": 3,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 4,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 5,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 6,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 7,
+          "maximum": 0,
+          "minimum": 0
+        }
+      ],
+      "checksum_candidate": {
+        "algorithm": "toyota-additive-id-dlc-payload-v0",
+        "candidate": false,
+        "checked": 77,
+        "match_rate": 0.0,
+        "matches": 0,
+        "status": "DISCOVERY_CANDIDATE"
+      },
+      "data_lengths": [
+        8
+      ],
+      "dynamic_byte_count": 0,
+      "dynamic_byte_positions": [],
+      "extended": false,
+      "first_big_endian_word": {
+        "bit_range": "0:16",
+        "byte_order": "BIG_ENDIAN",
+        "maximum": 1792,
+        "mean": 1792.0,
+        "minimum": 1792,
+        "standard_deviation": 0.0,
+        "status": "DISCOVERY_CANDIDATE"
+      },
+      "identifier": "0x4C6",
+      "identifier_value": 1222,
+      "payload_change_rate": 0.0,
+      "records": 77,
+      "sessions": 8,
+      "status": "DISCOVERY_CANDIDATE",
+      "unique_payloads": 1
+    },
+    {
+      "byte_ranges": [
+        {
+          "byte": 0,
+          "maximum": 8,
+          "minimum": 8
+        },
+        {
+          "byte": 1,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 2,
+          "maximum": 1,
+          "minimum": 1
+        },
+        {
+          "byte": 3,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 4,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 5,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 6,
+          "maximum": 0,
+          "minimum": 0
+        },
+        {
+          "byte": 7,
+          "maximum": 0,
+          "minimum": 0
+        }
+      ],
+      "checksum_candidate": {
+        "algorithm": "toyota-additive-id-dlc-payload-v0",
+        "candidate": false,
+        "checked": 76,
+        "match_rate": 0.0,
+        "matches": 0,
+        "status": "DISCOVERY_CANDIDATE"
+      },
+      "data_lengths": [
+        8
+      ],
+      "dynamic_byte_count": 0,
+      "dynamic_byte_positions": [],
+      "extended": false,
+      "first_big_endian_word": {
+        "bit_range": "0:16",
+        "byte_order": "BIG_ENDIAN",
+        "maximum": 2048,
+        "mean": 2048.0,
+        "minimum": 2048,
+        "standard_deviation": 0.0,
+        "status": "DISCOVERY_CANDIDATE"
+      },
+      "identifier": "0x4C7",
+      "identifier_value": 1223,
+      "payload_change_rate": 0.0,
+      "records": 76,
+      "sessions": 8,
+      "status": "DISCOVERY_CANDIDATE",
+      "unique_payloads": 1
+    }
+  ],
+  "raw_word_relationship_candidates": [
+    {
+      "left": "0x022[0:16]",
+      "maximum_pairing_delta_us": 141281,
+      "median_right_to_left_ratio": 0.062868,
+      "paired_samples": 142,
+      "pearson_correlation": -0.999643,
+      "right": "0x223[0:16]",
+      "status": "DISCOVERY_CANDIDATE"
+    },
+    {
+      "left": "0x2C4[0:16]",
+      "maximum_pairing_delta_us": 109508,
+      "median_right_to_left_ratio": 1.979058,
+      "paired_samples": 625,
+      "pearson_correlation": 0.99213,
+      "right": "0x2D0[0:16]",
+      "status": "DISCOVERY_CANDIDATE"
+    }
+  ],
+  "repeated_channel_candidates": [
+    {
+      "byte_positions": [
+        4,
+        5,
+        6
+      ],
+      "identifier": "0x025",
+      "maximum": 255,
+      "maximum_disagreement": 0,
+      "minimum": 115,
+      "records_compared": 667,
+      "status": "DISCOVERY_CANDIDATE"
+    }
+  ],
+  "sessions": [
+    {
+      "duration_seconds": 54.39,
+      "estimated_observed_rate_fps": 536.418,
+      "first_source_sequence": 1,
+      "gateway_id": "esp32-9454c5b08d14",
+      "last_source_sequence": 29177,
+      "records": 1984,
+      "retained_record_rate_fps": 36.477,
+      "sequence_coverage": 0.067999,
+      "sequence_span": 29177,
+      "session_id": 627753796,
+      "unique_identifiers": 17
+    },
+    {
+      "duration_seconds": 10.99,
+      "estimated_observed_rate_fps": 533.559,
+      "first_source_sequence": 1,
+      "gateway_id": "esp32-9454c5b08d14",
+      "last_source_sequence": 5865,
+      "records": 408,
+      "retained_record_rate_fps": 37.123,
+      "sequence_coverage": 0.069565,
+      "sequence_span": 5865,
+      "session_id": 628897492,
+      "unique_identifiers": 17
+    },
+    {
+      "duration_seconds": 23.533,
+      "estimated_observed_rate_fps": 538.103,
+      "first_source_sequence": 1,
+      "gateway_id": "esp32-9454c5b08d14",
+      "last_source_sequence": 12664,
+      "records": 864,
+      "retained_record_rate_fps": 36.715,
+      "sequence_coverage": 0.068225,
+      "sequence_span": 12664,
+      "session_id": 740616386,
+      "unique_identifiers": 17
+    },
+    {
+      "duration_seconds": 11.676,
+      "estimated_observed_rate_fps": 548.389,
+      "first_source_sequence": 1,
+      "gateway_id": "esp32-9454c5b08d14",
+      "last_source_sequence": 6404,
+      "records": 432,
+      "retained_record_rate_fps": 36.999,
+      "sequence_coverage": 0.067458,
+      "sequence_span": 6404,
+      "session_id": 1007674331,
+      "unique_identifiers": 17
+    },
+    {
+      "duration_seconds": 16.313,
+      "estimated_observed_rate_fps": 539.571,
+      "first_source_sequence": 1,
+      "gateway_id": "esp32-9454c5b08d14",
+      "last_source_sequence": 8803,
+      "records": 600,
+      "retained_record_rate_fps": 36.781,
+      "sequence_coverage": 0.068159,
+      "sequence_span": 8803,
+      "session_id": 1846258254,
+      "unique_identifiers": 17
+    },
+    {
+      "duration_seconds": 8.364,
+      "estimated_observed_rate_fps": 556.187,
+      "first_source_sequence": 1,
+      "gateway_id": "esp32-9454c5b08d14",
+      "last_source_sequence": 4653,
+      "records": 312,
+      "retained_record_rate_fps": 37.302,
+      "sequence_coverage": 0.067054,
+      "sequence_span": 4653,
+      "session_id": 2020748856,
+      "unique_identifiers": 17
+    },
+    {
+      "duration_seconds": 6.465,
+      "estimated_observed_rate_fps": 531.672,
+      "first_source_sequence": 179384,
+      "gateway_id": "esp32-9454c5b08d14",
+      "last_source_sequence": 182821,
+      "records": 240,
+      "retained_record_rate_fps": 37.126,
+      "sequence_coverage": 0.069808,
+      "sequence_span": 3438,
+      "session_id": 2175731012,
+      "unique_identifiers": 17
+    },
+    {
+      "duration_seconds": 9.1,
+      "estimated_observed_rate_fps": 537.811,
+      "first_source_sequence": 1,
+      "gateway_id": "esp32-9454c5b08d14",
+      "last_source_sequence": 4895,
+      "records": 336,
+      "retained_record_rate_fps": 36.924,
+      "sequence_coverage": 0.068641,
+      "sequence_span": 4895,
+      "session_id": 4020849719,
+      "unique_identifiers": 17
+    }
+  ],
+  "source_files": [
+    {
+      "byte_count": 173622,
+      "name": "1007674331.ndjson",
+      "record_count": 432,
+      "sha256": "b26a4377e654d9d5c5a1fe3ff02b61b336f91eb5a7dd02c4e93ba0c3e55cfeb4"
+    },
+    {
+      "byte_count": 241305,
+      "name": "1846258254.ndjson",
+      "record_count": 600,
+      "sha256": "ca82592df7fd9fb52a7eb3f05284d9aecf58a57907bc4de958093b540781fce2"
+    },
+    {
+      "byte_count": 125371,
+      "name": "2020748856.ndjson",
+      "record_count": 312,
+      "sha256": "38f0a0048be7333ab2046b9399c2807f95efe34d10dd18368b285fb7961b594f"
+    },
+    {
+      "byte_count": 97326,
+      "name": "2175731012.ndjson",
+      "record_count": 240,
+      "sha256": "b5a7296633145f3175f39a9691030550c3ec9ce3aad503d37f4d62cee3c85c7f"
+    },
+    {
+      "byte_count": 134952,
+      "name": "4020849719.ndjson",
+      "record_count": 336,
+      "sha256": "da57d792c53399349a9b4ced66da233eca0b4e34b946d1612b5762d3651d003e"
+    },
+    {
+      "byte_count": 797958,
+      "name": "627753796.ndjson",
+      "record_count": 1984,
+      "sha256": "94f3aa46c2734fcf514a7d06fe567b4b0131c937c7818f22ff41cc52c1226220"
+    },
+    {
+      "byte_count": 163559,
+      "name": "628897492.ndjson",
+      "record_count": 408,
+      "sha256": "7f1286627b3b000c4d4698f327af3f088ac0a73c0ea1e6818fd7adeaf9782981"
+    },
+    {
+      "byte_count": 346930,
+      "name": "740616386.ndjson",
+      "record_count": 864,
+      "sha256": "34ea3d3ae8b71241f9d0f1a5580c4c1eae80aa55817e56daf129a092d9a60324"
+    }
+  ],
+  "status": "DISCOVERY_CANDIDATE"
+}

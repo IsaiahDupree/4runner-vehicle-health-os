@@ -1,0 +1,50 @@
+{
+  "contract": "equation.definition",
+  "contract_version": "1.0.0",
+  "equation_id": "ac.pressure.delta",
+  "version": "1.0.0",
+  "human_explanation": "Subtract low-side absolute pressure from high-side absolute pressure. The atmospheric term cancels, so the result is also the gauge-pressure lift when both channels share the same atmospheric reference.",
+  "expression": {
+    "language": "vhos-expression-1",
+    "ast": {
+      "kind": "operation",
+      "operator": "subtract",
+      "arguments": [
+        {"kind": "input", "name": "high_pressure_absolute"},
+        {"kind": "input", "name": "low_pressure_absolute"}
+      ]
+    }
+  },
+  "inputs": [
+    {
+      "name": "high_pressure_absolute",
+      "unit": "kPa",
+      "maximum_age_ms": 0,
+      "accepted_quality": ["GOOD"]
+    },
+    {
+      "name": "low_pressure_absolute",
+      "unit": "kPa",
+      "maximum_age_ms": 0,
+      "accepted_quality": ["GOOD"]
+    }
+  ],
+  "constants": [],
+  "output": {"unit": "kPa", "truth_boundary": "ESTIMATED"},
+  "confidence_model": {
+    "equation_id": "ac.confidence.evidence",
+    "version": "1.0.0",
+    "factors": ["SOURCE_QUALITY", "CALIBRATION_QUALITY"]
+  },
+  "applicability": {
+    "vehicle_config_pack": "vhos.generic-ac-node",
+    "conditions": [
+      "Both absolute-pressure inputs come from the same telemetry observation.",
+      "Both pressure channels have an applicable validated calibration identity."
+    ]
+  },
+  "validation_status": "EXPERIMENTAL",
+  "reset_dependencies": ["ac.pressure.high.calibration", "ac.pressure.low.calibration"],
+  "release_notes": "Initial formula from A/C Engine-Bay Telemetry Node Specification v1.0; no vehicle threshold or charge-state interpretation is included.",
+  "released_at": "2026-08-16T00:00:00Z"
+}

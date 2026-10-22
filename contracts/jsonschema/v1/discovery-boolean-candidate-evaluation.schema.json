@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/discovery-boolean-candidate-evaluation.schema.json",
+  "title": "VHOS Discovery Boolean marker-correlation evaluation v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract", "contract_version", "field", "paired_observation_count", "true_observation_count", "false_observation_count", "true_state_mode", "false_state_mode", "correlation", "repeatability", "false_activation_count", "marker_ids", "observation_references", "algorithm_id", "algorithm_version", "authority"],
+  "properties": {
+    "contract": {"const": "vhos.discovery.boolean-candidate-evaluation"},
+    "contract_version": {"const": "1.0.0"},
+    "field": {"$ref": "discovery-common.schema.json#/$defs/candidateField"},
+    "paired_observation_count": {"type": "integer", "minimum": 2},
+    "true_observation_count": {"type": "integer", "minimum": 1},
+    "false_observation_count": {"type": "integer", "minimum": 1},
+    "true_state_mode": {"type": "integer", "minimum": 0},
+    "false_state_mode": {"type": "integer", "minimum": 0},
+    "correlation": {"type": "number", "minimum": -1, "maximum": 1},
+    "repeatability": {"type": "number", "minimum": 0, "maximum": 1},
+    "false_activation_count": {"type": "integer", "minimum": 0},
+    "marker_ids": {"type": "array", "minItems": 2, "uniqueItems": true, "items": {"type": "string", "pattern": "^marker_[0-9A-HJKMNP-TV-Z]{26}$"}},
+    "observation_references": {"type": "array", "minItems": 2, "items": {"type": "string", "minLength": 1, "maxLength": 240}},
+    "algorithm_id": {"$ref": "common.schema.json#/$defs/semanticId"},
+    "algorithm_version": {"$ref": "common.schema.json#/$defs/semanticVersion"},
+    "authority": {"const": "EXPERIMENTAL_CANDIDATE"}
+  }
+}

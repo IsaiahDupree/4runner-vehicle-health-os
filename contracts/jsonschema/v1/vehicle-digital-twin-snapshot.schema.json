@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/vehicle-digital-twin-snapshot.schema.json",
+  "title": "VHOS whole-vehicle digital-twin snapshot v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract", "contract_version", "snapshot_id", "exported_at", "database_version",
+    "head_unit_inventory", "vehicle_profile", "health_assessments"
+  ],
+  "properties": {
+    "contract": {"const": "vehicle.digital-twin.snapshot"},
+    "contract_version": {"const": "1.0.0"},
+    "snapshot_id": {"type": "string", "format": "uuid"},
+    "exported_at": {"$ref": "common.schema.json#/$defs/wallTime"},
+    "database_version": {"type": "integer", "minimum": 2},
+    "head_unit_inventory": {
+      "anyOf": [
+        {"$ref": "head-unit-inventory.schema.json"},
+        {"type": "null"}
+      ]
+    },
+    "vehicle_profile": {
+      "anyOf": [
+        {"$ref": "vehicle-profile.schema.json"},
+        {"type": "null"}
+      ]
+    },
+    "health_assessments": {
+      "type": "array", "minItems": 22, "maxItems": 22,
+      "items": {"$ref": "vehicle-health-assessment.schema.json"}
+    }
+  }
+}

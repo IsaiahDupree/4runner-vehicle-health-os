@@ -12,6 +12,10 @@ let package = Package(
     ],
     targets: [
         .target(name: "VHOSCore"),
-        .testTarget(name: "VHOSCoreTests", dependencies: ["VHOSCore"])
+        .testTarget(
+            name: "VHOSCoreTests",
+            dependencies: ["VHOSCore"],
+            resources: [.copy("Fixtures")]
+        )
     ]
 )

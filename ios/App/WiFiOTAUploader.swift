@@ -1,33 +1,34 @@
 import Foundation
+import NetworkExtension
 
 struct WiFiOTAUploader {
-  func upload(firmware: Data, to url: URL) async throws -> String {
+  func upload(firmware: Data, to url: URL, bearerToken: String) async throws -> String {
     try validateLocalOTAURL(url)
-    let boundary = "VHOS-\(UUID().uuidString)"
-    var body = Data()
-    body.append(Data("--\(boundary)\r\n".utf8))
-    body.append(
-      Data("Content-Disposition: form-data; name=\"file\"; filename=\"ota.bin\"\r\n".utf8))
-    body.append(Data("Content-Type: application/octet-stream\r\n\r\n".utf8))
-    body.append(firmware)
-    body.append(Data("\r\n--\(boundary)--\r\n".utf8))
+    guard bearerToken.count >= 32, bearerToken.count <= 80 else {
+      throw WiFiOTAError.invalidSessionToken
+    }
 
     var request = URLRequest(url: url)
     request.httpMethod = "POST"
-    request.timeoutInterval = 120
-    request.setValue(
-      "multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
-    request.setValue(String(body.count), forHTTPHeaderField: "Content-Length")
-    let (_, response) = try await URLSession.shared.upload(for: request, from: body)
+    request.timeoutInterval = 180
+    request.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
+    request.setValue("Bearer \(bearerToken)", forHTTPHeaderField: "Authorization")
+    request.setValue(String(firmware.count), forHTTPHeaderField: "Content-Length")
+    let (body, response) = try await URLSession.shared.upload(for: request, from: firmware)
     guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
-      throw WiFiOTAError.uploadRejected((response as? HTTPURLResponse)?.statusCode)
+      throw WiFiOTAError.uploadRejected(
+        (response as? HTTPURLResponse)?.statusCode,
+        String(data: body, encoding: .utf8)
+      )
     }
     return
       "Firmware accepted by the gateway. Keep vehicle power stable while probationary boot and self-test complete."
   }
 
   private func validateLocalOTAURL(_ url: URL) throws {
-    guard url.scheme == "http", url.path == "/upload/ota.bin", let host = url.host?.lowercased()
+    guard url.scheme == "http",
+      ["/api/v1/ota/image", "/upload/ota.bin"].contains(url.path),
+      let host = url.host?.lowercased()
     else {
       throw WiFiOTAError.invalidEndpoint
     }
@@ -44,18 +45,60 @@ struct WiFiOTAUploader {
   }
 }
 
+@MainActor
+struct TemporaryGatewayNetwork {
+  func join(ssid: String, passphrase: String) async throws {
+    guard !ssid.isEmpty, ssid.count <= 32, passphrase.count >= 8, passphrase.count <= 63 else {
+      throw WiFiOTAError.invalidNetworkCredentials
+    }
+    let configuration = NEHotspotConfiguration(
+      ssid: ssid,
+      passphrase: passphrase,
+      isWEP: false
+    )
+    configuration.hidden = true
+    configuration.joinOnce = true
+    try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+      NEHotspotConfigurationManager.shared.apply(configuration) { error in
+        if let error = error as NSError? {
+          if error.domain == NEHotspotConfigurationErrorDomain,
+            error.code == NEHotspotConfigurationError.alreadyAssociated.rawValue
+          {
+            continuation.resume(returning: ())
+          } else {
+            continuation.resume(throwing: WiFiOTAError.networkJoinFailed(error.localizedDescription))
+          }
+        } else {
+          continuation.resume(returning: ())
+        }
+      }
+    }
+    try await Task.sleep(for: .seconds(2))
+  }
+
+  func remove(ssid: String) {
+    NEHotspotConfigurationManager.shared.removeConfiguration(forSSID: ssid)
+  }
+}
+
 enum WiFiOTAError: Error, LocalizedError {
   case invalidEndpoint
   case nonLocalEndpoint
-  case uploadRejected(Int?)
+  case invalidSessionToken
+  case invalidNetworkCredentials
+  case networkJoinFailed(String)
+  case uploadRejected(Int?, String?)
 
   var errorDescription: String? {
     switch self {
     case .invalidEndpoint:
-      "OTA is restricted to HTTP /upload/ota.bin endpoints advertised by the gateway."
+      "OTA is restricted to a recognized local gateway upload endpoint."
     case .nonLocalEndpoint: "OTA is restricted to private IPv4 or .local gateway addresses."
-    case .uploadRejected(let status):
-      "Gateway rejected the firmware upload\(status.map { " (HTTP \($0))" } ?? "")."
+    case .invalidSessionToken: "The encrypted BLE OTA session token is invalid."
+    case .invalidNetworkCredentials: "The temporary gateway Wi-Fi credentials are invalid."
+    case .networkJoinFailed(let detail): "Could not join the temporary gateway network: \(detail)"
+    case .uploadRejected(let status, let detail):
+      "Gateway rejected the firmware upload\(status.map { " (HTTP \($0))" } ?? "")\(detail.map { ": \($0)" } ?? "")."
     }
   }
 }

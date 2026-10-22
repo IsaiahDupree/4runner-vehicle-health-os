@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/discovery-event-marker.schema.json",
+  "title": "VHOS Discovery event marker v1",
+  "$ref": "discovery-common.schema.json#/$defs/eventMarker"
+}

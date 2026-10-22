@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/recovered-passive-can-observation.schema.json",
+  "title": "Recovered passive CAN observation wrapper",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "contract_version",
+    "source_classification",
+    "vehicle_claims_authorized",
+    "observation"
+  ],
+  "properties": {
+    "contract": {"const": "can.recovered-passive-can-observation"},
+    "contract_version": {"const": "1.0.0"},
+    "source_classification": {"const": "RECOVERED_PORTABLE_EVIDENCE"},
+    "vehicle_claims_authorized": {"const": false},
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "contract_version",
+        "gateway_id",
+        "session_id",
+        "source_sequence",
+        "monotonic_microseconds",
+        "bitrate_bps",
+        "identifier",
+        "extended",
+        "remote_request",
+        "listen_only",
+        "data_length",
+        "data",
+        "evidence_source",
+        "ingested_at"
+      ],
+      "properties": {
+        "contract": {"const": "gateway.passive-can-observation"},
+        "contract_version": {"const": "1.0.0"},
+        "gateway_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._-]{1,128}$"
+        },
+        "session_id": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "source_sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "monotonic_microseconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "bitrate_bps": {"enum": [250000, 500000]},
+        "identifier": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 536870911
+        },
+        "extended": {"type": "boolean"},
+        "remote_request": {"type": "boolean"},
+        "listen_only": {"const": true},
+        "data_length": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 8
+        },
+        "data": {
+          "type": "array",
+          "minItems": 8,
+          "maxItems": 8,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        },
+        "evidence_source": {"enum": ["gateway-flash", "ble-live"]},
+        "ingested_at": {"$ref": "common.schema.json#/$defs/wallTime"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"extended": {"const": false}}},
+          "then": {"properties": {"identifier": {"maximum": 2047}}}
+        }
+      ]
+    }
+  }
+}

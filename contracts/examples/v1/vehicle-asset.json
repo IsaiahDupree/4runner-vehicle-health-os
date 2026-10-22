@@ -1,0 +1,32 @@
+{
+  "contract": "vehicle.asset",
+  "contract_version": "1.0.0",
+  "vehicle_id": "veh_00000000000000000000000001",
+  "revision_id": "vehrev_00000000000000000000000002",
+  "supersedes_revision_id": null,
+  "created_at": "2026-08-30T12:00:00Z",
+  "display_name": "Family vehicle",
+  "model_year": 2005,
+  "make": "Toyota",
+  "model": "4Runner",
+  "trim": null,
+  "vin": null,
+  "license_plate": null,
+  "distance_unit": "MILES",
+  "current_odometer": {
+    "value": 154000,
+    "unit": "MILES"
+  },
+  "configuration": {
+    "schema_version": "1.0.0",
+    "resolution_status": "PARTIAL",
+    "attributes": [
+      {"key": "engine.family", "state": "UNKNOWN", "value": null, "source": "UNKNOWN", "observed_at": null},
+      {"key": "market", "state": "KNOWN", "value": "US", "source": "MANUAL", "observed_at": "2026-08-30T12:00:00Z"}
+    ]
+  },
+  "severe_use_conditions": [
+    {"condition_key": "severe_use.towing", "status": "UNKNOWN", "source": "UNKNOWN", "observed_at": null, "notes": null}
+  ],
+  "active_vehicle_pack": null
+}

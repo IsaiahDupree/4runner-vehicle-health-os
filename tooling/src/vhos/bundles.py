@@ -9,12 +9,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from .contracts import ContractCatalog, ContractError
-from .simulator import (
-    SCENARIO_ID,
-    SCENARIO_VERSION,
-    SIMULATOR_VERSION,
-    ScenarioCapture,
-)
+from .simulator import ScenarioCapture
 
 
 class BundleError(ValueError):
@@ -69,13 +64,13 @@ def write_simulator_bundle(
             },
             "profile": {
                 "kind": "SIMULATOR",
-                "scenario_id": SCENARIO_ID,
-                "scenario_version": SCENARIO_VERSION,
+                "scenario_id": capture.scenario_id,
+                "scenario_version": capture.scenario_version,
             },
             "source": {
                 "kind": "SIMULATOR",
-                "source_id": "sim.powertrain-state",
-                "source_version": SIMULATOR_VERSION,
+                "source_id": capture.source_id,
+                "source_version": capture.source_version,
             },
             "segments": [
                 {

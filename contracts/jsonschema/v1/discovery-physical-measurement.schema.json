@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/discovery-physical-measurement.schema.json",
+  "title": "VHOS Discovery synchronized physical measurement v1",
+  "$ref": "discovery-common.schema.json#/$defs/physicalMeasurement"
+}

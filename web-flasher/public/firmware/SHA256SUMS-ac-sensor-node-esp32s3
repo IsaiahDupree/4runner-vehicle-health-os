@@ -1,0 +1,5 @@
+5d451fa38dd5b03c45a0a15f5208539ab43720bdc282662f8b673706e07b7c17  vhos-ac-sensor-node-esp32s3-v0.1.0-dev.1-merged.bin
+fe4ac839f38e0d8c7218f3930094c55374e2e3e3981990ecd4d5b49b5788e524  vhos-ac-sensor-node-esp32s3-v0.1.0-dev.1-bootloader.bin
+fcdec9d764cda6ae1b1cd9ebb6fde60f502db00cec47e639f9c50f3f73049be5  vhos-ac-sensor-node-esp32s3-v0.1.0-dev.1-partition-table.bin
+7d2c7ac4888bfd75cd5f56e8d61f69595121183afc81556c876732fd3782c62f  vhos-ac-sensor-node-esp32s3-v0.1.0-dev.1-ota-data-initial.bin
+2b37503ed5ca822e04f1bfb7cd5d8509fdf5e153d358bed0a61a6ce09e716e73  vhos-ac-sensor-node-esp32s3-v0.1.0-dev.1-app.bin

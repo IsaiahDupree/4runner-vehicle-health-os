@@ -1,0 +1,578 @@
+{
+  "contract": "can.cross-platform-signal-lineage",
+  "contract_version": "1.0.0",
+  "generated_at": "2026-08-18",
+  "target": {
+    "make": "Toyota",
+    "model": "4Runner",
+    "model_year": 2005,
+    "engine": null,
+    "drivetrain": null,
+    "vin_resolved": false
+  },
+  "authority": {
+    "status": "RESEARCH_LINEAGE_ONLY",
+    "accepted_signal_definitions": 0,
+    "production_value_display_allowed": false,
+    "statement": "This artifact records what each source actually establishes, including conflicts. Cross-model recurrence ranks experiments; it does not prove an exact 2005 4Runner byte layout, scale, unit, or ECU source."
+  },
+  "evidence_classes": [
+    {
+      "class": "A",
+      "meaning": "Toyota, Lexus, or SAE primary documentation. May establish diagnostic availability, procedure, applicability, or vehicle relationship, but not an undocumented raw broadcast-CAN layout."
+    },
+    {
+      "class": "B",
+      "meaning": "Primary, reproducible vehicle research with a named vehicle, acquisition method, physical or diagnostic reference, or peer-reviewed analysis. Cross-model only unless the target configuration matches."
+    },
+    {
+      "class": "C",
+      "meaning": "Version-pinned community DBC, logger definition, or listen-only notes. Useful for hypothesis ranking; never sufficient for promotion alone."
+    }
+  ],
+  "sources": [
+    {
+      "source_id": "toyota-2005-4runner-owner-manual-om35860u",
+      "evidence_class": "A",
+      "publisher": "Toyota Motor Sales, U.S.A.",
+      "url": "https://assets.sia.toyota.com/publications/en/om-s/OM35860U/pdf/OM35860U.pdf",
+      "scope": "Toyota's owner manual for the 2005 4Runner identifies both 1GR-FE and 2UZ-FE engine configurations for the exact target model year.",
+      "proves": [
+        "The unresolved target configuration can be either the 1GR-FE V6 or 2UZ-FE V8 family covered by the exact-model-year manual.",
+        "VIN and configuration resolution are mandatory before applying engine- or transmission-specific signal definitions."
+      ],
+      "does_not_prove": [
+        "Any CAN identifier, payload layout, scale, unit, transmitting ECU, or diagnostic PID applicability."
+      ]
+    },
+    {
+      "source_id": "toyota-general-2005-features-can-archive",
+      "evidence_class": "A",
+      "publisher": "Toyota General 2005 Features content; archived on Scribd",
+      "url": "https://www.scribd.com/document/391265361/51-Power-Steering",
+      "scope": "Toyota-authored General 2005 Features CAN section comparing the 2005 4Runner, Tundra, and Sequoia networks.",
+      "proves": [
+        "The documented 2005 4Runner/Tundra CAN network runs at 500 kbit/s.",
+        "The documented 2005 4Runner CAN connects the skid-control ECU, ECM, steering-angle sensor, yaw/deceleration sensor, and DLC3.",
+        "The 2005 Sequoia topology differs by adding suspension-control and translate ECUs, demonstrating option/model-specific network variation.",
+        "Toyota identifies repair manual publication 1165U for the 2005 4Runner CAN diagnostic procedure."
+      ],
+      "does_not_prove": [
+        "Any raw broadcast-CAN identifier, payload layout, scale, unit, checksum, or exact ECU calibration.",
+        "That every target option or drivetrain has an identical traffic population."
+      ],
+      "provenance_note": "The archived pages identify Toyota copyright and Toyota figure/publication references, but the public host is an unversioned third-party mirror rather than an official Toyota endpoint. Claims are limited to the visible manual text."
+    },
+    {
+      "source_id": "toyota-2006-4runner-rm00t1u-729e248",
+      "evidence_class": "A",
+      "publisher": "Toyota GSIC manual content; archived by ToyotaManuals on GitLab",
+      "url": "https://toyotamanuals.gitlab.io/rm00t1u/",
+      "revision": "729e2480c90ffd3525595400ddd69024077f487b",
+      "scope": "Version-pinned archival copy of Toyota repair/new-features manual RM00T1U/NM0010U for adjacent-model-year 4Runner GRN210/GRN215 and UZN210/UZN215 configurations.",
+      "proves": [
+        "The adjacent 4Runner generation exposes the steering-angle sensor through the intelligent tester CAN VIM and BUS CHECK workflow.",
+        "The same-generation manual distinguishes accelerator channels ACCEL POS and ACCEL POS#2 and publishes independent released/depressed voltage ranges.",
+        "The manual explicitly covers both GRN and UZN chassis families, reinforcing configuration-specific validation."
+      ],
+      "does_not_prove": [
+        "That the 2005 target shares every 2006 calibration or option.",
+        "Any raw broadcast-CAN identifier, field position, scale, unit, checksum, or transmitter."
+      ],
+      "provenance_note": "The underlying content identifies itself as Toyota GSIC service information; the cited public host is a third-party archive, not an official Toyota publication endpoint."
+    },
+    {
+      "source_id": "toyota-prado-ncf-276e",
+      "evidence_class": "A",
+      "publisher": "Toyota New Features manual content; archived by ToyotaManuals",
+      "url": "https://toyotamanuals.gitlab.io/PZ471-Z00W0-CA/htmlweb/ncf/ncf276e/m_05_0242.pdf",
+      "scope": "Toyota Land Cruiser/Land Cruiser Prado New Features page describing the VSC CAN network and its participating nodes.",
+      "proves": [
+        "The documented related-SUV VSC network runs CAN at 500 kbit/s.",
+        "The documented network connects the skid-control ECU, engine ECU, steering-angle sensor, yaw/deceleration sensor, DLC3, and an ECT ECU on the stated 1KD configuration."
+      ],
+      "does_not_prove": [
+        "That the 2005 4Runner has the same node population, topology, CAN identifiers, payloads, or ECU calibrations."
+      ],
+      "provenance_note": "The PDF is Toyota-authored New Features content hosted by a third-party archival mirror."
+    },
+    {
+      "source_id": "toyota-techstream-lite",
+      "evidence_class": "A",
+      "publisher": "Toyota Motor Sales, U.S.A.",
+      "url": "https://www.techinfo.toyota.com/techInfoPortal/appmanager/t3/ti?_nfpb=true&_pageLabel=ti_ts_lite",
+      "scope": "Toyota states that Techstream Lite supports DLC3/J1962 diagnostic functions on 1996 and later Toyota, Lexus, and Scion vehicles marketed in North America.",
+      "proves": [
+        "A factory diagnostic reference path exists for the target model year.",
+        "Techstream Data List values are suitable independent observables for synchronized validation."
+      ],
+      "does_not_prove": [
+        "Any raw broadcast-CAN identifier, field layout, scale, unit, or checksum."
+      ]
+    },
+    {
+      "source_id": "toyota-tech-tip-tt0615-20",
+      "evidence_class": "A",
+      "publisher": "Toyota Motor Sales, U.S.A.",
+      "url": "https://static.nhtsa.gov/odi/tsbs/2020/MC-10177575-9999.pdf",
+      "scope": "Toyota Tech Tip T-TT-0615-20 specifies a synchronized Techstream snapshot containing vehicle speed, engine speed, accelerator position, intake-air temperature, output-axis speed, NT sensor speed, selector status, lockup, and other drivability values.",
+      "proves": [
+        "Toyota exposes independent reference values covering several current CAN hypotheses.",
+        "A marked, synchronized snapshot is an OEM-supported diagnostic workflow."
+      ],
+      "does_not_prove": [
+        "That any listed diagnostic value is broadcast at a particular CAN identifier."
+      ]
+    },
+    {
+      "source_id": "toyota-camry-steering-tsb-0086-13",
+      "evidence_class": "A",
+      "publisher": "Toyota Motor Sales, U.S.A.",
+      "url": "https://static.nhtsa.gov/odi/tsbs/2013/MC-10132241-9999.pdf",
+      "scope": "Toyota T-SB-0086-13 directs technicians to inspect the Techstream Steering Angle Sensor value on 2009-2011 Camry vehicles and publishes diagnostic ranges.",
+      "proves": [
+        "Steering angle can be captured as an independent Toyota Data List reference on the Camry research lineage."
+      ],
+      "does_not_prove": [
+        "The raw 0x025 scaling or its applicability to a 2005 4Runner."
+      ]
+    },
+    {
+      "source_id": "lexus-rx-accelerator-campaign-2012",
+      "evidence_class": "A",
+      "publisher": "Toyota Motor Sales, U.S.A. / Lexus",
+      "url": "https://static.nhtsa.gov/odi/rcl/2012/RCMN-12V305-6789.pdf",
+      "scope": "The Lexus RX350/RX450h campaign procedure records Techstream accelerator sensor or accelerator-position Data List values at released and fully depressed states.",
+      "proves": [
+        "Toyota/Lexus exposes independent accelerator-pedal references and distinguishes redundant sensor channels."
+      ],
+      "does_not_prove": [
+        "That 0x2C1 uses the same encoding on RX, FJ Cruiser, Camry, or the target 4Runner."
+      ]
+    },
+    {
+      "source_id": "toyota-nt-speed-tsb-0160-18",
+      "evidence_class": "A",
+      "publisher": "Toyota Motor Sales, U.S.A.",
+      "url": "https://static.nhtsa.gov/odi/tsbs/2021/MC-10198131-9999.pdf",
+      "scope": "Toyota T-SB-0160-18 directs technicians to compare engine speed and transmission revolution sensor NT speed in Techstream under a controlled Park condition.",
+      "proves": [
+        "Engine and transmission input/turbine speed are distinct OEM diagnostic observables suitable for resolving the 0x2C4 versus 0x2D0 relationship."
+      ],
+      "does_not_prove": [
+        "The identity or scale of 0x2D0 on the target vehicle."
+      ]
+    },
+    {
+      "source_id": "toyota-official-suv-relationship",
+      "evidence_class": "A",
+      "publisher": "Toyota Motor Corporation",
+      "url": "https://global.toyota/en/newsroom/corporate/32615825.html",
+      "scope": "Toyota identifies 4Runner, Land Cruiser Prado, LC200, and Lexus GX on a Tahara production line, and Prado and FJ Cruiser on a Hamura line.",
+      "proves": [
+        "Those vehicles are defensible related-SUV research cohorts rather than arbitrary Toyota comparisons."
+      ],
+      "does_not_prove": [
+        "Shared ECUs, software, network topology, CAN identifiers, or signal layouts across model years."
+      ]
+    },
+    {
+      "source_id": "toyota-official-fj-2010",
+      "evidence_class": "A",
+      "publisher": "Toyota Motor Corporation",
+      "url": "https://global.toyota/en/detail/325290",
+      "scope": "Toyota identifies the FJ Cruiser as a 1GR-FE 4.0-liter, five-speed electronically controlled, part-time-4WD vehicle.",
+      "proves": [
+        "The FJ mapping is a more relevant powertrain research lead for a VIN-confirmed 1GR-FE 4Runner than an unrelated Toyota passenger car mapping."
+      ],
+      "does_not_prove": [
+        "That the target 4Runner is 1GR-FE or that the FJ CAN mapping is identical."
+      ]
+    },
+    {
+      "source_id": "csu-toyota-can-2010-camry",
+      "evidence_class": "B",
+      "publisher": "Colorado State University",
+      "url": "https://www.engr.colostate.edu/~jdaily/tucrrc/ToyotaCAN.html",
+      "scope": "Primary 2010 Camry research correlating physical vehicle actions with 11-bit, 500 kbit/s CAN traffic.",
+      "proves": [
+        "0x025 behaved as steering data, 0x2C1 as accelerator/throttle-pedal data, 0x2C4 as engine speed, and 0x224 as brake-pressure data on the tested Camry.",
+        "0x022 was steering-like; 0x023 and 0x223 were observed but unresolved; 0x2D0 was observed but unresolved."
+      ],
+      "does_not_prove": [
+        "Exact 2005 4Runner field scaling, layout, direction, unit, or applicability."
+      ]
+    },
+    {
+      "source_id": "sae-ruth-bartlett-daily-camry-2012",
+      "evidence_class": "B",
+      "publisher": "SAE International / Ruth, Bartlett, and Daily",
+      "url": "https://doi.org/10.4271/2012-01-0999",
+      "scope": "Peer-reviewed synchronized 2010 and 2011 Camry testing using independent reference acquisition and CAN logging.",
+      "proves": [
+        "0x2C1 carried accelerator-pedal-position data and 0x2C4 carried engine-speed data on the tested Camry family.",
+        "0x2C1 updated every 512 ms, 0x2C4 updated every 24 ms, and the tested Toyota network used standard 11-bit identifiers at 500 kbit/s."
+      ],
+      "does_not_prove": [
+        "Exact 2005 4Runner layout, scaling, ECU calibration, or applicability."
+      ]
+    },
+    {
+      "source_id": "umich-cids-camry-2010",
+      "evidence_class": "B",
+      "publisher": "University of Michigan / USENIX Security 2016",
+      "url": "https://rtcl.eecs.umich.edu/rtclweb/assets/publications/2016/sec16-final165_final.pdf",
+      "scope": "Peer-reviewed transmitter-fingerprinting analysis using 2010 Camry CAN data and a separate ground-truth method.",
+      "proves": [
+        "0x223 and 0x224 originated from the same ECU on the tested Camry.",
+        "0x2C1 and 0x2C4 originated from distinct transmitters on the tested Camry."
+      ],
+      "does_not_prove": [
+        "Payload semantics, target-vehicle ECU identity, or field scaling."
+      ]
+    },
+    {
+      "source_id": "nfi-lexus-is250-evu-2016",
+      "evidence_class": "B",
+      "publisher": "Netherlands Forensic Institute / 25th EVU Congress",
+      "url": "https://www.researchgate.net/publication/355445796_Evaluation_of_a_common_practice_-_to_calculate_speed_from_EDR-reported_RPM",
+      "scope": "Primary 2010 Lexus IS250 experiment using synchronized crank/cam and pedal/brake measurements, DLC CAN logging, controlled driving, and EDR replay to identify RPM-related messages.",
+      "proves": [
+        "0x2C4 byte position 1 carried engine-RPM-related data on the tested Lexus.",
+        "0x2C1 byte position 7 tracked accelerator-pedal-voltage behavior on the tested Lexus.",
+        "0x2D0 carried RPM-related data and a current-gear field on the tested Lexus."
+      ],
+      "does_not_prove": [
+        "The exact 2005 4Runner scale, payload layout, unit, or applicability.",
+        "That the FJ turbine-speed transform applies to 0x2D0 on the target.",
+        "That the Lexus current-gear field and FJ selector field occupy the same byte."
+      ],
+      "provenance_note": "The EVU article identifies the 2016 congress paper and authors; the cited ResearchGate copy exposes the experimental tables and methods used in this lineage review."
+    },
+    {
+      "source_id": "hbirdj-prius-translator-4674872",
+      "evidence_class": "B",
+      "publisher": "HbirdJ CAN Translator project",
+      "url": "https://github.com/HbirdJ/CAN-Translator/tree/4674872629f7fddc4eb8b76a69004222ec471687",
+      "revision": "4674872629f7fddc4eb8b76a69004222ec471687",
+      "scope": "Primary Prius acquisition project with preserved CAN logs, VSI-2534 acquisition, and VBox GPS used to validate vehicle speed.",
+      "proves": [
+        "A synchronized external reference and preserved raw logs can validate Toyota CAN hypotheses reproducibly."
+      ],
+      "does_not_prove": [
+        "Any current 2005 4Runner hypothesis without a matching, reviewed identifier and field."
+      ]
+    },
+    {
+      "source_id": "comma-opendbc-b4ef5e1",
+      "evidence_class": "C",
+      "publisher": "comma.ai opendbc",
+      "url": "https://github.com/commaai/opendbc/tree/b4ef5e1cf406ff143fa67bdbfb154739d43279c9/opendbc/dbc",
+      "revision": "b4ef5e1cf406ff143fa67bdbfb154739d43279c9",
+      "scope": "Version-pinned Toyota DBC corpus covering iQ, Prius, and generated DBC families used by later Toyota and Lexus platforms.",
+      "proves": [
+        "0x025 steering-angle definitions recur, but the 2009 iQ definition is signed 11-bit at 1 degree/count while Prius and generated Toyota definitions are signed 12-bit at 1.5 degrees/count.",
+        "A byte-6 accelerator field at 0.5 percent/count recurs in a generated Toyota ADAS definition."
+      ],
+      "does_not_prove": [
+        "An exact 2005 4Runner DBC or a single universal Toyota layout."
+      ]
+    },
+    {
+      "source_id": "realdash-fj-cruiser-cedfdf49",
+      "evidence_class": "C",
+      "publisher": "RealDash-extras contributor M. Main",
+      "url": "https://github.com/janimm/RealDash-extras/blob/cedfdf491b53d331625930909f949b657441f4a3/RealDash-CAN/XML-files/toyota/toyota_fj_can.xml",
+      "revision": "cedfdf491b53d331625930909f949b657441f4a3",
+      "scope": "Community mapping labeled for a 2012 FJ Cruiser.",
+      "proves": [
+        "A related-SUV community artifact maps 0x2C4 to engine RPM, 0x2C1 to accelerator position, 0x2D0 to turbine speed and selector state, 0x025 to steering, 0x223 to brake state, and 0x224 to pressure-like data."
+      ],
+      "does_not_prove": [
+        "Exact target applicability, correctness, or universality across FJ/4Runner/Prado/GX."
+      ]
+    },
+    {
+      "source_id": "aim-community-dbc-6e2f88f",
+      "evidence_class": "C",
+      "publisher": "CAN-DBC-Collection",
+      "url": "https://github.com/billyjack2/CAN-DBC-Collection/blob/6e2f88fd6cd9c1f47d0db7bd022711b106f27027/TOYOTA/LEXUS/can1v3.dbc",
+      "revision": "6e2f88fd6cd9c1f47d0db7bd022711b106f27027",
+      "scope": "Community transcription labeled as an AiM generic Toyota/Lexus protocol.",
+      "proves": [
+        "The corpus contains 0x025, 0x224, 0x2C1, and 0x2C4 definitions, including 0x2C4 at 0.78125 rpm/count."
+      ],
+      "does_not_prove": [
+        "Vehicle years, exact supported models, target applicability, or universal field positions."
+      ]
+    },
+    {
+      "source_id": "aim-community-auris-6e2f88f",
+      "evidence_class": "C",
+      "publisher": "CAN-DBC-Collection",
+      "url": "https://github.com/billyjack2/CAN-DBC-Collection/blob/6e2f88fd6cd9c1f47d0db7bd022711b106f27027/TOYOTA/AURIS/can1v3.dbc",
+      "revision": "6e2f88fd6cd9c1f47d0db7bd022711b106f27027",
+      "scope": "Community transcription labeled as an AiM Toyota Auris protocol.",
+      "proves": [
+        "The artifact maps 0x2C4 at 0.78125 rpm/count and 0x2C1 byte 6 at 0.5 percent/count, and also defines 0x0B0/0x0B2 wheel speeds and 0x224 brake pressure."
+      ],
+      "does_not_prove": [
+        "Auris model year, exact target applicability, or correctness of physical scaling."
+      ]
+    },
+    {
+      "source_id": "aim-community-lexus-is-f-6e2f88f",
+      "evidence_class": "C",
+      "publisher": "CAN-DBC-Collection",
+      "url": "https://github.com/billyjack2/CAN-DBC-Collection/blob/6e2f88fd6cd9c1f47d0db7bd022711b106f27027/LEXUS/IS_F/can1v3.dbc",
+      "revision": "6e2f88fd6cd9c1f47d0db7bd022711b106f27027",
+      "scope": "Community transcription labeled as an AiM Lexus IS F protocol.",
+      "proves": [
+        "The artifact maps 0x2C4 at 0.78125 rpm/count and 0x2C1 byte 6 at 0.5 percent/count, while supplying different 0x224 pressure scaling and a different 0x2C4 air-temperature transform than the FJ mapping."
+      ],
+      "does_not_prove": [
+        "Exact target applicability or which conflicting transform is correct for the 4Runner."
+      ]
+    },
+    {
+      "source_id": "yaris-listen-only-ddd7a2b",
+      "evidence_class": "C",
+      "publisher": "P1kachu talking-with-cars",
+      "url": "https://github.com/P1kachu/talking-with-cars/blob/ddd7a2b7137a67aeac84a0eb858b57bc08aee38c/notes/toyota-yaris.md",
+      "revision": "ddd7a2b7137a67aeac84a0eb858b57bc08aee38c",
+      "scope": "Explicitly listen-only Toyota Yaris notes whose author labels fields as guessed.",
+      "proves": [
+        "The author observed 0x2C4 first-word behavior consistent with high-rate engine revolutions and recorded 0x0B0/0x0B2 wheel-speed candidates and a 0x224 brake bit."
+      ],
+      "does_not_prove": [
+        "Engineering-unit scales, Yaris model year, or target applicability."
+      ]
+    }
+  ],
+  "vehicle_line_matrix": [
+    {
+      "cohort": "Exact target",
+      "vehicles": ["2005 Toyota 4Runner, unresolved VIN configuration"],
+      "source_ids": [
+        "toyota-2005-4runner-owner-manual-om35860u",
+        "toyota-general-2005-features-can-archive"
+      ],
+      "usable_conclusion": "The exact-model-year manuals confirm both 1GR-FE and 2UZ-FE configurations plus a 500 kbit/s VSC CAN joining the ECM, skid-control ECU, steering-angle sensor, yaw/deceleration sensor, and DLC3. No authoritative public exact-target raw payload definition was found; all production signal definitions remain blocked."
+    },
+    {
+      "cohort": "Related Toyota body-on-frame SUVs",
+      "vehicles": ["Toyota FJ Cruiser", "Toyota Land Cruiser Prado", "Lexus GX", "Toyota 4Runner"],
+      "source_ids": [
+        "toyota-2006-4runner-rm00t1u-729e248",
+        "toyota-prado-ncf-276e",
+        "toyota-general-2005-features-can-archive",
+        "toyota-official-suv-relationship",
+        "toyota-official-fj-2010",
+        "realdash-fj-cruiser-cedfdf49"
+      ],
+      "usable_conclusion": "The adjacent 4Runner manual and Prado New Features manual establish relevant diagnostic channels and a 500 kbit/s related-SUV topology. The FJ is a rational high-priority source when the target is VIN-confirmed 1GR-FE. None of those relationships proves raw CAN identity."
+    },
+    {
+      "cohort": "Primary Toyota experiments",
+      "vehicles": ["2010 Toyota Camry", "2010 Lexus IS250", "Toyota Prius test vehicle"],
+      "source_ids": [
+        "csu-toyota-can-2010-camry",
+        "sae-ruth-bartlett-daily-camry-2012",
+        "umich-cids-camry-2010",
+        "nfi-lexus-is250-evu-2016",
+        "hbirdj-prius-translator-4674872"
+      ],
+      "usable_conclusion": "These sources support physical correlation, transmitter grouping, and external-reference methodology. The Camry and Lexus experiments directly corroborate several target identifiers while remaining cross-model evidence."
+    },
+    {
+      "cohort": "Toyota passenger-car/community definitions",
+      "vehicles": ["Toyota iQ", "Toyota Prius", "Toyota Yaris", "Toyota Auris", "generic Toyota/Lexus", "Lexus IS F"],
+      "source_ids": [
+        "comma-opendbc-b4ef5e1",
+        "yaris-listen-only-ddd7a2b",
+        "aim-community-dbc-6e2f88f",
+        "aim-community-auris-6e2f88f",
+        "aim-community-lexus-is-f-6e2f88f"
+      ],
+      "usable_conclusion": "Repeated identifiers reveal Toyota message-family lineage, while the conflicting width, placement, scale, and units demonstrate why model-specific validation is mandatory."
+    },
+    {
+      "cohort": "Later open Toyota/Lexus DBC families",
+      "vehicles": [
+        "Toyota Alphard",
+        "Toyota Avalon",
+        "Toyota Camry",
+        "Toyota C-HR",
+        "Toyota Corolla",
+        "Toyota Highlander",
+        "Toyota Mirai",
+        "Toyota Prius and Prius v",
+        "Toyota RAV4",
+        "Toyota Sienna",
+        "Toyota Yaris",
+        "Lexus CT",
+        "Lexus ES",
+        "Lexus GS F",
+        "Lexus IS",
+        "Lexus LC",
+        "Lexus LS",
+        "Lexus NX",
+        "Lexus RC",
+        "Lexus RX"
+      ],
+      "source_ids": ["comma-opendbc-b4ef5e1"],
+      "usable_conclusion": "The pinned opendbc platform catalog shows broad reuse of a small set of generated Toyota DBC families in later vehicles. It does not include an exact 2005 4Runner definition and must not be back-applied blindly."
+    }
+  ],
+  "signal_lineage": [
+    {
+      "identifier": "0x2C4",
+      "target_present": true,
+      "candidate": "engine speed in the first 16 payload bits",
+      "supporting_source_ids": [
+        "csu-toyota-can-2010-camry",
+        "sae-ruth-bartlett-daily-camry-2012",
+        "realdash-fj-cruiser-cedfdf49",
+        "aim-community-dbc-6e2f88f",
+        "aim-community-auris-6e2f88f",
+        "aim-community-lexus-is-f-6e2f88f",
+        "yaris-listen-only-ddd7a2b",
+        "nfi-lexus-is250-evu-2016"
+      ],
+      "agreement": "Eight cross-model artifacts associate 0x2C4 with engine-speed behavior; the peer-reviewed SAE Camry study independently identifies the message and its 24 ms update period, the FJ and three pinned AiM-derived files use 0.78125 rpm/count, and the physical Lexus study independently confirms the RPM-related identifier and first byte position.",
+      "conflicts": [
+        "An IS F community definition applies a 2.5*raw-40 intake-air-temperature transform where the FJ community file labels the same candidate byte as raw degrees Celsius.",
+        "No authoritative source establishes the exact target scale or target byte semantics."
+      ],
+      "target_decision": "Highest-priority candidate; display only as unverified engineering data until synchronized J1979 PID 0x0C or Techstream comparison passes."
+    },
+    {
+      "identifier": "0x2C1",
+      "target_present": true,
+      "candidate": "accelerator-pedal position at byte 6",
+      "supporting_source_ids": [
+        "csu-toyota-can-2010-camry",
+        "sae-ruth-bartlett-daily-camry-2012",
+        "realdash-fj-cruiser-cedfdf49",
+        "comma-opendbc-b4ef5e1",
+        "aim-community-auris-6e2f88f",
+        "aim-community-lexus-is-f-6e2f88f",
+        "nfi-lexus-is250-evu-2016"
+      ],
+      "agreement": "The Camry experiments identify accelerator-pedal behavior, with the peer-reviewed SAE study reporting a 512 ms update period; the physical Lexus experiment independently identifies one-indexed byte 7; FJ, generated Toyota, Auris, and IS F artifacts place a 0.5 percent/count candidate at zero-indexed byte 6.",
+      "conflicts": [
+        "The generic Toyota/Lexus community DBC places a seven-bit pedal field elsewhere at 1 percent/count.",
+        "Other Toyota generations use different accelerator messages and normalized units."
+      ],
+      "target_decision": "High-priority candidate; require rest plus separated pedal levels against Techstream or supported J1979 accelerator position."
+    },
+    {
+      "identifier": "0x025",
+      "target_present": true,
+      "candidate": "steering-wheel angle",
+      "supporting_source_ids": [
+        "csu-toyota-can-2010-camry",
+        "realdash-fj-cruiser-cedfdf49",
+        "comma-opendbc-b4ef5e1",
+        "aim-community-dbc-6e2f88f",
+        "aim-community-lexus-is-f-6e2f88f"
+      ],
+      "agreement": "The identifier repeatedly belongs to a steering-angle family.",
+      "conflicts": [
+        "Pinned definitions disagree between signed 11-bit at 1 degree/count, signed 12-bit at 1.5 degrees/count, and an FJ circular-angle formula equivalent to approximately -0.087890625 degree/count.",
+        "Direction, center offset, and valid range are unresolved on the target."
+      ],
+      "target_decision": "Semantic family is strong; no degree value is allowed until center/left/right Techstream correlation resolves width, scale, direction, and offset."
+    },
+    {
+      "identifier": "0x224",
+      "target_present": true,
+      "candidate": "brake state or pressure family",
+      "supporting_source_ids": [
+        "csu-toyota-can-2010-camry",
+        "realdash-fj-cruiser-cedfdf49",
+        "aim-community-dbc-6e2f88f",
+        "aim-community-auris-6e2f88f",
+        "aim-community-lexus-is-f-6e2f88f",
+        "yaris-listen-only-ddd7a2b"
+      ],
+      "agreement": "Every relevant source associates 0x224 with braking, a brake bit, or pressure-like data.",
+      "conflicts": [
+        "Field positions and scales differ materially across Camry/FJ, generic Toyota/Lexus, Auris, IS F, and Yaris artifacts.",
+        "The retained target candidate field was not exercised and remained static in the audited sample."
+      ],
+      "target_decision": "Do not display pressure units. First prove a repeated brake-press response and compare it with a Toyota Data List pressure or stop-light observable."
+    },
+    {
+      "identifier": "0x223",
+      "target_present": true,
+      "candidate": "brake-related state",
+      "supporting_source_ids": [
+        "realdash-fj-cruiser-cedfdf49",
+        "umich-cids-camry-2010",
+        "csu-toyota-can-2010-camry"
+      ],
+      "agreement": "The FJ artifact proposes a brake-state meaning, and Camry primary research proves 0x223 and 0x224 shared a transmitter on that test vehicle.",
+      "conflicts": [
+        "The CSU semantic study left 0x223 unknown, and transmitter grouping is not semantic proof."
+      ],
+      "target_decision": "Keep as a brake-family experiment candidate, not an accepted stop-light switch."
+    },
+    {
+      "identifier": "0x2D0",
+      "target_present": true,
+      "candidate": "transmission turbine/input speed and selector code",
+      "supporting_source_ids": [
+        "realdash-fj-cruiser-cedfdf49",
+        "csu-toyota-can-2010-camry",
+        "nfi-lexus-is250-evu-2016",
+        "toyota-nt-speed-tsb-0160-18"
+      ],
+      "agreement": "The FJ artifact supplies the turbine/selector hypothesis, the physical Lexus study independently finds RPM-related and current-gear data in 0x2D0, and Toyota documents an independent NT-speed reference workflow.",
+      "conflicts": [
+        "The CSU Camry study observed 0x2D0 but did not identify it.",
+        "Only the FJ raw-CAN source supplies the turbine layout and 0.390625 rpm/count scale.",
+        "The Lexus paper places current gear in its fifth byte position, while the FJ artifact places a selector candidate in its third byte position; indexing conventions aside, the layouts conflict and must not be merged."
+      ],
+      "target_decision": "Weak-to-moderate candidate; resolve only with synchronized engine speed, NT/turbine speed, vehicle speed, selector, and shift-state data."
+    },
+    {
+      "identifier": "0x022",
+      "target_present": true,
+      "candidate": "steering-related unknown",
+      "supporting_source_ids": ["csu-toyota-can-2010-camry"],
+      "agreement": "The target and Camry both contain the identifier; the Camry experiment described steering-like behavior.",
+      "conflicts": ["No second independent field mapping or exact semantic source was found."],
+      "target_decision": "ID-level candidate only."
+    },
+    {
+      "identifier": "0x023",
+      "target_present": true,
+      "candidate": null,
+      "supporting_source_ids": ["csu-toyota-can-2010-camry"],
+      "agreement": "Both target and Camry evidence contain a seven-byte 0x023 message.",
+      "conflicts": [
+        "The Camry research left it unknown.",
+        "A pinned opendbc 0x023 definition is for an aftermarket Zorro steering sensor and is explicitly not evidence for the OEM target frame."
+      ],
+      "target_decision": "Remain unmapped beyond identifier/DLC corroboration."
+    },
+    {
+      "identifier": "0x420",
+      "target_present": true,
+      "candidate": null,
+      "supporting_source_ids": [],
+      "agreement": "No reviewed source established a relevant mapping.",
+      "conflicts": [],
+      "target_decision": "Remain unmapped."
+    }
+  ],
+  "verification_sequence": [
+    "Resolve VIN, engine, drivetrain, market, and option configuration.",
+    "Run read-only SAE J1979 supported-PID enumeration before requesting standardized values.",
+    "Capture Techstream or a trusted scan-tool reference on the same monotonic timeline as passive CAN.",
+    "Validate 0x2C4 engine speed first, then 0x2C1 accelerator, 0x025 steering, 0x224/0x223 braking, and 0x2D0 turbine/selector.",
+    "Preserve competing transforms and rejection evidence; never choose a transform solely because it looks plausible.",
+    "Promote only through a versioned signal definition, golden replay, and missing/stale/range tests."
+  ]
+}

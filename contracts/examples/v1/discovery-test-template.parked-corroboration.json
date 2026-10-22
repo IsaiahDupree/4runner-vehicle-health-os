@@ -1,0 +1,15 @@
+{
+  "contract": "vhos.discovery.test-template",
+  "contract_version": "1.0.0",
+  "id": "discovery.test.parked-corroboration",
+  "template_version": "1.0.0",
+  "title": "Parked corroboration capture",
+  "category": "ENGINE",
+  "hypothesis": "Independent reference evidence can distinguish the candidate from alternatives.",
+  "required_vehicle_motion": "PARKED",
+  "safety_instructions": ["Keep the vehicle parked and follow the independent instrument procedure."],
+  "required_gateway_capabilities": ["capture.passive"],
+  "targeted_validation_requirements": ["INDEPENDENT_CORROBORATION", "REPEATABILITY_ACROSS_CONTROLLED_TESTS"],
+  "steps": [{"id": "parked-reference-capture", "sequence": 1, "instruction": "Record the independent reference and retained CAN evidence on one timeline.", "requires_explicit_confirmation": true}],
+  "authority": "DEFINITION_VALIDATED"
+}

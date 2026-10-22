@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vhos.dev/v1/vehicle-health-assessment.schema.json",
+  "title": "VHOS evidence-qualified vehicle-system health assessment v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract", "contract_version", "assessment_id", "supersedes_assessment_id",
+    "profile_revision_id", "system_id", "state", "basis", "recorded_at", "summary",
+    "evidence_refs", "equation_definition_id", "equation_version", "confidence"
+  ],
+  "properties": {
+    "contract": {"const": "vehicle.health-assessment"},
+    "contract_version": {"const": "1.0.0"},
+    "assessment_id": {"type": "string", "format": "uuid"},
+    "supersedes_assessment_id": {"type": ["string", "null"], "format": "uuid"},
+    "profile_revision_id": {"type": ["string", "null"], "format": "uuid"},
+    "system_id": {
+      "enum": [
+        "ENGINE", "ENGINE_COOLING", "ENGINE_LUBRICATION", "FUEL_AND_INDUCTION",
+        "IGNITION_EMISSIONS_EXHAUST", "TRANSMISSION", "TRANSFER_CASE",
+        "FRONT_DIFFERENTIAL", "REAR_DIFFERENTIAL", "DRIVESHAFT_AND_AXLES",
+        "STARTING_CHARGING_BATTERY", "HVAC_AND_AC", "BRAKES", "STEERING",
+        "FRONT_SUSPENSION", "REAR_SUSPENSION", "WHEELS_AND_TIRES",
+        "BODY_FRAME_AND_CORROSION", "LIGHTING_AND_VISIBILITY", "SAFETY_RESTRAINTS",
+        "CABIN_CONTROLS_AND_ACCESSORIES", "FLUIDS_HOSES_BELTS_AND_LEAKS"
+      ]
+    },
+    "state": {"enum": ["UNKNOWN", "OK", "DUE_SOON", "DUE", "ATTENTION", "CRITICAL"]},
+    "basis": {"enum": ["DIRECT_MEASUREMENT", "CALCULATED", "SCHEDULE", "INSPECTION", "INFERRED", "UNKNOWN"]},
+    "recorded_at": {"$ref": "common.schema.json#/$defs/wallTime"},
+    "summary": {"type": "string", "minLength": 1, "maxLength": 1000},
+    "evidence_refs": {
+      "type": "array", "uniqueItems": true, "maxItems": 100,
+      "items": {"type": "string", "minLength": 1, "maxLength": 200}
+    },
+    "equation_definition_id": {"type": ["string", "null"], "maxLength": 200},
+    "equation_version": {"type": ["string", "null"], "maxLength": 80},
+    "confidence": {"type": ["number", "null"], "minimum": 0, "maximum": 1}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"state": {"const": "UNKNOWN"}}},
+      "then": {
+        "properties": {
+          "basis": {"const": "UNKNOWN"},
+          "evidence_refs": {"maxItems": 0},
+          "equation_definition_id": {"type": "null"},
+          "equation_version": {"type": "null"},
+          "confidence": {"type": "null"}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"state": {"not": {"const": "UNKNOWN"}}}},
+      "then": {
+        "properties": {
+          "basis": {"not": {"const": "UNKNOWN"}},
+          "evidence_refs": {"minItems": 1}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"basis": {"const": "CALCULATED"}}},
+      "then": {
+        "properties": {
+          "equation_definition_id": {"type": "string", "minLength": 1},
+          "equation_version": {"type": "string", "minLength": 1},
+          "confidence": {"type": "number"}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"basis": {"const": "INFERRED"}}},
+      "then": {"properties": {"confidence": {"type": "number"}}}
+    }
+  ]
+}

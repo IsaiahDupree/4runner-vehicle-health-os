@@ -21,10 +21,11 @@ test("server-renders the VHOS provisioner", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /<title>VHOS Gateway Provisioner · VHOS<\/title>/i);
+  assert.match(html, /<title>VHOS Device Provisioner · VHOS<\/title>/i);
   assert.match(html, /Flash with a way back/);
   assert.match(html, /Classic ESP32 \+ MrDIY CAN Shield v1\.3\+/);
   assert.match(html, /ESP32-S3 \+ MeatPi WiCAN Pro/);
+  assert.match(html, /ESP32-S3 \+ A\/C Sensor Node — Wi-Fi-off recovery/);
   assert.match(html, /SELECT HARDWARE BELOW/);
   assert.match(html, /BACK UP FULL FLASH/);
   assert.match(html, /INSTALL VERIFIED VHOS IMAGE/);
@@ -36,6 +37,7 @@ test("target manifests resolve to byte-exact local artifacts and safe install pl
   const manifestNames = [
     "manifest-mrdiy-esp32-v13.json",
     "manifest-wican-pro-esp32s3.json",
+    "manifest-ac-sensor-node-esp32s3.json",
   ];
   const chipFamilies = new Set();
 
@@ -75,8 +77,42 @@ test("MrDIY install plan preserves the BLE bond NVS partition", async () => {
   const manifestUrl = new URL("../public/firmware/manifest-mrdiy-esp32-v13.json", import.meta.url);
   const manifest = JSON.parse(await readFile(manifestUrl, "utf8"));
   assert.equal(manifest.schemaVersion, "1.1.0");
+  assert.equal(manifest.release, "v0.1.0-dev.13");
   assert.equal(manifest.segments.length, 4);
   assert.deepEqual(manifest.protectedRanges, [
     { label: "BLE bond and Wi-Fi NVS", address: 0x9000, byteCount: 0x4000 },
+  ]);
+});
+
+test("A/C empty recovery release is radio-off and preserves device NVS", async () => {
+  const manifestUrl = new URL("../public/firmware/manifest-ac-sensor-node-esp32s3.json", import.meta.url);
+  const manifest = JSON.parse(await readFile(manifestUrl, "utf8"));
+  assert.equal(manifest.schemaVersion, "1.1.0");
+  assert.equal(manifest.hardwareFamily, "AC-SENSOR-NODE-ESP32S3");
+  assert.equal(manifest.softwareProfile, "EMPTY_RECOVERY");
+  assert.deepEqual(manifest.runtimeRadios, { wifi: "not-initialized", ble: "not-initialized" });
+  assert.equal(manifest.segments.length, 4);
+  assert.deepEqual(manifest.protectedRanges, [
+    { label: "Device identity and future BLE bond NVS", address: 0x9000, byteCount: 0x4000 },
+  ]);
+
+  const validationUrl = new URL(
+    "../public/firmware/recovery-validation-ac-sensor-node-esp32s3.json",
+    import.meta.url,
+  );
+  const validation = JSON.parse(await readFile(validationUrl, "utf8"));
+  assert.equal(validation.expectedFlashBytes, 16 * 1024 * 1024);
+  assert.equal(validation.checks.runtimeRadioInitialization, "passed:none");
+  assert.equal(validation.checks.linkedRadioNetworkComponents, "passed:none");
+  assert.equal(validation.checks.physicalFlashAndBoot, "not-run-by-release-builder");
+});
+
+test("target catalog publishes all supported recovery choices", async () => {
+  const catalogUrl = new URL("../public/firmware/manifest.json", import.meta.url);
+  const catalog = JSON.parse(await readFile(catalogUrl, "utf8"));
+  assert.deepEqual(catalog.targets.map((target) => target.id), [
+    "mrdiy-esp32-v13",
+    "wican-pro-esp32s3",
+    "ac-sensor-node-esp32s3",
   ]);
 });

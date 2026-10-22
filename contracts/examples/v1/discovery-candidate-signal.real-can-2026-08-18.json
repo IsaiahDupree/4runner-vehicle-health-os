@@ -1,0 +1,17 @@
+{
+  "contract": "vhos.discovery.candidate-signal",
+  "contract_version": "1.0.0",
+  "id": "candidate_01K32Q6T000000000000000002",
+  "created_at": "2026-08-18T17:38:00Z",
+  "candidate_semantic": "engine.speed-candidate",
+  "proposed_canonical_signal_id": "engine.rpm",
+  "field": {"protocol_id": "CAN_11_500", "identifier": 708, "extended": false, "byte_offset": 0, "bit_offset": 0, "bit_length": 16, "byte_order": "BIG_ENDIAN", "signed": false},
+  "metrics": {"false_activation_count": 0, "analyzed_observation_count": 32, "analyzed_capture_count": 1, "controlled_test_count": 0, "behavior_shape": "ANALOG", "algorithm_id": "passive-can.research-analyzer", "algorithm_version": "0.4.0"},
+  "review_state": "NEEDS_MORE_DATA",
+  "capture_ids": ["capture_01K32Q6T000000000000000000"],
+  "test_template_ids": [],
+  "event_marker_ids": [],
+  "independent_evidence_references": [],
+  "source_references": ["archive-sha256:af2305021c2d48d89c55d1739da407d78ee28baa39cce63125d0656672f58aed", "signal-pack-sha256:6e2df8207e8977d613923a01f4bea7a16baba74a1869cce2ad0a83b56cf6ba32"],
+  "authority": "EXPERIMENTAL_CANDIDATE"
+}

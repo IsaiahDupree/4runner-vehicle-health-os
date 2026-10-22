@@ -1,0 +1,50 @@
+{
+  "contract": "equation.definition",
+  "contract_version": "1.0.0",
+  "equation_id": "ac.vent.delta",
+  "version": "1.0.0",
+  "human_explanation": "Subtract center-vent temperature from cabin-return temperature for the same operating observation. The result is a delivered cooling delta, not a standalone diagnosis.",
+  "expression": {
+    "language": "vhos-expression-1",
+    "ast": {
+      "kind": "operation",
+      "operator": "subtract",
+      "arguments": [
+        {"kind": "input", "name": "cabin_return_temperature"},
+        {"kind": "input", "name": "center_vent_temperature"}
+      ]
+    }
+  },
+  "inputs": [
+    {
+      "name": "cabin_return_temperature",
+      "unit": "Cel",
+      "maximum_age_ms": 0,
+      "accepted_quality": ["GOOD"]
+    },
+    {
+      "name": "center_vent_temperature",
+      "unit": "Cel",
+      "maximum_age_ms": 0,
+      "accepted_quality": ["GOOD"]
+    }
+  ],
+  "constants": [],
+  "output": {"unit": "Cel", "truth_boundary": "ESTIMATED"},
+  "confidence_model": {
+    "equation_id": "ac.confidence.evidence",
+    "version": "1.0.0",
+    "factors": ["SOURCE_QUALITY", "CALIBRATION_QUALITY"]
+  },
+  "applicability": {
+    "vehicle_config_pack": "vhos.generic-ac-node",
+    "conditions": [
+      "Cabin-return and center-vent inputs come from the same telemetry observation.",
+      "Blower and recirculation state are preserved as capture context before vehicle comparison."
+    ]
+  },
+  "validation_status": "EXPERIMENTAL",
+  "reset_dependencies": ["ac.temperature.cabin-return.calibration", "ac.temperature.center-vent.calibration"],
+  "release_notes": "Initial formula from A/C Engine-Bay Telemetry Node Specification v1.0; no healthy delta-T threshold is defined.",
+  "released_at": "2026-08-16T00:00:00Z"
+}
