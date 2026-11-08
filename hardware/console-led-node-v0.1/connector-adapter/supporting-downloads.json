@@ -1,0 +1,54 @@
+{
+  "recorded_at_utc": "2026-11-08T03:34:03.900755+00:00",
+  "files": [
+    {
+      "name": "Toyota_2003_EWD514U_routing_REFERENCE.pdf",
+      "download_url": "https://carmanualsclub.com/files/62abc497b1f970ed9bc95202d30583bf3a73aea30feba8fadbbcb2acc2d99169.pdf",
+      "source_class": "factory_manual_mirror",
+      "authority_limit": "2003; adjacent-year connector location and face reference only",
+      "bytes": 4747383,
+      "sha256": "62abc497b1f970ed9bc95202d30583bf3a73aea30feba8fadbbcb2acc2d99169"
+    },
+    {
+      "name": "Toyota_2006_EM00T0U_circuits_REFERENCE.pdf",
+      "download_url": "https://www.datacar-manualrepair.com/wp-content/uploads/2018/09/Diagrama-el%C3%A9ctrico-Toyota-4Runner-2006.pdf",
+      "source_class": "factory_manual_mirror",
+      "authority_limit": "2006; not verified 2005 V8 applicability",
+      "bytes": 4218240,
+      "sha256": "e474323d7554d61c40f360e2c29d31c61e4a56f97a03b04aba1df78fd43145a2"
+    },
+    {
+      "name": "Yazaki_7282-1060_drawing.pdf",
+      "download_url": "https://connector.yazaki-group.com/common/ProductImage/draw/7282-106072821060%3AR_DRAW.pdf",
+      "source_class": "manufacturer_drawing",
+      "authority_limit": "Male wire-harness housing; not a PCB header",
+      "bytes": 1353289,
+      "sha256": "54fc38a00fba88ba24ed22ea1589bf1687afbaa9adbef7235f887d654acbddf7"
+    },
+    {
+      "name": "Yazaki_7283-1060_drawing.pdf",
+      "download_url": "https://connector.yazaki-group.com/common/ProductImage/draw/7283-106072831060%3AR_DRAW.pdf",
+      "source_class": "manufacturer_drawing",
+      "authority_limit": "Female mating housing; verify retainer and physical match",
+      "bytes": 4626807,
+      "sha256": "527dfe4fd7f01c32021698071330376e9b1b8f59197548b1546fa3a72e7946e0"
+    },
+    {
+      "name": "Arduino_A000066_UNO_R3_official_CAD.zip",
+      "download_url": "https://docs.arduino.cc/static/6bb7a3ca51ebee82a252f60c0b418787/A000066-cad-files.zip",
+      "source_class": "manufacturer_eagle_reference",
+      "authority_limit": "Official UNO R3; not the actual owned ESP32 board",
+      "bytes": 303265,
+      "sha256": "532b306cb153846eafc0ca9fe991d7a4dfa0c52dcefafa2efeaebf4b845ec820"
+    },
+    {
+      "name": "kicad_molex_43045-0600.kicad_mod",
+      "download_url": "https://gitlab.com/kicad/libraries/kicad-footprints/-/raw/master/Connector_Molex.pretty/Molex_Micro-Fit_3.0_43045-0600_2x03_P3.00mm_Horizontal.kicad_mod",
+      "source_class": "official_kicad_footprint",
+      "authority_limit": "Compare against selected manufacturer drawing before fabrication",
+      "bytes": 4754,
+      "sha256": "1189d97f82d7fb3431677e14c083aca02bb7d19cf70b3b44453348b7371d963d"
+    }
+  ],
+  "manufacturing_released": false
+}

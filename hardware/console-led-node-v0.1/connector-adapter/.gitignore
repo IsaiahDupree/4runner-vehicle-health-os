@@ -1,0 +1,8 @@
+inputs/
+*.step
+*.stp
+*.pdf
+*.FCStd
+*.stl
+*.png
+__pycache__/

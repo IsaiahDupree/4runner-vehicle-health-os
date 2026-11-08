@@ -1,0 +1,12 @@
+{
+  "status": "pass",
+  "download_hashes": 9,
+  "native_models": 3,
+  "schemas": 52,
+  "repository_tests_passed": 217,
+  "pack_files": 32,
+  "pack_bytes": 16611871,
+  "pack_sha256": "4d035aef452b4e8bb87fa92a261d24a8a63a6659c7e37850f8db8dc5143f1b57",
+  "physical_fit_verified": false,
+  "manufacturing_released": false
+}

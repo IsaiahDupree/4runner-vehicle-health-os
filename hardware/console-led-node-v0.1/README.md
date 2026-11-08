@@ -41,6 +41,11 @@ The complete candidate list, quantities and unresolved selection conditions are
 in [BOM.csv](BOM.csv). All electronic parts are research candidates, not a
 released fabrication BOM.
 
+The [connector-to-shield research](connector-adapter/README.md) now supplies a
+concrete Yazaki mating-pair candidate, a conditional six-circuit adapter map,
+the exact Molex PCB interface, and official UNO R3 header-coordinate references.
+The Toyota photo/2005 applicability and owned ESP32 board remain unconfirmed.
+
 The subsequent [component CAD collection](cad-references/README.md) records six
 downloaded STEP references, manufacturer versus community provenance, native
 Orion inspection and the remaining Toyota/full-controller model gaps.

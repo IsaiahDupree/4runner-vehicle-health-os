@@ -1,0 +1,102 @@
+{
+  "command_id": "cmd_b2a519a8c049485a8b8ee94282e64c02",
+  "ok": true,
+  "result": {
+    "actor": "vhos-console-connector-research",
+    "artifacts": [
+      {
+        "bytes": 475,
+        "name": "_native_entry.py",
+        "sha256": "4d89298d54f1418998cddf29ea99c7f432f7f5d08188e4178fdbe1674c56184f"
+      },
+      {
+        "bytes": 3909,
+        "name": "_native_impl.py",
+        "sha256": "6cd7d2af2f8b7848983bdd5bf6f0489632dd5e9a39c1258bea0f6ba6c933006a"
+      },
+      {
+        "bytes": 2372,
+        "name": "_render.py",
+        "sha256": "cfab6205ef992e4cc4d4b0511dc3bddbfb11d139fe5b31230e6fd15940789c38"
+      },
+      {
+        "bytes": 332,
+        "name": "blender.log",
+        "sha256": "47df451ccb110e9bf76be950073f68005b66b21fb2595eea73f56ef9185cd780"
+      },
+      {
+        "bytes": 0,
+        "name": "freecad.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 1489,
+        "name": "inspection-manifest.json",
+        "sha256": "b353446289b07798c884c6a23da59e50dd36dda069e55933d21911487a2b1f91"
+      },
+      {
+        "bytes": 2516,
+        "name": "native_inspection.json",
+        "sha256": "9850a54ac4f5c8045c535d126f876e408ec4762ed03e0c080b397e5f3a1cba11"
+      },
+      {
+        "bytes": 217934,
+        "name": "reference_0.stl",
+        "sha256": "d6b570fe472000f4942fa0931670779ad8ee98d85186fe84e7f882fb6f840380"
+      },
+      {
+        "bytes": 22284,
+        "name": "reference_1.stl",
+        "sha256": "85e046463b3e28ef44caf8eb5713e8a03dfd52d6430fc2869e0a9ac2c21362ee"
+      },
+      {
+        "bytes": 68284,
+        "name": "reference_2.stl",
+        "sha256": "74284262f8d689d1fb4fdcf3b8c51c82b04dca787af0f196d7ce2398781d43d8"
+      },
+      {
+        "bytes": 195025,
+        "name": "reference_catalog.FCStd",
+        "sha256": "ae93c931f27df90517a79b92ee22146de2b3c0f72816ba929ed23d8db2c19093"
+      },
+      {
+        "bytes": 1928705,
+        "name": "reference_catalog.png",
+        "sha256": "0ffcbde2e5c8e0e10051958d6f5a01bb99d390987a5f391f50041358d95a3dfe"
+      }
+    ],
+    "command": [
+      "C:\\Users\\Isaia\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+      "-I",
+      "-B",
+      "C:\\orion\\projects\\vhos-console-connector-mapping-20261107\\inspect_models_job.py",
+      "--params",
+      "C:\\orion\\control\\vhos-console-connector-mapping-20261107\\modeling\\jobs\\mdl_d7b7711c712a454c\\params.json",
+      "--out",
+      "C:\\orion\\control\\vhos-console-connector-mapping-20261107\\modeling\\jobs\\mdl_d7b7711c712a454c\\out"
+    ],
+    "completed_at": "2026-11-08T03:30:19.176656+00:00",
+    "duration_sec": 2.2,
+    "error": null,
+    "exit_code": 0,
+    "job_dir": "C:\\orion\\control\\vhos-console-connector-mapping-20261107\\modeling\\jobs\\mdl_d7b7711c712a454c",
+    "job_id": "mdl_d7b7711c712a454c",
+    "job_type": "cad.vhos_console_connector_inspection",
+    "log_tail": "{\"status\": \"inspected\", \"models\": 3, \"physical_fit_verified\": false}\r\n",
+    "params": {
+      "expected_manifest_sha256": "8e6f2ae2a72a1fad2c6ac3904b0705faf95a2d295306e890af061ebb9c14c2c3",
+      "expected_source_sha256": "18e0e5a028420935357191c5c4cffaece0a69e7715d03cc254221825855531d6",
+      "research_only": true,
+      "timeout_sec": 240
+    },
+    "pid": 118468,
+    "queue": {
+      "queued": [],
+      "running": null
+    },
+    "started_at": "2026-11-08T03:30:17.002770+00:00",
+    "status": "succeeded",
+    "submitted_at": "2026-11-08T03:30:16.994348+00:00",
+    "updated_at": "2026-11-08T03:30:19.203406+00:00"
+  }
+}

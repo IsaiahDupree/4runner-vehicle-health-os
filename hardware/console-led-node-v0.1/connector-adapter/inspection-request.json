@@ -1,0 +1,9 @@
+{
+  "job_type": "cad.vhos_console_connector_inspection",
+  "params": {
+    "expected_source_sha256": "18e0e5a028420935357191c5c4cffaece0a69e7715d03cc254221825855531d6",
+    "expected_manifest_sha256": "8e6f2ae2a72a1fad2c6ac3904b0705faf95a2d295306e890af061ebb9c14c2c3",
+    "research_only": true,
+    "timeout_sec": 240
+  }
+}

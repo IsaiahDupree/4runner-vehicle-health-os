@@ -1,0 +1,7 @@
+candidate_factory_connector,candidate_factory_cavity,source_applicability,reference_signal,reference_color,proposed_pcb_connector,proposed_pcb_cavity,proposed_destination,physical_vehicle_connection,release_status
+IR1,1,2006 EM00T0U reference only; exact 2005 V8 unverified,ASHTRAY_ILL_FEED,G,J1 Molex 43045-0600,1,BREAKOUT_ONLY; future protected sense,UNCONNECTED,CONDITIONAL_DESIGN_DRAFT
+IR1,2,2006 EM00T0U reference only; exact 2005 V8 unverified,ASHTRAY_ILL_RETURN,W-G main; W-B lamp loom,J1 Molex 43045-0600,2,ISOLATED_BREAKOUT; not power ground,UNCONNECTED,CONDITIONAL_DESIGN_DRAFT
+IR1,3,2006 EM00T0U reference only; exact 2005 V8 unverified,LIGHTER_ILL_FEED,G,J1 Molex 43045-0600,3,BREAKOUT_ONLY; future protected sense,UNCONNECTED,CONDITIONAL_DESIGN_DRAFT
+IR1,4,2006 EM00T0U reference only; exact 2005 V8 unverified,LIGHTER_ILL_RETURN,W-G main; W-B lamp loom,J1 Molex 43045-0600,4,ISOLATED_BREAKOUT; not power ground,UNCONNECTED,CONDITIONAL_DESIGN_DRAFT
+IR1,5,2006 EM00T0U reference only; exact 2005 V8 unverified,CIG_POWER_GND,W-B,J1 Molex 43045-0600,5,PGND after physical confirmation,UNCONNECTED,CONDITIONAL_DESIGN_DRAFT
+IR1,6,2006 EM00T0U reference only; exact 2005 V8 unverified,CIG_ACC_RAW,P-L,J1 Molex 43045-0600,6,New branch fuse then automotive protection and 5 V buck,UNCONNECTED,CONDITIONAL_DESIGN_DRAFT

@@ -1,0 +1,41 @@
+{
+  "contract": "vhos_console_connector_mapping_v1",
+  "recorded_at_utc": "2026-11-08T03:29:34.860494+00:00",
+  "models": [
+    {
+      "name": "Yazaki_7282-1060.stp",
+      "label": "Yazaki 7282-1060 Toyota IR1 mate CANDIDATE",
+      "source_class": "manufacturer_download",
+      "download_url": "https://connector.yazaki-group.com/common/ProductImage/cad/7282-1060_3D_CAD.stp",
+      "reference_url": "https://connector.yazaki-group.com/cgi-bin/english/detail.cgi?part_id=7282-1060",
+      "authority_limit": "Correct manufacturer part file; exact vehicle/photo identification and mating to IR1 remain unverified",
+      "physical_match_verified": false,
+      "bytes": 688190,
+      "sha256": "3a395c88b0391df2321a68c37f330d390038b7a9a3875ca3417d1235ee711eb5"
+    },
+    {
+      "name": "Molex_43045-0600.step",
+      "label": "Molex 43045-0600 right-angle PCB header",
+      "source_class": "public_repository_reference",
+      "download_url": "https://raw.githubusercontent.com/danbrunski/canary/8dbaa4b4534cad4a08cf70bfc700814ce5f32c76/hardware/canary-pwr-rev1.0/lib/3dmodels/Molex_Micro-Fit_3.0_43045-0600_2x03_P3.00mm_Horizontal.step",
+      "reference_url": "https://www.molex.com/en-us/products/part-detail/430450600",
+      "bytes": 185002,
+      "sha256": "6b5ec1174920d285f102c5a15611141b00bbca4e1b2e7c3a1e0b2cde67f5f884",
+      "authority_limit": "OpenCascade export with matching product name; manufacturer geometry lineage not established",
+      "physical_match_verified": false
+    },
+    {
+      "name": "Molex_43025-0600.stp",
+      "label": "Molex 43025-0600 cable housing",
+      "source_class": "public_mirror_reference",
+      "download_url": "https://raw.githubusercontent.com/vamoirid/Battery-Management-System-LTC6811-STM32/cbfc74c965ef9d69083b5adda7335d44274c2e58/BMS_PCB/3D%20Bodies/43025-0600_stp/430250600.stp",
+      "reference_url": "https://www.molex.com/en-us/products/part-detail/430250600",
+      "bytes": 185164,
+      "sha256": "4d406abac216d558e0a938267287f3bbc60afa9001d40f75dae379a1d0a37233",
+      "authority_limit": "Pro/ENGINEER file identifies 430250600; official download bytes unavailable for comparison",
+      "physical_match_verified": false
+    }
+  ],
+  "physical_fit_verified": false,
+  "manufacturing_released": false
+}

@@ -1,0 +1,13 @@
+{
+  "recorded_at_utc": "2026-11-08T03:32:57.688601+00:00",
+  "vehicle": "2005 Toyota 4Runner V8 4.7L 2UZ-FE",
+  "exact_2005_ewd_verified": false,
+  "photo_mating_face_verified": false,
+  "owned_controller_verified": false,
+  "automotive_pair_manufacturer_verified": true,
+  "automotive_photo_match": "candidate_inferred_from_adjacent_year_IR1_geometry",
+  "pcb_connector_pair": "Molex 43045-0600 / 43025-0600",
+  "actual_vehicle_cavities": "UNCONNECTED",
+  "manufacturing_released": false,
+  "orion_job_id": "mdl_d7b7711c712a454c"
+}

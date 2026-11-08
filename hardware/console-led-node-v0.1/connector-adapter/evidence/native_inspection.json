@@ -1,0 +1,110 @@
+{
+  "models": [
+    {
+      "name": "Yazaki_7282-1060.stp",
+      "source_class": "manufacturer_download",
+      "valid": true,
+      "solids": 1,
+      "shells": 1,
+      "faces": 218,
+      "volume_mm3": 8859.242198857186,
+      "bounds_mm": [
+        -16.55000000000198,
+        -11.4,
+        -22.000003247540917,
+        4.5500000000000025,
+        10.0,
+        16.000000000000018
+      ],
+      "size_mm": [
+        21.100000000001984,
+        21.4,
+        38.00000324754093
+      ],
+      "physical_match_verified": false,
+      "mesh_closed": false,
+      "tessellated_size_mm": [
+        21.09999942779541,
+        21.399999618530273,
+        38.0
+      ],
+      "native_bbox_excess_mm": [
+        5.722065736790682e-07,
+        3.8146972514141453e-07,
+        3.2475409312837655e-06
+      ]
+    },
+    {
+      "name": "Molex_43045-0600.step",
+      "source_class": "public_repository_reference",
+      "valid": true,
+      "solids": 7,
+      "shells": 7,
+      "faces": 65,
+      "volume_mm3": 789.7529965300153,
+      "bounds_mm": [
+        -3.575,
+        -3.32,
+        -3.18,
+        9.575,
+        8.92,
+        9.4
+      ],
+      "size_mm": [
+        13.149999999999999,
+        12.24,
+        12.58
+      ],
+      "physical_match_verified": false,
+      "mesh_closed": true,
+      "tessellated_size_mm": [
+        13.149999856948853,
+        12.240000009536743,
+        12.579999685287476
+      ],
+      "native_bbox_excess_mm": [
+        1.4305114603985203e-07,
+        -9.53674295089968e-09,
+        3.147125244851168e-07
+      ]
+    },
+    {
+      "name": "Molex_43025-0600.stp",
+      "source_class": "public_mirror_reference",
+      "valid": true,
+      "solids": 1,
+      "shells": 1,
+      "faces": 150,
+      "volume_mm3": 751.8531435841493,
+      "bounds_mm": [
+        -4.93,
+        -4.0,
+        -6.7,
+        4.92,
+        10.0,
+        4.13
+      ],
+      "size_mm": [
+        9.85,
+        14.0,
+        10.83
+      ],
+      "physical_match_verified": false,
+      "mesh_closed": true,
+      "tessellated_size_mm": [
+        9.849999904632568,
+        14.0,
+        10.829999923706055
+      ],
+      "native_bbox_excess_mm": [
+        9.536743128535363e-08,
+        0.0,
+        7.629394538355427e-08
+      ]
+    }
+  ],
+  "units": "mm after native STEP import",
+  "geometry_repaired": false,
+  "catalog_only_not_installed_assembly": true,
+  "physical_fit_verified": false
+}

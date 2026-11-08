@@ -1,0 +1,218 @@
+{
+  "source_class": "manufacturer_eagle_layout_reference",
+  "reference_part": "Arduino A000066 UNO R3, UNO-TH_Rev3e.brd",
+  "source_url": "https://docs.arduino.cc/static/6bb7a3ca51ebee82a252f60c0b418787/A000066-cad-files.zip",
+  "source_brd_sha256": "599de43d9f8a0e1474564f75c732b474fee696529cf7f0cb38ab2511b51261f3",
+  "source_origin": "Original EAGLE board origin; bottom-left board outline at (0,0); PCB top view, x right/y up",
+  "units": "mm",
+  "headers": [
+    {
+      "name": "IOL",
+      "count": 8,
+      "pads": [
+        {
+          "eagle_pad": "1",
+          "x_mm": 63.5,
+          "y_mm": 50.8
+        },
+        {
+          "eagle_pad": "2",
+          "x_mm": 60.96,
+          "y_mm": 50.8
+        },
+        {
+          "eagle_pad": "3",
+          "x_mm": 58.42,
+          "y_mm": 50.8
+        },
+        {
+          "eagle_pad": "4",
+          "x_mm": 55.88,
+          "y_mm": 50.8
+        },
+        {
+          "eagle_pad": "5",
+          "x_mm": 53.34,
+          "y_mm": 50.8
+        },
+        {
+          "eagle_pad": "6",
+          "x_mm": 50.8,
+          "y_mm": 50.8
+        },
+        {
+          "eagle_pad": "7",
+          "x_mm": 48.26,
+          "y_mm": 50.8
+        },
+        {
+          "eagle_pad": "8",
+          "x_mm": 45.72,
+          "y_mm": 50.8
+        }
+      ]
+    },
+    {
+      "name": "IOH",
+      "count": 10,
+      "pads": [
+        {
+          "eagle_pad": "1",
+          "x_mm": 41.656,
+          "y_mm": 50.8
+        },
+        {
+          "eagle_pad": "2",
+          "x_mm": 39.116,
+          "y_mm": 50.8
+        },
+        {
+          "eagle_pad": "3",
+          "x_mm": 36.576,
+          "y_mm": 50.8
+        },
+        {
+          "eagle_pad": "4",
+          "x_mm": 34.036,
+          "y_mm": 50.8
+        },
+        {
+          "eagle_pad": "5",
+          "x_mm": 31.496,
+          "y_mm": 50.8
+        },
+        {
+          "eagle_pad": "6",
+          "x_mm": 28.956,
+          "y_mm": 50.8
+        },
+        {
+          "eagle_pad": "7",
+          "x_mm": 26.416,
+          "y_mm": 50.8
+        },
+        {
+          "eagle_pad": "8",
+          "x_mm": 23.876,
+          "y_mm": 50.8
+        },
+        {
+          "eagle_pad": "9",
+          "x_mm": 21.336,
+          "y_mm": 50.8
+        },
+        {
+          "eagle_pad": "10",
+          "x_mm": 18.796,
+          "y_mm": 50.8
+        }
+      ]
+    },
+    {
+      "name": "AD",
+      "count": 6,
+      "pads": [
+        {
+          "eagle_pad": "1",
+          "x_mm": 50.8,
+          "y_mm": 2.54
+        },
+        {
+          "eagle_pad": "2",
+          "x_mm": 53.34,
+          "y_mm": 2.54
+        },
+        {
+          "eagle_pad": "3",
+          "x_mm": 55.88,
+          "y_mm": 2.54
+        },
+        {
+          "eagle_pad": "4",
+          "x_mm": 58.42,
+          "y_mm": 2.54
+        },
+        {
+          "eagle_pad": "5",
+          "x_mm": 60.96,
+          "y_mm": 2.54
+        },
+        {
+          "eagle_pad": "6",
+          "x_mm": 63.5,
+          "y_mm": 2.54
+        }
+      ]
+    },
+    {
+      "name": "POWER",
+      "count": 8,
+      "pads": [
+        {
+          "eagle_pad": "1",
+          "x_mm": 27.94,
+          "y_mm": 2.54
+        },
+        {
+          "eagle_pad": "2",
+          "x_mm": 30.48,
+          "y_mm": 2.54
+        },
+        {
+          "eagle_pad": "3",
+          "x_mm": 33.02,
+          "y_mm": 2.54
+        },
+        {
+          "eagle_pad": "4",
+          "x_mm": 35.56,
+          "y_mm": 2.54
+        },
+        {
+          "eagle_pad": "5",
+          "x_mm": 38.1,
+          "y_mm": 2.54
+        },
+        {
+          "eagle_pad": "6",
+          "x_mm": 40.64,
+          "y_mm": 2.54
+        },
+        {
+          "eagle_pad": "7",
+          "x_mm": 43.18,
+          "y_mm": 2.54
+        },
+        {
+          "eagle_pad": "8",
+          "x_mm": 45.72,
+          "y_mm": 2.54
+        }
+      ]
+    }
+  ],
+  "mounting_holes": [
+    {
+      "x_mm": 66.04,
+      "y_mm": 35.56,
+      "diameter_mm": 3.2
+    },
+    {
+      "x_mm": 66.04,
+      "y_mm": 7.62,
+      "diameter_mm": 3.2
+    },
+    {
+      "x_mm": 15.24,
+      "y_mm": 50.8,
+      "diameter_mm": 3.2
+    },
+    {
+      "x_mm": 13.97,
+      "y_mm": 2.54,
+      "diameter_mm": 3.2
+    }
+  ],
+  "authority_limit": "Official Arduino R3 reference only. Owned ESP32 board maker/revision, holes, header positions and component/antenna keepouts unconfirmed. This is not a released ESP32 shield.",
+  "physical_fit_verified": false
+}
