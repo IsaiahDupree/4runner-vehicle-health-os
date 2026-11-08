@@ -1,0 +1,19 @@
+{
+  "ok": true,
+  "verification": "Actual failed modeling.submit receipts; no extra successful job created",
+  "checks": [
+    {
+      "command_id": "cmd_7a50d3dac45c4f6283dc918995c5f338",
+      "status": "failed",
+      "error": "expected_source_sha256 must match the regular, registered source file",
+      "rejected_before_job_creation": true
+    },
+    {
+      "command_id": "cmd_fbb6aee411114e4ab9daa6f72a02f202",
+      "status": "failed",
+      "error": "only the fixed console fit-check job is admitted",
+      "rejected_before_job_creation": true
+    }
+  ],
+  "http_response_assertion": "The first diagnostic expected HTTP 400; the existing control API maps these validator exceptions to HTTP 500. Refusal is verified by receipts, not that incorrect status assertion."
+}

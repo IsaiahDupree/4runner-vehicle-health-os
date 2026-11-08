@@ -1,0 +1,51 @@
+{
+  "definition_version": "1.0.0",
+  "interface_version": "fitcheck-1",
+  "units": "mm",
+  "status": "generated_fitcheck_not_qualified",
+  "function": "Screw-fastened cabin enclosure for a proposed protected ESP32 LED carrier, with separately supported pigtails",
+  "roles": {
+    "case_base": "Printed structural tub and carrier supports",
+    "case_lid": "Removable flat lid retained by four M3 screws",
+    "carrier": "Proposed 90 x 62 x 1.6 mm PCB reference, not a completed electrical board",
+    "controller": "Estimated 72 x 57 x 25 mm reserved volume, owned component not verified",
+    "insert_coupon": "Pilot-hole fit study in the actual print process",
+    "carrier_drill_template": "Proposed carrier hole-spacing fit study"
+  },
+  "frame": "Case body minimum XY at 0,0; underside Z=0; ears extend X to -7 and 123",
+  "carrier_hole_axes_case_xy": [[18,17],[18,69],[98,17],[98,69]],
+  "lid_hole_axes_case_xy": [[7,7],[7,79],[109,7],[109,79]],
+  "anchors": ["case floor", "four solid corner posts", "four carrier bosses", "two integral tie bridges", "two mounting ears"],
+  "permitted_contacts": ["lid underside against rim and corner posts", "carrier underside against boss tops", "insert interference with calibrated pilot"],
+  "load_path": "Pigtail to tie bridge/case; carrier screws to bosses and floor; lid screws to corner posts; case floor/ears to an independently verified console mount",
+  "keepouts": ["actual antenna and surrounding conductors to be measured", "actual USB plug and extraction path to be measured", "vehicle shifter/switch/moving-trim sweep to be measured", "carrier screwdriver access with controller removed only", "wire bundle bend radius and tug restraint to be measured"],
+  "service_states": [
+    {"name":"insert_installation", "state":"Empty tub; insert tool vertical to each pocket", "verified":"nominal CAD only; physical process pending"},
+    {"name":"carrier_installation", "state":"Lid and controller removed; carrier seated on four bosses", "verified":"exported-solid static interference check against proposed carrier"},
+    {"name":"normal_operation", "state":"Lid closed; cables restrained; new LEDs on a protected circuit", "verified":"estimated-envelope CAD check only; electrical and vehicle states unverified"},
+    {"name":"bench_service", "state":"Vehicle power disconnected; lid removed; USB access after verifying owned-board geometry", "verified":"not physically verified"},
+    {"name":"removal", "state":"Disconnect mating harness, release independent cable support and mounting hardware", "verified":"vehicle mounting and connected extraction pending"}
+  ],
+  "manufacturing_context": {
+    "prototype_material":"PETG unpowered fit study",
+    "installed_material":"unselected; ASA candidate",
+    "printer":"unverified for this part",
+    "pilot_clearance":"manufacturer nominal interference pilot; no global scale compensation",
+    "seam":"rigid flat joint without a gasket or ingress rating"
+  },
+  "analysis_regions": {
+    "support":"mounting-ear bores and floor at installed mounting surface, actual fixture unknown",
+    "load":"pigtail pull at tie bridges and retained board mass under vibration, magnitudes unknown",
+    "solver_status":"not_run; no arbitrary load or material properties substituted"
+  },
+  "evidence": {
+    "orion_job_id":"mdl_167661df00514363",
+    "manifest":"cad/manifest.json",
+    "static_exported_solid_check":"cad/cad_observation.json",
+    "motion_sweep_verified":false,
+    "solver_screened":false,
+    "printed":false,
+    "physical_fit_verified":false,
+    "electrical_release":false
+  }
+}

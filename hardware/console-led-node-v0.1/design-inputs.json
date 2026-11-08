@@ -1,0 +1,68 @@
+{
+  "contract": "vhos_console_led_case_fitcheck_v1",
+  "status": "FIT_CHECK_ONLY",
+  "vehicle": "2005 Toyota 4Runner 4.7 L 2UZ-FE V8; drivetrain, trim and build month unconfirmed",
+  "controller_candidate": "DIYables ESP32-S3-WROOM-1-N16R8, UNO form factor; owned board revision unverified",
+  "factory_connector_identity": null,
+  "factory_pin_assignments": null,
+  "led_type": null,
+  "led_current_a": null,
+  "vehicle_available_space_mm": null,
+  "geometry_mm": {
+    "width": 116.0,
+    "depth": 86.0,
+    "body_height": 42.0,
+    "wall": 2.4,
+    "floor": 3.0,
+    "lid": 3.0,
+    "outer_corner_radius": 4.0,
+    "ear_extension": 7.0,
+    "carrier_width": 90.0,
+    "carrier_depth": 62.0,
+    "carrier_thickness": 1.6,
+    "carrier_origin_x": 13.0,
+    "carrier_origin_y": 12.0,
+    "carrier_hole_inset": 5.0,
+    "carrier_standoff_height": 7.0,
+    "carrier_boss_diameter": 8.8,
+    "insert_pilot_diameter": 4.0,
+    "insert_pocket_depth": 6.7,
+    "screw_clearance_diameter": 3.2,
+    "lid_post_inset": 7.0,
+    "cable_slot_width": 12.0,
+    "cable_slot_depth": 8.0,
+    "controller_reserved_width": 72.0,
+    "controller_reserved_depth": 57.0,
+    "controller_reserved_height": 25.0
+  },
+  "dimension_authority": {
+    "case_and_carrier": "Original proposed geometry; not measured vehicle or owned-controller dimensions",
+    "controller_reserved_envelope": "Informed estimate around manufacturer's approximate 68 x 53 mm board; header/USB/stack envelope unverified",
+    "insert": "ruthex RX-M3x5.7: 4.6 mm maximum OD, 5.7 mm nominal length, 4.0 mm recommended pilot; 6.7 mm pocket is length plus 1 mm",
+    "carrier_holes": "Proposed custom carrier only: (5,5), (85,5), (85,57), (5,57) mm relative to carrier origin; not UNO mounting holes"
+  },
+  "hardware": {
+    "insert": "8 x ruthex RX-M3x5.7",
+    "lid_screws": "4 x M3x8 pan-head",
+    "carrier_screws": "4 x M3x6 pan-head with 0.5 mm insulating washers; engagement 3.9 mm at 1.6 mm PCB",
+    "vehicle_mounting_fasteners": null
+  },
+  "process": {
+    "prototype_material": "PETG for unpowered dimensional fit checks only",
+    "installed_material_candidate": "ASA, subject to actual printer capability, cabin-temperature and creep verification",
+    "layer_height_mm_proposal": 0.2,
+    "nozzle_mm_proposal": 0.4,
+    "perimeters_proposal": 5,
+    "infill_percent_proposal": 30,
+    "printer_profile_verified": false,
+    "sealing_rating": null
+  },
+  "release": {
+    "vehicle_fit_verified": false,
+    "controller_fit_verified": false,
+    "connector_fit_verified": false,
+    "electrical_design_released": false,
+    "manufacturing_released": false,
+    "print_started": false
+  }
+}

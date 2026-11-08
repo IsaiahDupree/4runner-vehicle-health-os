@@ -1,0 +1,25 @@
+{
+  "command_id": "cmd_7d3c53d2f69f487f93ae600b6af77925",
+  "ok": true,
+  "result": {
+    "actor": "owner-task:4runner-console-led-fitcheck",
+    "artifacts": [],
+    "completed_at": null,
+    "error": null,
+    "exit_code": null,
+    "job_dir": "C:\\orion\\control\\vhos-console-led-node-20261107\\modeling\\jobs\\mdl_167661df00514363",
+    "job_id": "mdl_167661df00514363",
+    "job_type": "cad.vhos_console_led_case",
+    "params": {
+      "expected_inputs_sha256": "5d006b720af15d9adefd11ae109ef4ce6fc3c8cbc4284e0c591be4ae781e12b8",
+      "expected_source_sha256": "bbefd2f07f6e078fa25dd531a106ebcd51db8ef8700997f6b8ade17bac37d8c6",
+      "timeout_sec": 300
+    },
+    "pid": null,
+    "queue_position": 1,
+    "started_at": null,
+    "status": "queued",
+    "submitted_at": "2026-11-08T02:36:06.058497+00:00",
+    "updated_at": "2026-11-08T02:36:06.059058+00:00"
+  }
+}

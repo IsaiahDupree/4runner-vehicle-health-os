@@ -1,0 +1,8 @@
+{
+  "job_type": "cad.vhos_console_led_case",
+  "params": {
+    "expected_source_sha256": "bbefd2f07f6e078fa25dd531a106ebcd51db8ef8700997f6b8ade17bac37d8c6",
+    "expected_inputs_sha256": "5d006b720af15d9adefd11ae109ef4ce6fc3c8cbc4284e0c591be4ae781e12b8",
+    "timeout_sec": 300
+  }
+}

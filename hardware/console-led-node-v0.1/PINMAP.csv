@@ -1,0 +1,10 @@
+interface,cavity,orientation,signal,voltage,connection_status,required_evidence
+Photographed loose white connector,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNCONNECTED,Face photo latch orientation molded numbers cavity count and exact 2005 V8 EWD
+Photographed beige connector,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNCONNECTED,Face photo and verified socket/illumination routing
+Photographed blue connector,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNCONNECTED,Front switch legend and exact vehicle EWD; no control/safety circuit tapping
+New PCB Micro-Fit header,1,TO_BE_FROZEN,UNASSIGNED,UNASSIGNED,DESIGN_PENDING,Select actual input/output connector role and keying after LED/power decision
+New PCB Micro-Fit header,2,TO_BE_FROZEN,UNASSIGNED,UNASSIGNED,DESIGN_PENDING,Select actual input/output connector role and keying after LED/power decision
+New PCB Micro-Fit header,3,TO_BE_FROZEN,UNASSIGNED,UNASSIGNED,DESIGN_PENDING,Select actual input/output connector role and keying after LED/power decision
+New PCB Micro-Fit header,4,TO_BE_FROZEN,UNASSIGNED,UNASSIGNED,DESIGN_PENDING,Select actual input/output connector role and keying after LED/power decision
+New PCB Micro-Fit header,5,TO_BE_FROZEN,UNASSIGNED,UNASSIGNED,DESIGN_PENDING,Select actual input/output connector role and keying after LED/power decision
+New PCB Micro-Fit header,6,TO_BE_FROZEN,UNASSIGNED,UNASSIGNED,DESIGN_PENDING,Select actual input/output connector role and keying after LED/power decision

@@ -1,0 +1,25 @@
+category,manufacturer,part_number,quantity,status,purpose,selection_condition,source_url
+OEM loom,Toyota,82390-35010,1,CANDIDATE_ONLY,Console cigarette-lighter wiring assembly,Verify both connector ends and populated cavities; may be lamp/socket subassembly only,https://parts.olathetoyota.com/oem-parts/toyota-bulb-wire-8239035010
+OEM housing,Toyota,90980-10760,1,NOT_MATCHED_TO_PHOTO,Cataloged lighter female connector housing,Not the identified mate of the loose white multi-pin plug; terminals and mating half unresolved,https://www.toyotapartsdeal.com/oem/toyota~housing~connector~f~90980-10760.html
+OEM illumination housing,Toyota,90980-11148,1,CATALOG_REFERENCE_ONLY,Illumination housing reference,Exact build applicability and mating geometry unverified,https://diagnostdata.com/toyota/4runner/iv-facelift-2005-2009/remont/body-electrical/oem-part-number-of-connectors/oem-part-number-of-connectors/
+OEM full-pin T harness,,,1,IDENTIFICATION_REQUIRED,Preserve all existing circuits and add a fused branch,Exact male/female housing numbers and terminal series depend on connector face and 2005 V8 EWD,
+PCB connector,Molex,43045-0600,1,CANDIDATE,Locking six-circuit right-angle through-hole PCB header,1.6 mm board; final circuit assignment and derated current budget required,https://www.molex.com/en-us/products/part-detail/430450600
+Harness connector,Molex,43025-0600,1,CANDIDATE,Matching six-circuit Micro-Fit cable receptacle,Pairs with our PCB header; not a Toyota mating housing,https://www.molex.com/en-us/products/part-detail/430250600
+Crimp contacts,Molex,43030-0007,6,CANDIDATE,20-24 AWG tin female contacts,Insulation OD max 1.85 mm; proper terminal-specific crimp and pull test,https://www.molex.com/en-us/products/part-detail/430300007
+Controller,DIYables,ESP32-S3-WROOM-1-N16R8 UNO-format board,1,OWNED_CANDIDATE_NOT_VERIFIED,Wi-Fi/BLE controller,Verify owned model and power/logic/header schematic before assigning GPIO,https://diyables.io/products/esp32-s3-development-board-with-esp32-s3-wroom-1-n16r8-wifi-bluetooth-uno-compatible-form-factor-works-with-arduino-ide
+Buck controller,Texas Instruments,LM5164-Q1,1,CANDIDATE,6-100 V input 1 A controller/logic supply,Full regulator circuit and measured burst/crank/thermal design required; not LED power by default,https://www.ti.com/product/LM5164-Q1
+Reverse protection,Texas Instruments,LM74700-Q1,1,CANDIDATE,Automotive ideal-diode control,External FET and coordinated transient clamp required; 65 V controller does not inherit buck 100 V rating,https://www.ti.com/product/LM74700-Q1
+Transient clamp,,,,UNSELECTED,Protect branch and downstream components,Select pulse/energy/clamp voltage against actual transient requirement and every part limit,
+Logic branch fuse,,,,UNSELECTED,Protect new feed near takeoff,Rating and wire gauge follow measured consumption/inrush and upstream circuit budget,
+LED power and fuse,,,,UNSELECTED,Independent LED load feed,Exact LED model voltage and peak load needed; never draw strip current through ESP32 headers,
+Addressable option,Texas Instruments,SN74AHCT125-Q1,1,ALTERNATIVE_CANDIDATE,3.3 V to 5 V data buffer,Only for compatible addressable LEDs; review OE power sequencing and waveform at real cable length,https://www.ti.com/product/SN74AHCT125-Q1
+Analog RGB option,Texas Instruments,UCC27524A-Q1,2,ALTERNATIVE_CANDIDATE,Four available gate-driver channels for three RGB channels,Regulated driver supply and hardware disable/pulldowns; not required for addressable data-only option,https://www.ti.com/product/UCC27524A-Q1
+Analog RGB option,Nexperia,BUK9K12-60E,2,ALTERNATIVE_CANDIDATE,Four available 60 V low-side MOSFET channels,Review gate voltage Rds temperature PCB copper transients and actual strip current,https://www.nexperia.com/product/BUK9K12-60E
+LEDs,,,,UNSELECTED,Added accent or indicator lights,Exact type voltage length current color and installation location not supplied,
+Heat-set inserts,ruthex,RX-M3x5.7,8,FIT_CHECK_CASE_HARDWARE,Four lid and four proposed carrier inserts,Coupon pilots 4.0/4.1/4.2 mm; 6.7 mm minimum pocket; physical process unqualified,https://www.ruthex.de/products/ruthex-gewindeeinsatz-m3-100-stuck-rx-m3x5-7-messing-gewindebuchsen
+Lid screws,,M3x8 pan-head,4,FIT_CHECK_CASE_HARDWARE,Fasten 3 mm lid,5 mm nominal engagement; confirm head and insert stock,
+Carrier screws,,M3x6 pan-head,4,FIT_CHECK_CASE_HARDWARE,Fasten proposed 1.6 mm carrier,Use 0.5 mm insulating washers for 3.9 mm nominal engagement,
+Carrier washers,,M3 insulating washer 0.5 mm,4,FIT_CHECK_CASE_HARDWARE,Protect PCB mounting surface,Check outer diameter and local component keepout,
+Wire and sleeving,,,1,UNSELECTED,Automotive wire abrasion protection and loom restraint,Wire size and insulation OD must fit terminals and fuse; use proper sleeve and strain relief,
+PCB,,,,DESIGN_PENDING,Protected carrier and LED output stage,No schematic routing netlist or fabrication package released,
+Installed enclosure material,,,1,UNSELECTED,Cabin case,ASA candidate; verify actual filament printer capability cabin heat and creep before installation,

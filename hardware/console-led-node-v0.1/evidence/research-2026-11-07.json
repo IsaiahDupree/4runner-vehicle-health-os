@@ -1,0 +1,160 @@
+{
+  "owner_task_date": "2026-11-07",
+  "recorded_at_utc": "2026-11-08T02:44:19.156241+00:00",
+  "photos": [
+    {
+      "name": "1-Photo-1.jpg",
+      "bytes": 1482857,
+      "sha256": "1e9f89b780d045f501c5a6f68f0edeb8b13fe255a524c745f911a1f298f69714",
+      "observed_face": "rear/side; cavity mapping unavailable"
+    },
+    {
+      "name": "2-Photo-2.jpg",
+      "bytes": 1591199,
+      "sha256": "9754d12bba4c51e339f85a6b2c058257b29f629707c12b173890e504ed792ca5",
+      "observed_face": "rear/side; cavity mapping unavailable"
+    }
+  ],
+  "sources": [
+    {
+      "id": "ewd-ground",
+      "url": "https://diagnostdata.com/toyota/4runner/iv-facelift-2005-2009/remont/body-electrical/oem-ground-points/wiring/",
+      "retrieval": "read with web tool in this task",
+      "authority_limit": "See README and BOM; no source confirms the photographed plug mating face"
+    },
+    {
+      "id": "ewd-connectors",
+      "url": "https://diagnostdata.com/toyota/4runner/iv-facelift-2005-2009/remont/body-electrical/oem-part-number-of-connectors/oem-part-number-of-connectors/",
+      "retrieval": "read with web tool in this task",
+      "authority_limit": "See README and BOM; no source confirms the photographed plug mating face"
+    },
+    {
+      "id": "tis",
+      "url": "https://techinfo.toyota.com/techInfoPortal/appmanager/t3/ti?_nfpb=true&_pageLabel=ti_toy_lib_content",
+      "retrieval": "read with web tool in this task",
+      "authority_limit": "See README and BOM; no source confirms the photographed plug mating face"
+    },
+    {
+      "id": "toyota-harness",
+      "url": "https://parts.olathetoyota.com/oem-parts/toyota-bulb-wire-8239035010",
+      "retrieval": "read with web tool in this task",
+      "authority_limit": "See README and BOM; no source confirms the photographed plug mating face"
+    },
+    {
+      "id": "harness-sale",
+      "url": "https://www.toyotapartsdeal.com/oem/toyota~wire~cigarette~lighter~82390-35010.html",
+      "retrieval": "read with web tool in this task",
+      "authority_limit": "See README and BOM; no source confirms the photographed plug mating face"
+    },
+    {
+      "id": "socket-housing",
+      "url": "https://www.toyotapartsdeal.com/oem/toyota~housing~connector~f~90980-10760.html",
+      "retrieval": "read with web tool in this task",
+      "authority_limit": "See README and BOM; no source confirms the photographed plug mating face"
+    },
+    {
+      "id": "molex-header",
+      "url": "https://www.molex.com/en-us/products/part-detail/430450600",
+      "retrieval": "read with web tool in this task",
+      "authority_limit": "See README and BOM; no source confirms the photographed plug mating face"
+    },
+    {
+      "id": "molex-housing",
+      "url": "https://www.molex.com/en-us/products/part-detail/430250600",
+      "retrieval": "read with web tool in this task",
+      "authority_limit": "See README and BOM; no source confirms the photographed plug mating face"
+    },
+    {
+      "id": "molex-contact",
+      "url": "https://www.molex.com/en-us/products/part-detail/430300007",
+      "retrieval": "read with web tool in this task",
+      "authority_limit": "See README and BOM; no source confirms the photographed plug mating face"
+    },
+    {
+      "id": "molex-family",
+      "url": "https://www.mouser.com/pdfDocs/987650-3951.pdf",
+      "retrieval": "read with web tool in this task",
+      "authority_limit": "See README and BOM; no source confirms the photographed plug mating face"
+    },
+    {
+      "id": "buck",
+      "url": "https://www.ti.com/product/LM5164-Q1",
+      "retrieval": "read with web tool in this task",
+      "authority_limit": "See README and BOM; no source confirms the photographed plug mating face"
+    },
+    {
+      "id": "ideal-diode",
+      "url": "https://www.ti.com/product/LM74700-Q1",
+      "retrieval": "read with web tool in this task",
+      "authority_limit": "See README and BOM; no source confirms the photographed plug mating face"
+    },
+    {
+      "id": "level-shifter",
+      "url": "https://www.ti.com/product/SN74AHCT125-Q1",
+      "retrieval": "read with web tool in this task",
+      "authority_limit": "See README and BOM; no source confirms the photographed plug mating face"
+    },
+    {
+      "id": "gate-driver",
+      "url": "https://www.ti.com/product/UCC27524A-Q1",
+      "retrieval": "read with web tool in this task",
+      "authority_limit": "See README and BOM; no source confirms the photographed plug mating face"
+    },
+    {
+      "id": "mosfet",
+      "url": "https://www.nexperia.com/product/BUK9K12-60E",
+      "retrieval": "read with web tool in this task",
+      "authority_limit": "See README and BOM; no source confirms the photographed plug mating face"
+    },
+    {
+      "id": "inserts",
+      "url": "https://www.ruthex.de/products/ruthex-gewindeeinsatz-m3-100-stuck-rx-m3x5-7-messing-gewindebuchsen",
+      "retrieval": "read with web tool in this task",
+      "authority_limit": "See README and BOM; no source confirms the photographed plug mating face"
+    },
+    {
+      "id": "board",
+      "url": "https://diyables.io/products/esp32-s3-development-board-with-esp32-s3-wroom-1-n16r8-wifi-bluetooth-uno-compatible-form-factor-works-with-arduino-ide",
+      "retrieval": "read with web tool in this task",
+      "authority_limit": "See README and BOM; no source confirms the photographed plug mating face"
+    },
+    {
+      "id": "esp-guidance",
+      "url": "https://docs.espressif.com/projects/esp-hardware-design-guidelines/en/latest/esp32s3/schematic-checklist.html",
+      "retrieval": "read with web tool in this task",
+      "authority_limit": "See README and BOM; no source confirms the photographed plug mating face"
+    }
+  ],
+  "quotes": [
+    {
+      "source_id": "toyota-harness",
+      "part": "82390-35010",
+      "price_usd": 20.78,
+      "purchase": false
+    },
+    {
+      "source_id": "harness-sale",
+      "part": "82390-35010",
+      "price_usd": 14.86,
+      "dispatch_claim": "1-3 business days",
+      "purchase": false
+    },
+    {
+      "source_id": "socket-housing",
+      "part": "90980-10760",
+      "availability_claim": "currently unavailable",
+      "photo_match_confirmed": false
+    }
+  ],
+  "execution": {
+    "orion_job_id": "mdl_167661df00514363",
+    "compute_device": "Orion",
+    "main_modeling_discovery_error": "Authoritative Cura source changed after snapshot export: cura.log; re-export profile before slicing",
+    "isolated_controller_cleaned_up": true,
+    "task_ssh_forward_closed": true,
+    "cloud_compute_used": false,
+    "github_actions_used": false,
+    "printer_dispatch": false,
+    "purchases": false
+  }
+}

@@ -1,0 +1,136 @@
+{
+  "command_id": "cmd_edf844010abb4a8e82e9af7c20a23af7",
+  "ok": true,
+  "result": {
+    "actor": "owner-task:4runner-console-led-fitcheck",
+    "artifacts": [
+      {
+        "bytes": 466,
+        "name": "_native_entry.py",
+        "sha256": "814cf5a3a9f4f46b4910a7bb79435ad59c6742938de885b98a4aff3efb6a33fa"
+      },
+      {
+        "bytes": 6145,
+        "name": "_native_impl.py",
+        "sha256": "ff6fe1e32088b9ae8953881435638bfe8562beec394fca9bcd5fdf880e5f770e"
+      },
+      {
+        "bytes": 1448,
+        "name": "_render_case.py",
+        "sha256": "816021e81c7d746bfd96db33172b55e02deb6b7f697066045dc4bc8ca732fd0b"
+      },
+      {
+        "bytes": 351,
+        "name": "blender.log",
+        "sha256": "8149443a1e1c998bffcde81168e741e23b2a15f003c935546534bf70ca769b0d"
+      },
+      {
+        "bytes": 1662,
+        "name": "cad_observation.json",
+        "sha256": "f88ae405cd53739a4528e48f9faf0a98c8a14d81330796bd38b733dda5b80a39"
+      },
+      {
+        "bytes": 12641,
+        "name": "carrier_drill_template.step",
+        "sha256": "11082f8988676deabb54c1e9e3145d63495c3b3e720f4060563c2230eefc85f3"
+      },
+      {
+        "bytes": 68684,
+        "name": "carrier_drill_template.stl",
+        "sha256": "72d45e17818d5f48716f568f4ea15582313e2debb7f8788e5f9e61fa610170bb"
+      },
+      {
+        "bytes": 12759,
+        "name": "carrier_REFERENCE_ONLY.step",
+        "sha256": "435c255b75af089525730dd4bbee5c10a6d64c3dff4d2b419dc1584c6f6008c8"
+      },
+      {
+        "bytes": 92267,
+        "name": "case_base.step",
+        "sha256": "ca13902cc02590ef08a5cd00ab7a08f9a3d0484fdd17d7e3fd722e58adfc3992"
+      },
+      {
+        "bytes": 262284,
+        "name": "case_base.stl",
+        "sha256": "4ec3b903da2497d7253927a62b7b190a35cf8347385e9a8c55544fd880898bfa"
+      },
+      {
+        "bytes": 18144,
+        "name": "case_lid.step",
+        "sha256": "ba0f7c9dac4e58cc2a29c36987c2c0b8b764cd694667f412b91584f311080c6f"
+      },
+      {
+        "bytes": 85484,
+        "name": "case_lid.stl",
+        "sha256": "e460b0200676c6063d0b14c632d24f7e24c471c97b440ab79cd6ba87aa35eee5"
+      },
+      {
+        "bytes": 1964340,
+        "name": "case_overview.png",
+        "sha256": "0e3706ca2c7d15bea1ab9489ae3fbe3b6e85ef772048643440599abd868a0b8b"
+      },
+      {
+        "bytes": 21225,
+        "name": "console_led_fitcheck.FCStd",
+        "sha256": "83d463b03f30ace5d308dbef3debf86b37173dd64051c4a99ff16e51b85a8bb7"
+      },
+      {
+        "bytes": 6945,
+        "name": "controller_ESTIMATED_KEEP_OUT.step",
+        "sha256": "50fe5f9f62b41a139d6eae3b3e01de71dc602b8a3513c178ab903ce1f9a69332"
+      },
+      {
+        "bytes": 0,
+        "name": "freecad.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 17319,
+        "name": "insert_coupon.step",
+        "sha256": "bb0e2ef5942740c5b35b5479d6fbbd78ce535d08a6effa5b1cb2fa1091081f84"
+      },
+      {
+        "bytes": 67884,
+        "name": "insert_coupon.stl",
+        "sha256": "2c80409e14c595b6344d02536bb7c558011a28c546707304b917849a899b29e3"
+      },
+      {
+        "bytes": 5490,
+        "name": "manifest.json",
+        "sha256": "c30a97a04e05bc7a2c53673d58da2a4ff788846acd2f2b6de0827f38cfaae430"
+      }
+    ],
+    "command": [
+      "C:\\Users\\Isaia\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+      "-I",
+      "-B",
+      "C:\\orion\\projects\\vhos-console-led-node-20261107\\case_job.py",
+      "--params",
+      "C:\\orion\\control\\vhos-console-led-node-20261107\\modeling\\jobs\\mdl_167661df00514363\\params.json",
+      "--out",
+      "C:\\orion\\control\\vhos-console-led-node-20261107\\modeling\\jobs\\mdl_167661df00514363\\out"
+    ],
+    "completed_at": "2026-11-08T02:36:08.329408+00:00",
+    "duration_sec": 2.3,
+    "error": null,
+    "exit_code": 0,
+    "job_dir": "C:\\orion\\control\\vhos-console-led-node-20261107\\modeling\\jobs\\mdl_167661df00514363",
+    "job_id": "mdl_167661df00514363",
+    "job_type": "cad.vhos_console_led_case",
+    "log_tail": "{\"status\": \"FIT_CHECK_ONLY\", \"artifact_count\": 14, \"manufacturing_released\": false, \"print_started\": false}\r\n",
+    "params": {
+      "expected_inputs_sha256": "5d006b720af15d9adefd11ae109ef4ce6fc3c8cbc4284e0c591be4ae781e12b8",
+      "expected_source_sha256": "bbefd2f07f6e078fa25dd531a106ebcd51db8ef8700997f6b8ade17bac37d8c6",
+      "timeout_sec": 300
+    },
+    "pid": 118860,
+    "queue": {
+      "queued": [],
+      "running": null
+    },
+    "started_at": "2026-11-08T02:36:06.066206+00:00",
+    "status": "succeeded",
+    "submitted_at": "2026-11-08T02:36:06.058497+00:00",
+    "updated_at": "2026-11-08T02:36:08.360166+00:00"
+  }
+}

@@ -1,0 +1,211 @@
+{
+  "contract": "vhos_console_led_case_fitcheck_v1",
+  "job_type": "cad.vhos_console_led_case",
+  "execution_device": "orion",
+  "request": {
+    "expected_source_sha256": "bbefd2f07f6e078fa25dd531a106ebcd51db8ef8700997f6b8ade17bac37d8c6",
+    "expected_inputs_sha256": "5d006b720af15d9adefd11ae109ef4ce6fc3c8cbc4284e0c591be4ae781e12b8",
+    "timeout_sec": 300
+  },
+  "geometry_mm": {
+    "width": 116.0,
+    "depth": 86.0,
+    "body_height": 42.0,
+    "wall": 2.4,
+    "floor": 3.0,
+    "lid": 3.0,
+    "outer_corner_radius": 4.0,
+    "ear_extension": 7.0,
+    "carrier_width": 90.0,
+    "carrier_depth": 62.0,
+    "carrier_thickness": 1.6,
+    "carrier_origin_x": 13.0,
+    "carrier_origin_y": 12.0,
+    "carrier_hole_inset": 5.0,
+    "carrier_standoff_height": 7.0,
+    "carrier_boss_diameter": 8.8,
+    "insert_pilot_diameter": 4.0,
+    "insert_pocket_depth": 6.7,
+    "screw_clearance_diameter": 3.2,
+    "lid_post_inset": 7.0,
+    "cable_slot_width": 12.0,
+    "cable_slot_depth": 8.0,
+    "controller_reserved_width": 72.0,
+    "controller_reserved_depth": 57.0,
+    "controller_reserved_height": 25.0
+  },
+  "observation": {
+    "parts": {
+      "case_base": {
+        "valid": true,
+        "solids": 1,
+        "mesh_closed": true,
+        "volume_mm3": 79860.01248078162,
+        "bbox_mm": [
+          130.0,
+          86.0,
+          42.0
+        ]
+      },
+      "case_lid": {
+        "valid": true,
+        "solids": 1,
+        "mesh_closed": true,
+        "volume_mm3": 29790.286721054028,
+        "bbox_mm": [
+          116.0,
+          86.0,
+          3.0
+        ]
+      },
+      "insert_coupon": {
+        "valid": true,
+        "solids": 1,
+        "mesh_closed": true,
+        "volume_mm3": 5463.620975328443,
+        "bbox_mm": [
+          40.0,
+          16.0,
+          9.0
+        ]
+      },
+      "carrier_drill_template": {
+        "valid": true,
+        "solids": 1,
+        "mesh_closed": true,
+        "volume_mm3": 5547.8300912272425,
+        "bbox_mm": [
+          90.0,
+          62.0,
+          1.0
+        ]
+      }
+    },
+    "retained_solid_checks": {
+      "base_lid_intersection_mm3": 0.0,
+      "base_carrier_intersection_mm3": 0.0,
+      "base_controller_intersection_mm3": 0.0,
+      "lid_controller_intersection_mm3": 0.0,
+      "carrier_controller_intersection_mm3": 0.0
+    },
+    "assembled_case_bbox_mm": [
+      130.0,
+      86.0,
+      45.0
+    ],
+    "carrier_axes_mm": [
+      [
+        18.0,
+        17.0
+      ],
+      [
+        18.0,
+        69.0
+      ],
+      [
+        98.0,
+        17.0
+      ],
+      [
+        98.0,
+        69.0
+      ]
+    ],
+    "lid_axes_mm": [
+      [
+        7,
+        7
+      ],
+      [
+        7,
+        79.0
+      ],
+      [
+        109.0,
+        7
+      ],
+      [
+        109.0,
+        79.0
+      ]
+    ],
+    "controller_top_clearance_mm": 5.399999999999999,
+    "physical_fit_verified": false
+  },
+  "status": "FIT_CHECK_ONLY",
+  "manufacturing_released": false,
+  "vehicle_fit_verified": false,
+  "controller_fit_verified": false,
+  "print_started": false,
+  "runtimes": {
+    "freecad": "C:\\Program Files\\FreeCAD 1.0\\bin\\FreeCADCmd.exe",
+    "blender": "C:\\Program Files\\Blender Foundation\\Blender 4.4\\blender.exe"
+  },
+  "artifacts": [
+    {
+      "name": "case_base.step",
+      "bytes": 92267,
+      "sha256": "ca13902cc02590ef08a5cd00ab7a08f9a3d0484fdd17d7e3fd722e58adfc3992"
+    },
+    {
+      "name": "case_base.stl",
+      "bytes": 262284,
+      "sha256": "4ec3b903da2497d7253927a62b7b190a35cf8347385e9a8c55544fd880898bfa"
+    },
+    {
+      "name": "case_lid.step",
+      "bytes": 18144,
+      "sha256": "ba0f7c9dac4e58cc2a29c36987c2c0b8b764cd694667f412b91584f311080c6f"
+    },
+    {
+      "name": "case_lid.stl",
+      "bytes": 85484,
+      "sha256": "e460b0200676c6063d0b14c632d24f7e24c471c97b440ab79cd6ba87aa35eee5"
+    },
+    {
+      "name": "insert_coupon.step",
+      "bytes": 17319,
+      "sha256": "bb0e2ef5942740c5b35b5479d6fbbd78ce535d08a6effa5b1cb2fa1091081f84"
+    },
+    {
+      "name": "insert_coupon.stl",
+      "bytes": 67884,
+      "sha256": "2c80409e14c595b6344d02536bb7c558011a28c546707304b917849a899b29e3"
+    },
+    {
+      "name": "carrier_drill_template.step",
+      "bytes": 12641,
+      "sha256": "11082f8988676deabb54c1e9e3145d63495c3b3e720f4060563c2230eefc85f3"
+    },
+    {
+      "name": "carrier_drill_template.stl",
+      "bytes": 68684,
+      "sha256": "72d45e17818d5f48716f568f4ea15582313e2debb7f8788e5f9e61fa610170bb"
+    },
+    {
+      "name": "carrier_REFERENCE_ONLY.step",
+      "bytes": 12759,
+      "sha256": "435c255b75af089525730dd4bbee5c10a6d64c3dff4d2b419dc1584c6f6008c8"
+    },
+    {
+      "name": "controller_ESTIMATED_KEEP_OUT.step",
+      "bytes": 6945,
+      "sha256": "50fe5f9f62b41a139d6eae3b3e01de71dc602b8a3513c178ab903ce1f9a69332"
+    },
+    {
+      "name": "console_led_fitcheck.FCStd",
+      "bytes": 21225,
+      "sha256": "83d463b03f30ace5d308dbef3debf86b37173dd64051c4a99ff16e51b85a8bb7"
+    },
+    {
+      "name": "cad_observation.json",
+      "bytes": 1662,
+      "sha256": "f88ae405cd53739a4528e48f9faf0a98c8a14d81330796bd38b733dda5b80a39"
+    },
+    {
+      "name": "case_overview.png",
+      "bytes": 1964340,
+      "sha256": "0e3706ca2c7d15bea1ab9489ae3fbe3b6e85ef772048643440599abd868a0b8b"
+    }
+  ]
+}

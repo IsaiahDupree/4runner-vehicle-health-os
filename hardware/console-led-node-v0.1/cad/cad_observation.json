@@ -1,0 +1,98 @@
+{
+  "parts": {
+    "case_base": {
+      "valid": true,
+      "solids": 1,
+      "mesh_closed": true,
+      "volume_mm3": 79860.01248078162,
+      "bbox_mm": [
+        130.0,
+        86.0,
+        42.0
+      ]
+    },
+    "case_lid": {
+      "valid": true,
+      "solids": 1,
+      "mesh_closed": true,
+      "volume_mm3": 29790.286721054028,
+      "bbox_mm": [
+        116.0,
+        86.0,
+        3.0
+      ]
+    },
+    "insert_coupon": {
+      "valid": true,
+      "solids": 1,
+      "mesh_closed": true,
+      "volume_mm3": 5463.620975328443,
+      "bbox_mm": [
+        40.0,
+        16.0,
+        9.0
+      ]
+    },
+    "carrier_drill_template": {
+      "valid": true,
+      "solids": 1,
+      "mesh_closed": true,
+      "volume_mm3": 5547.8300912272425,
+      "bbox_mm": [
+        90.0,
+        62.0,
+        1.0
+      ]
+    }
+  },
+  "retained_solid_checks": {
+    "base_lid_intersection_mm3": 0.0,
+    "base_carrier_intersection_mm3": 0.0,
+    "base_controller_intersection_mm3": 0.0,
+    "lid_controller_intersection_mm3": 0.0,
+    "carrier_controller_intersection_mm3": 0.0
+  },
+  "assembled_case_bbox_mm": [
+    130.0,
+    86.0,
+    45.0
+  ],
+  "carrier_axes_mm": [
+    [
+      18.0,
+      17.0
+    ],
+    [
+      18.0,
+      69.0
+    ],
+    [
+      98.0,
+      17.0
+    ],
+    [
+      98.0,
+      69.0
+    ]
+  ],
+  "lid_axes_mm": [
+    [
+      7,
+      7
+    ],
+    [
+      7,
+      79.0
+    ],
+    [
+      109.0,
+      7
+    ],
+    [
+      109.0,
+      79.0
+    ]
+  ],
+  "controller_top_clearance_mm": 5.399999999999999,
+  "physical_fit_verified": false
+}

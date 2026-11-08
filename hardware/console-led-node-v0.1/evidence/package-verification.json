@@ -1,0 +1,51 @@
+{
+  "ok": true,
+  "verification_scope": "source/retained-artifact integrity and independent STL topology, dimensions and volume",
+  "orion_job_id": "mdl_167661df00514363",
+  "cad_artifact_count": 13,
+  "meshes": {
+    "case_base": {
+      "triangles": 5244,
+      "edge_pairs": 7866,
+      "signed_volume_mm3": 79857.13425690804,
+      "bbox_mm": [
+        130.0,
+        86.0,
+        42.0
+      ]
+    },
+    "case_lid": {
+      "triangles": 1708,
+      "edge_pairs": 2562,
+      "signed_volume_mm3": 29790.236059103787,
+      "bbox_mm": [
+        116.0,
+        86.0,
+        3.0
+      ]
+    },
+    "insert_coupon": {
+      "triangles": 1356,
+      "edge_pairs": 2034,
+      "signed_volume_mm3": 5463.763036509863,
+      "bbox_mm": [
+        40.0,
+        16.0,
+        9.0
+      ]
+    },
+    "carrier_drill_template": {
+      "triangles": 1372,
+      "edge_pairs": 2058,
+      "signed_volume_mm3": 5547.860075282868,
+      "bbox_mm": [
+        90.0,
+        62.0,
+        1.0
+      ]
+    }
+  },
+  "physical_fit_verified": false,
+  "electrical_design_released": false,
+  "print_started": false
+}

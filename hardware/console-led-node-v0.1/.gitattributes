@@ -1,0 +1,5 @@
+# Preserve native Orion export/receipt hashes, including Windows line endings.
+cad/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+# Native STEP writer padding is retained byte-for-byte; review generator/CAD hashes.
+cad/*.step binary
+evidence/orion-receipts.jsonl -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

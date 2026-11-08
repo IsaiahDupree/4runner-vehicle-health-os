@@ -1,0 +1,35 @@
+{
+  "recorded_at_utc": "2026-11-08T02:45:47.716746+00:00",
+  "checks": [
+    {
+      "command": ".venv/bin/vhos contracts check",
+      "exit_code": 0,
+      "result": "52 schemas valid"
+    },
+    {
+      "command": ".venv/bin/python -m pytest tests -q",
+      "exit_code": 0,
+      "result": "217 passed in 7.45s"
+    },
+    {
+      "command": "python3 hardware/console-led-node-v0.1/verify_package.py",
+      "exit_code": 0,
+      "result": "13 retained CAD artifact hashes verified; four closed positive-volume STL meshes; native STEP checks passed"
+    },
+    {
+      "command": "GitHub Actions permissions and run inspection",
+      "result": {
+        "enabled": false,
+        "queued": 0,
+        "in_progress": 0
+      }
+    },
+    {
+      "command": "Task-scoped Orion controller and SSH cleanup",
+      "result": "Controller PID 27112 stopped after command-line identity check; dedicated port 8849 SSH forward closed"
+    }
+  ],
+  "manufacturing_released": false,
+  "print_started": false,
+  "purchases": false
+}
