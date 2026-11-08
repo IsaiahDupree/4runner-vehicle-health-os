@@ -1,0 +1,61 @@
+{
+  "record_type": "underbody_led_research_v1",
+  "research_date_local": "2026-11-07",
+  "timezone": "America/New_York",
+  "vehicle": "2005 Toyota 4Runner V8 4.7 L 2UZ-FE",
+  "user_requirement": "Waterproof LEDs mountable under the car with basic protection",
+  "selection_status": "UNSELECTED",
+  "recommended_sample": "Diode Dynamics DD7440 Stage Series RGBW with matching M8 extension/pigtail",
+  "recommendation_is_owner_selection": false,
+  "candidate_interfaces": [
+    {
+      "candidate": "Diode Dynamics DD7440",
+      "interface_status": "COMMON_POSITIVE_RGBW_INFERRED_FROM_COMPATIBLE_CONTROLLER_NOT_PHYSICALLY_VERIFIED",
+      "power_channels_per_independent_zone": 4,
+      "connector_cavity_map": null,
+      "native_manufacturer_step_obtained": false,
+      "dimensional_source": "Published product envelope only",
+      "envelope_mm": [60.96, 60.96, 15.24],
+      "power_source": "Separate fused LED branch; final current and protection design pending"
+    },
+    {
+      "candidate": "Super Bright LEDs RLK-RGBW-6",
+      "interface_status": "BUNDLED_CONTROLLER_DOCUMENTED_CUSTOM_INTERFACE_UNKNOWN",
+      "connector_cavity_map": null,
+      "native_manufacturer_step_obtained": false,
+      "envelope_mm": null
+    },
+    {
+      "candidate": "Rhino Diamond RGB current 24-LED variant",
+      "interface_status": "DIGITAL_RHINO_RGB_PROTOCOL_AND_LOGIC_LEVEL_UNCONFIRMED",
+      "legacy_ws2811_support_page_proves_current_variant": false,
+      "connector_cavity_map": null,
+      "native_manufacturer_step_obtained": false,
+      "dimensional_source": "Published configurator envelope only",
+      "envelope_mm": [76.2, 38.1, 12.7],
+      "ip69k_claim_proves_immersion_rating": false
+    },
+    {
+      "candidate": "BTF WS2815 IP68 5m 300 LED listing",
+      "interface_status": "WS2815_ADDRESSABLE_DIFFERENT_DRIVER_FROM_ANALOG_RGBW",
+      "native_manufacturer_step_obtained": false,
+      "envelope_mm": [5000, 12, 3.85],
+      "listed_operating_temperature_c": [-20, 40],
+      "underbody_thermal_suitability_verified": false
+    }
+  ],
+  "superseded_working_assumption": "Temporary 5 V addressable bench target mentioned before underbody-light research",
+  "pcb_routing_exists": false,
+  "erc_drc_completed": false,
+  "physical_vehicle_fit_verified": false,
+  "outdoor_mounting_positions_verified": false,
+  "outdoor_connectors_selected": false,
+  "parts_ordered": false,
+  "manufacturing_released": false,
+  "remaining_decisions": [
+    "Choose RGBW color zones or addressable animations and exact light variant",
+    "Choose pod count and independent zone count",
+    "Verify exact connector pinout and sample current before output-stage design",
+    "Obtain mounting-hole and cable-exit dimensions for bracket CAD"
+  ]
+}

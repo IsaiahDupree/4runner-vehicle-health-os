@@ -1,0 +1,14 @@
+{
+  "checked_at_utc": "2026-11-08T04:21:37.935450+00:00",
+  "research_records_parse": true,
+  "retained_source_hashes_verified": 5,
+  "reference_download_failure_retained": true,
+  "selection_and_release_status_consistent": true,
+  "repository_regression_checks": {
+    "domain_schemas_passed": 52,
+    "pytest_passed": 217,
+    "pytest_duration_seconds": 7.4
+  },
+  "new_research_record_is_a_domain_schema": false,
+  "electrical_or_mechanical_hardware_test_performed": false
+}

@@ -70,6 +70,13 @@ subject to seller/VIN confirmation. No purchase has been placed.
 The [updated PCB placement preview](pcb-preview/README.md) shows the proposed
 shield above the ShengYang board reference. It is not a routed electrical design.
 
+The subsequent [underbody LED comparison](led-selection/README.md) evaluates
+sealed rock-light pods and an addressable strip against the owner's outdoor
+mounting requirement. It recommends a DD7440 RGBW sample for evaluation; the
+light and interface remain unselected. RGBW requires four power channels per
+independent zone, so the earlier three-channel RGB or data-output concept is
+not a final output circuit.
+
 ## Electrical and mechanical arrangement
 
 ```mermaid

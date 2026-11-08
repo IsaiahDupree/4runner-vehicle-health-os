@@ -1,0 +1,84 @@
+{
+  "research_date_local": "2026-11-07",
+  "timezone": "America/New_York",
+  "asset_root": "/Users/isaiahdupree/Documents/Software/artifacts/4runner-underbody-led-research-2026-11-07",
+  "full_webpages_stored_outside_git": true,
+  "sources": [
+    {
+      "filename": "diode-dynamics-dd7440.html",
+      "url": "https://www.diodedynamics.com/stage-series-rgbw-led-rock-light-one.html",
+      "observed_at_utc": "2026-11-08T04:20:03.576413+00:00",
+      "status": "RETRIEVED",
+      "http_status": 200,
+      "final_url": "https://www.diodedynamics.com/stage-series-rgbw-led-rock-light-one.html",
+      "bytes": 360163,
+      "sha256": "61058a4ed1081cbb86a1515a19ae259d4559d1157ef72b06d4a3b591e3279f15"
+    },
+    {
+      "filename": "diode-dynamics-rgbw-controller.html",
+      "url": "https://www.diodedynamics.com/rgbw-bluetooth-controller.html",
+      "observed_at_utc": "2026-11-08T04:20:03.576710+00:00",
+      "status": "RETRIEVED",
+      "http_status": 200,
+      "final_url": "https://www.diodedynamics.com/rgbw-bluetooth-controller.html",
+      "bytes": 372058,
+      "sha256": "c34fa3a944314b24cb87332e380dd80b7a240199b732e175aabc7d359e1e4ed8"
+    },
+    {
+      "filename": "rhino-diamond-rgb.html",
+      "url": "https://rhinoledlights.com/index.php/products/usa-made-rgb-rock-light",
+      "observed_at_utc": "2026-11-08T04:20:03.576793+00:00",
+      "status": "RETRIEVED",
+      "http_status": 200,
+      "final_url": "https://rhinoledlights.com/index.php/products/usa-made-rgb-rock-light",
+      "bytes": 135358,
+      "sha256": "1002653df86cbf97c893f01dd3230649ccba0b2781dd79278ddb6631ef6f012d"
+    },
+    {
+      "filename": "sbl-rlk-manual.pdf",
+      "url": "https://www.superbrightleds.com/amfile/file/download/file/ye4SRnrTViQceniVjfUJYlvYZ0LF8NIx/product/235007/",
+      "observed_at_utc": "2026-11-08T04:20:04.186005+00:00",
+      "status": "RETRIEVED",
+      "http_status": 200,
+      "final_url": "https://www.superbrightleds.com/amfile/file/download/file/ye4SRnrTViQceniVjfUJYlvYZ0LF8NIx/product/235007/",
+      "bytes": 681464,
+      "sha256": "0ab151c02d0c7f993e758e7737f8761ad5991c256081dc3eaef12ed07ff3900a"
+    },
+    {
+      "filename": "btf-ws2815-ip68.html",
+      "url": "https://www.btf-lighting.com/en-intl/products/ip68-ws2815-addressable-rgb-led-strip",
+      "observed_at_utc": "2026-11-08T04:20:05.175081+00:00",
+      "status": "RETRIEVED",
+      "http_status": 200,
+      "final_url": "https://www.btf-lighting.com/en-intl/products/ip68-ws2815-addressable-rgb-led-strip",
+      "bytes": 831180,
+      "sha256": "e8058dd3315d76a780a5e1b7211d65cfb3c665624cc90a92aeb070850c08f813",
+      "page_open_graph_price_observation": {
+        "amount": 47.66,
+        "currency": "USD",
+        "checkout_verified": false
+      }
+    },
+    {
+      "filename": "te-deutsch-dt-catalog.pdf",
+      "url": "https://www.te.com/content/dam/te-com/documents/industrial-and-commercial-transportation/global/dt-inline-catalog.pdf",
+      "observed_at_utc": "2026-11-08T04:20:05.577665+00:00",
+      "status": "RETRIEVAL_FAILED",
+      "error": "HTTPError: HTTP Error 403: Forbidden"
+    }
+  ],
+  "source_limit": "Published manufacturer specifications; no purchased sample or physical qualification",
+  "search_index_observations": [
+    {
+      "url": "https://www.superbrightleds.com/vehicle-lights/off-road-lights?beam_fil=90430%2C117100&product_applica=124146",
+      "observed_via": "web search tool manufacturer listing excerpt",
+      "direct_fetch_status": "Repeated timeouts",
+      "prices_usd": {
+        "RLK-RGBW-6": 54.99,
+        "RLK-RGBW-8": 69.99,
+        "RLK-RGBW-12": 99.99
+      },
+      "checkout_verified": false
+    }
+  ]
+}
