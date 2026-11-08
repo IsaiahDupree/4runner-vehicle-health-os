@@ -1,0 +1,75 @@
+{
+  "contract": "vhos_console_cad_references_v1",
+  "recorded_at_utc": "2026-11-08T02:58:16.120176+00:00",
+  "units": "native STEP units interpreted by FreeCAD into mm, not filename assumptions",
+  "models": [
+    {
+      "name": "Molex_43045-0600.step",
+      "label": "Molex 43045-0600 right-angle PCB header",
+      "source_class": "public_repository_reference",
+      "download_url": "https://raw.githubusercontent.com/danbrunski/canary/8dbaa4b4534cad4a08cf70bfc700814ce5f32c76/hardware/canary-pwr-rev1.0/lib/3dmodels/Molex_Micro-Fit_3.0_43045-0600_2x03_P3.00mm_Horizontal.step",
+      "reference_url": "https://www.molex.com/en-us/products/part-detail/430450600",
+      "bytes": 185002,
+      "sha256": "6b5ec1174920d285f102c5a15611141b00bbca4e1b2e7c3a1e0b2cde67f5f884",
+      "authority_limit": "OpenCascade export with matching product name; manufacturer geometry lineage not established",
+      "physical_match_verified": false
+    },
+    {
+      "name": "Molex_43025-0600.stp",
+      "label": "Molex 43025-0600 cable housing",
+      "source_class": "public_mirror_reference",
+      "download_url": "https://raw.githubusercontent.com/vamoirid/Battery-Management-System-LTC6811-STM32/cbfc74c965ef9d69083b5adda7335d44274c2e58/BMS_PCB/3D%20Bodies/43025-0600_stp/430250600.stp",
+      "reference_url": "https://www.molex.com/en-us/products/part-detail/430250600",
+      "bytes": 185164,
+      "sha256": "4d406abac216d558e0a938267287f3bbc60afa9001d40f75dae379a1d0a37233",
+      "authority_limit": "Pro/ENGINEER file identifies 430250600; official download bytes unavailable for comparison",
+      "physical_match_verified": false
+    },
+    {
+      "name": "Molex_43030-0007.stp",
+      "label": "Molex 43030-0007 female crimp contact",
+      "source_class": "traceparts_public_mirror_reference",
+      "download_url": "https://raw.githubusercontent.com/ryancinsight/kwavers/4b5ced3115fb856ed498ae08da750c8ca25d5d1c/crates/kwavers-driver/docs/cad_models/185746181-659-0430300007/0430300007.stp",
+      "reference_url": "https://www.molex.com/en-us/products/part-detail/430300007",
+      "bytes": 224730,
+      "sha256": "2ccdbddd9a7ac49b4fce7382af4372f681dc0875654fef38c0a75d34b04b93a0",
+      "authority_limit": "AP242 header identifies TraceParts and 0430300007; crimped wire geometry not supplied",
+      "physical_match_verified": false
+    },
+    {
+      "name": "ESP32-S3-WROOM-1.step",
+      "label": "Espressif ESP32-S3-WROOM-1 module",
+      "source_class": "manufacturer_download",
+      "download_url": "https://www.espressif.com/sites/default/files/3dmodel/ESP32-S3-WROOM-1%203D%20Model.STEP",
+      "reference_url": "https://www.espressif.com/en/products/modules/esp32-s3-wroom-1-wroom-1u",
+      "bytes": 6225940,
+      "sha256": "02e192087a1a2268ccbe7bf667ef04884370fc76c994484bf85654dfa7407ef6",
+      "authority_limit": "Module only; not the DIYables UNO board, headers, USB or mounting pattern",
+      "physical_match_verified": false
+    },
+    {
+      "name": "ruthex_RX-M3x5_7.stp",
+      "label": "ruthex RX-M3x5.7 heat-set insert",
+      "source_class": "manufacturer_download",
+      "download_url": "https://cdn.shopify.com/s/files/1/0567/7019/9760/files/ruthex_RX-M3x5_7.stp?v=1621261355",
+      "reference_url": "https://www.ruthex.de/pages/cad-daten",
+      "bytes": 1257489,
+      "sha256": "3686e4730b18fa3f0a83585da28dc7eca70e5da21cedd3f75f3205c5ad11b917",
+      "authority_limit": "Correct standard M3x5.7 part; recommended hole still comes from manufacturer drawing and process coupon",
+      "physical_match_verified": false
+    },
+    {
+      "name": "Nexperia_SOT1205.step",
+      "label": "SOT1205 LFPAK56D package reference",
+      "source_class": "community_package_reference",
+      "download_url": "https://raw.githubusercontent.com/Merophy/enzyme/a3f2c7a949ae81638eee89f56c14f9281c0e66d3/kiCad-solids/SmallOutline/SOT1205.step",
+      "reference_url": "https://www.nexperia.com/packages/SOT1205",
+      "bytes": 296639,
+      "sha256": "347dcacef78f24eb96d8028b338326ecc3c191ca72997b9cc79412c2165f9ad4",
+      "authority_limit": "User Library model, not official Nexperia CAD; compare full package drawing before BUK9K12-60E layout",
+      "physical_match_verified": false
+    }
+  ],
+  "physical_fit_verified": false,
+  "manufacturing_released": false
+}

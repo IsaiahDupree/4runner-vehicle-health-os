@@ -1,0 +1,37 @@
+{
+  "manufacturer_pdf": {
+    "url": "https://www.farnell.com/datasheets/2554985.pdf",
+    "reference_page": "https://www.newark.com/molex/43045-0600/connector-header-6pos-2row-3mm/dp/56H9486",
+    "bytes": 176119,
+    "sha256": "f55bc2330028790742ae33efbddda61aa52ce6cf979dbf2f72e17e490ea8c025",
+    "pages": 1,
+    "annotations": [
+      {
+        "subtype": "/3D",
+        "has_3d_stream": true
+      }
+    ],
+    "attached_files": [],
+    "step_geometry_extracted": false
+  },
+  "diyables_wiring_asset": {
+    "name": "DIYables-ESP32-S3-Uno.fzpz",
+    "url": "https://diyables.io/download/fritzing/DIYables-ESP32-S3-Uno.fzpz",
+    "bytes": 11643,
+    "sha256": "4aa9a673345a8f15700b35f0b84851bcc28ad516791c3f9966f6e0d29b552ba5",
+    "files": [
+      "part.DIYables-ESP32-S3-Uno_1.fzp",
+      "svg.breadboard.DIYables-ESP32-S3-Uno_1_breadboard.svg",
+      "svg.schematic.DIYables-ESP32-S3-Uno_1_schematic.svg",
+      "svg.pcb.DIYables-ESP32-S3-Uno_1_pcb.svg"
+    ],
+    "mechanical_3d_model": false
+  },
+  "kicad_header_footprint": {
+    "name": "kicad_molex_43045-0600.kicad_mod",
+    "url": "https://gitlab.com/kicad/libraries/kicad-footprints/-/raw/master/Connector_Molex.pretty/Molex_Micro-Fit_3.0_43045-0600_2x03_P3.00mm_Horizontal.kicad_mod",
+    "bytes": 4754,
+    "sha256": "1189d97f82d7fb3431677e14c083aca02bb7d19cf70b3b44453348b7371d963d",
+    "native_erc_drc_verified": false
+  }
+}

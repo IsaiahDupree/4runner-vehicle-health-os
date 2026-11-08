@@ -1,0 +1,46 @@
+[
+  {
+    "name": "ruthex_RX-M3x5_7.stp",
+    "url": "https://cdn.shopify.com/s/files/1/0567/7019/9760/files/ruthex_RX-M3x5_7.stp?v=1621261355",
+    "final_url": "https://cdn.shopify.com/s/files/1/0567/7019/9760/files/ruthex_RX-M3x5_7.stp?v=1621261355",
+    "status": "downloaded",
+    "bytes": 1257489,
+    "sha256": "3686e4730b18fa3f0a83585da28dc7eca70e5da21cedd3f75f3205c5ad11b917"
+  },
+  {
+    "name": "430450600-legacy.zip",
+    "url": "https://www.molex.com/pdm_docs/stp/430450600_stp.zip",
+    "status": "TimeoutError",
+    "detail": "The read operation timed out"
+  },
+  {
+    "name": "430450600-modern.zip",
+    "url": "https://www.molex.com/content/dam/molex/molex-dot-com/products/automated/en-us/3dcadmodels/430/43045/430450600_stp.zip",
+    "status": "TimeoutError",
+    "detail": "The read operation timed out"
+  },
+  {
+    "name": "430250600-legacy.zip",
+    "url": "https://www.molex.com/pdm_docs/stp/430250600_stp.zip",
+    "status": "TimeoutError",
+    "detail": "The read operation timed out"
+  },
+  {
+    "name": "430250600-modern.zip",
+    "url": "https://www.molex.com/content/dam/molex/molex-dot-com/products/automated/en-us/3dcadmodels/430/43025/430250600_stp.zip",
+    "status": "TimeoutError",
+    "detail": "The read operation timed out"
+  },
+  {
+    "name": "430300007-legacy.zip",
+    "url": "https://www.molex.com/pdm_docs/stp/430300007_stp.zip",
+    "status": "TimeoutError",
+    "detail": "The read operation timed out"
+  },
+  {
+    "name": "430300007-modern.zip",
+    "url": "https://www.molex.com/content/dam/molex/molex-dot-com/products/automated/en-us/3dcadmodels/430/43030/430300007_stp.zip",
+    "status": "TimeoutError",
+    "detail": "The read operation timed out"
+  }
+]

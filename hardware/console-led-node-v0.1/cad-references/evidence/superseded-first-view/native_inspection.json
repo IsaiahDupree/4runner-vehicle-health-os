@@ -1,0 +1,152 @@
+{
+  "models": [
+    {
+      "name": "Molex_43045-0600.step",
+      "source_class": "public_repository_reference",
+      "valid": true,
+      "solids": 7,
+      "shells": 7,
+      "faces": 65,
+      "volume_mm3": 789.7529965300153,
+      "bounds_mm": [
+        -3.575,
+        -3.32,
+        -3.18,
+        9.575,
+        8.92,
+        9.4
+      ],
+      "size_mm": [
+        13.149999999999999,
+        12.24,
+        12.58
+      ],
+      "physical_match_verified": false,
+      "mesh_closed": true
+    },
+    {
+      "name": "Molex_43025-0600.stp",
+      "source_class": "public_mirror_reference",
+      "valid": true,
+      "solids": 1,
+      "shells": 1,
+      "faces": 150,
+      "volume_mm3": 751.8531435841493,
+      "bounds_mm": [
+        -4.93,
+        -4.0,
+        -6.7,
+        4.92,
+        10.0,
+        4.13
+      ],
+      "size_mm": [
+        9.85,
+        14.0,
+        10.83
+      ],
+      "physical_match_verified": false,
+      "mesh_closed": true
+    },
+    {
+      "name": "Molex_43030-0007.stp",
+      "source_class": "traceparts_public_mirror_reference",
+      "valid": true,
+      "solids": 5,
+      "shells": 5,
+      "faces": 71,
+      "volume_mm3": 15.548948460874245,
+      "bounds_mm": [
+        -1.68,
+        -1.10872073591441,
+        -11.31,
+        1.7182830413113002,
+        1.215000000000001,
+        0.0
+      ],
+      "size_mm": [
+        3.3982830413113003,
+        2.323720735914411,
+        11.31
+      ],
+      "physical_match_verified": false,
+      "mesh_closed": false
+    },
+    {
+      "name": "ESP32-S3-WROOM-1.step",
+      "source_class": "manufacturer_download",
+      "valid": true,
+      "solids": 234,
+      "shells": 235,
+      "faces": 3551,
+      "volume_mm3": 494.7472627997699,
+      "bounds_mm": [
+        -5.475939593804248e-14,
+        -5.3312253700185663e-17,
+        -6.938893903907228e-18,
+        18.000000000000004,
+        25.5,
+        3.1
+      ],
+      "size_mm": [
+        18.000000000000057,
+        25.5,
+        3.1
+      ],
+      "physical_match_verified": false,
+      "mesh_closed": false
+    },
+    {
+      "name": "ruthex_RX-M3x5_7.stp",
+      "source_class": "manufacturer_download",
+      "valid": true,
+      "solids": 1,
+      "shells": 1,
+      "faces": 313,
+      "volume_mm3": 39.70914204792421,
+      "bounds_mm": [
+        -2.40135424318431,
+        -2.39387667415909,
+        -5.86079204996931,
+        2.3,
+        2.37330862721755,
+        0.08721630351270919
+      ],
+      "size_mm": [
+        4.70135424318431,
+        4.7671853013766405,
+        5.9480083534820185
+      ],
+      "physical_match_verified": false,
+      "mesh_closed": true
+    },
+    {
+      "name": "Nexperia_SOT1205.step",
+      "source_class": "community_package_reference",
+      "valid": true,
+      "solids": 7,
+      "shells": 7,
+      "faces": 128,
+      "volume_mm3": 24.191719729082042,
+      "bounds_mm": [
+        -2.562500000000001,
+        -6.05,
+        -1.6874222112054316e-62,
+        2.562500000000001,
+        0.0,
+        1.05
+      ],
+      "size_mm": [
+        5.125000000000002,
+        6.05,
+        1.05
+      ],
+      "physical_match_verified": false,
+      "mesh_closed": false
+    }
+  ],
+  "units": "mm after native STEP import",
+  "geometry_repaired": false,
+  "catalog_only_not_installed_assembly": true,
+  "physical_fit_verified": false
+}

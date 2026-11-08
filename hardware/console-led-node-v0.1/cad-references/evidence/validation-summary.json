@@ -1,0 +1,21 @@
+{
+  "recorded_at_utc": "2026-11-08T03:09:29.162684+00:00",
+  "native_reference_count": 6,
+  "direct_manufacturer_step_count": 2,
+  "mirrored_or_community_step_count": 4,
+  "supporting_download_count": 3,
+  "contracts_valid": true,
+  "schema_count": 52,
+  "reference_verifier_passed": true,
+  "invalid_pinned_requests_rejected": 4,
+  "controller_cleaned_up": true,
+  "task_ssh_forward_closed": true,
+  "github_actions_enabled": false,
+  "cloud_cad_compute_used": false,
+  "pcb_or_case_geometry_changed": false,
+  "owned_board_or_toyota_plug_fit_verified": false,
+  "repository_tests": {
+    "result": "217 passed",
+    "duration_sec": 10.57
+  }
+}

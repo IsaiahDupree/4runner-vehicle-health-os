@@ -1,0 +1,9 @@
+# Vendor/library downloads stay in the local artifact bundle; track their hashes.
+inputs/
+*.step
+*.stp
+*.stl
+*.pdf
+*.fzpz
+*.FCStd
+*.png

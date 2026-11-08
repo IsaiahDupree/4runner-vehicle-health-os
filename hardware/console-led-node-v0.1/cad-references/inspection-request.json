@@ -1,0 +1,9 @@
+{
+  "job_type": "cad.vhos_console_reference_inspection",
+  "params": {
+    "expected_source_sha256": "6848e657308d1e8cbb0c77f1abdde5a135a149b024236b15a59825936aabb7fd",
+    "expected_manifest_sha256": "a45c12465da4d446faa8663f24703d3af1f2b4668a30da7bc10236fd16f0a242",
+    "research_only": true,
+    "timeout_sec": 360
+  }
+}

@@ -1,0 +1,117 @@
+{
+  "command_id": "cmd_05219739f570455080950aa7ab352f17",
+  "ok": true,
+  "result": {
+    "actor": "owner-task:4runner-cad-reference-collection",
+    "artifacts": [
+      {
+        "bytes": 472,
+        "name": "_native_entry.py",
+        "sha256": "2705b760020a7ccb8a2e8e45bba439973722c231bc8c256e27125bf9170af068"
+      },
+      {
+        "bytes": 5649,
+        "name": "_native_impl.py",
+        "sha256": "f81db99da8ddd8947e139265d11571be5d4bbc5e5dce740e1e5cf6a045d77fcb"
+      },
+      {
+        "bytes": 2399,
+        "name": "_render.py",
+        "sha256": "40e5436ae2815c31a9a84bfd09dd69bb29b0c4a3c89c88a3c3c8844367d6ee81"
+      },
+      {
+        "bytes": 765,
+        "name": "blender.log",
+        "sha256": "4bf2b57201b12666c22d6b0304b3015bac0bcfa1d512fb91ace3a514bf847afb"
+      },
+      {
+        "bytes": 0,
+        "name": "freecad.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 1959,
+        "name": "inspection-manifest.json",
+        "sha256": "396322f9c11ce548a79b37f1a1bded765fe05ffd9991828da5f892696accc1f4"
+      },
+      {
+        "bytes": 4992,
+        "name": "native_inspection.json",
+        "sha256": "3206fb0817bba3164a6b62652edfee751778ddf0b14b12a5933428aa724f7cc3"
+      },
+      {
+        "bytes": 22284,
+        "name": "reference_0.stl",
+        "sha256": "85e046463b3e28ef44caf8eb5713e8a03dfd52d6430fc2869e0a9ac2c21362ee"
+      },
+      {
+        "bytes": 68284,
+        "name": "reference_1.stl",
+        "sha256": "74284262f8d689d1fb4fdcf3b8c51c82b04dca787af0f196d7ce2398781d43d8"
+      },
+      {
+        "bytes": 261884,
+        "name": "reference_2.stl",
+        "sha256": "a5264e5a7313a8add0db5d460dbd2604ff80d860abe6aac15ee9177f2d1f608d"
+      },
+      {
+        "bytes": 2768584,
+        "name": "reference_3.stl",
+        "sha256": "5a906e943e4cfc68fefcecee5d27b1a42ce916319ebaba8e2ed1f7a6d0e8e3b3"
+      },
+      {
+        "bytes": 1548084,
+        "name": "reference_4.stl",
+        "sha256": "5833d414e20d93e60ac531eb1db9891c52331d6e3e762b0646977f4740026ecd"
+      },
+      {
+        "bytes": 114684,
+        "name": "reference_5.stl",
+        "sha256": "ca8e88fae39fd62d277d02d6c183fd380da2dd41c64c9522adf519c4c83b6f42"
+      },
+      {
+        "bytes": 735066,
+        "name": "reference_catalog.FCStd",
+        "sha256": "339f91809f72078b0251696f921305bc2cb0ba410248e644b3eaefddc27e6110"
+      },
+      {
+        "bytes": 1899987,
+        "name": "reference_catalog.png",
+        "sha256": "4427d57478d2345b63215fa6e290bbe3d3b793bf4d22e4bdbaf0dfd6280dfdc3"
+      }
+    ],
+    "command": [
+      "C:\\Users\\Isaia\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+      "-I",
+      "-B",
+      "C:\\orion\\projects\\vhos-console-cad-references-20261107\\inspect_models_job.py",
+      "--params",
+      "C:\\orion\\control\\vhos-console-cad-references-20261107\\modeling\\jobs\\mdl_4d21782ed4d04fc0\\params.json",
+      "--out",
+      "C:\\orion\\control\\vhos-console-cad-references-20261107\\modeling\\jobs\\mdl_4d21782ed4d04fc0\\out"
+    ],
+    "completed_at": "2026-11-08T03:06:26.270285+00:00",
+    "duration_sec": 7.9,
+    "error": null,
+    "exit_code": 0,
+    "job_dir": "C:\\orion\\control\\vhos-console-cad-references-20261107\\modeling\\jobs\\mdl_4d21782ed4d04fc0",
+    "job_id": "mdl_4d21782ed4d04fc0",
+    "job_type": "cad.vhos_console_reference_inspection",
+    "log_tail": "{\"status\": \"inspected\", \"models\": 6, \"physical_fit_verified\": false}\r\n",
+    "params": {
+      "expected_manifest_sha256": "a45c12465da4d446faa8663f24703d3af1f2b4668a30da7bc10236fd16f0a242",
+      "expected_source_sha256": "6848e657308d1e8cbb0c77f1abdde5a135a149b024236b15a59825936aabb7fd",
+      "research_only": true,
+      "timeout_sec": 360
+    },
+    "pid": 107460,
+    "queue": {
+      "queued": [],
+      "running": null
+    },
+    "started_at": "2026-11-08T03:06:18.392539+00:00",
+    "status": "succeeded",
+    "submitted_at": "2026-11-08T03:06:18.386011+00:00",
+    "updated_at": "2026-11-08T03:06:26.296075+00:00"
+  }
+}

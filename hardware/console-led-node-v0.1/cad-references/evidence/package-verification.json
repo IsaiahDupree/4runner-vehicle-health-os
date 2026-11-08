@@ -1,0 +1,9 @@
+{
+  "ok": true,
+  "reference_steps": 6,
+  "supporting_files": 3,
+  "orion_job_id": "mdl_4d21782ed4d04fc0",
+  "native_step_imports_valid": 6,
+  "source_and_artifact_hashes_verified": true,
+  "model_mating_or_physical_fit_claim": false
+}

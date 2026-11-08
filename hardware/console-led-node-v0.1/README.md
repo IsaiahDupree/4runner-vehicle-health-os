@@ -41,6 +41,10 @@ The complete candidate list, quantities and unresolved selection conditions are
 in [BOM.csv](BOM.csv). All electronic parts are research candidates, not a
 released fabrication BOM.
 
+The subsequent [component CAD collection](cad-references/README.md) records six
+downloaded STEP references, manufacturer versus community provenance, native
+Orion inspection and the remaining Toyota/full-controller model gaps.
+
 | Item | Concrete lead | What it establishes |
 | --- | --- | --- |
 | Console wiring assembly | **Toyota 82390-35010** | Dealer calls it Bulb Wire / Wiring Assembly Cigaret, center console. ToyotaPartsDeal lists 4.7 L 2UZ-FE compatibility. It may be only part of the lamp/socket loom; terminal population and both ends require a real product photo. [Dealer listing][toyota-harness], [secondary availability][harness-sale] |

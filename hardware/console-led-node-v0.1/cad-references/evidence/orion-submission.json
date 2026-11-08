@@ -1,0 +1,26 @@
+{
+  "command_id": "cmd_caedc370d933472cb24259e97c9148a4",
+  "ok": true,
+  "result": {
+    "actor": "owner-task:4runner-cad-reference-collection",
+    "artifacts": [],
+    "completed_at": null,
+    "error": null,
+    "exit_code": null,
+    "job_dir": "C:\\orion\\control\\vhos-console-cad-references-20261107\\modeling\\jobs\\mdl_4d21782ed4d04fc0",
+    "job_id": "mdl_4d21782ed4d04fc0",
+    "job_type": "cad.vhos_console_reference_inspection",
+    "params": {
+      "expected_manifest_sha256": "a45c12465da4d446faa8663f24703d3af1f2b4668a30da7bc10236fd16f0a242",
+      "expected_source_sha256": "6848e657308d1e8cbb0c77f1abdde5a135a149b024236b15a59825936aabb7fd",
+      "research_only": true,
+      "timeout_sec": 360
+    },
+    "pid": null,
+    "queue_position": 1,
+    "started_at": null,
+    "status": "queued",
+    "submitted_at": "2026-11-08T03:06:18.386011+00:00",
+    "updated_at": "2026-11-08T03:06:18.386011+00:00"
+  }
+}
