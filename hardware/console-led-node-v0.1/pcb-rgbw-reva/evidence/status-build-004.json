@@ -1,0 +1,77 @@
+{
+  "command_id": "cmd_3082d4df90cd4fcd8ae3acadf171e1ac",
+  "ok": true,
+  "result": {
+    "actor": "vhos-rgbw-shield",
+    "artifacts": [
+      {
+        "bytes": 471,
+        "name": "commands.json",
+        "sha256": "7c3c8fdc74005170f32199fad1f1bd6c3435e7aeab68ba8a665c3b58fa9a5396"
+      },
+      {
+        "bytes": 2640,
+        "name": "engineering-manifest.json",
+        "sha256": "dd768a34687c2334d0abdeca207de7e43a4a0419ff8db113d8a7e15211d8194e"
+      },
+      {
+        "bytes": 848,
+        "name": "native-build.log",
+        "sha256": "4e7d99d6c88a8cb2623bf1362d11577140e14e877ca317a7d3b6a0d8cb090203"
+      },
+      {
+        "bytes": 143,
+        "name": "sym-lib-table",
+        "sha256": "54cec4b0c4d04da8aa9067828f426b3b74cc17f7a82acaca3a2c07985df96cc8"
+      },
+      {
+        "bytes": 55638,
+        "name": "VHOS.kicad_sym",
+        "sha256": "67da6f03d50bdbf9e025a278948b714efbeb2b27af68a7aff58d086c3ee4054f"
+      },
+      {
+        "bytes": 2609,
+        "name": "vhos_rgbw_reva.kicad_pro",
+        "sha256": "441a12ee62c29fa3207ad1921f68a9f69bb3e909415e4e28de2d4379f9fac0b0"
+      },
+      {
+        "bytes": 158208,
+        "name": "vhos_rgbw_reva.kicad_sch",
+        "sha256": "0a7c603108f5b9062739d760c1026494a69deae1c52dda890abec2a6b29caf4b"
+      }
+    ],
+    "command": [
+      "C:\\Users\\Isaia\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+      "-I",
+      "-B",
+      "C:\\orion\\projects\\vhos-rgbw-shield-reva-20261107\\engineering_job.py",
+      "--params",
+      "C:\\orion\\control\\vhos-rgbw-shield-reva-20261107\\modeling\\jobs\\mdl_19c4f75ed6184930\\params.json",
+      "--out",
+      "C:\\orion\\control\\vhos-rgbw-shield-reva-20261107\\modeling\\jobs\\mdl_19c4f75ed6184930\\out"
+    ],
+    "completed_at": "2026-11-08T05:08:34.167854+00:00",
+    "duration_sec": 0.6,
+    "error": "runner exited 1:                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"C:\\orion\\projects\\vhos-rgbw-shield-reva-20261107\\engineering_job.py\", line 57, in run\r\n    call('native-build',[PYTHON,'-I','-B',ROOT/'native_pcb.py','build','--out',out])\r\n  File \"C:\\orion\\projects\\vhos-rgbw-shield-reva-20261107\\engineering_job.py\", line 55, in call\r\n    if result.returncode not in allowed:raise RuntimeError(name+' failed with '+str(result.returncode))\r\n                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nRuntimeError: native-build failed with 1\r\n",
+    "exit_code": 1,
+    "job_dir": "C:\\orion\\control\\vhos-rgbw-shield-reva-20261107\\modeling\\jobs\\mdl_19c4f75ed6184930",
+    "job_id": "mdl_19c4f75ed6184930",
+    "job_type": "pcb.vhos_rgbw_engineering",
+    "log_tail": "Traceback (most recent call last):\r\n  File \"C:\\orion\\projects\\vhos-rgbw-shield-reva-20261107\\engineering_job.py\", line 87, in <module>\r\n    if __name__=='__main__':main()\r\n                            ^^^^^^\r\n  File \"C:\\orion\\projects\\vhos-rgbw-shield-reva-20261107\\engineering_job.py\", line 86, in main\r\n    print(json.dumps(run(json.loads(a.params.read_text()),a.out.resolve())))\r\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"C:\\orion\\projects\\vhos-rgbw-shield-reva-20261107\\engineering_job.py\", line 57, in run\r\n    call('native-build',[PYTHON,'-I','-B',ROOT/'native_pcb.py','build','--out',out])\r\n  File \"C:\\orion\\projects\\vhos-rgbw-shield-reva-20261107\\engineering_job.py\", line 55, in call\r\n    if result.returncode not in allowed:raise RuntimeError(name+' failed with '+str(result.returncode))\r\n                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nRuntimeError: native-build failed with 1\r\n",
+    "params": {
+      "evaluation_only": true,
+      "expected_source_set_sha256": "9299ec45982b6a3c564e2e734940ec5bace62bb6e23c6524c5419c6368dceaa8",
+      "stage": "build",
+      "timeout_sec": 360
+    },
+    "pid": 103764,
+    "queue": {
+      "queued": [],
+      "running": null
+    },
+    "started_at": "2026-11-08T05:08:33.534393+00:00",
+    "status": "failed",
+    "submitted_at": "2026-11-08T05:08:33.526866+00:00",
+    "updated_at": "2026-11-08T05:08:34.188825+00:00"
+  }
+}

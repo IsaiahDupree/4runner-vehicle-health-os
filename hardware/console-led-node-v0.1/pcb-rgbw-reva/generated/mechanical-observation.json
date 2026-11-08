@@ -1,0 +1,104 @@
+{
+  "units": "mm",
+  "case_body_height_mm": 48,
+  "carrier_plate_thickness_mm": 2.4,
+  "tower_height_mm": 15,
+  "nominal_shield_top_z_mm": 29.0,
+  "checks": {
+    "exported_shield_vs_nominal_lower_components": {
+      "intersection_mm3": 0.0,
+      "minimum_distance_mm": 1.8546832613683646
+    },
+    "exported_shield_vs_revised_case": {
+      "intersection_mm3": 0.0,
+      "minimum_distance_mm": 5.9170600808171585
+    },
+    "exported_shield_vs_revised_lid": {
+      "intersection_mm3": 0.0,
+      "minimum_distance_mm": 9.515
+    },
+    "nominal_mating_plug_vs_original_lid": {
+      "intersection_mm3": 330.0,
+      "minimum_distance_mm": 0.0
+    },
+    "nominal_mating_plug_vs_revised_lid": {
+      "intersection_mm3": 0.0,
+      "minimum_distance_mm": 5.0
+    },
+    "nominal_mating_plug_vs_revised_case": {
+      "intersection_mm3": 0.0,
+      "minimum_distance_mm": 11.01635148313633
+    },
+    "estimated_usb_service_path_vs_revised_case": {
+      "intersection_mm3": 0.0,
+      "minimum_distance_mm": 1.200000000000001
+    },
+    "estimated_led_service_path_vs_revised_case": {
+      "intersection_mm3": 0.0,
+      "minimum_distance_mm": 3.0
+    },
+    "estimated_input_service_path_vs_revised_case": {
+      "intersection_mm3": 0.0,
+      "minimum_distance_mm": 2.0
+    },
+    "nominal_controller_vs_revised_carrier": {
+      "intersection_mm3": 0.0,
+      "minimum_distance_mm": 0.0
+    },
+    "exported_shield_vs_revised_carrier": {
+      "intersection_mm3": 0.0,
+      "minimum_distance_mm": 0.08999999999999986
+    },
+    "estimated_carrier_screw_heads_vs_towers": {
+      "intersection_mm3": 0.0,
+      "minimum_distance_mm": 0.0
+    },
+    "estimated_carrier_screw_heads_vs_nominal_controller": {
+      "intersection_mm3": 0.0,
+      "minimum_distance_mm": 0.6200000000000045
+    },
+    "lid_removed_screwdriver_1_vs_shield_components": {
+      "intersection_mm3": 0.0,
+      "minimum_distance_mm": 0.10000000000000142
+    },
+    "lid_removed_screwdriver_2_vs_shield_components": {
+      "intersection_mm3": 0.0,
+      "minimum_distance_mm": 0.10000000000000142
+    }
+  },
+  "printable_parts": [
+    {
+      "name": "case_base_rgbw_reva",
+      "valid": true,
+      "solids": 1,
+      "mesh_closed": true
+    },
+    {
+      "name": "case_lid_rgbw_reva",
+      "valid": true,
+      "solids": 1,
+      "mesh_closed": true
+    },
+    {
+      "name": "carrier_rgbw_reva",
+      "valid": true,
+      "solids": 1,
+      "mesh_closed": true
+    }
+  ],
+  "exported_native_step_valid": true,
+  "underlying_controller_geometry": "SPECIFICATION_AND_PHOTO_ESTIMATE",
+  "mating_plug_geometry": "ESTIMATED",
+  "service_states_sampled": [
+    "installed",
+    "lid_removed_vertical_screwdriver_access",
+    "straight_unplug_corridors"
+  ],
+  "continuous_service_sweep_verified": false,
+  "physical_fit_verified": false,
+  "rf_keepout_qualified": false,
+  "electrical_qualification": false,
+  "manufacturing_released": false,
+  "header_tail_length_must_be_verified": true,
+  "carrier_screw_head_geometry": "ESTIMATED 5.6mm diameter x 3.1mm height; no carrier washers; exact fastener selection pending"
+}

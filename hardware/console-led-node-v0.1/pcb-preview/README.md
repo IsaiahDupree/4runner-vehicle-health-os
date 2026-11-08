@@ -1,5 +1,9 @@
 # Updated shield placement preview
 
+This historical placement image is superseded by the [routed RGBW evaluation
+and native KiCad preview](../pcb-rgbw-reva/README.md). Its original files and
+receipts remain unchanged.
+
 ![Updated shield above the purple UNO-format ESP32-S3 reference](updated_shield_overview.png)
 
 This picture answers the owner's request for an updated PCB view. It is a

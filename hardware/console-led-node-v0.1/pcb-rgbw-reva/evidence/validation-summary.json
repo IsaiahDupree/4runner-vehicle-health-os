@@ -1,0 +1,18 @@
+{
+  "status": "pass",
+  "contract_schemas": 52,
+  "repository_tests_passed": 217,
+  "repository_test_duration_sec": 7.36,
+  "cad_reference_downloads_and_hashes": "pass",
+  "connector_reference_downloads_and_hashes": "pass",
+  "published_file_hashes_verified": 31,
+  "erc_findings": 0,
+  "drc_findings": 0,
+  "unconnected_items": 0,
+  "schematic_parity_findings": 0,
+  "actions_enabled": false,
+  "active_actions_runs": 0,
+  "manufacturing_released": false,
+  "physical_fit_verified": false,
+  "vehicle_connection_released": false
+}

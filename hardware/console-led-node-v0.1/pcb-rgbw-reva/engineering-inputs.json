@@ -1,0 +1,309 @@
+{
+  "contract": "vhos_rgbw_eval_reva_v1",
+  "headers": {
+    "source_class": "manufacturer_eagle_layout_reference",
+    "reference_part": "Arduino A000066 UNO R3, UNO-TH_Rev3e.brd",
+    "source_url": "https://docs.arduino.cc/static/6bb7a3ca51ebee82a252f60c0b418787/A000066-cad-files.zip",
+    "source_brd_sha256": "599de43d9f8a0e1474564f75c732b474fee696529cf7f0cb38ab2511b51261f3",
+    "source_origin": "Original EAGLE board origin; bottom-left board outline at (0,0); PCB top view, x right/y up",
+    "units": "mm",
+    "headers": [
+      {
+        "name": "IOL",
+        "count": 8,
+        "pads": [
+          {
+            "eagle_pad": "1",
+            "x_mm": 63.5,
+            "y_mm": 50.8
+          },
+          {
+            "eagle_pad": "2",
+            "x_mm": 60.96,
+            "y_mm": 50.8
+          },
+          {
+            "eagle_pad": "3",
+            "x_mm": 58.42,
+            "y_mm": 50.8
+          },
+          {
+            "eagle_pad": "4",
+            "x_mm": 55.88,
+            "y_mm": 50.8
+          },
+          {
+            "eagle_pad": "5",
+            "x_mm": 53.34,
+            "y_mm": 50.8
+          },
+          {
+            "eagle_pad": "6",
+            "x_mm": 50.8,
+            "y_mm": 50.8
+          },
+          {
+            "eagle_pad": "7",
+            "x_mm": 48.26,
+            "y_mm": 50.8
+          },
+          {
+            "eagle_pad": "8",
+            "x_mm": 45.72,
+            "y_mm": 50.8
+          }
+        ]
+      },
+      {
+        "name": "IOH",
+        "count": 10,
+        "pads": [
+          {
+            "eagle_pad": "1",
+            "x_mm": 41.656,
+            "y_mm": 50.8
+          },
+          {
+            "eagle_pad": "2",
+            "x_mm": 39.116,
+            "y_mm": 50.8
+          },
+          {
+            "eagle_pad": "3",
+            "x_mm": 36.576,
+            "y_mm": 50.8
+          },
+          {
+            "eagle_pad": "4",
+            "x_mm": 34.036,
+            "y_mm": 50.8
+          },
+          {
+            "eagle_pad": "5",
+            "x_mm": 31.496,
+            "y_mm": 50.8
+          },
+          {
+            "eagle_pad": "6",
+            "x_mm": 28.956,
+            "y_mm": 50.8
+          },
+          {
+            "eagle_pad": "7",
+            "x_mm": 26.416,
+            "y_mm": 50.8
+          },
+          {
+            "eagle_pad": "8",
+            "x_mm": 23.876,
+            "y_mm": 50.8
+          },
+          {
+            "eagle_pad": "9",
+            "x_mm": 21.336,
+            "y_mm": 50.8
+          },
+          {
+            "eagle_pad": "10",
+            "x_mm": 18.796,
+            "y_mm": 50.8
+          }
+        ]
+      },
+      {
+        "name": "AD",
+        "count": 6,
+        "pads": [
+          {
+            "eagle_pad": "1",
+            "x_mm": 50.8,
+            "y_mm": 2.54
+          },
+          {
+            "eagle_pad": "2",
+            "x_mm": 53.34,
+            "y_mm": 2.54
+          },
+          {
+            "eagle_pad": "3",
+            "x_mm": 55.88,
+            "y_mm": 2.54
+          },
+          {
+            "eagle_pad": "4",
+            "x_mm": 58.42,
+            "y_mm": 2.54
+          },
+          {
+            "eagle_pad": "5",
+            "x_mm": 60.96,
+            "y_mm": 2.54
+          },
+          {
+            "eagle_pad": "6",
+            "x_mm": 63.5,
+            "y_mm": 2.54
+          }
+        ]
+      },
+      {
+        "name": "POWER",
+        "count": 8,
+        "pads": [
+          {
+            "eagle_pad": "1",
+            "x_mm": 27.94,
+            "y_mm": 2.54
+          },
+          {
+            "eagle_pad": "2",
+            "x_mm": 30.48,
+            "y_mm": 2.54
+          },
+          {
+            "eagle_pad": "3",
+            "x_mm": 33.02,
+            "y_mm": 2.54
+          },
+          {
+            "eagle_pad": "4",
+            "x_mm": 35.56,
+            "y_mm": 2.54
+          },
+          {
+            "eagle_pad": "5",
+            "x_mm": 38.1,
+            "y_mm": 2.54
+          },
+          {
+            "eagle_pad": "6",
+            "x_mm": 40.64,
+            "y_mm": 2.54
+          },
+          {
+            "eagle_pad": "7",
+            "x_mm": 43.18,
+            "y_mm": 2.54
+          },
+          {
+            "eagle_pad": "8",
+            "x_mm": 45.72,
+            "y_mm": 2.54
+          }
+        ]
+      }
+    ],
+    "mounting_holes": [
+      {
+        "x_mm": 66.04,
+        "y_mm": 35.56,
+        "diameter_mm": 3.2
+      },
+      {
+        "x_mm": 66.04,
+        "y_mm": 7.62,
+        "diameter_mm": 3.2
+      },
+      {
+        "x_mm": 15.24,
+        "y_mm": 50.8,
+        "diameter_mm": 3.2
+      },
+      {
+        "x_mm": 13.97,
+        "y_mm": 2.54,
+        "diameter_mm": 3.2
+      }
+    ],
+    "authority_limit": "Official Arduino R3 reference only. Owned ESP32 board maker/revision, holes, header positions and component/antenna keepouts unconfirmed. This is not a released ESP32 shield.",
+    "physical_fit_verified": false
+  },
+  "working_target": {
+    "light": "DD7440 RGBW sample candidate",
+    "pods": 4,
+    "independent_zones": 1,
+    "led_common_positive": "External regulated/protected LED supply; no LED positive conductor on shield",
+    "m8_pinout_verified": false
+  },
+  "pcb": {
+    "width_with_mount_wing_mm": 78.58,
+    "height_mm": 53.34,
+    "thickness_mm": 1.6,
+    "layers": 2,
+    "copper_oz": 1,
+    "nominal_shield_pcb_bottom_above_controller_bottom_mm": 15,
+    "target_current_per_channel_a": 1.5,
+    "target_aggregate_led_return_a": 3.0,
+    "target_logic_output_a": 0.5
+  },
+  "source_limits": [
+    "Exact ShengYang header continuity and dimensional fit unmeasured",
+    "Toyota IR1 six-way mapping conditional",
+    "M8 pod pinout unverified",
+    "External LED supply protection not part of this shield",
+    "Surge, EMC, thermal and fault qualification pending"
+  ],
+  "assets": [
+    {
+      "name": "case_base.step",
+      "bytes": 92267,
+      "sha256": "ca13902cc02590ef08a5cd00ab7a08f9a3d0484fdd17d7e3fd722e58adfc3992"
+    },
+    {
+      "name": "case_lid.step",
+      "bytes": 18144,
+      "sha256": "ba0f7c9dac4e58cc2a29c36987c2c0b8b764cd694667f412b91584f311080c6f"
+    },
+    {
+      "name": "ESP32-S3-WROOM-1.step",
+      "bytes": 6225940,
+      "sha256": "02e192087a1a2268ccbe7bf667ef04884370fc76c994484bf85654dfa7407ef6"
+    }
+  ],
+  "case_geometry_mm": {
+    "width": 116.0,
+    "depth": 86.0,
+    "body_height": 42.0,
+    "wall": 2.4,
+    "floor": 3.0,
+    "lid": 3.0,
+    "outer_corner_radius": 4.0,
+    "ear_extension": 7.0,
+    "carrier_width": 90.0,
+    "carrier_depth": 62.0,
+    "carrier_thickness": 1.6,
+    "carrier_origin_x": 13.0,
+    "carrier_origin_y": 12.0,
+    "carrier_hole_inset": 5.0,
+    "carrier_standoff_height": 7.0,
+    "carrier_boss_diameter": 8.8,
+    "insert_pilot_diameter": 4.0,
+    "insert_pocket_depth": 6.7,
+    "screw_clearance_diameter": 3.2,
+    "lid_post_inset": 7.0,
+    "cable_slot_width": 12.0,
+    "cable_slot_depth": 8.0,
+    "controller_reserved_width": 72.0,
+    "controller_reserved_depth": 57.0,
+    "controller_reserved_height": 25.0
+  },
+  "pcb_input_connector_model": {
+    "name": "Molex_43045-0600.step",
+    "bytes": 185002,
+    "sha256": "6b5ec1174920d285f102c5a15611141b00bbca4e1b2e7c3a1e0b2cde67f5f884",
+    "source_class": "public_repository_reference",
+    "authority_limit": "Matching KiCad-named model; manufacturer lineage and physical match unverified",
+    "provenance": "../cad-references/reference-models.json"
+  },
+  "revision_geometry": {
+    "case_body_height_mm": 48,
+    "carrier_plate_thickness_mm": 2.4,
+    "shield_tower_diameters_mm": [
+      7,
+      8
+    ],
+    "shield_tower_height_mm": 15,
+    "lower_component_geometry": "Estimated topside only; actual board underside and retention unverified",
+    "carrier_hardware": "M3x6 socket heads without washers; estimated head envelope 5.6x3.1mm; exact fasteners pending"
+  }
+}

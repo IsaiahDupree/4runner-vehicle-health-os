@@ -1,0 +1,5 @@
+# Preserve Windows line endings for the published-file SHA-256 hashes.
+# The full artifact archive retains the untouched native exports.
+# A carriage return in a CRLF line ending is not trailing source whitespace.
+generated/** -text whitespace=cr-at-eol
+evidence/final-engineering-manifest.json -text whitespace=cr-at-eol

@@ -1,0 +1,254 @@
+[
+  {
+    "id": "VHOS_Connectors:Molex_Micro-Fit_3.0_43045-0600_2x03_P3.00mm_Horizontal",
+    "sha256": "07d1acc7daa5339473b01d86d9c4e078462ababb62c8d8fc16dbe2afa46b69bc"
+  },
+  {
+    "id": "VHOS_Connectors:PhoenixContact_MC_1,5_5-G-3.81_1x05_P3.81mm_Horizontal",
+    "sha256": "e0a16e64d30efd9190a73e47fbc6de2d0bf984f2a420690b4009b6840b962099"
+  },
+  {
+    "id": "Diode_SMD:D_SMA",
+    "sha256": "e2d049a54ef961e231eb8e7e769078a3c44feb8475a7bdafba01c6646a5144f3"
+  },
+  {
+    "id": "Diode_SMD:D_SMB",
+    "sha256": "9c05e7c89fdbe091e34239523a372eea056ffe3ad12d5526f5b49eaa25428579"
+  },
+  {
+    "id": "Capacitor_SMD:CP_Elec_6.3x5.8",
+    "sha256": "4ad900c0b3650a4a1d1db6c3fdc50090c218b0b67ef248cd4ec5d9972438eb3f"
+  },
+  {
+    "id": "Capacitor_SMD:C_1210_3225Metric",
+    "sha256": "c0c3dbbbe623e957a8ee6c0a36f432e06b10ff8bd79fc785bd13dea723a1f20c"
+  },
+  {
+    "id": "Capacitor_SMD:C_1210_3225Metric",
+    "sha256": "c0c3dbbbe623e957a8ee6c0a36f432e06b10ff8bd79fc785bd13dea723a1f20c"
+  },
+  {
+    "id": "Package_SO:HSOP-8-1EP_3.9x4.9mm_P1.27mm_EP2.41x3.1mm",
+    "sha256": "1e91134d34192594a437c8b9583e855134d0829d7536439e1a4488ca765ee896"
+  },
+  {
+    "id": "Inductor_SMD:L_Coilcraft_MSS1246T-XXX",
+    "sha256": "1440bde0ac796ddff51f77ccb1f5e3367ec58caded53b42fdc062e1631d768f4"
+  },
+  {
+    "id": "Resistor_SMD:R_0603_1608Metric",
+    "sha256": "03fc7902b2661df01b4d828fdb6eab9eddf974e7130ed2b98892607387a50c4b"
+  },
+  {
+    "id": "Resistor_SMD:R_0603_1608Metric",
+    "sha256": "03fc7902b2661df01b4d828fdb6eab9eddf974e7130ed2b98892607387a50c4b"
+  },
+  {
+    "id": "Resistor_SMD:R_0603_1608Metric",
+    "sha256": "03fc7902b2661df01b4d828fdb6eab9eddf974e7130ed2b98892607387a50c4b"
+  },
+  {
+    "id": "Resistor_SMD:R_0603_1608Metric",
+    "sha256": "03fc7902b2661df01b4d828fdb6eab9eddf974e7130ed2b98892607387a50c4b"
+  },
+  {
+    "id": "Resistor_SMD:R_0603_1608Metric",
+    "sha256": "03fc7902b2661df01b4d828fdb6eab9eddf974e7130ed2b98892607387a50c4b"
+  },
+  {
+    "id": "Resistor_SMD:R_0603_1608Metric",
+    "sha256": "03fc7902b2661df01b4d828fdb6eab9eddf974e7130ed2b98892607387a50c4b"
+  },
+  {
+    "id": "Capacitor_SMD:C_0603_1608Metric",
+    "sha256": "d45eebd5cb9faace255d4ec95a0f9484efde898359507b02e2ba9bbb3ef6d857"
+  },
+  {
+    "id": "Capacitor_SMD:C_0603_1608Metric",
+    "sha256": "d45eebd5cb9faace255d4ec95a0f9484efde898359507b02e2ba9bbb3ef6d857"
+  },
+  {
+    "id": "Capacitor_SMD:C_0603_1608Metric",
+    "sha256": "d45eebd5cb9faace255d4ec95a0f9484efde898359507b02e2ba9bbb3ef6d857"
+  },
+  {
+    "id": "Capacitor_SMD:C_1210_3225Metric",
+    "sha256": "c0c3dbbbe623e957a8ee6c0a36f432e06b10ff8bd79fc785bd13dea723a1f20c"
+  },
+  {
+    "id": "Capacitor_SMD:C_1210_3225Metric",
+    "sha256": "c0c3dbbbe623e957a8ee6c0a36f432e06b10ff8bd79fc785bd13dea723a1f20c"
+  },
+  {
+    "id": "Resistor_SMD:R_0603_1608Metric",
+    "sha256": "03fc7902b2661df01b4d828fdb6eab9eddf974e7130ed2b98892607387a50c4b"
+  },
+  {
+    "id": "Jumper:SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm",
+    "sha256": "2c57d7a1d9531e235440b9895e19c55ce210475b3020a4ab4e85bc49e47a5012"
+  },
+  {
+    "id": "Connector_PinSocket_2.54mm:PinSocket_1x08_P2.54mm_Vertical",
+    "sha256": "063882d49721ea89894fbed3131d3263fcc950275a0f581666f7651593aebce3"
+  },
+  {
+    "id": "Connector_PinSocket_2.54mm:PinSocket_1x10_P2.54mm_Vertical",
+    "sha256": "2846a28a129475a1b5c1ff2d44221f0e85d786721870ba036714f2383451bf04"
+  },
+  {
+    "id": "Connector_PinSocket_2.54mm:PinSocket_1x08_P2.54mm_Vertical",
+    "sha256": "063882d49721ea89894fbed3131d3263fcc950275a0f581666f7651593aebce3"
+  },
+  {
+    "id": "Connector_PinSocket_2.54mm:PinSocket_1x06_P2.54mm_Vertical",
+    "sha256": "6c1e17af04d5d504b0a121f37786681e0f741d7f3c68dd7820eaefe73651378e"
+  },
+  {
+    "id": "TestPoint:TestPoint_Pad_D1.0mm",
+    "sha256": "eb7c629059d07f6b09617273ed038a415763363e2db41669c0d65af6d34c05eb"
+  },
+  {
+    "id": "TestPoint:TestPoint_Pad_D1.0mm",
+    "sha256": "eb7c629059d07f6b09617273ed038a415763363e2db41669c0d65af6d34c05eb"
+  },
+  {
+    "id": "TestPoint:TestPoint_Pad_D1.0mm",
+    "sha256": "eb7c629059d07f6b09617273ed038a415763363e2db41669c0d65af6d34c05eb"
+  },
+  {
+    "id": "TestPoint:TestPoint_Pad_D1.0mm",
+    "sha256": "eb7c629059d07f6b09617273ed038a415763363e2db41669c0d65af6d34c05eb"
+  },
+  {
+    "id": "TestPoint:TestPoint_Pad_D1.0mm",
+    "sha256": "eb7c629059d07f6b09617273ed038a415763363e2db41669c0d65af6d34c05eb"
+  },
+  {
+    "id": "TestPoint:TestPoint_Pad_D1.0mm",
+    "sha256": "eb7c629059d07f6b09617273ed038a415763363e2db41669c0d65af6d34c05eb"
+  },
+  {
+    "id": "TestPoint:TestPoint_Pad_D1.0mm",
+    "sha256": "eb7c629059d07f6b09617273ed038a415763363e2db41669c0d65af6d34c05eb"
+  },
+  {
+    "id": "TestPoint:TestPoint_Pad_D1.0mm",
+    "sha256": "eb7c629059d07f6b09617273ed038a415763363e2db41669c0d65af6d34c05eb"
+  },
+  {
+    "id": "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm",
+    "sha256": "3c9b63198dd4dbf5e6c28c84702c29fad46a35103b821a19306c4ac888ad8e76"
+  },
+  {
+    "id": "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm",
+    "sha256": "3c9b63198dd4dbf5e6c28c84702c29fad46a35103b821a19306c4ac888ad8e76"
+  },
+  {
+    "id": "Capacitor_SMD:C_0603_1608Metric",
+    "sha256": "d45eebd5cb9faace255d4ec95a0f9484efde898359507b02e2ba9bbb3ef6d857"
+  },
+  {
+    "id": "Capacitor_SMD:C_0603_1608Metric",
+    "sha256": "d45eebd5cb9faace255d4ec95a0f9484efde898359507b02e2ba9bbb3ef6d857"
+  },
+  {
+    "id": "Capacitor_SMD:C_0603_1608Metric",
+    "sha256": "d45eebd5cb9faace255d4ec95a0f9484efde898359507b02e2ba9bbb3ef6d857"
+  },
+  {
+    "id": "Capacitor_SMD:C_0603_1608Metric",
+    "sha256": "d45eebd5cb9faace255d4ec95a0f9484efde898359507b02e2ba9bbb3ef6d857"
+  },
+  {
+    "id": "Resistor_SMD:R_0603_1608Metric",
+    "sha256": "03fc7902b2661df01b4d828fdb6eab9eddf974e7130ed2b98892607387a50c4b"
+  },
+  {
+    "id": "Package_TO_SOT_SMD:LFPAK56",
+    "sha256": "80fcf888e1383218375167bd02b9170b7ef3d8b1cd52bdbe9d4be3a7baad62f8"
+  },
+  {
+    "id": "Resistor_SMD:R_0603_1608Metric",
+    "sha256": "03fc7902b2661df01b4d828fdb6eab9eddf974e7130ed2b98892607387a50c4b"
+  },
+  {
+    "id": "Resistor_SMD:R_0603_1608Metric",
+    "sha256": "03fc7902b2661df01b4d828fdb6eab9eddf974e7130ed2b98892607387a50c4b"
+  },
+  {
+    "id": "Resistor_SMD:R_0603_1608Metric",
+    "sha256": "03fc7902b2661df01b4d828fdb6eab9eddf974e7130ed2b98892607387a50c4b"
+  },
+  {
+    "id": "Diode_SMD:D_SMB",
+    "sha256": "9c05e7c89fdbe091e34239523a372eea056ffe3ad12d5526f5b49eaa25428579"
+  },
+  {
+    "id": "Package_TO_SOT_SMD:LFPAK56",
+    "sha256": "80fcf888e1383218375167bd02b9170b7ef3d8b1cd52bdbe9d4be3a7baad62f8"
+  },
+  {
+    "id": "Resistor_SMD:R_0603_1608Metric",
+    "sha256": "03fc7902b2661df01b4d828fdb6eab9eddf974e7130ed2b98892607387a50c4b"
+  },
+  {
+    "id": "Resistor_SMD:R_0603_1608Metric",
+    "sha256": "03fc7902b2661df01b4d828fdb6eab9eddf974e7130ed2b98892607387a50c4b"
+  },
+  {
+    "id": "Resistor_SMD:R_0603_1608Metric",
+    "sha256": "03fc7902b2661df01b4d828fdb6eab9eddf974e7130ed2b98892607387a50c4b"
+  },
+  {
+    "id": "Diode_SMD:D_SMB",
+    "sha256": "9c05e7c89fdbe091e34239523a372eea056ffe3ad12d5526f5b49eaa25428579"
+  },
+  {
+    "id": "Package_TO_SOT_SMD:LFPAK56",
+    "sha256": "80fcf888e1383218375167bd02b9170b7ef3d8b1cd52bdbe9d4be3a7baad62f8"
+  },
+  {
+    "id": "Resistor_SMD:R_0603_1608Metric",
+    "sha256": "03fc7902b2661df01b4d828fdb6eab9eddf974e7130ed2b98892607387a50c4b"
+  },
+  {
+    "id": "Resistor_SMD:R_0603_1608Metric",
+    "sha256": "03fc7902b2661df01b4d828fdb6eab9eddf974e7130ed2b98892607387a50c4b"
+  },
+  {
+    "id": "Resistor_SMD:R_0603_1608Metric",
+    "sha256": "03fc7902b2661df01b4d828fdb6eab9eddf974e7130ed2b98892607387a50c4b"
+  },
+  {
+    "id": "Diode_SMD:D_SMB",
+    "sha256": "9c05e7c89fdbe091e34239523a372eea056ffe3ad12d5526f5b49eaa25428579"
+  },
+  {
+    "id": "Package_TO_SOT_SMD:LFPAK56",
+    "sha256": "80fcf888e1383218375167bd02b9170b7ef3d8b1cd52bdbe9d4be3a7baad62f8"
+  },
+  {
+    "id": "Resistor_SMD:R_0603_1608Metric",
+    "sha256": "03fc7902b2661df01b4d828fdb6eab9eddf974e7130ed2b98892607387a50c4b"
+  },
+  {
+    "id": "Resistor_SMD:R_0603_1608Metric",
+    "sha256": "03fc7902b2661df01b4d828fdb6eab9eddf974e7130ed2b98892607387a50c4b"
+  },
+  {
+    "id": "Resistor_SMD:R_0603_1608Metric",
+    "sha256": "03fc7902b2661df01b4d828fdb6eab9eddf974e7130ed2b98892607387a50c4b"
+  },
+  {
+    "id": "Diode_SMD:D_SMB",
+    "sha256": "9c05e7c89fdbe091e34239523a372eea056ffe3ad12d5526f5b49eaa25428579"
+  },
+  {
+    "id": "MountingHole:MountingHole_3.2mm_M3",
+    "sha256": "3853c52bba27d3e3e3e18db44a20dfb296eb9e6cd16ebf26fe4a96a2ee8add3b"
+  },
+  {
+    "id": "MountingHole:MountingHole_3.2mm_M3",
+    "sha256": "3853c52bba27d3e3e3e18db44a20dfb296eb9e6cd16ebf26fe4a96a2ee8add3b"
+  }
+]

@@ -1,5 +1,10 @@
 # Fit-check parts only
 
+The [RGBW Rev A case revision](pcb-rgbw-reva/README.md) has a 48 mm body and
+2.4 mm carrier. The dimensions and hardware below describe the original
+42 mm prototype. Both revisions remain unpowered fit studies; no printer
+dispatch or installation qualification is supplied.
+
 These files are original proposed geometry generated on Orion. They do not
 establish fit to the owned ESP32 board, Toyota connector or the console space.
 Use the parts unpowered for measurement. No G-code, slicer-project approval or

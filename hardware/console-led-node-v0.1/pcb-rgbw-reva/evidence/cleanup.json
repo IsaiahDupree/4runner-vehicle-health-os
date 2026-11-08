@@ -1,0 +1,11 @@
+{
+  "task_controller_pid": 109668,
+  "task_controller_stopped": true,
+  "main_controller_present_before": true,
+  "main_controller_present_after": true,
+  "main_controller_modified": false,
+  "local_tunnel_pids_stopped": [
+    77514
+  ],
+  "completed_job_id": "mdl_3ccf5c4e62e84ff1"
+}

@@ -1,0 +1,262 @@
+{
+  "command_id": "cmd_f5ae0cffc81f478c8d9f373b06be791f",
+  "ok": true,
+  "result": {
+    "actor": "vhos-rgbw-shield",
+    "artifacts": [
+      {
+        "bytes": 6212,
+        "name": "BOM-DRAFT.csv",
+        "sha256": "a7710ecf586a303ca1dfb85f018d14d354fe2f984bfd494d7080328ad5e95158"
+      },
+      {
+        "bytes": 30804,
+        "name": "circuit-design.json",
+        "sha256": "ed6fb86174815b6fc62625ff6be40ed189a22c0d50c129ec945cbff134dda0c0"
+      },
+      {
+        "bytes": 5532,
+        "name": "commands.json",
+        "sha256": "9b721f7a40d615a9051edad001210908db7a7bf10e4cface19f51ead7bab61e5"
+      },
+      {
+        "bytes": 199,
+        "name": "connectivity-reconciliation.json",
+        "sha256": "112556b1d7351953d5c50df54f07a819225bacfbae947fa029a36db586f3b312"
+      },
+      {
+        "bytes": 16734,
+        "name": "drc.json",
+        "sha256": "298c6269d32224ddf0133347fe6bb2eae73a55b104cff650ad04656b92ad4ca1"
+      },
+      {
+        "bytes": 198,
+        "name": "drc.log",
+        "sha256": "1c2c6fb95feb7d408d2f252158e62c26a01f818fa59615591b3a2834e6a51d2e"
+      },
+      {
+        "bytes": 7342,
+        "name": "dsn-rule-binding.json",
+        "sha256": "b945f7dca4b51dcaca38081405391c538b9e57441eb5b9b92ec150bc5e339787"
+      },
+      {
+        "bytes": 6350,
+        "name": "effective-netclasses.json",
+        "sha256": "e330e794dd02765949bbd2c0e0c513bade0e7becfb8b3184868dd8211aa6ef58"
+      },
+      {
+        "bytes": 9011,
+        "name": "engineering-manifest.json",
+        "sha256": "49d15e8e7a4644c6812f7cd566f1fd89229401463025c38d2e95163602f97d02"
+      },
+      {
+        "bytes": 1045,
+        "name": "erc.json",
+        "sha256": "9631f19a640573a28825cb6f2b4a2e6cce695bba6316ba8fd72e0fc866216ef0"
+      },
+      {
+        "bytes": 137,
+        "name": "erc.log",
+        "sha256": "a5231708540b8b4a675b33d51a4d07626df1489f2d1ad2af44fea31f36ebd51c"
+      },
+      {
+        "bytes": 8865,
+        "name": "footprint-sources.json",
+        "sha256": "0a8e5088849eebd32b360f15f61b6cd19edf8bf04dc4f7ca2df80da42241a132"
+      },
+      {
+        "bytes": 2374,
+        "name": "fp-lib-table",
+        "sha256": "d18e4ef789cefe7ec31719a21709c048b12ade81b5a07e0e1146dacee820b1e5"
+      },
+      {
+        "bytes": 1492,
+        "name": "native-build.log",
+        "sha256": "07626f40f04de8a85cc21da1ec92588c8a3345225da6583527f84e20bf54aeec"
+      },
+      {
+        "bytes": 641,
+        "name": "native-import.log",
+        "sha256": "9da246e12af49bbdccfa59608d51bb93cf2ca3cf9983577119816974e2b17541"
+      },
+      {
+        "bytes": 205,
+        "name": "native-toolchain.json",
+        "sha256": "909293dc83f2b27360878455ee036329a4b7b72989dbdee1f3ad98de53c77633"
+      },
+      {
+        "bytes": 484,
+        "name": "pcb-outline.json",
+        "sha256": "1336cc1f280e9ea54a585805e80b555d79b69e3fea7b24a23b9c90f506f98e22"
+      },
+      {
+        "bytes": 29678,
+        "name": "placed-identity.json",
+        "sha256": "373857f6289cba8bfcae9c0dc0174e51f52d2c342023fd7cc75f3f32a86c4431"
+      },
+      {
+        "bytes": 0,
+        "name": "reconcile-build.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 0,
+        "name": "reconcile-routed.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 33403,
+        "name": "route-identity.json",
+        "sha256": "0f83b9b24e2e7fee17e94232ec1b6d308b46715e007028210153f8ed6a22d38e"
+      },
+      {
+        "bytes": 17952,
+        "name": "router-result.json",
+        "sha256": "8198ae09961b832eed0bce72064719e63fa477f9755c36db2ac5fd7695fe234c"
+      },
+      {
+        "bytes": 2094,
+        "name": "router-state/freerouting.json",
+        "sha256": "f4a57a1b7280a9697e946af14b10ab7c64534bdda9bf26b51d04123a49dee5cf"
+      },
+      {
+        "bytes": 8616,
+        "name": "router.log",
+        "sha256": "c8a7e189cd7f1b555fbb4874363fb427d9d2055c774f782deaadf9ccd95ceb05"
+      },
+      {
+        "bytes": 0,
+        "name": "schematic-netlist.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 123,
+        "name": "schematic-pdf.log",
+        "sha256": "98129a17232b994591235c36053130de46d79c3000608738253b65f8825966cf"
+      },
+      {
+        "bytes": 101994,
+        "name": "schematic.net.xml",
+        "sha256": "13b90b6a8b80df14896ba0b5a4a60f0af3be49689a982089cd31362c9cf86d9a"
+      },
+      {
+        "bytes": 211411,
+        "name": "schematic.pdf",
+        "sha256": "d254159df42fc48364112f66dcef67e18c2cc32eab089b8dc66f70b5d530b6cd"
+      },
+      {
+        "bytes": 49881,
+        "name": "shield-native-export.dsn",
+        "sha256": "3a92025c93bae44ea759b936b2dc1327368207754990e81843b66ebcef2fc21f"
+      },
+      {
+        "bytes": 41663,
+        "name": "shield.dsn",
+        "sha256": "c9166683b6cd18312e2885e8dd1f44a76d6af3ac6a7c4c85501171ae8e5cd0fe"
+      },
+      {
+        "bytes": 30003,
+        "name": "shield.ses",
+        "sha256": "bcd12b0363ad1328ea48ae6fcb67b445d2d8369a7ab34e954f8c224b1097f4ae"
+      },
+      {
+        "bytes": 8556,
+        "name": "source/circuit.py",
+        "sha256": "7c992c427566f1f151df1128dd6bca58465d2c44797b8e554f39d68098eaa366"
+      },
+      {
+        "bytes": 7049,
+        "name": "source/engineering-inputs.json",
+        "sha256": "b71e32d83581efe0f7937ea0498c8f76f662f9135c08deb86efc88366c499b2d"
+      },
+      {
+        "bytes": 7484,
+        "name": "source/engineering_job.py",
+        "sha256": "3834bc179099de87804893930dd342c2c777fdd3b2ab8c8173edb09bafe3af91"
+      },
+      {
+        "bytes": 7763,
+        "name": "source/mechanical_audit.py",
+        "sha256": "986832d7ffa72fc76df668a2e5330e167db1fd64d15452b961851b6d59ced2ff"
+      },
+      {
+        "bytes": 21959,
+        "name": "source/native_pcb.py",
+        "sha256": "96a74bbe115e6079f8b76413b68c56a732981f94dad10b68c5857b3650df85f1"
+      },
+      {
+        "bytes": 3960,
+        "name": "source/run_isolated_engineering.py",
+        "sha256": "5e4701851492068195782433d552b754dbc88e3f89d2fbe9d588299fce93c808"
+      },
+      {
+        "bytes": 143,
+        "name": "sym-lib-table",
+        "sha256": "54cec4b0c4d04da8aa9067828f426b3b74cc17f7a82acaca3a2c07985df96cc8"
+      },
+      {
+        "bytes": 55622,
+        "name": "VHOS.kicad_sym",
+        "sha256": "f0f86f558c24cc6e83ba77f00d93ba474d10ce65a2eedb03bcdd45fa3f35962c"
+      },
+      {
+        "bytes": 7194,
+        "name": "VHOS_Connectors.pretty/Molex_Micro-Fit_3.0_43045-0600_2x03_P3.00mm_Horizontal.kicad_mod",
+        "sha256": "1fa7d1f082ea56f34b56d3c11f54247d6aad32a20d3bfdc04bc1fe80aa4b0231"
+      },
+      {
+        "bytes": 5974,
+        "name": "VHOS_Connectors.pretty/PhoenixContact_MC_1,5_5-G-3.81_1x05_P3.81mm_Horizontal.kicad_mod",
+        "sha256": "70dc13a3b146722abee5b876033d5d23a216422dc1bc96d0ad1841a027d4efef"
+      },
+      {
+        "bytes": 660162,
+        "name": "vhos_rgbw_reva.kicad_pcb",
+        "sha256": "6caa4c9c89c8aea1ddf06938e3abff66c0099fe1960301e39319dec5bbe15871"
+      },
+      {
+        "bytes": 2301,
+        "name": "vhos_rgbw_reva.kicad_prl",
+        "sha256": "356b6fb445726a02da2ec55887e83a2adb83a57c576b292088445c7d305a0df1"
+      },
+      {
+        "bytes": 2609,
+        "name": "vhos_rgbw_reva.kicad_pro",
+        "sha256": "441a12ee62c29fa3207ad1921f68a9f69bb3e909415e4e28de2d4379f9fac0b0"
+      },
+      {
+        "bytes": 158170,
+        "name": "vhos_rgbw_reva.kicad_sch",
+        "sha256": "ad1ea48736350fc88da05d999db9de7b255a91943a9ab774d3dd77a026f11a14"
+      }
+    ],
+    "command": [
+      "C:\\Users\\Isaia\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+      "-I",
+      "-B",
+      "C:\\orion\\projects\\vhos-rgbw-shield-reva-20261107\\engineering_job.py",
+      "--params",
+      "C:\\orion\\control\\vhos-rgbw-shield-reva-20261107\\modeling\\jobs\\mdl_a806ac15aa2e4b01\\params.json",
+      "--out",
+      "C:\\orion\\control\\vhos-rgbw-shield-reva-20261107\\modeling\\jobs\\mdl_a806ac15aa2e4b01\\out"
+    ],
+    "completed_at": "2026-11-08T05:28:56.960780+00:00",
+    "duration_sec": 65.8,
+    "error": null,
+    "exit_code": 0,
+    "job_dir": "C:\\orion\\control\\vhos-rgbw-shield-reva-20261107\\modeling\\jobs\\mdl_a806ac15aa2e4b01",
+    "job_id": "mdl_a806ac15aa2e4b01",
+    "job_type": "pcb.vhos_rgbw_engineering",
+    "params": {
+      "evaluation_only": true,
+      "expected_source_set_sha256": "db1be5cfa47b4fb1463cf9ed4597b6fc54e126d5601bfb10b67c2de1a02f3d85",
+      "stage": "route",
+      "timeout_sec": 360
+    },
+    "pid": 126180,
+    "started_at": "2026-11-08T05:27:51.152591+00:00",
+    "status": "succeeded",
+    "submitted_at": "2026-11-08T05:27:51.145064+00:00",
+    "updated_at": "2026-11-08T05:28:56.999786+00:00"
+  }
+}

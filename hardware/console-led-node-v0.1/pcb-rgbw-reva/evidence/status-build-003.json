@@ -1,0 +1,82 @@
+{
+  "command_id": "cmd_1c0786b3c7fc4354b20f94bcc98e46e6",
+  "ok": true,
+  "result": {
+    "actor": "vhos-rgbw-shield",
+    "artifacts": [
+      {
+        "bytes": 480,
+        "name": "commands.json",
+        "sha256": "dcf4da9fdb49e2be1343f9efd914482fbf101a9bf7cd73756a480755162d5a50"
+      },
+      {
+        "bytes": 2807,
+        "name": "engineering-manifest.json",
+        "sha256": "c9fe5a95c046603ea218229deaae62ee04697c837ed0a38c4fc3d761878c7b36"
+      },
+      {
+        "bytes": 26,
+        "name": "native-build.log",
+        "sha256": "e671d593a11b8f603049b44ddcd4688fe28df6b09b29c8c924d4f0d36c7331ee"
+      },
+      {
+        "bytes": 143,
+        "name": "sym-lib-table",
+        "sha256": "54cec4b0c4d04da8aa9067828f426b3b74cc17f7a82acaca3a2c07985df96cc8"
+      },
+      {
+        "bytes": 55638,
+        "name": "VHOS.kicad_sym",
+        "sha256": "67da6f03d50bdbf9e025a278948b714efbeb2b27af68a7aff58d086c3ee4054f"
+      },
+      {
+        "bytes": 2609,
+        "name": "vhos_rgbw_reva.kicad_pro",
+        "sha256": "441a12ee62c29fa3207ad1921f68a9f69bb3e909415e4e28de2d4379f9fac0b0"
+      },
+      {
+        "bytes": 158208,
+        "name": "vhos_rgbw_reva.kicad_sch",
+        "sha256": "0a7c603108f5b9062739d760c1026494a69deae1c52dda890abec2a6b29caf4b"
+      },
+      {
+        "bytes": 39,
+        "name": "~vhos_rgbw_reva.kicad_pro.lck",
+        "sha256": "a465bf33c209a1c8878d7639c1557d70ea99f1d8041ce29544786cb549e83c82"
+      }
+    ],
+    "command": [
+      "C:\\Users\\Isaia\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+      "-I",
+      "-B",
+      "C:\\orion\\projects\\vhos-rgbw-shield-reva-20261107\\engineering_job.py",
+      "--params",
+      "C:\\orion\\control\\vhos-rgbw-shield-reva-20261107\\modeling\\jobs\\mdl_f0217c0a26aa439b\\params.json",
+      "--out",
+      "C:\\orion\\control\\vhos-rgbw-shield-reva-20261107\\modeling\\jobs\\mdl_f0217c0a26aa439b\\out"
+    ],
+    "completed_at": "2026-11-08T05:07:26.899864+00:00",
+    "duration_sec": 3.3,
+    "error": "runner exited 1:        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"C:\\orion\\projects\\vhos-rgbw-shield-reva-20261107\\engineering_job.py\", line 57, in run\r\n    call('native-build',[PYTHON,'-I','-B',ROOT/'native_pcb.py','build','--out',out])\r\n  File \"C:\\orion\\projects\\vhos-rgbw-shield-reva-20261107\\engineering_job.py\", line 55, in call\r\n    if result.returncode not in allowed:raise RuntimeError(name+' failed with '+str(result.returncode))\r\n                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nRuntimeError: native-build failed with 3221225477\r\n",
+    "exit_code": 1,
+    "job_dir": "C:\\orion\\control\\vhos-rgbw-shield-reva-20261107\\modeling\\jobs\\mdl_f0217c0a26aa439b",
+    "job_id": "mdl_f0217c0a26aa439b",
+    "job_type": "pcb.vhos_rgbw_engineering",
+    "log_tail": "Traceback (most recent call last):\r\n  File \"C:\\orion\\projects\\vhos-rgbw-shield-reva-20261107\\engineering_job.py\", line 87, in <module>\r\n    if __name__=='__main__':main()\r\n                            ^^^^^^\r\n  File \"C:\\orion\\projects\\vhos-rgbw-shield-reva-20261107\\engineering_job.py\", line 86, in main\r\n    print(json.dumps(run(json.loads(a.params.read_text()),a.out.resolve())))\r\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"C:\\orion\\projects\\vhos-rgbw-shield-reva-20261107\\engineering_job.py\", line 57, in run\r\n    call('native-build',[PYTHON,'-I','-B',ROOT/'native_pcb.py','build','--out',out])\r\n  File \"C:\\orion\\projects\\vhos-rgbw-shield-reva-20261107\\engineering_job.py\", line 55, in call\r\n    if result.returncode not in allowed:raise RuntimeError(name+' failed with '+str(result.returncode))\r\n                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nRuntimeError: native-build failed with 3221225477\r\n",
+    "params": {
+      "evaluation_only": true,
+      "expected_source_set_sha256": "49ec8edff7d047ce74c8bad6e079409f1e5abae988e2a3bc5a09eee369d2dd53",
+      "stage": "build",
+      "timeout_sec": 360
+    },
+    "pid": 116076,
+    "queue": {
+      "queued": [],
+      "running": null
+    },
+    "started_at": "2026-11-08T05:07:23.633010+00:00",
+    "status": "failed",
+    "submitted_at": "2026-11-08T05:07:23.623190+00:00",
+    "updated_at": "2026-11-08T05:07:26.922254+00:00"
+  }
+}

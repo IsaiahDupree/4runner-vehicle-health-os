@@ -1,0 +1,35 @@
+{
+  "command_id": "cmd_aa67381f6c394008872a25b74b43c4d1",
+  "ok": true,
+  "result": {
+    "actor": "vhos-rgbw-shield",
+    "artifacts": [],
+    "command": [
+      "C:\\Users\\Isaia\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+      "-I",
+      "-B",
+      "C:\\orion\\projects\\vhos-rgbw-shield-reva-20261107\\engineering_job.py",
+      "--params",
+      "C:\\orion\\control\\vhos-rgbw-shield-reva-20261107\\modeling\\jobs\\mdl_a586187d4149455e\\params.json",
+      "--out",
+      "C:\\orion\\control\\vhos-rgbw-shield-reva-20261107\\modeling\\jobs\\mdl_a586187d4149455e\\out"
+    ],
+    "completed_at": null,
+    "error": null,
+    "exit_code": null,
+    "job_dir": "C:\\orion\\control\\vhos-rgbw-shield-reva-20261107\\modeling\\jobs\\mdl_a586187d4149455e",
+    "job_id": "mdl_a586187d4149455e",
+    "job_type": "pcb.vhos_rgbw_engineering",
+    "params": {
+      "evaluation_only": true,
+      "expected_source_set_sha256": "3bdfe39613602a1c41f22f5f6b964af20b1267121a8ddb394c182e0130b9a11c",
+      "stage": "route",
+      "timeout_sec": 360
+    },
+    "pid": 111372,
+    "started_at": "2026-11-08T05:13:57.172775+00:00",
+    "status": "cancelling",
+    "submitted_at": "2026-11-08T05:13:57.166487+00:00",
+    "updated_at": "2026-11-08T05:16:27.257362+00:00"
+  }
+}

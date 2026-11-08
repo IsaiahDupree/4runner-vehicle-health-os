@@ -1,5 +1,9 @@
 # ShengYang listing: D1 UNO ESP32-S3 N16R8 board reference
 
+Revision note: the subsequent [RGBW shield](../pcb-rgbw-reva/README.md) uses
+GPIO2/A0 for **white PWM**, superseding the optional A0 illumination-sense role
+below. The earlier GPIO CSV remains a historical proposal.
+
 The user's supplied product screenshot identifies the target as the **purple D1 UNO ESP32-S3 N16R8 / CH340 board sold by ShengYang**. This replaces the earlier DIYables brand assumption. It identifies the selected listing and visible layout; the actual board revision, electrical continuity and populated height have not been measured. No purchase is implied.
 
 The listing says 16 MB flash and N16R8. Espressif's corresponding WROOM-1-N16R8 part has 8 MB octal PSRAM, but the listing does not by itself verify an exact genuine WROOM module or its fitted memory. Retain those as part-selection claims until a hardware memory read and marking check.

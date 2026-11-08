@@ -1,0 +1,13 @@
+{
+  "actor": "vhos-rgbw-shield",
+  "request_id": "vhos-rgbw-build-001",
+  "params": {
+    "job_type": "pcb.vhos_rgbw_engineering",
+    "params": {
+      "expected_source_set_sha256": "1961d2f2df644041808f16a8cab6609ab31f46d8441baf54b4fd7f687a494f2a",
+      "stage": "build",
+      "timeout_sec": 300,
+      "evaluation_only": true
+    }
+  }
+}

@@ -1,0 +1,204 @@
+{
+  "tracks": [
+    {
+      "net": "/ACC_FUSED",
+      "minimum_width_mm": 0.8,
+      "required_minimum_mm": 0.8,
+      "total_length_mm": 15.485281374238571
+    },
+    {
+      "net": "/BST",
+      "minimum_width_mm": 0.25,
+      "required_minimum_mm": 0.25,
+      "total_length_mm": 3.9070815490432027
+    },
+    {
+      "net": "/DRV_B",
+      "minimum_width_mm": 0.25,
+      "required_minimum_mm": 0.25,
+      "total_length_mm": 42.45198993418832
+    },
+    {
+      "net": "/DRV_G",
+      "minimum_width_mm": 0.25,
+      "required_minimum_mm": 0.25,
+      "total_length_mm": 30.990185771132282
+    },
+    {
+      "net": "/DRV_R",
+      "minimum_width_mm": 0.25,
+      "required_minimum_mm": 0.25,
+      "total_length_mm": 33.84314337193552
+    },
+    {
+      "net": "/DRV_W",
+      "minimum_width_mm": 0.25,
+      "required_minimum_mm": 0.25,
+      "total_length_mm": 28.953037866999672
+    },
+    {
+      "net": "/ENABLE_REQ",
+      "minimum_width_mm": 0.25,
+      "required_minimum_mm": 0.25,
+      "total_length_mm": 68.39744570379855
+    },
+    {
+      "net": "/ESP_5V",
+      "minimum_width_mm": 0.25,
+      "required_minimum_mm": 0.25,
+      "total_length_mm": 5.18193000900063
+    },
+    {
+      "net": "/FB",
+      "minimum_width_mm": 0.25,
+      "required_minimum_mm": 0.25,
+      "total_length_mm": 15.910346822218337
+    },
+    {
+      "net": "/GATE_B",
+      "minimum_width_mm": 0.25,
+      "required_minimum_mm": 0.25,
+      "total_length_mm": 10.061645636230313
+    },
+    {
+      "net": "/GATE_G",
+      "minimum_width_mm": 0.25,
+      "required_minimum_mm": 0.25,
+      "total_length_mm": 9.607314881732556
+    },
+    {
+      "net": "/GATE_R",
+      "minimum_width_mm": 0.25,
+      "required_minimum_mm": 0.25,
+      "total_length_mm": 22.574091104252048
+    },
+    {
+      "net": "/GATE_W",
+      "minimum_width_mm": 0.25,
+      "required_minimum_mm": 0.25,
+      "total_length_mm": 5.145035713374682
+    },
+    {
+      "net": "/GND",
+      "minimum_width_mm": 0.25,
+      "required_minimum_mm": 0.25,
+      "total_length_mm": 64.17414232037554
+    },
+    {
+      "net": "/ISO_ILL1_N",
+      "minimum_width_mm": 0.25,
+      "required_minimum_mm": 0.25,
+      "total_length_mm": 20.42143462486435
+    },
+    {
+      "net": "/ISO_ILL1_P",
+      "minimum_width_mm": 0.25,
+      "required_minimum_mm": 0.25,
+      "total_length_mm": 15.65685424949238
+    },
+    {
+      "net": "/ISO_ILL2_N",
+      "minimum_width_mm": 0.25,
+      "required_minimum_mm": 0.25,
+      "total_length_mm": 23.262975421159158
+    },
+    {
+      "net": "/ISO_ILL2_P",
+      "minimum_width_mm": 0.25,
+      "required_minimum_mm": 0.25,
+      "total_length_mm": 26.96668861333458
+    },
+    {
+      "net": "/LED_B_NEG",
+      "minimum_width_mm": 1.0,
+      "required_minimum_mm": 1.0,
+      "total_length_mm": 48.959628550292635
+    },
+    {
+      "net": "/LED_G_NEG",
+      "minimum_width_mm": 1.0,
+      "required_minimum_mm": 1.0,
+      "total_length_mm": 29.766825551141924
+    },
+    {
+      "net": "/LED_R_NEG",
+      "minimum_width_mm": 1.0,
+      "required_minimum_mm": 1.0,
+      "total_length_mm": 36.36316378833927
+    },
+    {
+      "net": "/LED_W_NEG",
+      "minimum_width_mm": 1.0,
+      "required_minimum_mm": 1.0,
+      "total_length_mm": 43.00945190936491
+    },
+    {
+      "net": "/PGOOD",
+      "minimum_width_mm": 0.25,
+      "required_minimum_mm": 0.25,
+      "total_length_mm": 20.259066794086028
+    },
+    {
+      "net": "/PWM_B",
+      "minimum_width_mm": 0.25,
+      "required_minimum_mm": 0.25,
+      "total_length_mm": 49.121521448613215
+    },
+    {
+      "net": "/PWM_G",
+      "minimum_width_mm": 0.25,
+      "required_minimum_mm": 0.25,
+      "total_length_mm": 75.47846413302806
+    },
+    {
+      "net": "/PWM_R",
+      "minimum_width_mm": 0.25,
+      "required_minimum_mm": 0.25,
+      "total_length_mm": 72.28169947303522
+    },
+    {
+      "net": "/PWM_W",
+      "minimum_width_mm": 0.25,
+      "required_minimum_mm": 0.25,
+      "total_length_mm": 24.30274519890926
+    },
+    {
+      "net": "/RIPPLE",
+      "minimum_width_mm": 0.25,
+      "required_minimum_mm": 0.25,
+      "total_length_mm": 9.143560802999641
+    },
+    {
+      "net": "/RON",
+      "minimum_width_mm": 0.25,
+      "required_minimum_mm": 0.25,
+      "total_length_mm": 5.371650429449554
+    },
+    {
+      "net": "/SW",
+      "minimum_width_mm": 0.8,
+      "required_minimum_mm": 0.8,
+      "total_length_mm": 22.230202001340707
+    },
+    {
+      "net": "/UVLO",
+      "minimum_width_mm": 0.25,
+      "required_minimum_mm": 0.25,
+      "total_length_mm": 9.540341108078387
+    },
+    {
+      "net": "/V5_LOGIC",
+      "minimum_width_mm": 0.8,
+      "required_minimum_mm": 0.8,
+      "total_length_mm": 102.52965037158695
+    },
+    {
+      "net": "/VIN_PROT",
+      "minimum_width_mm": 0.8,
+      "required_minimum_mm": 0.8,
+      "total_length_mm": 40.47254008220861
+    }
+  ],
+  "ground_strategy": "0.25mm logic pad escapes plus F/B solid-connected pours; LED return ampacity unqualified",
+  "accepted_against_declared_minimums": true
+}

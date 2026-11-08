@@ -96,9 +96,11 @@ drawing or full installation CAD was obtained for these lights**.
 | BTF strip, exact IP68 listing | 5000 × 12 × 3.85 mm | Silicone envelope; mount and cable ends not included in this geometry |
 | Super Bright LEDs RLK | Not established | Do not invent a bracket footprint |
 
-Route the final output section after choosing the light interface. Current
-PCB files remain the earlier placement concept; no routing, ERC/DRC or
-physical-fit qualification was completed by this research step.
+This research step did not route a board or qualify physical fit. The subsequent
+[RGBW Rev A evaluation](../pcb-rgbw-reva/README.md) advances a four-channel
+draft around the DD7440 sample assumption and passes digital ERC/DRC checks.
+The pod interface and actual fit remain unverified; the candidate has not been
+purchased or physically selected.
 
 [dd-one]: https://www.diodedynamics.com/stage-series-rgbw-led-rock-light-one.html
 [dd-range]: https://www.diodedynamics.com/products/led-off-road-lights/rock-lights/rgbw.html

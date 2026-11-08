@@ -1,0 +1,14 @@
+{
+  "artifact_files_verified": 69,
+  "source_set_sha256": "25029bb9a81fa105229780fb70d00e5b40dbafd72781448c636327c758b8be7e",
+  "electrical_findings": {
+    "erc.json": 0,
+    "drc.json": 0
+  },
+  "digital_checks_clean": true,
+  "physical_fit_verified": false,
+  "manufacturing_released": false,
+  "nominal_interferences_mm3": {
+    "nominal_mating_plug_vs_original_lid": 330.0
+  }
+}

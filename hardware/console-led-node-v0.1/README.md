@@ -1,7 +1,14 @@
 # 2005 V8 4Runner console LED node — research and fit-check case
 
-Status: **connector identification pending; electrical design pending; case is a dimensional prototype**.
+Status: **routed RGBW evaluation draft; physical interfaces and vehicle qualification pending**.
 Owner task: 2026-11-07. No parts ordered, functional PCB fabricated, vehicle wiring changed, or printer started.
+
+The current [RGBW Rev A package](pcb-rgbw-reva/README.md) supplies native KiCad
+files, four PWM power channels, a protected logic-supply draft, a BOM and
+updated case parts. Its final Orion export has zero ERC/DRC findings and zero
+unfinished connections. Nominal CAD interference checks pass for the revised
+assembly. The Toyota plug, pod pinout, actual controller stack and RF fit still
+need physical verification. Earlier records below remain historical references.
 
 ![Orion-generated fit-check case, lid, carrier drill template and insert coupon](cad/case_overview.png)
 
@@ -67,8 +74,8 @@ $20.78 at Olathe and $14.86 with a stated 1–3 business day dispatch at
 ToyotaPartsDeal. These are page observations, excluding delivery/tax and
 subject to seller/VIN confirmation. No purchase has been placed.
 
-The [updated PCB placement preview](pcb-preview/README.md) shows the proposed
-shield above the ShengYang board reference. It is not a routed electrical design.
+The [earlier placement preview](pcb-preview/README.md) is superseded by the
+[routed RGBW draft and native preview](pcb-rgbw-reva/README.md).
 
 The subsequent [underbody LED comparison](led-selection/README.md) evaluates
 sealed rock-light pods and an addressable strip against the owner's outdoor
@@ -143,8 +150,9 @@ The proposed custom carrier is **90 × 62 × 1.6 mm**, with an **80 × 52 mm**
 mount-hole rectangle. Its interface is our design, not a measured UNO hole
 pattern. The separate controller envelope **72 × 57 × 25 mm** is an informed
 estimate and leaves 5.4 mm nominal ceiling space; it does not prove clearance
-for the actual shield, USB plugs, wiring or the RF antenna. No functional KiCad
-board or Gerbers are supplied.
+for the actual shield, USB plugs, wiring or the RF antenna. This original case
+package predates the native KiCad files in the RGBW Rev A revision. No Gerbers
+or vehicle/fabrication release are supplied.
 
 Download/inspect these files under [cad/](cad/):
 
@@ -173,7 +181,7 @@ authenticated, single-job Orion controller; the installed service was not
 modified or restarted. Slicing/printing was not attempted with that stale
 profile. No cloud compute or GitHub Actions was used.
 
-## Information needed to finish the actual PCB and installation
+## Information needed to qualify the PCB and installation
 
 1. Confirm which photographed plug is the target. Retain a straight-on mating
    face photo with latch orientation, a rear-wire photo and every molded number.

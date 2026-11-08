@@ -1,0 +1,26 @@
+{
+  "command_id": "cmd_323e57df8f5946dda7d3b72e5d0296a6",
+  "ok": true,
+  "result": {
+    "actor": "vhos-rgbw-shield",
+    "artifacts": [],
+    "completed_at": null,
+    "error": null,
+    "exit_code": null,
+    "job_dir": "C:\\orion\\control\\vhos-rgbw-shield-reva-20261107\\modeling\\jobs\\mdl_eabfb9b605e74e16",
+    "job_id": "mdl_eabfb9b605e74e16",
+    "job_type": "pcb.vhos_rgbw_engineering",
+    "params": {
+      "evaluation_only": true,
+      "expected_source_set_sha256": "d270e8aed50ace3be124a85b771a29076bf2c9ac624633d06bb0996308f66481",
+      "stage": "finish",
+      "timeout_sec": 900
+    },
+    "pid": null,
+    "queue_position": 1,
+    "started_at": null,
+    "status": "queued",
+    "submitted_at": "2026-11-08T05:37:44.030076+00:00",
+    "updated_at": "2026-11-08T05:37:44.030076+00:00"
+  }
+}

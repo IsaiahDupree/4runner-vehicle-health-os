@@ -1,0 +1,247 @@
+{
+  "command_id": "cmd_a62c3e1c7a154aedae464641d9bea9b1",
+  "ok": true,
+  "result": {
+    "actor": "vhos-rgbw-shield",
+    "artifacts": [
+      {
+        "bytes": 6217,
+        "name": "BOM-DRAFT.csv",
+        "sha256": "01954c404f1fc90cbdda285ff48d49e6e23c9c982b8c07e074af349d726bf66d"
+      },
+      {
+        "bytes": 30606,
+        "name": "circuit-design.json",
+        "sha256": "4ebce226c2e33c90d82398e04484fb2e30d01bb4ccf3d277ce42272cb85825a3"
+      },
+      {
+        "bytes": 5481,
+        "name": "commands.json",
+        "sha256": "625c8f065955c4ccf01ce889a9979a91548c84e552ea9a9ada14767ad262dc1f"
+      },
+      {
+        "bytes": 199,
+        "name": "connectivity-reconciliation.json",
+        "sha256": "112556b1d7351953d5c50df54f07a819225bacfbae947fa029a36db586f3b312"
+      },
+      {
+        "bytes": 81566,
+        "name": "drc.json",
+        "sha256": "dd32cb7493f8831492f38c46a6d03f90946463a327ea403269a51ebaa8850a89"
+      },
+      {
+        "bytes": 199,
+        "name": "drc.log",
+        "sha256": "a60ac15cc516cf23ca6596d3620f8a8bdb6cc922fb68c50401cd71786e256274"
+      },
+      {
+        "bytes": 6350,
+        "name": "effective-netclasses.json",
+        "sha256": "e330e794dd02765949bbd2c0e0c513bade0e7becfb8b3184868dd8211aa6ef58"
+      },
+      {
+        "bytes": 8232,
+        "name": "engineering-manifest.json",
+        "sha256": "b89f3aec4eef29163de2056ad59608b40b03c8c1b82ce0bbfc624959af9f04bb"
+      },
+      {
+        "bytes": 1045,
+        "name": "erc.json",
+        "sha256": "cba318e11ef28b3a987f07ee526b22d7c002fa86c77178180fece39266b915b0"
+      },
+      {
+        "bytes": 137,
+        "name": "erc.log",
+        "sha256": "b3c03a4c5eb270d5b9672156b920cda7e88730b914b84ff011707c3bf4fa9d02"
+      },
+      {
+        "bytes": 8870,
+        "name": "footprint-sources.json",
+        "sha256": "497feedefb6c8c40a1e2ac2e3e51002393613288e46c753e382606ee3e304992"
+      },
+      {
+        "bytes": 2226,
+        "name": "fp-lib-table",
+        "sha256": "594731aaeb26766c9a7ef135c2c62c8bc6ffe1437b2cc3ddd11c40b064223f38"
+      },
+      {
+        "bytes": 1492,
+        "name": "native-build.log",
+        "sha256": "07626f40f04de8a85cc21da1ec92588c8a3345225da6583527f84e20bf54aeec"
+      },
+      {
+        "bytes": 641,
+        "name": "native-import.log",
+        "sha256": "9da246e12af49bbdccfa59608d51bb93cf2ca3cf9983577119816974e2b17541"
+      },
+      {
+        "bytes": 205,
+        "name": "native-toolchain.json",
+        "sha256": "909293dc83f2b27360878455ee036329a4b7b72989dbdee1f3ad98de53c77633"
+      },
+      {
+        "bytes": 484,
+        "name": "pcb-outline.json",
+        "sha256": "1336cc1f280e9ea54a585805e80b555d79b69e3fea7b24a23b9c90f506f98e22"
+      },
+      {
+        "bytes": 29683,
+        "name": "placed-identity.json",
+        "sha256": "e649dbc03d031fb175403341b2ac62c7df95f6c05ca88bd6615c7754b419b63f"
+      },
+      {
+        "bytes": 0,
+        "name": "reconcile-build.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 0,
+        "name": "reconcile-routed.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 33408,
+        "name": "route-identity.json",
+        "sha256": "550f6991dcf3aea55c809cdaa629c1cbec2271afa7897dd7ee5db6bbc54b4de6"
+      },
+      {
+        "bytes": 17907,
+        "name": "router-result.json",
+        "sha256": "e698f8386d6b23da84e7407658f3755ce3a8f3206d25cf53dfb24d6afc406a43"
+      },
+      {
+        "bytes": 2094,
+        "name": "router-state/freerouting.json",
+        "sha256": "c8e3e186d1b5a066b04af853dda13c929051102cd97667108c82868e605a61ad"
+      },
+      {
+        "bytes": 7938,
+        "name": "router.log",
+        "sha256": "bd15e6c2b04a9431b69d52f8921fb3cf8f42a9986ab7b3a90addc9441fe72e7e"
+      },
+      {
+        "bytes": 0,
+        "name": "schematic-netlist.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 123,
+        "name": "schematic-pdf.log",
+        "sha256": "67898b4572e13380e0137bcbdeb9a28dfd06d4a9446e841e3893a29ad48ccdb1"
+      },
+      {
+        "bytes": 102009,
+        "name": "schematic.net.xml",
+        "sha256": "07d22067c2e8638a9847a7511b2ee6c818bd49693ef29b37c2a9b2af2d092161"
+      },
+      {
+        "bytes": 211416,
+        "name": "schematic.pdf",
+        "sha256": "e2324bfdf082d9e85e8e4ffa7793077d4b46696ddd000b2ccf17ed3eafb5081b"
+      },
+      {
+        "bytes": 49882,
+        "name": "shield.dsn",
+        "sha256": "5a3f514867f90eae40c05a7d4c2140d4edc3ccd2eba16e9a664878d72fcb4b83"
+      },
+      {
+        "bytes": 26799,
+        "name": "shield.ses",
+        "sha256": "bb36869c88dc102c3bcbf16ebd6bf24f4b7443369c18efff88785f2fd29b3e45"
+      },
+      {
+        "bytes": 8556,
+        "name": "source/circuit.py",
+        "sha256": "d23002dbedfc50f00e6fc7629e1c7196dcca442f32180cda5ba295ca511ada78"
+      },
+      {
+        "bytes": 7049,
+        "name": "source/engineering-inputs.json",
+        "sha256": "b71e32d83581efe0f7937ea0498c8f76f662f9135c08deb86efc88366c499b2d"
+      },
+      {
+        "bytes": 7424,
+        "name": "source/engineering_job.py",
+        "sha256": "850bfc8387059a253324eebe01e3618d81539f3f4ed5a362712328ca73ee1323"
+      },
+      {
+        "bytes": 7763,
+        "name": "source/mechanical_audit.py",
+        "sha256": "986832d7ffa72fc76df668a2e5330e167db1fd64d15452b961851b6d59ced2ff"
+      },
+      {
+        "bytes": 19359,
+        "name": "source/native_pcb.py",
+        "sha256": "fe10f96fed1f6b28b6bdbb30ccae7f0ceb3166b583c61548f03f1e74ae3998a9"
+      },
+      {
+        "bytes": 3960,
+        "name": "source/run_isolated_engineering.py",
+        "sha256": "5e4701851492068195782433d552b754dbc88e3f89d2fbe9d588299fce93c808"
+      },
+      {
+        "bytes": 143,
+        "name": "sym-lib-table",
+        "sha256": "54cec4b0c4d04da8aa9067828f426b3b74cc17f7a82acaca3a2c07985df96cc8"
+      },
+      {
+        "bytes": 55627,
+        "name": "VHOS.kicad_sym",
+        "sha256": "9286e3b119fa107f93db6dbb1dca527f3f1a5105fbaaf59062c6748ea27c14d2"
+      },
+      {
+        "bytes": 646814,
+        "name": "vhos_rgbw_reva.kicad_pcb",
+        "sha256": "bb2a7817d9a7301c9ced17ee55342157e05efbf60255643fa6b810c882f4ece2"
+      },
+      {
+        "bytes": 2301,
+        "name": "vhos_rgbw_reva.kicad_prl",
+        "sha256": "356b6fb445726a02da2ec55887e83a2adb83a57c576b292088445c7d305a0df1"
+      },
+      {
+        "bytes": 2609,
+        "name": "vhos_rgbw_reva.kicad_pro",
+        "sha256": "441a12ee62c29fa3207ad1921f68a9f69bb3e909415e4e28de2d4379f9fac0b0"
+      },
+      {
+        "bytes": 158180,
+        "name": "vhos_rgbw_reva.kicad_sch",
+        "sha256": "43459ff951995a19784ca122a3ad84f9e61dfb3137e39f2bb01d5dddf80ff689"
+      }
+    ],
+    "command": [
+      "C:\\Users\\Isaia\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+      "-I",
+      "-B",
+      "C:\\orion\\projects\\vhos-rgbw-shield-reva-20261107\\engineering_job.py",
+      "--params",
+      "C:\\orion\\control\\vhos-rgbw-shield-reva-20261107\\modeling\\jobs\\mdl_018257e2e3644a3d\\params.json",
+      "--out",
+      "C:\\orion\\control\\vhos-rgbw-shield-reva-20261107\\modeling\\jobs\\mdl_018257e2e3644a3d\\out"
+    ],
+    "completed_at": "2026-11-08T05:19:55.720455+00:00",
+    "duration_sec": 29.0,
+    "error": null,
+    "exit_code": 0,
+    "job_dir": "C:\\orion\\control\\vhos-rgbw-shield-reva-20261107\\modeling\\jobs\\mdl_018257e2e3644a3d",
+    "job_id": "mdl_018257e2e3644a3d",
+    "job_type": "pcb.vhos_rgbw_engineering",
+    "log_tail": "{\"stage\": \"route\", \"engineering_status\": \"EVALUATION_ONLY\", \"manufacturing_released\": false}\r\n",
+    "params": {
+      "evaluation_only": true,
+      "expected_source_set_sha256": "f814e0a9612b4dbf75dd5994e098db24dccf1aa1e7ba7f3f7c7c60385d282037",
+      "stage": "route",
+      "timeout_sec": 360
+    },
+    "pid": 83608,
+    "queue": {
+      "queued": [],
+      "running": null
+    },
+    "started_at": "2026-11-08T05:19:26.763639+00:00",
+    "status": "succeeded",
+    "submitted_at": "2026-11-08T05:19:26.756838+00:00",
+    "updated_at": "2026-11-08T05:19:55.758857+00:00"
+  }
+}

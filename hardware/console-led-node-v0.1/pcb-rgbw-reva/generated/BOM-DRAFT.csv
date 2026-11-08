@@ -1,0 +1,64 @@
+ref,value,mpn,footprint,note
+J1,CONSOLE_BRANCH_ONLY,43045-0600,VHOS_Connectors:Molex_Micro-Fit_3.0_43045-0600_2x03_P3.00mm_Horizontal,Conditional adapter map; exact Toyota cavities remain unverified. External branch fuse required.
+J2,R- G- B- W- LED_GND,1803303,"VHOS_Connectors:PhoenixContact_MC_1,5_5-G-3.81_1x05_P3.81mm_Horizontal","Dry-cabin connector. Common LED positive is supplied externally, outside PCB. Mate 1803604."
+D1,STPS2H100AY,STPS2H100AY,Diode_SMD:D_SMA,Series reverse-battery diode; surge/fuse coordination unqualified
+D2,SMBJ24A,SMBJ24A,Diode_SMD:D_SMB,Logic input clamp candidate; not a complete load-dump qualification
+C1,10u 63V EEEFK1J100P,EEEFK1J100P,Capacitor_SMD:CP_Elec_6.3x5.8,"Polar bulk damping candidate; manufacturer 6.3mm diameter, 5.8mm body height. Cable-response/ripple validation pending."
+C2,2.2u 100V X7R,CGA6N3X7R2A225K230AB,Capacitor_SMD:C_1210_3225Metric,
+C3,2.2u 100V X7R,CGA6N3X7R2A225K230AB,Capacitor_SMD:C_1210_3225Metric,
+U1,LM5164QDDARQ1,LM5164QDDARQ1,Package_SO:HSOP-8-1EP_3.9x4.9mm_P1.27mm_EP2.41x3.1mm,"5V logic only; target 0.5A evaluation load, thermal and transient tests pending"
+L1,68u MSS1246T-683MLC,MSS1246T-683MLC,Inductor_SMD:L_Coilcraft_MSS1246T-XXX,
+R1,41.2k,,Resistor_SMD:R_0603_1608Metric,"1%, final orderable manufacturer suffix pending"
+R2,1M,,Resistor_SMD:R_0603_1608Metric,"1%, final orderable manufacturer suffix pending"
+R3,221k,,Resistor_SMD:R_0603_1608Metric,"1%, final orderable manufacturer suffix pending"
+R4,158k,,Resistor_SMD:R_0603_1608Metric,"1%, final orderable manufacturer suffix pending"
+R5,49.9k,,Resistor_SMD:R_0603_1608Metric,"1%, final orderable manufacturer suffix pending"
+R6,150k,,Resistor_SMD:R_0603_1608Metric,"1%, final orderable manufacturer suffix pending"
+C4,2.2n 50V X7R,,Capacitor_SMD:C_0603_1608Metric,
+C5,3.3n 50V X7R,,Capacitor_SMD:C_0603_1608Metric,
+C6,180p C0G,,Capacitor_SMD:C_0603_1608Metric,
+C7,22u 25V X7R,TMK325B7226KMHT,Capacitor_SMD:C_1210_3225Metric,
+C8,22u 25V X7R,TMK325B7226KMHT,Capacitor_SMD:C_1210_3225Metric,
+R7,100k,,Resistor_SMD:R_0603_1608Metric,"1%, final orderable manufacturer suffix pending"
+JP1,OPEN: USB ISOLATION,,Jumper:SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm,DEFAULT OPEN. Bridge only for qualified shield feed with USB physically disconnected.
+H1,IOL_NOMINAL,,Connector_PinSocket_2.54mm:PinSocket_1x08_P2.54mm_Vertical,UNO R3 nominal center coordinates; exact board continuity and stack hardware pending
+H2,IOH_NOMINAL,,Connector_PinSocket_2.54mm:PinSocket_1x10_P2.54mm_Vertical,UNO R3 nominal center coordinates; exact board continuity and stack hardware pending
+H3,POWER_NOMINAL,,Connector_PinSocket_2.54mm:PinSocket_1x08_P2.54mm_Vertical,UNO R3 nominal center coordinates; exact board continuity and stack hardware pending
+H4,AD_NOMINAL,,Connector_PinSocket_2.54mm:PinSocket_1x06_P2.54mm_Vertical,UNO R3 nominal center coordinates; exact board continuity and stack hardware pending
+TP1,ISO_ILL1_P,,TestPoint:TestPoint_Pad_D1.0mm,
+TP2,ISO_ILL1_N,,TestPoint:TestPoint_Pad_D1.0mm,
+TP3,ISO_ILL2_P,,TestPoint:TestPoint_Pad_D1.0mm,
+TP4,ISO_ILL2_N,,TestPoint:TestPoint_Pad_D1.0mm,
+TP5,V5_LOGIC,,TestPoint:TestPoint_Pad_D1.0mm,
+TP6,GND,,TestPoint:TestPoint_Pad_D1.0mm,
+TP7,PGOOD,,TestPoint:TestPoint_Pad_D1.0mm,
+TP8,ENABLE_REQ,,TestPoint:TestPoint_Pad_D1.0mm,
+U2,UCC27524AQDRQ1,UCC27524AQDRQ1,Package_SO:SOIC-8_3.9x4.9mm_P1.27mm,5V gate drive; enables have internal pullups overridden by external 2.2k pulldown
+U3,UCC27524AQDRQ1,UCC27524AQDRQ1,Package_SO:SOIC-8_3.9x4.9mm_P1.27mm,5V gate drive; enables have internal pullups overridden by external 2.2k pulldown
+C9,100n 25V X7R,,Capacitor_SMD:C_0603_1608Metric,
+C11,100n 25V X7R,,Capacitor_SMD:C_0603_1608Metric,
+C10,1u 25V X7R,,Capacitor_SMD:C_0603_1608Metric,
+C12,1u 25V X7R,,Capacitor_SMD:C_0603_1608Metric,
+R8,2.2k,,Resistor_SMD:R_0603_1608Metric,"1%, final orderable manufacturer suffix pending"
+Q1,BUK9Y15-60E,"BUK9Y15-60E,115",Package_TO_SOT_SMD:LFPAK56,"60V; 15mOhm max at 5V gate, 25C. Layout/current ratings remain evaluation targets."
+R9,100,,Resistor_SMD:R_0603_1608Metric,"1%, final orderable manufacturer suffix pending"
+R13,10k,,Resistor_SMD:R_0603_1608Metric,"1%, final orderable manufacturer suffix pending"
+R17,100k,,Resistor_SMD:R_0603_1608Metric,"1%, final orderable manufacturer suffix pending"
+D3,SMBJ24CA,SMBJ24CA,Diode_SMD:D_SMB,Bidirectional output clamp candidate; cable-energy test pending
+Q2,BUK9Y15-60E,"BUK9Y15-60E,115",Package_TO_SOT_SMD:LFPAK56,"60V; 15mOhm max at 5V gate, 25C. Layout/current ratings remain evaluation targets."
+R10,100,,Resistor_SMD:R_0603_1608Metric,"1%, final orderable manufacturer suffix pending"
+R14,10k,,Resistor_SMD:R_0603_1608Metric,"1%, final orderable manufacturer suffix pending"
+R18,100k,,Resistor_SMD:R_0603_1608Metric,"1%, final orderable manufacturer suffix pending"
+D4,SMBJ24CA,SMBJ24CA,Diode_SMD:D_SMB,Bidirectional output clamp candidate; cable-energy test pending
+Q3,BUK9Y15-60E,"BUK9Y15-60E,115",Package_TO_SOT_SMD:LFPAK56,"60V; 15mOhm max at 5V gate, 25C. Layout/current ratings remain evaluation targets."
+R11,100,,Resistor_SMD:R_0603_1608Metric,"1%, final orderable manufacturer suffix pending"
+R15,10k,,Resistor_SMD:R_0603_1608Metric,"1%, final orderable manufacturer suffix pending"
+R19,100k,,Resistor_SMD:R_0603_1608Metric,"1%, final orderable manufacturer suffix pending"
+D5,SMBJ24CA,SMBJ24CA,Diode_SMD:D_SMB,Bidirectional output clamp candidate; cable-energy test pending
+Q4,BUK9Y15-60E,"BUK9Y15-60E,115",Package_TO_SOT_SMD:LFPAK56,"60V; 15mOhm max at 5V gate, 25C. Layout/current ratings remain evaluation targets."
+R12,100,,Resistor_SMD:R_0603_1608Metric,"1%, final orderable manufacturer suffix pending"
+R16,10k,,Resistor_SMD:R_0603_1608Metric,"1%, final orderable manufacturer suffix pending"
+R20,100k,,Resistor_SMD:R_0603_1608Metric,"1%, final orderable manufacturer suffix pending"
+D6,SMBJ24CA,SMBJ24CA,Diode_SMD:D_SMB,Bidirectional output clamp candidate; cable-energy test pending
+MH1,M3 SUPPORT,,MountingHole:MountingHole_3.2mm_M3,Mechanical support; nominal carrier tower only
+MH2,M3 SUPPORT,,MountingHole:MountingHole_3.2mm_M3,Mechanical support; nominal carrier tower only

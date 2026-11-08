@@ -1,0 +1,1 @@
+(sym_lib_table (lib (name "VHOS") (type "KiCad") (uri "${KIPRJMOD}/VHOS.kicad_sym") (options "") (descr "Rev A source-bound circuit symbols")))

@@ -1,0 +1,388 @@
+{
+  "contract": "vhos_rgbw_eval_reva_v1",
+  "execution_device": "orion",
+  "source_pins": {
+    "engineering_job.py": "a388cc3ce207d9c10a0c75de8b28a57f5117904e440eca8e72868b59d06b1b3a",
+    "native_pcb.py": "2f2ee35134f321bf27e4a23d94a1324681b5bcd0b240cc8793e46623c79e895e",
+    "circuit.py": "db04c82bb06e688d3cd75548cc81b055ee92e3c0813742e2c6041a8a8f137bb9",
+    "mechanical_audit.py": "57d8d75c01283f57fbf9b6144e3f604af817bbdd7f2b7ff710055cc6741275b1",
+    "run_isolated_engineering.py": "5e4701851492068195782433d552b754dbc88e3f89d2fbe9d588299fce93c808",
+    "engineering-inputs.json": "7bacb751b2c9528023fa21e3b3c077748739da77172a26e317fb0700cf3a9bd5"
+  },
+  "source_set_sha256": "25029bb9a81fa105229780fb70d00e5b40dbafd72781448c636327c758b8be7e",
+  "params": {
+    "expected_source_set_sha256": "25029bb9a81fa105229780fb70d00e5b40dbafd72781448c636327c758b8be7e",
+    "stage": "finish",
+    "timeout_sec": 900,
+    "evaluation_only": true
+  },
+  "runtimes": {
+    "kicad_cli": {
+      "path": "C:\\Program Files\\KiCad\\10.0\\bin\\kicad-cli.exe",
+      "sha256": "393525236969434e24bc710334efe244fb285ef6596a1aea8e74353ef4db5477"
+    },
+    "kicad_python": {
+      "path": "C:\\Program Files\\KiCad\\10.0\\bin\\python.exe",
+      "sha256": "79826db0c9261339ffe5d410662c8aad2dd210e4211b83ab2f7622da7b34ebcb"
+    },
+    "router_java": {
+      "path": "C:\\PCBToolchains\\java25\\jdk-25.0.4.1+1-jre\\bin\\java.exe",
+      "sha256": "5808527e3dfc4eb285c7664ba356bc267055ef906e83ed4660d9f7976da7349b"
+    },
+    "router_jar": {
+      "path": "C:\\PCBToolchains\\freerouting\\2.5.0\\freerouting-2.5.0.jar",
+      "sha256": "f6f51bb02245e8e717f9359bd260cc9c5c0b1bc0acc8b7cb2cd5b8ffeb5de3c7"
+    }
+  },
+  "elapsed_sec": 107.735,
+  "artifacts": [
+    {
+      "name": "BOM-DRAFT.csv",
+      "bytes": 6212,
+      "sha256": "a7710ecf586a303ca1dfb85f018d14d354fe2f984bfd494d7080328ad5e95158"
+    },
+    {
+      "name": "carrier_rgbw_reva.step",
+      "bytes": 19480,
+      "sha256": "bffa85223059d80c71c343d94f095573cbbd80f5202260fa19b1d9cad14b1990"
+    },
+    {
+      "name": "carrier_rgbw_reva.stl",
+      "bytes": 113484,
+      "sha256": "310cc000024f4c90fffe392a7e2ee279f4432f614734f49203d7092d6456912b"
+    },
+    {
+      "name": "case_base_rgbw_reva.step",
+      "bytes": 71098,
+      "sha256": "9a1c9aaef2bf09b0d911f28408a078d3b94dce6564d52b14d78431f4e31a71af"
+    },
+    {
+      "name": "case_base_rgbw_reva.stl",
+      "bytes": 217284,
+      "sha256": "3ced8131581a32f5d1835f8be67b7382d80e81f9b54c5936a62f720d0c1f16c8"
+    },
+    {
+      "name": "case_lid_rgbw_reva.step",
+      "bytes": 18144,
+      "sha256": "65cdbae928ef40592e2e60de60d6d4314192b19cf90f78b7805b14f757bc8cdf"
+    },
+    {
+      "name": "case_lid_rgbw_reva.stl",
+      "bytes": 71884,
+      "sha256": "e47aad0de5a9b55b8dfad3aa9fb1ccfe65cefeb76386e517c3f5fb98b7d42eb5"
+    },
+    {
+      "name": "circuit-design.json",
+      "bytes": 30807,
+      "sha256": "9aa8edaa408be5e2ec06a4c4f3d873c143e5b1cb50a886dc70abb7633173f424"
+    },
+    {
+      "name": "commands.json",
+      "bytes": 9242,
+      "sha256": "07796871750c27b6a6a0244c8d3ac1af9eb1e7b16ba12cde1a7825d62d1a11a0"
+    },
+    {
+      "name": "connectivity-reconciliation.json",
+      "bytes": 199,
+      "sha256": "112556b1d7351953d5c50df54f07a819225bacfbae947fa029a36db586f3b312"
+    },
+    {
+      "name": "drc.json",
+      "bytes": 1129,
+      "sha256": "98a6f0bcdfd6c78ba0673f4704a95d2f1499b5acb574a887af852ce745840b64"
+    },
+    {
+      "name": "drc.log",
+      "bytes": 197,
+      "sha256": "33a20ad2bf0b6636115821983b19d74d86ed4829bd2e2d3f343d197edc415cc9"
+    },
+    {
+      "name": "dsn-rule-binding.json",
+      "bytes": 7442,
+      "sha256": "700ca77257455f99658f15cc2016a902b9887afd3d2fffcb5c54af5b82e0a560"
+    },
+    {
+      "name": "effective-netclasses.json",
+      "bytes": 6355,
+      "sha256": "c2cfd2425e182043d1019e98e6408306c2834591a562e3364e47ddc9073a5755"
+    },
+    {
+      "name": "erc.json",
+      "bytes": 1045,
+      "sha256": "6c768e007526e5930171f6c09f095a9041ee8ea78256af3d5b328dc6e937f179"
+    },
+    {
+      "name": "erc.log",
+      "bytes": 137,
+      "sha256": "03d23c7c025e55c77782936933c75321720bbcb86dbb4c4604554ea03f6c527a"
+    },
+    {
+      "name": "footprint-sources.json",
+      "bytes": 8865,
+      "sha256": "0a8e5088849eebd32b360f15f61b6cd19edf8bf04dc4f7ca2df80da42241a132"
+    },
+    {
+      "name": "fp-lib-table",
+      "bytes": 2062,
+      "sha256": "cfe8158831529270c6423718f5a42ed16e10e4eb5ac486b6958d1970c270bf66"
+    },
+    {
+      "name": "freecad.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "mechanical-audit.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "mechanical-observation.json",
+      "bytes": 3209,
+      "sha256": "7c2da17ab2d56c41be54b5ffb5d1b6a22e218b02bf67b2a8ca0646c29ca31f78"
+    },
+    {
+      "name": "native-build.log",
+      "bytes": 1492,
+      "sha256": "07626f40f04de8a85cc21da1ec92588c8a3345225da6583527f84e20bf54aeec"
+    },
+    {
+      "name": "native-import.log",
+      "bytes": 641,
+      "sha256": "9da246e12af49bbdccfa59608d51bb93cf2ca3cf9983577119816974e2b17541"
+    },
+    {
+      "name": "native-toolchain.json",
+      "bytes": 205,
+      "sha256": "909293dc83f2b27360878455ee036329a4b7b72989dbdee1f3ad98de53c77633"
+    },
+    {
+      "name": "pcb-layers.pdf",
+      "bytes": 250439,
+      "sha256": "b70352a8f3684105f40e00b1684a20d341a3ed9ed2c19134d00ffb9cb3035087"
+    },
+    {
+      "name": "pcb-outline.json",
+      "bytes": 484,
+      "sha256": "1a723a7a88574fdfc84beb2827ba262af916d0fbe14a08e3ec21549d89e292c9"
+    },
+    {
+      "name": "pcb-pdf.log",
+      "bytes": 124,
+      "sha256": "9d1e56594ade5a5504ad396c929f9343185d541bf83813c43a9bdf0e9301b4a2"
+    },
+    {
+      "name": "pcb-render-iso.log",
+      "bytes": 1601,
+      "sha256": "d4a95b51a84d9564f1918174c8680e8dc1960a7e80934c57912986d648418d90"
+    },
+    {
+      "name": "pcb-render-top.log",
+      "bytes": 1601,
+      "sha256": "3387057400e8a7d68f947f8745d84817b2ec665673ea6579c97b637432fb390e"
+    },
+    {
+      "name": "pcb-step.log",
+      "bytes": 151,
+      "sha256": "16ca2dbc3bca421dc1b6fe227b8bdcb09eb5825e0f99b394f80c51540733d706"
+    },
+    {
+      "name": "placed-identity.json",
+      "bytes": 29680,
+      "sha256": "352cebfd828a056e00a4a683c2483fbe76c346c476e8bd60a626cd001190dd72"
+    },
+    {
+      "name": "reconcile-build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "reconcile-routed.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "rgbw_nominal_assembly.FCStd",
+      "bytes": 516081,
+      "sha256": "b4c320f8eb2765ccd95b290ff29d14aab084a76533e6b5cff55d03db6ec9fd55"
+    },
+    {
+      "name": "route-identity.json",
+      "bytes": 33405,
+      "sha256": "f03316caa68f4b56754a622e4986e0ae5529e99289aec497d3cb0811f68b9f03"
+    },
+    {
+      "name": "routed-width-audit.json",
+      "bytes": 5243,
+      "sha256": "8fc8e71d26970a55600ba536895a512dacb4cc0c2738da2e434d1cd9e6ea6f19"
+    },
+    {
+      "name": "routed_shield.step",
+      "bytes": 2951246,
+      "sha256": "5bc6eba0b14aa0a320f737409758fc0be98d724470801f3d50b277dc079e77ca"
+    },
+    {
+      "name": "routed_shield_isometric.png",
+      "bytes": 282003,
+      "sha256": "381f0cec8941b8ef45383e25d3851ff0a366ff926d80e200d92160ed04582fcd"
+    },
+    {
+      "name": "routed_shield_top.png",
+      "bytes": 89946,
+      "sha256": "8684b038e62fc5ea9fd90170899f83360541bf645a90601922e3138391cbc79a"
+    },
+    {
+      "name": "router-result.json",
+      "bytes": 17916,
+      "sha256": "61b843334addc29d55eea2653661fc5145ca192adf74efb8488cc849318ac770"
+    },
+    {
+      "name": "router.log",
+      "bytes": 4405,
+      "sha256": "5995876337713f35f6059b90f406073413904c3c0a060844c285d50a068445f4"
+    },
+    {
+      "name": "schematic-netlist.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "schematic-overview.png",
+      "bytes": 171957,
+      "sha256": "11a3e2a876ca528a8fbc9da8d595fca87dd2bc3a851782c486445f590d1e091c"
+    },
+    {
+      "name": "schematic-pdf.log",
+      "bytes": 123,
+      "sha256": "9cf74657cbe5b0880f4b983ccc3474a4252c82ca51e4f9b3daf192b0a4136271"
+    },
+    {
+      "name": "schematic-svg.log",
+      "bytes": 142,
+      "sha256": "2b2665a7f69511d1d63e94047eba7adf918d53f138fb7f32e92284fc7a3be4ee"
+    },
+    {
+      "name": "schematic.net.xml",
+      "bytes": 101998,
+      "sha256": "912e1fffd59fb0b6968e313d8126547f03a3a6b569f9c13e6f584f6c03f74713"
+    },
+    {
+      "name": "schematic.pdf",
+      "bytes": 211799,
+      "sha256": "d99d42705633f72d0955c36b3ddefeb9afa42daf6c71156e3afea47c721a50de"
+    },
+    {
+      "name": "shield-native-export.dsn",
+      "bytes": 51454,
+      "sha256": "e9e2fa89a2ed67bc3acf0effa1a83f959646bf5b14a7f6a77eee8cfb76010645"
+    },
+    {
+      "name": "shield.dsn",
+      "bytes": 43058,
+      "sha256": "23bd6207acecf91d214c5a1663e391737849ff58af99d99676c278eb832cfd00"
+    },
+    {
+      "name": "shield.ses",
+      "bytes": 34870,
+      "sha256": "ea784306d4bcc5e5e7c076dfbbfe0adabee03a9af907675013d120303e372746"
+    },
+    {
+      "name": "sym-lib-table",
+      "bytes": 143,
+      "sha256": "54cec4b0c4d04da8aa9067828f426b3b74cc17f7a82acaca3a2c07985df96cc8"
+    },
+    {
+      "name": "VHOS.kicad_sym",
+      "bytes": 55622,
+      "sha256": "f0f86f558c24cc6e83ba77f00d93ba474d10ce65a2eedb03bcdd45fa3f35962c"
+    },
+    {
+      "name": "vhos_rgbw_reva.kicad_pcb",
+      "bytes": 661321,
+      "sha256": "25d5f2d4d543a4c59c04adb89d8218e1966287a977c9730570247362e751d119"
+    },
+    {
+      "name": "vhos_rgbw_reva.kicad_prl",
+      "bytes": 2301,
+      "sha256": "356b6fb445726a02da2ec55887e83a2adb83a57c576b292088445c7d305a0df1"
+    },
+    {
+      "name": "vhos_rgbw_reva.kicad_pro",
+      "bytes": 2535,
+      "sha256": "1c251bdb134b0c993a2127953f138c9db8ffabb5c8ec09bd0e87411814cffcd3"
+    },
+    {
+      "name": "vhos_rgbw_reva.kicad_sch",
+      "bytes": 158170,
+      "sha256": "ad1ea48736350fc88da05d999db9de7b255a91943a9ab774d3dd77a026f11a14"
+    },
+    {
+      "name": "_native_entry.py",
+      "bytes": 466,
+      "sha256": "9a9ce32b96f82c7fcf30c21ddb9f2dfff41a0985067136de4737c0cb42e2e400"
+    },
+    {
+      "name": "_native_impl.py",
+      "bytes": 13520,
+      "sha256": "eb966fb76d88c0de9474e42f3473eacf6a0cbf3263669d604a87b212c7180e4e"
+    },
+    {
+      "name": "models/Molex_43045-0600.step",
+      "bytes": 185002,
+      "sha256": "6b5ec1174920d285f102c5a15611141b00bbca4e1b2e7c3a1e0b2cde67f5f884"
+    },
+    {
+      "name": "router-state/freerouting.json",
+      "bytes": 2094,
+      "sha256": "82593e7036ff1942a062f075633733f71fe27618d0a8219326181e6c6e827f48"
+    },
+    {
+      "name": "schematic-svg/vhos_rgbw_reva.svg",
+      "bytes": 1411486,
+      "sha256": "8b9e489d11cab2e9abfd4cd6ae717704732d1a851b2d58a2e130cb14632a4f18"
+    },
+    {
+      "name": "source/circuit.py",
+      "bytes": 8612,
+      "sha256": "db04c82bb06e688d3cd75548cc81b055ee92e3c0813742e2c6041a8a8f137bb9"
+    },
+    {
+      "name": "source/engineering-inputs.json",
+      "bytes": 7863,
+      "sha256": "7bacb751b2c9528023fa21e3b3c077748739da77172a26e317fb0700cf3a9bd5"
+    },
+    {
+      "name": "source/engineering_job.py",
+      "bytes": 7612,
+      "sha256": "a388cc3ce207d9c10a0c75de8b28a57f5117904e440eca8e72868b59d06b1b3a"
+    },
+    {
+      "name": "source/mechanical_audit.py",
+      "bytes": 9091,
+      "sha256": "57d8d75c01283f57fbf9b6144e3f604af817bbdd7f2b7ff710055cc6741275b1"
+    },
+    {
+      "name": "source/native_pcb.py",
+      "bytes": 24919,
+      "sha256": "2f2ee35134f321bf27e4a23d94a1324681b5bcd0b240cc8793e46623c79e895e"
+    },
+    {
+      "name": "source/run_isolated_engineering.py",
+      "bytes": 3960,
+      "sha256": "5e4701851492068195782433d552b754dbc88e3f89d2fbe9d588299fce93c808"
+    },
+    {
+      "name": "VHOS_Connectors.pretty/Molex_Micro-Fit_3.0_43045-0600_2x03_P3.00mm_Horizontal.kicad_mod",
+      "bytes": 7127,
+      "sha256": "d0a20086258f9bd7b86a063e8265f866ac85507aee6a454663077565c0080943"
+    },
+    {
+      "name": "VHOS_Connectors.pretty/PhoenixContact_MC_1,5_5-G-3.81_1x05_P3.81mm_Horizontal.kicad_mod",
+      "bytes": 5974,
+      "sha256": "f23005df88ccabc9f3b3ae125cd277c3d98faa1dabbce4b8f68e8261e5c46330"
+    }
+  ],
+  "physical_fit_verified": false,
+  "manufacturing_released": false,
+  "vehicle_connection_released": false
+}

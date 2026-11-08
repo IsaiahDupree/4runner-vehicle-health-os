@@ -1,0 +1,107 @@
+{
+  "command_id": "cmd_dd0dadd4c8b441a9b16c24bd3e193e5c",
+  "ok": true,
+  "result": {
+    "actor": "vhos-rgbw-shield",
+    "artifacts": [
+      {
+        "bytes": 471,
+        "name": "commands.json",
+        "sha256": "fcc70ead6c2dd456e6e720ffabf8c615fa6a361c5b97df64667e3e0ac01c60f3"
+      },
+      {
+        "bytes": 3834,
+        "name": "engineering-manifest.json",
+        "sha256": "8eda213725c7a8d757aa0e17cf6bbe008ae622f7fcc9ca65105c35e4fb5591d6"
+      },
+      {
+        "bytes": 982,
+        "name": "native-build.log",
+        "sha256": "0dd712e25898cca9578ba1884846f3558ac338cf1ed1df196b6f25974f50d617"
+      },
+      {
+        "bytes": 8556,
+        "name": "source/circuit.py",
+        "sha256": "7c992c427566f1f151df1128dd6bca58465d2c44797b8e554f39d68098eaa366"
+      },
+      {
+        "bytes": 7049,
+        "name": "source/engineering-inputs.json",
+        "sha256": "b71e32d83581efe0f7937ea0498c8f76f662f9135c08deb86efc88366c499b2d"
+      },
+      {
+        "bytes": 7484,
+        "name": "source/engineering_job.py",
+        "sha256": "3834bc179099de87804893930dd342c2c777fdd3b2ab8c8173edb09bafe3af91"
+      },
+      {
+        "bytes": 7763,
+        "name": "source/mechanical_audit.py",
+        "sha256": "986832d7ffa72fc76df668a2e5330e167db1fd64d15452b961851b6d59ced2ff"
+      },
+      {
+        "bytes": 21907,
+        "name": "source/native_pcb.py",
+        "sha256": "1c12e83721e04320411f2b780347d3e80224d4092dc12bfe4b41e064c6176cd7"
+      },
+      {
+        "bytes": 3960,
+        "name": "source/run_isolated_engineering.py",
+        "sha256": "5e4701851492068195782433d552b754dbc88e3f89d2fbe9d588299fce93c808"
+      },
+      {
+        "bytes": 143,
+        "name": "sym-lib-table",
+        "sha256": "54cec4b0c4d04da8aa9067828f426b3b74cc17f7a82acaca3a2c07985df96cc8"
+      },
+      {
+        "bytes": 55622,
+        "name": "VHOS.kicad_sym",
+        "sha256": "f0f86f558c24cc6e83ba77f00d93ba474d10ce65a2eedb03bcdd45fa3f35962c"
+      },
+      {
+        "bytes": 2609,
+        "name": "vhos_rgbw_reva.kicad_pro",
+        "sha256": "441a12ee62c29fa3207ad1921f68a9f69bb3e909415e4e28de2d4379f9fac0b0"
+      },
+      {
+        "bytes": 158170,
+        "name": "vhos_rgbw_reva.kicad_sch",
+        "sha256": "ad1ea48736350fc88da05d999db9de7b255a91943a9ab774d3dd77a026f11a14"
+      }
+    ],
+    "command": [
+      "C:\\Users\\Isaia\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+      "-I",
+      "-B",
+      "C:\\orion\\projects\\vhos-rgbw-shield-reva-20261107\\engineering_job.py",
+      "--params",
+      "C:\\orion\\control\\vhos-rgbw-shield-reva-20261107\\modeling\\jobs\\mdl_7a0d83f66ae24fd6\\params.json",
+      "--out",
+      "C:\\orion\\control\\vhos-rgbw-shield-reva-20261107\\modeling\\jobs\\mdl_7a0d83f66ae24fd6\\out"
+    ],
+    "completed_at": "2026-11-08T05:27:13.287868+00:00",
+    "duration_sec": 0.8,
+    "error": "runner exited 1:                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"C:\\orion\\projects\\vhos-rgbw-shield-reva-20261107\\engineering_job.py\", line 61, in run\r\n    call('native-build',[PYTHON,'-I','-B',ROOT/'native_pcb.py','build','--out',out])\r\n  File \"C:\\orion\\projects\\vhos-rgbw-shield-reva-20261107\\engineering_job.py\", line 59, in call\r\n    if result.returncode not in allowed:raise RuntimeError(name+' failed with '+str(result.returncode))\r\n                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nRuntimeError: native-build failed with 1\r\n",
+    "exit_code": 1,
+    "job_dir": "C:\\orion\\control\\vhos-rgbw-shield-reva-20261107\\modeling\\jobs\\mdl_7a0d83f66ae24fd6",
+    "job_id": "mdl_7a0d83f66ae24fd6",
+    "job_type": "pcb.vhos_rgbw_engineering",
+    "log_tail": "Traceback (most recent call last):\r\n  File \"C:\\orion\\projects\\vhos-rgbw-shield-reva-20261107\\engineering_job.py\", line 97, in <module>\r\n    if __name__=='__main__':main()\r\n                            ^^^^^^\r\n  File \"C:\\orion\\projects\\vhos-rgbw-shield-reva-20261107\\engineering_job.py\", line 96, in main\r\n    print(json.dumps(run(json.loads(a.params.read_text()),a.out.resolve())))\r\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"C:\\orion\\projects\\vhos-rgbw-shield-reva-20261107\\engineering_job.py\", line 61, in run\r\n    call('native-build',[PYTHON,'-I','-B',ROOT/'native_pcb.py','build','--out',out])\r\n  File \"C:\\orion\\projects\\vhos-rgbw-shield-reva-20261107\\engineering_job.py\", line 59, in call\r\n    if result.returncode not in allowed:raise RuntimeError(name+' failed with '+str(result.returncode))\r\n                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nRuntimeError: native-build failed with 1\r\n",
+    "params": {
+      "evaluation_only": true,
+      "expected_source_set_sha256": "cb314e1a8ff604d9a383d8ea4a9c83e6644009553cd382d26aee586ee905fe7e",
+      "stage": "route",
+      "timeout_sec": 360
+    },
+    "pid": 63852,
+    "queue": {
+      "queued": [],
+      "running": null
+    },
+    "started_at": "2026-11-08T05:27:12.520795+00:00",
+    "status": "failed",
+    "submitted_at": "2026-11-08T05:27:12.511663+00:00",
+    "updated_at": "2026-11-08T05:27:13.313154+00:00"
+  }
+}

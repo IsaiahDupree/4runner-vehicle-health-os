@@ -1,0 +1,338 @@
+[
+  {
+    "net": "/ACC_FUSED",
+    "class": "Power",
+    "width_mm": 0.8,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "/BST",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "/DRV_B",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "/DRV_G",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "/DRV_R",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "/DRV_W",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "/ENABLE_REQ",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "/ESP_5V",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "/FB",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "/GATE_B",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "/GATE_G",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "/GATE_R",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "/GATE_W",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "/GND",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "/ISO_ILL1_N",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "/ISO_ILL1_P",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "/ISO_ILL2_N",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "/ISO_ILL2_P",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "/LED_B_NEG",
+    "class": "LED",
+    "width_mm": 1.0,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "/LED_G_NEG",
+    "class": "LED",
+    "width_mm": 1.0,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "/LED_R_NEG",
+    "class": "LED",
+    "width_mm": 1.0,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "/LED_W_NEG",
+    "class": "LED",
+    "width_mm": 1.0,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "/PGOOD",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "/PWM_B",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "/PWM_G",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "/PWM_R",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "/PWM_W",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "/RIPPLE",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "/RON",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "/SW",
+    "class": "Power",
+    "width_mm": 0.8,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "/UVLO",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "/V5_LOGIC",
+    "class": "Power",
+    "width_mm": 0.8,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "/VIN_PROT",
+    "class": "Power",
+    "width_mm": 0.8,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "unconnected-(H1-Pad1)",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "unconnected-(H1-Pad2)",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "unconnected-(H1-Pad5)",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "unconnected-(H1-Pad6)",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "unconnected-(H1-Pad7)",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "unconnected-(H2-Pad10)",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "unconnected-(H2-Pad2)",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "unconnected-(H2-Pad3)",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "unconnected-(H2-Pad4)",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "unconnected-(H2-Pad5)",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "unconnected-(H2-Pad6)",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "unconnected-(H2-Pad8)",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "unconnected-(H2-Pad9)",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "unconnected-(H3-Pad1)",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "unconnected-(H3-Pad2)",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "unconnected-(H3-Pad3)",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "unconnected-(H3-Pad4)",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "unconnected-(H3-Pad8)",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "unconnected-(H4-Pad2)",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "unconnected-(H4-Pad3)",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "unconnected-(H4-Pad4)",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "unconnected-(H4-Pad5)",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  },
+  {
+    "net": "unconnected-(H4-Pad6)",
+    "class": "Default",
+    "width_mm": 0.25,
+    "clearance_mm": 0.25
+  }
+]

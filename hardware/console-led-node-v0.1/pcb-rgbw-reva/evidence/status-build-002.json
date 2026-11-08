@@ -1,0 +1,182 @@
+{
+  "command_id": "cmd_79e1dd843859434d9592658ef8ca206b",
+  "ok": true,
+  "result": {
+    "actor": "vhos-rgbw-shield",
+    "artifacts": [
+      {
+        "bytes": 6017,
+        "name": "BOM-DRAFT.csv",
+        "sha256": "addaec3679421eaeec75b002e7a640749ac31cb73210f01f88a14dbe4414d47f"
+      },
+      {
+        "bytes": 29894,
+        "name": "circuit-design.json",
+        "sha256": "44a6b9fbbdaaf9ca2647badbed4828d68e75b7b3b55301c1bdff4aba25911fdc"
+      },
+      {
+        "bytes": 3229,
+        "name": "commands.json",
+        "sha256": "7e15f59133a9cc81ec3b8025ea4964e88c09e05a1e9533a41b58c6286e27f732"
+      },
+      {
+        "bytes": 199,
+        "name": "connectivity-reconciliation.json",
+        "sha256": "dfcd71d34a2b9a55ea01ff5d398ffdd16fc55dcc792eeaee265cc8c3249ca945"
+      },
+      {
+        "bytes": 384277,
+        "name": "drc.json",
+        "sha256": "38faefcbca05a9a61e00c731cca99a62407c31bf542e7e767d12200f4e081079"
+      },
+      {
+        "bytes": 203,
+        "name": "drc.log",
+        "sha256": "13d55af3380bf68421a1409ab3521a3742d2a0de09cd5d0636a36e2facd5a3d3"
+      },
+      {
+        "bytes": 5941,
+        "name": "engineering-manifest.json",
+        "sha256": "fc9f20dd19c62ca3bdfb821ee3dacb7aa7044ca5916c3612b5d5564fc87654e6"
+      },
+      {
+        "bytes": 140838,
+        "name": "erc.json",
+        "sha256": "9b0c1e066289535fe6e9706f01ac768409e62d2ea52fbfabfc1534451325156f"
+      },
+      {
+        "bytes": 139,
+        "name": "erc.log",
+        "sha256": "f8d924c9a44f4f426d9142d680bfea1e3e5584e4db7e0abc7068bad6049822ca"
+      },
+      {
+        "bytes": 8598,
+        "name": "footprint-sources.json",
+        "sha256": "fa53c78b72cc68657162f40b7311e16c6ae795edb6acb1d755fb670fcc00391d"
+      },
+      {
+        "bytes": 2045,
+        "name": "fp-lib-table",
+        "sha256": "47e11f75ea750d18e9805873c945fcf16543aaff2f9a194886fb76428bf523f3"
+      },
+      {
+        "bytes": 1456,
+        "name": "native-build.log",
+        "sha256": "3930712739ecb51b4607ff8fc3009ba91da55d973a10b93c39bbcefe2572d5b3"
+      },
+      {
+        "bytes": 205,
+        "name": "native-toolchain.json",
+        "sha256": "909293dc83f2b27360878455ee036329a4b7b72989dbdee1f3ad98de53c77633"
+      },
+      {
+        "bytes": 484,
+        "name": "pcb-outline.json",
+        "sha256": "c394efb760819a5ef2a6313deba61dedae0292fc8edf4a0256e2898c9780b5b6"
+      },
+      {
+        "bytes": 28835,
+        "name": "placed-identity.json",
+        "sha256": "a9e7f60d6735db64fb260a58b12b2087dcf3a1a2fc4feeded3782e9a723ff299"
+      },
+      {
+        "bytes": 0,
+        "name": "reconcile-build.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 0,
+        "name": "schematic-netlist.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 123,
+        "name": "schematic-pdf.log",
+        "sha256": "0935c2605a2d41f0dad30f122b7f238930f5390b2e7d4bac7d897982183efd61"
+      },
+      {
+        "bytes": 99419,
+        "name": "schematic.net.xml",
+        "sha256": "d07763aed1fc173c1005cec6a438a92acec92465e4b3c0bb51388c7d1a69f0db"
+      },
+      {
+        "bytes": 214135,
+        "name": "schematic.pdf",
+        "sha256": "4b432338c8aa74d62ffe9e1935f467a98a8848ba77e0e28622d6f608ebb8bf32"
+      },
+      {
+        "bytes": 47467,
+        "name": "shield.dsn",
+        "sha256": "5a1dcce7e9661a0aa6aed4b5bebdfda3e6f89324367991fab2b0e1387b4e9be5"
+      },
+      {
+        "bytes": 143,
+        "name": "sym-lib-table",
+        "sha256": "54cec4b0c4d04da8aa9067828f426b3b74cc17f7a82acaca3a2c07985df96cc8"
+      },
+      {
+        "bytes": 54646,
+        "name": "VHOS.kicad_sym",
+        "sha256": "4bec5d7dc87438c0ab2aa888ba9669f7ed89817485858e1e84a8f53a31345682"
+      },
+      {
+        "bytes": 279114,
+        "name": "vhos_rgbw_reva.kicad_pcb",
+        "sha256": "d225ae2b8177f28f5b3833f8a16597d3c5e4642503c5d9b0aba3af7856491378"
+      },
+      {
+        "bytes": 2301,
+        "name": "vhos_rgbw_reva.kicad_prl",
+        "sha256": "356b6fb445726a02da2ec55887e83a2adb83a57c576b292088445c7d305a0df1"
+      },
+      {
+        "bytes": 2603,
+        "name": "vhos_rgbw_reva.kicad_pro",
+        "sha256": "c4f33e79b11233522005c251d357465b33320a856dbca9cac747ea48fa4322c3"
+      },
+      {
+        "bytes": 150508,
+        "name": "vhos_rgbw_reva.kicad_sch",
+        "sha256": "723c2cc8f56f426aba09653af0cdb156c413a01b2aadaac59310a69e18a7ab63"
+      },
+      {
+        "bytes": 39,
+        "name": "~vhos_rgbw_reva.kicad_pro.lck",
+        "sha256": "a465bf33c209a1c8878d7639c1557d70ea99f1d8041ce29544786cb549e83c82"
+      }
+    ],
+    "command": [
+      "C:\\Users\\Isaia\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+      "-I",
+      "-B",
+      "C:\\orion\\projects\\vhos-rgbw-shield-reva-20261107\\engineering_job.py",
+      "--params",
+      "C:\\orion\\control\\vhos-rgbw-shield-reva-20261107\\modeling\\jobs\\mdl_86940aa274a94233\\params.json",
+      "--out",
+      "C:\\orion\\control\\vhos-rgbw-shield-reva-20261107\\modeling\\jobs\\mdl_86940aa274a94233\\out"
+    ],
+    "completed_at": "2026-11-08T05:00:28.360145+00:00",
+    "duration_sec": 30.4,
+    "error": null,
+    "exit_code": 0,
+    "job_dir": "C:\\orion\\control\\vhos-rgbw-shield-reva-20261107\\modeling\\jobs\\mdl_86940aa274a94233",
+    "job_id": "mdl_86940aa274a94233",
+    "job_type": "pcb.vhos_rgbw_engineering",
+    "log_tail": "{\"stage\": \"build\", \"engineering_status\": \"EVALUATION_ONLY\", \"manufacturing_released\": false}\r\n",
+    "params": {
+      "evaluation_only": true,
+      "expected_source_set_sha256": "3f22c60a4e62df5eba5cd68cfc42afb9d6ceb5113053875d6cd71e9a1e32e18c",
+      "stage": "build",
+      "timeout_sec": 300
+    },
+    "pid": 120312,
+    "queue": {
+      "queued": [],
+      "running": null
+    },
+    "started_at": "2026-11-08T04:59:57.932557+00:00",
+    "status": "succeeded",
+    "submitted_at": "2026-11-08T04:59:57.925126+00:00",
+    "updated_at": "2026-11-08T05:00:28.382391+00:00"
+  }
+}
