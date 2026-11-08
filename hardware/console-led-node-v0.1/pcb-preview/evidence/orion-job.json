@@ -1,0 +1,182 @@
+{
+  "command_id": "cmd_1d2f72086fe849bda8850d8cbe05531e",
+  "ok": true,
+  "result": {
+    "actor": "vhos-shield-picture",
+    "artifacts": [
+      {
+        "bytes": 464,
+        "name": "_native_entry.py",
+        "sha256": "b27490b51eff4d1cd075dd202c624aeac3ab2244cde1c117fdfaf97bfbed65f5"
+      },
+      {
+        "bytes": 12837,
+        "name": "_native_impl.py",
+        "sha256": "5f35d0138042f88fb0477bc5d7134a48c19f78609f122f8ec6359a44b433a684"
+      },
+      {
+        "bytes": 3616,
+        "name": "_render.py",
+        "sha256": "34961410b5200f1556e9d720f222b12f090e2cea5382861a98920db9b3e9a867"
+      },
+      {
+        "bytes": 60484,
+        "name": "adapter_plug.stl",
+        "sha256": "35385270fbb91b6d582b6aa4ab597c4200ffe32c5374c6a66ebbaf75e91bdc06"
+      },
+      {
+        "bytes": 684,
+        "name": "barrel_reference.stl",
+        "sha256": "e9a684df259ae42e95779b63ddf9fc7dfa34da787499fe918aeb5961c33d3b11"
+      },
+      {
+        "bytes": 1054,
+        "name": "blender.log",
+        "sha256": "053738664c395de274ebde8e92f8e7ddc7b1705572074f542ac41388cbe5b97b"
+      },
+      {
+        "bytes": 425484,
+        "name": "controller_pcb.stl",
+        "sha256": "226fbce53f33d976dc5bcf5eeab439f1a97e815e8ef168ccf26019cefbe194eb"
+      },
+      {
+        "bytes": 2264984,
+        "name": "esp32_module.stl",
+        "sha256": "19b6f3dfdf8d78aeea90196b856dcda281ad40137a10759554964f723aa8d99e"
+      },
+      {
+        "bytes": 0,
+        "name": "freecad.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "bytes": 19284,
+        "name": "header_pins.stl",
+        "sha256": "9814ad9ef6b7595288f6c166933c2ae5392db2d18364df2c2d52a7a6b2ab42e7"
+      },
+      {
+        "bytes": 19884,
+        "name": "input_header.stl",
+        "sha256": "6f22c60740b1a14a4cc4299b3d862e6e70c6ccafb8726db603c2efaa1eaa54e8"
+      },
+      {
+        "bytes": 47084,
+        "name": "led_output_envelope.stl",
+        "sha256": "7ef1c971abd2af0ed8e5ccffdfd3e8685f7fdc48137a52a1f90033ed13c5b2b9"
+      },
+      {
+        "bytes": 48884,
+        "name": "output_screws.stl",
+        "sha256": "4fff5228e70d37608df694123736af45e8de1944398cba373149cdc87346f5a9"
+      },
+      {
+        "bytes": 5484,
+        "name": "passive_blocks.stl",
+        "sha256": "337a7fb2b9d089305d067563e4799d391cec73bab4b909bff1fcaa63e128b5c3"
+      },
+      {
+        "bytes": 10884,
+        "name": "passive_ends.stl",
+        "sha256": "a5c1e08d2551ea414c55646ce7f3a18db4eb0f279f2dfddb6f5f56fa6415e22b"
+      },
+      {
+        "bytes": 4884,
+        "name": "placement_blocks.stl",
+        "sha256": "976dc42c0be7cf78289e82ed87d149c452b8b69a1d2788cd63e87f2c080e2815"
+      },
+      {
+        "bytes": 742484,
+        "name": "plated_pads.stl",
+        "sha256": "4ef38a34abaa4156c2e6aeb38da5904f12392c7b4a10511eec20e98176d4ef45"
+      },
+      {
+        "bytes": 1690,
+        "name": "preview-manifest.json",
+        "sha256": "6db49ee1e373b9a9c48cd09381f94bdc8dea67263fda65cfdf315347b50a593b"
+      },
+      {
+        "bytes": 5989,
+        "name": "preview_observation.json",
+        "sha256": "f8ae4bc7967853abce5391fb19721cf71d9adc989c7ad8e509ee3fc02622e7e5"
+      },
+      {
+        "bytes": 1998518,
+        "name": "shield_isometric.png",
+        "sha256": "fadc65e10b42ca8780a2ac090cd6f01f4cb12c8f9dd3e8f7593469cb223d7f79"
+      },
+      {
+        "bytes": 426284,
+        "name": "shield_pcb.stl",
+        "sha256": "56ba7a8112ead7f347889d729026b801b318a799d8705a39d0b9d7abe1cf542b"
+      },
+      {
+        "bytes": 433323,
+        "name": "shield_placement_concept.FCStd",
+        "sha256": "4aebb12671145b99cb21d471526b2ca978dab6bae16450987f2b85652efa89fd"
+      },
+      {
+        "bytes": 6366072,
+        "name": "shield_placement_concept.step",
+        "sha256": "bff68dc9e9d28a2bf83fc505dc094fc3f3a07cff98b24ed4ef75130c70eff370"
+      },
+      {
+        "bytes": 5181724,
+        "name": "shield_preview.blend",
+        "sha256": "80bcd1eef3d3b08cf01467aa46870cbe0055f773f6d81d1a6a9ebaa516e8d297"
+      },
+      {
+        "bytes": 1081324,
+        "name": "shield_top.png",
+        "sha256": "2308773648804d7430dff3624fbcf9e0934515027f49aed0886dc0010e8815fb"
+      },
+      {
+        "bytes": 760084,
+        "name": "stack_sockets.stl",
+        "sha256": "212e4b9cdc4b5b263c291a1f48e400785cbd4751322526d6641561115da5de72"
+      },
+      {
+        "bytes": 1861420,
+        "name": "updated_shield_overview.png",
+        "sha256": "23f1a3f256437b2ad8608150ee143385dbf233f5cf3ff823c1f550f8be9e2bbf"
+      },
+      {
+        "bytes": 684,
+        "name": "usb_reference.stl",
+        "sha256": "aa0de38d71641632579d44c251fc92a2071b3b69e2e8a10c9ce377a4a6106aca"
+      }
+    ],
+    "command": [
+      "C:\\Users\\Isaia\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+      "-I",
+      "-B",
+      "C:\\orion\\projects\\vhos-shield-preview-20261107\\preview_job.py",
+      "--params",
+      "C:\\orion\\control\\vhos-shield-preview-20261107\\modeling\\jobs\\mdl_601003628bcb4aaf\\params.json",
+      "--out",
+      "C:\\orion\\control\\vhos-shield-preview-20261107\\modeling\\jobs\\mdl_601003628bcb4aaf\\out"
+    ],
+    "completed_at": "2026-11-08T03:55:44.555572+00:00",
+    "duration_sec": 20.6,
+    "error": null,
+    "exit_code": 0,
+    "job_dir": "C:\\orion\\control\\vhos-shield-preview-20261107\\modeling\\jobs\\mdl_601003628bcb4aaf",
+    "job_id": "mdl_601003628bcb4aaf",
+    "job_type": "cad.vhos_shield_placement_preview",
+    "log_tail": "{\"status\": \"rendered_placement_concept\", \"physical_fit_verified\": false, \"electrical_routing_exists\": false}\r\n",
+    "params": {
+      "expected_manifest_sha256": "bc8449c7d0fc1bb8dcd54c44d8f11f755b1e363107c991de259c77383e208831",
+      "expected_source_sha256": "2cfc0dde2a53569564e8f685a2d896c9070b8c1390de1bdbeb5da8b5a50f225d",
+      "research_only": true,
+      "timeout_sec": 360
+    },
+    "pid": 123244,
+    "queue": {
+      "queued": [],
+      "running": null
+    },
+    "started_at": "2026-11-08T03:55:23.971053+00:00",
+    "status": "succeeded",
+    "submitted_at": "2026-11-08T03:55:23.963984+00:00",
+    "updated_at": "2026-11-08T03:55:44.610551+00:00"
+  }
+}

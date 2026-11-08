@@ -1,0 +1,15 @@
+{
+  "status": "pass",
+  "orion_job_id": "mdl_601003628bcb4aaf",
+  "native_parts_valid": 15,
+  "exported_step_reopened_valid": true,
+  "nominal_header_positions": 32,
+  "artifact_hashes_verified": 7,
+  "schemas_passed": 52,
+  "repository_tests_passed": 217,
+  "preview_visually_inspected": true,
+  "task_controller_stopped": true,
+  "electrical_routing_exists": false,
+  "physical_fit_verified": false,
+  "manufacturing_released": false
+}

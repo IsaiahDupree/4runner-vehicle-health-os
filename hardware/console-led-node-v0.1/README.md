@@ -67,6 +67,9 @@ $20.78 at Olathe and $14.86 with a stated 1–3 business day dispatch at
 ToyotaPartsDeal. These are page observations, excluding delivery/tax and
 subject to seller/VIN confirmation. No purchase has been placed.
 
+The [updated PCB placement preview](pcb-preview/README.md) shows the proposed
+shield above the ShengYang board reference. It is not a routed electrical design.
+
 ## Electrical and mechanical arrangement
 
 ```mermaid

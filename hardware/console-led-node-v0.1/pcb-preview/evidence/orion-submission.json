@@ -1,0 +1,26 @@
+{
+  "command_id": "cmd_bc2d09d634614917ad7073b5dea7b314",
+  "ok": true,
+  "result": {
+    "actor": "vhos-shield-picture",
+    "artifacts": [],
+    "completed_at": null,
+    "error": null,
+    "exit_code": null,
+    "job_dir": "C:\\orion\\control\\vhos-shield-preview-20261107\\modeling\\jobs\\mdl_601003628bcb4aaf",
+    "job_id": "mdl_601003628bcb4aaf",
+    "job_type": "cad.vhos_shield_placement_preview",
+    "params": {
+      "expected_manifest_sha256": "bc8449c7d0fc1bb8dcd54c44d8f11f755b1e363107c991de259c77383e208831",
+      "expected_source_sha256": "2cfc0dde2a53569564e8f685a2d896c9070b8c1390de1bdbeb5da8b5a50f225d",
+      "research_only": true,
+      "timeout_sec": 360
+    },
+    "pid": null,
+    "queue_position": 1,
+    "started_at": null,
+    "status": "queued",
+    "submitted_at": "2026-11-08T03:55:23.963984+00:00",
+    "updated_at": "2026-11-08T03:55:23.963984+00:00"
+  }
+}

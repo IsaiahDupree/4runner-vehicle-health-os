@@ -1,0 +1,319 @@
+{
+  "contract": "vhos_shield_placement_preview_v1",
+  "models": [
+    {
+      "name": "Molex_43045-0600.step",
+      "label": "Molex 43045-0600 right-angle PCB header",
+      "source_class": "public_repository_reference",
+      "download_url": "https://raw.githubusercontent.com/danbrunski/canary/8dbaa4b4534cad4a08cf70bfc700814ce5f32c76/hardware/canary-pwr-rev1.0/lib/3dmodels/Molex_Micro-Fit_3.0_43045-0600_2x03_P3.00mm_Horizontal.step",
+      "reference_url": "https://www.molex.com/en-us/products/part-detail/430450600",
+      "bytes": 185002,
+      "sha256": "6b5ec1174920d285f102c5a15611141b00bbca4e1b2e7c3a1e0b2cde67f5f884",
+      "authority_limit": "OpenCascade export with matching product name; manufacturer geometry lineage not established",
+      "physical_match_verified": false
+    },
+    {
+      "name": "Molex_43025-0600.stp",
+      "label": "Molex 43025-0600 cable housing",
+      "source_class": "public_mirror_reference",
+      "download_url": "https://raw.githubusercontent.com/vamoirid/Battery-Management-System-LTC6811-STM32/cbfc74c965ef9d69083b5adda7335d44274c2e58/BMS_PCB/3D%20Bodies/43025-0600_stp/430250600.stp",
+      "reference_url": "https://www.molex.com/en-us/products/part-detail/430250600",
+      "bytes": 185164,
+      "sha256": "4d406abac216d558e0a938267287f3bbc60afa9001d40f75dae379a1d0a37233",
+      "authority_limit": "Pro/ENGINEER file identifies 430250600; official download bytes unavailable for comparison",
+      "physical_match_verified": false
+    },
+    {
+      "name": "ESP32-S3-WROOM-1.step",
+      "label": "Espressif ESP32-S3-WROOM-1 module",
+      "source_class": "manufacturer_download",
+      "download_url": "https://www.espressif.com/sites/default/files/3dmodel/ESP32-S3-WROOM-1%203D%20Model.STEP",
+      "reference_url": "https://www.espressif.com/en/products/modules/esp32-s3-wroom-1-wroom-1u",
+      "bytes": 6225940,
+      "sha256": "02e192087a1a2268ccbe7bf667ef04884370fc76c994484bf85654dfa7407ef6",
+      "authority_limit": "Module only; not the DIYables UNO board, headers, USB or mounting pattern",
+      "physical_match_verified": false
+    }
+  ],
+  "headers": {
+    "source_class": "manufacturer_eagle_layout_reference",
+    "reference_part": "Arduino A000066 UNO R3, UNO-TH_Rev3e.brd",
+    "source_url": "https://docs.arduino.cc/static/6bb7a3ca51ebee82a252f60c0b418787/A000066-cad-files.zip",
+    "source_brd_sha256": "599de43d9f8a0e1474564f75c732b474fee696529cf7f0cb38ab2511b51261f3",
+    "source_origin": "Original EAGLE board origin; bottom-left board outline at (0,0); PCB top view, x right/y up",
+    "units": "mm",
+    "headers": [
+      {
+        "name": "IOL",
+        "count": 8,
+        "pads": [
+          {
+            "eagle_pad": "1",
+            "x_mm": 63.5,
+            "y_mm": 50.8
+          },
+          {
+            "eagle_pad": "2",
+            "x_mm": 60.96,
+            "y_mm": 50.8
+          },
+          {
+            "eagle_pad": "3",
+            "x_mm": 58.42,
+            "y_mm": 50.8
+          },
+          {
+            "eagle_pad": "4",
+            "x_mm": 55.88,
+            "y_mm": 50.8
+          },
+          {
+            "eagle_pad": "5",
+            "x_mm": 53.34,
+            "y_mm": 50.8
+          },
+          {
+            "eagle_pad": "6",
+            "x_mm": 50.8,
+            "y_mm": 50.8
+          },
+          {
+            "eagle_pad": "7",
+            "x_mm": 48.26,
+            "y_mm": 50.8
+          },
+          {
+            "eagle_pad": "8",
+            "x_mm": 45.72,
+            "y_mm": 50.8
+          }
+        ]
+      },
+      {
+        "name": "IOH",
+        "count": 10,
+        "pads": [
+          {
+            "eagle_pad": "1",
+            "x_mm": 41.656,
+            "y_mm": 50.8
+          },
+          {
+            "eagle_pad": "2",
+            "x_mm": 39.116,
+            "y_mm": 50.8
+          },
+          {
+            "eagle_pad": "3",
+            "x_mm": 36.576,
+            "y_mm": 50.8
+          },
+          {
+            "eagle_pad": "4",
+            "x_mm": 34.036,
+            "y_mm": 50.8
+          },
+          {
+            "eagle_pad": "5",
+            "x_mm": 31.496,
+            "y_mm": 50.8
+          },
+          {
+            "eagle_pad": "6",
+            "x_mm": 28.956,
+            "y_mm": 50.8
+          },
+          {
+            "eagle_pad": "7",
+            "x_mm": 26.416,
+            "y_mm": 50.8
+          },
+          {
+            "eagle_pad": "8",
+            "x_mm": 23.876,
+            "y_mm": 50.8
+          },
+          {
+            "eagle_pad": "9",
+            "x_mm": 21.336,
+            "y_mm": 50.8
+          },
+          {
+            "eagle_pad": "10",
+            "x_mm": 18.796,
+            "y_mm": 50.8
+          }
+        ]
+      },
+      {
+        "name": "AD",
+        "count": 6,
+        "pads": [
+          {
+            "eagle_pad": "1",
+            "x_mm": 50.8,
+            "y_mm": 2.54
+          },
+          {
+            "eagle_pad": "2",
+            "x_mm": 53.34,
+            "y_mm": 2.54
+          },
+          {
+            "eagle_pad": "3",
+            "x_mm": 55.88,
+            "y_mm": 2.54
+          },
+          {
+            "eagle_pad": "4",
+            "x_mm": 58.42,
+            "y_mm": 2.54
+          },
+          {
+            "eagle_pad": "5",
+            "x_mm": 60.96,
+            "y_mm": 2.54
+          },
+          {
+            "eagle_pad": "6",
+            "x_mm": 63.5,
+            "y_mm": 2.54
+          }
+        ]
+      },
+      {
+        "name": "POWER",
+        "count": 8,
+        "pads": [
+          {
+            "eagle_pad": "1",
+            "x_mm": 27.94,
+            "y_mm": 2.54
+          },
+          {
+            "eagle_pad": "2",
+            "x_mm": 30.48,
+            "y_mm": 2.54
+          },
+          {
+            "eagle_pad": "3",
+            "x_mm": 33.02,
+            "y_mm": 2.54
+          },
+          {
+            "eagle_pad": "4",
+            "x_mm": 35.56,
+            "y_mm": 2.54
+          },
+          {
+            "eagle_pad": "5",
+            "x_mm": 38.1,
+            "y_mm": 2.54
+          },
+          {
+            "eagle_pad": "6",
+            "x_mm": 40.64,
+            "y_mm": 2.54
+          },
+          {
+            "eagle_pad": "7",
+            "x_mm": 43.18,
+            "y_mm": 2.54
+          },
+          {
+            "eagle_pad": "8",
+            "x_mm": 45.72,
+            "y_mm": 2.54
+          }
+        ]
+      }
+    ],
+    "mounting_holes": [
+      {
+        "x_mm": 66.04,
+        "y_mm": 35.56,
+        "diameter_mm": 3.2
+      },
+      {
+        "x_mm": 66.04,
+        "y_mm": 7.62,
+        "diameter_mm": 3.2
+      },
+      {
+        "x_mm": 15.24,
+        "y_mm": 50.8,
+        "diameter_mm": 3.2
+      },
+      {
+        "x_mm": 13.97,
+        "y_mm": 2.54,
+        "diameter_mm": 3.2
+      }
+    ],
+    "authority_limit": "Official Arduino R3 reference only. Owned ESP32 board maker/revision, holes, header positions and component/antenna keepouts unconfirmed. This is not a released ESP32 shield.",
+    "physical_fit_verified": false
+  },
+  "target_board": {
+    "recorded_at_utc": "2026-11-08T03:42:28.926239+00:00",
+    "target_identity": "D1 UNO ESP32-S3 N16R8 CH340, purple PCB, ShengYang AliExpress listing supplied by user",
+    "identity_status": "USER_SELECTED_PRODUCT_REFERENCE",
+    "seller": "ShengYang",
+    "board_manufacturer": "unverified; seller name is not established manufacturer identity",
+    "listed_flash_mb": 16,
+    "listed_psram_mb": 8,
+    "memory_status": "listing/module-marking claim; not hardware-read verified",
+    "usb_connector": "USB-C visible in supplied listing",
+    "usb_uart_bridge": "CH340 family in listing; exact chip suffix and USB power path not verified",
+    "silkscreen_pinout_status": "visible labels compared with seller family diagram; not continuity verified",
+    "full_board_step_found": false,
+    "schematic_for_exact_revision_found": false,
+    "header_geometry_reference": "Official Arduino UNO R3 coordinates retained as nominal reference, not owned-board measurement",
+    "dimension_reference": {
+      "source": "Makerbazar seller PDF, page 7 dimension graphic",
+      "main_body_length_mm": 66.0,
+      "additional_right_projection_mm": 2.49,
+      "calculated_overall_length_mm": 68.49,
+      "overall_width_mm": 53.34,
+      "reference_only": true,
+      "limitation": "Seller-derived board-family drawing; exact ShengYang revision and hole centers unverified. Approximate outline is not dimensional qualification."
+    },
+    "user_reference": {
+      "name": "ShengYang_D1_UNO_ESP32-S3_user_listing.jpg",
+      "bytes": 148062,
+      "sha256": "152a4378acb24dea39cdf7c5a089e4bf8b29df8eb55f3640e455cdf13d2790b6"
+    },
+    "seller_pdf": {
+      "name": "Makerbazar_ESP32-S3_UNO_seller_reference.pdf",
+      "download_url": "https://5.imimg.com/data5/SELLER/Doc/2026/4/601423043/LE/RC/AT/123335792/esp32-s3-uno-development-board-wifi-bluetooth.pdf",
+      "bytes": 9041243,
+      "sha256": "a902df4a233080eeb46971cc8b88c8f2d8ddccb8a2f0873760122877105288c3",
+      "authority": "seller family reference, not manufacturer schematic or verified model of owned PCB"
+    },
+    "physical_fit_verified": false,
+    "gpio_connections_verified": false,
+    "vehicle_connector_identity_verified": false,
+    "manufacturing_released": false
+  },
+  "authority": "connector CAD references plus nominal UNO header coordinates, estimated controller and component envelopes",
+  "stack": {
+    "controller_board_thickness_mm": 1.6,
+    "shield_bottom_z_mm": 14.5,
+    "shield_thickness_mm": 1.6,
+    "header_body_height_mm": 8.5,
+    "dimensions_are_nominal": true
+  },
+  "rf_opening_mm": {
+    "x": 50,
+    "y": 10,
+    "width": 18.58,
+    "height": 22,
+    "qualified": false
+  },
+  "circuit": {
+    "routing_exists": false,
+    "driver_type_selected": false,
+    "toyota_plug_identified": false,
+    "physical_fit_verified": false,
+    "manufacturing_released": false
+  }
+}

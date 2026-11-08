@@ -1,0 +1,312 @@
+{
+  "parts": [
+    {
+      "name": "controller_pcb",
+      "color": [
+        0.31,
+        0.13,
+        0.5,
+        1
+      ],
+      "authority": "estimated UNO-style controller outline; nominal reference holes",
+      "valid": true,
+      "solids": 1,
+      "bounds_mm": [
+        0.0,
+        0.0,
+        0.0,
+        68.58,
+        53.34,
+        1.6
+      ]
+    },
+    {
+      "name": "shield_pcb",
+      "color": [
+        0.035,
+        0.29,
+        0.27,
+        1
+      ],
+      "authority": "custom placement-only shield; provisional RF opening",
+      "valid": true,
+      "solids": 1,
+      "bounds_mm": [
+        0.0,
+        0.0,
+        14.5,
+        68.58,
+        53.34,
+        16.1
+      ]
+    },
+    {
+      "name": "stack_sockets",
+      "color": [
+        0.045,
+        0.055,
+        0.065,
+        1
+      ],
+      "authority": "nominal 10+8+8+6 stacking-header envelopes",
+      "valid": true,
+      "solids": 8,
+      "bounds_mm": [
+        17.546,
+        1.29,
+        1.6,
+        64.75,
+        52.05,
+        24.6
+      ]
+    },
+    {
+      "name": "header_pins",
+      "color": [
+        0.75,
+        0.59,
+        0.28,
+        1
+      ],
+      "authority": "estimated 0.64 mm pin envelopes; not chosen tail length",
+      "valid": true,
+      "solids": 32,
+      "bounds_mm": [
+        18.476,
+        2.22,
+        7.0,
+        63.82,
+        51.12,
+        16.1
+      ]
+    },
+    {
+      "name": "plated_pads",
+      "color": [
+        0.79,
+        0.63,
+        0.29,
+        1
+      ],
+      "authority": "illustrative pad rings; no copper routing",
+      "valid": true,
+      "solids": 32,
+      "bounds_mm": [
+        17.855999999999998,
+        1.6013785909799436,
+        16.1,
+        64.44,
+        51.738621409020055,
+        16.18
+      ]
+    },
+    {
+      "name": "esp32_module",
+      "color": [
+        0.5,
+        0.53,
+        0.55,
+        1
+      ],
+      "authority": "Espressif reference module; estimated board placement, exact fitted module unverified",
+      "valid": true,
+      "solids": 234,
+      "bounds_mm": [
+        42.5,
+        13.0,
+        1.6,
+        68.0,
+        31.00000000000006,
+        4.7
+      ]
+    },
+    {
+      "name": "input_header",
+      "color": [
+        0.065,
+        0.08,
+        0.095,
+        1
+      ],
+      "authority": "downloaded Molex 43045-0600 reference; proposed placement",
+      "valid": true,
+      "solids": 7,
+      "bounds_mm": [
+        2.0799999999999983,
+        18.425,
+        12.920000000000002,
+        14.32,
+        31.575000000000003,
+        25.5
+      ]
+    },
+    {
+      "name": "adapter_plug",
+      "color": [
+        0.1,
+        0.12,
+        0.14,
+        1
+      ],
+      "authority": "downloaded cable housing; shown detached, mating alignment not verified",
+      "valid": true,
+      "solids": 1,
+      "bounds_mm": [
+        -18.0,
+        19.5,
+        15.5,
+        -3.9999999999999982,
+        29.35,
+        26.33
+      ]
+    },
+    {
+      "name": "placement_blocks",
+      "color": [
+        0.15,
+        0.18,
+        0.21,
+        1
+      ],
+      "authority": "estimated protection, regulator and driver placement blocks; packages not frozen",
+      "valid": true,
+      "solids": 8,
+      "bounds_mm": [
+        20.0,
+        13.0,
+        16.1,
+        39.5,
+        44.0,
+        19.3
+      ]
+    },
+    {
+      "name": "passive_blocks",
+      "color": [
+        0.5,
+        0.37,
+        0.19,
+        1
+      ],
+      "authority": "illustrative passive envelopes, values unselected",
+      "valid": true,
+      "solids": 9,
+      "bounds_mm": [
+        18.0,
+        18.0,
+        16.1,
+        40.2,
+        42.2,
+        17.3
+      ]
+    },
+    {
+      "name": "passive_ends",
+      "color": [
+        0.68,
+        0.72,
+        0.73,
+        1
+      ],
+      "authority": "illustrative terminations",
+      "valid": true,
+      "solids": 18,
+      "bounds_mm": [
+        17.9,
+        18.0,
+        16.1,
+        40.300000000000004,
+        42.2,
+        17.35
+      ]
+    },
+    {
+      "name": "led_output_envelope",
+      "color": [
+        0.12,
+        0.45,
+        0.25,
+        1
+      ],
+      "authority": "generic four-way output connector envelope; actual LED connector/current TBD",
+      "valid": true,
+      "solids": 1,
+      "bounds_mm": [
+        2.0,
+        9.5,
+        16.1,
+        17.0,
+        16.5,
+        21.6
+      ]
+    },
+    {
+      "name": "output_screws",
+      "color": [
+        0.67,
+        0.7,
+        0.72,
+        1
+      ],
+      "authority": "illustrative screw heads",
+      "valid": true,
+      "solids": 4,
+      "bounds_mm": [
+        3.42,
+        12.171217266503568,
+        20.9,
+        15.58,
+        13.828782733496432,
+        21.5
+      ]
+    },
+    {
+      "name": "usb_reference",
+      "color": [
+        0.7,
+        0.74,
+        0.77,
+        1
+      ],
+      "authority": "estimated USB-C access envelope",
+      "valid": true,
+      "solids": 1,
+      "bounds_mm": [
+        -1.0,
+        30.0,
+        1.6,
+        6.0,
+        39.0,
+        4.9
+      ]
+    },
+    {
+      "name": "barrel_reference",
+      "color": [
+        0.08,
+        0.09,
+        0.11,
+        1
+      ],
+      "authority": "estimated barrel-jack access envelope",
+      "valid": true,
+      "solids": 1,
+      "bounds_mm": [
+        -2.0,
+        6.0,
+        1.6,
+        10.0,
+        14.5,
+        11.6
+      ]
+    }
+  ],
+  "units": "mm",
+  "exported_step_valid": true,
+  "header_positions": 32,
+  "electrical_routing_exists": false,
+  "physical_fit_verified": false,
+  "manufacturing_released": false,
+  "rf_clearance_qualified": false,
+  "status": "PLACEMENT_CONCEPT"
+}
