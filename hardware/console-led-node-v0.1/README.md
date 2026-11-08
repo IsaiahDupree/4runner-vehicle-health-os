@@ -90,13 +90,16 @@ plug does not support the PCB's weight. A direct Toyota PCB header would be
 an alternative only if its exact mate, retention, drawing and availability
 are established.
 
-The UNO-shaped controller previously referenced in this workspace is a likely
-**DIYables ESP32-S3-WROOM-1-N16R8**, still unverified against the owned revision.
-Its published approximate outline is 68 × 53 mm and it supports Wi-Fi and BLE.
-The published pin mapping is not an AVR UNO electrical pinout: the listing
-even marks IOREF as 5 V while ESP32-S3 GPIO is a 3.3 V domain. Do not attach a
-5 V UNO shield or raw vehicle wiring on the strength of its shape. [DIYables][board],
-[Espressif hardware guidance][esp-guidance].
+The user has identified the target controller with a product screenshot:
+**ShengYang listing, purple D1 UNO ESP32-S3 N16R8 / CH340 board**. The earlier
+DIYables brand assumption is superseded. Its visible UNO-style header layout
+and GPIO labels agree with the seller-family reference. The new
+[board identity and shield GPIO proposal](controller-board/README.md) records
+that evidence, the seller dimension drawing and 32 header positions.
+GPIO is a 3.3 V domain; the printed 5 V/IOREF and RST/AREF positions are not an
+AVR UNO electrical pinout. Exact populated height, hole positions, power-path
+behavior and final physical fit remain unverified. The original case inputs
+and receipts remain frozen, with their estimated controller envelope.
 
 The existing VHOS repository already preserves raw observations and signal
 quality. Its README reports zero accepted target-specific passive-CAN signals
@@ -166,7 +169,8 @@ profile. No cloud compute or GitHub Actions was used.
    face photo with latch orientation, a rear-wire photo and every molded number.
    Count cavities, including empty ones. A scale/caliper measurement is needed
    for any connector retention bracket.
-2. Confirm the owned ESP32 maker/revision and both faces; measure board, holes,
+2. The target is now the user-provided ShengYang D1 UNO ESP32-S3 listing; confirm
+   the physical revision and both faces, then measure board, holes,
    header stack, USB access and antenna position. The earlier A/C board and this
    cabin light node are distinct projects.
 3. Identify the actual LEDs: new accent/indicator lights or factory lights,

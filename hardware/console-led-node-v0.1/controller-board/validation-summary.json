@@ -1,0 +1,19 @@
+{
+  "recorded_at_utc": "2026-11-08T03:44:35.772503+00:00",
+  "source_hashes_verified": 2,
+  "header_positions": 32,
+  "proposed_unwired_gpio": [
+    18,
+    17,
+    14,
+    21,
+    2,
+    1
+  ],
+  "schemas_passed": 52,
+  "repository_tests_passed": 217,
+  "original_case_artifact_integrity": "passed; frozen inputs preserved",
+  "physical_fit_verified": false,
+  "gpio_continuity_verified": false,
+  "manufacturing_released": false
+}

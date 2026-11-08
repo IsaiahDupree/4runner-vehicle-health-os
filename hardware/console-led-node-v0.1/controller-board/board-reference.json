@@ -1,0 +1,41 @@
+{
+  "recorded_at_utc": "2026-11-08T03:42:28.926239+00:00",
+  "target_identity": "D1 UNO ESP32-S3 N16R8 CH340, purple PCB, ShengYang AliExpress listing supplied by user",
+  "identity_status": "USER_SELECTED_PRODUCT_REFERENCE",
+  "seller": "ShengYang",
+  "board_manufacturer": "unverified; seller name is not established manufacturer identity",
+  "listed_flash_mb": 16,
+  "listed_psram_mb": 8,
+  "memory_status": "listing/module-marking claim; not hardware-read verified",
+  "usb_connector": "USB-C visible in supplied listing",
+  "usb_uart_bridge": "CH340 family in listing; exact chip suffix and USB power path not verified",
+  "silkscreen_pinout_status": "visible labels compared with seller family diagram; not continuity verified",
+  "full_board_step_found": false,
+  "schematic_for_exact_revision_found": false,
+  "header_geometry_reference": "Official Arduino UNO R3 coordinates retained as nominal reference, not owned-board measurement",
+  "dimension_reference": {
+    "source": "Makerbazar seller PDF, page 7 dimension graphic",
+    "main_body_length_mm": 66.0,
+    "additional_right_projection_mm": 2.49,
+    "calculated_overall_length_mm": 68.49,
+    "overall_width_mm": 53.34,
+    "reference_only": true,
+    "limitation": "Seller-derived board-family drawing; exact ShengYang revision and hole centers unverified. Approximate outline is not dimensional qualification."
+  },
+  "user_reference": {
+    "name": "ShengYang_D1_UNO_ESP32-S3_user_listing.jpg",
+    "bytes": 148062,
+    "sha256": "152a4378acb24dea39cdf7c5a089e4bf8b29df8eb55f3640e455cdf13d2790b6"
+  },
+  "seller_pdf": {
+    "name": "Makerbazar_ESP32-S3_UNO_seller_reference.pdf",
+    "download_url": "https://5.imimg.com/data5/SELLER/Doc/2026/4/601423043/LE/RC/AT/123335792/esp32-s3-uno-development-board-wifi-bluetooth.pdf",
+    "bytes": 9041243,
+    "sha256": "a902df4a233080eeb46971cc8b88c8f2d8ddccb8a2f0873760122877105288c3",
+    "authority": "seller family reference, not manufacturer schematic or verified model of owned PCB"
+  },
+  "physical_fit_verified": false,
+  "gpio_connections_verified": false,
+  "vehicle_connector_identity_verified": false,
+  "manufacturing_released": false
+}

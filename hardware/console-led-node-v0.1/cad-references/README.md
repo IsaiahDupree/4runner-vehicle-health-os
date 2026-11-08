@@ -1,5 +1,10 @@
 # Component CAD references for the console LED node
 
+The user has since identified the target as the **ShengYang D1 UNO ESP32-S3
+N16R8 / CH340 listing**. See [the current board record](../controller-board/README.md).
+DIYables artwork below is retained as a family comparison reference. It is not
+evidence that the owned board is DIYables or that its mechanical revision matches.
+
 Six STEP models have been downloaded and imported on Orion. The original
 downloads and a labeled FreeCAD/PNG reference catalog are retained locally in
 `artifacts/4runner-console-cad-2026-11-07/`. This repository records their exact
@@ -71,7 +76,7 @@ conversion, hosted build or paid API was run.
 | --- | --- | --- |
 | Exact photographed Toyota plug and mating half | **Unresolved**. No confirmed model found for this physical connector; 90980-10760 and 90980-11148 remain catalog candidates, not identifications | Straight-on mating face, latch orientation, molded numbers, cavity count, exact 2005 V8/build applicability |
 | Toyota 82390-35010 console sub-harness | Dealer catalog lead, no verified assembly STEP found | Actual harness variant, both connector ends, populated cavities and available space |
-| Complete owned DIYables UNO-format ESP32 | Manufacturer wiring artwork found; **no verified full-board 3D model found** | Owned board identity/revision and a mechanical drawing or measured board/holes/header/USB envelope. A generic Arduino UNO or another ESP32 dev board is not substituted |
+| Complete target ShengYang D1 UNO ESP32-S3 | Manufacturer wiring artwork found; **no verified full-board 3D model found** | Owned board identity/revision and a mechanical drawing or measured board/holes/header/USB envelope. A generic Arduino UNO or another ESP32 dev board is not substituted |
 | LM5164-Q1 | TI links CAD for **8-pin DDA HSOIC** | Freeze exact orderable part/package, then obtain that CAD through the linked library |
 | LM74700-Q1 | TI links CAD for **6-pin DBV** and **8-pin DDF** variants | Resolve the selected package first; these footprints are not interchangeable |
 | SN74AHCT125-Q1 | TI lists **D, PW and BQA** package CAD choices | Select the actual package with the LED topology |

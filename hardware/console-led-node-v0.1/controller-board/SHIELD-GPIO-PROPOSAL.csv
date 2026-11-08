@@ -1,0 +1,7 @@
+function,uno_reference_position,silkscreen,gpio,connection,status
+LED_DATA_1_OR_RGB_R,D2,IO18,18,Driver/buffer logic input only,PROPOSED_UNWIRED
+LED_DATA_2_OR_RGB_G,D3,IO17,17,Driver/buffer logic input only,PROPOSED_UNWIRED
+LED_DATA_3_OR_RGB_B,D7,IO14,14,Driver/buffer logic input only,PROPOSED_UNWIRED
+OUTPUT_ENABLE_REQUEST,D8,IO21,21,Designed hardware default-off enable stage,PROPOSED_UNWIRED
+OPTIONAL_ILL_SENSE,A0,IO2,2,Output of protected illumination interface; not raw Toyota cavity,PROPOSED_UNWIRED
+OPTIONAL_SUPPLY_SENSE,A1,IO1,1,Output of protected voltage-sense interface; not raw 12 V,PROPOSED_UNWIRED

@@ -1,0 +1,33 @@
+header_group,uno_reference_position,visible_or_family_silkscreen,esp32_gpio,evidence,restriction,electrical_status
+DIGITAL,D0,RXD,44,RXD/TXD visible; GPIO number from matching supplier pin table,UART0 upload/serial reserved,DRAFT_NOT_CONTINUITY_VERIFIED
+DIGITAL,D1,TXD,43,RXD/TXD visible; GPIO number from matching supplier pin table,UART0 upload/serial reserved,DRAFT_NOT_CONTINUITY_VERIFIED
+DIGITAL,D2,IO18,18,user listing silkscreen plus seller family diagram,,DRAFT_NOT_CONTINUITY_VERIFIED
+DIGITAL,D3,IO17,17,user listing silkscreen plus seller family diagram,,DRAFT_NOT_CONTINUITY_VERIFIED
+DIGITAL,D4,IO19,19,user listing silkscreen plus seller family diagram,Native USB function reserved,DRAFT_NOT_CONTINUITY_VERIFIED
+DIGITAL,D5,IO20,20,user listing silkscreen plus seller family diagram,Native USB function reserved,DRAFT_NOT_CONTINUITY_VERIFIED
+DIGITAL,D6,IO3,3,user listing silkscreen plus seller family diagram,Strapping; avoid in LED draft,DRAFT_NOT_CONTINUITY_VERIFIED
+DIGITAL,D7,IO14,14,user listing silkscreen plus seller family diagram,,DRAFT_NOT_CONTINUITY_VERIFIED
+DIGITAL,D8,IO21,21,user listing silkscreen plus seller family diagram,,DRAFT_NOT_CONTINUITY_VERIFIED
+DIGITAL,D9,IO46,46,user listing silkscreen plus seller family diagram,Strapping; avoid in LED draft,DRAFT_NOT_CONTINUITY_VERIFIED
+DIGITAL,D10,IO10,10,user listing silkscreen plus seller family diagram,SPI reserve,DRAFT_NOT_CONTINUITY_VERIFIED
+DIGITAL,D11,IO11,11,user listing silkscreen plus seller family diagram,SPI reserve,DRAFT_NOT_CONTINUITY_VERIFIED
+DIGITAL,D12,IO13,13,user listing silkscreen plus seller family diagram,SPI reserve,DRAFT_NOT_CONTINUITY_VERIFIED
+DIGITAL,D13,IO12,12,user listing silkscreen plus seller family diagram,SPI reserve,DRAFT_NOT_CONTINUITY_VERIFIED
+DIGITAL,GND,GND,,user listing silkscreen plus seller family diagram,,DRAFT_NOT_CONTINUITY_VERIFIED
+DIGITAL,AREF,RST,,user listing silkscreen plus seller family diagram,RESET line; not analog reference,DRAFT_NOT_CONTINUITY_VERIFIED
+DIGITAL,SDA,IO8,8,user listing silkscreen plus seller family diagram,I2C reserve,DRAFT_NOT_CONTINUITY_VERIFIED
+DIGITAL,SCL,IO9,9,user listing silkscreen plus seller family diagram,I2C reserve,DRAFT_NOT_CONTINUITY_VERIFIED
+ANALOG,A0,IO2,2,user listing silkscreen plus seller family diagram,ADC1 capable; vehicle input needs external conditioning,DRAFT_NOT_CONTINUITY_VERIFIED
+ANALOG,A1,IO1,1,user listing silkscreen plus seller family diagram,ADC1 capable; vehicle input needs external conditioning,DRAFT_NOT_CONTINUITY_VERIFIED
+ANALOG,A2,IO7,7,user listing silkscreen plus seller family diagram,ADC1 capable; vehicle input needs external conditioning,DRAFT_NOT_CONTINUITY_VERIFIED
+ANALOG,A3,IO6,6,user listing silkscreen plus seller family diagram,ADC1 capable; vehicle input needs external conditioning,DRAFT_NOT_CONTINUITY_VERIFIED
+ANALOG,A4,IO5,5,user listing silkscreen plus seller family diagram,ADC1 capable; vehicle input needs external conditioning,DRAFT_NOT_CONTINUITY_VERIFIED
+ANALOG,A5,IO4,4,user listing silkscreen plus seller family diagram,ADC1 capable; vehicle input needs external conditioning,DRAFT_NOT_CONTINUITY_VERIFIED
+POWER,NC,IO0,0,user listing silkscreen plus seller family diagram,Strapping; not unconnected on this board,DRAFT_NOT_CONTINUITY_VERIFIED
+POWER,IOREF,5V,,user listing silkscreen plus seller family diagram,5 V rail label; does not imply 5 V GPIO tolerance,DRAFT_NOT_CONTINUITY_VERIFIED
+POWER,RESET,RST,,user listing silkscreen plus seller family diagram,Reset,DRAFT_NOT_CONTINUITY_VERIFIED
+POWER,3V3,3V3,,user listing silkscreen plus seller family diagram,3.3 V power rail; available current unknown,DRAFT_NOT_CONTINUITY_VERIFIED
+POWER,5V,5V,,user listing silkscreen plus seller family diagram,Power-path direction/backfeed protection unverified; no direct feed release,DRAFT_NOT_CONTINUITY_VERIFIED
+POWER,GND_1,GND,,user listing silkscreen plus seller family diagram,,DRAFT_NOT_CONTINUITY_VERIFIED
+POWER,GND_2,GND,,user listing silkscreen plus seller family diagram,,DRAFT_NOT_CONTINUITY_VERIFIED
+POWER,VIN,VIN,,user listing silkscreen plus seller family diagram,Raw VIN input rating/transient protection unverified,DRAFT_NOT_CONTINUITY_VERIFIED

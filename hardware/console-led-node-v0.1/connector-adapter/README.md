@@ -74,7 +74,12 @@ The library uses Ø1.02 mm drills and 1.5 mm copper pads for the six contacts. T
 
 Official Arduino **A000066 UNO-TH_Rev3e.brd** was downloaded. `uno-r3-reference-header-coordinates.json` records its 32 header pad centers and four mounting holes in the original EAGLE millimeter coordinates. The two digital header groups have an **unusual 4.064 mm separation** between their adjacent pad centers; copying a uniform 2.54 mm grid will not fit. Opposite header rows are 48.26 mm apart. This is a reference for the proposed shield, **not proof that the owned ESP32 shares the holes, header locations, board height or USB/antenna keepouts**.
 
-The likely DIYables UNO-format ESP32-S3 has 3.3 V GPIO despite UNO-shaped headers. Confirm the owned maker/revision before routing power or selecting GPIO. Keep the antenna region clear of shield copper, components and wiring using that exact module's guidance. Verify the regulated-5 V injection point and USB backfeed behavior from the actual board circuit before making the power connection.
+The user has now supplied the **ShengYang D1 UNO ESP32-S3 N16R8 / CH340**
+product reference. [The board record](../controller-board/README.md) replaces
+the earlier DIYables identity assumption, compares visible GPIO labels with a
+seller-family diagram and proposes LED GPIO18/17/14 with GPIO21 for enable.
+The product family is identified; physical revision, populated height, holes,
+USB power path and antenna/connector keepouts remain unverified. GPIO is 3.3 V.
 
 ## Downloaded CAD and native inspection
 
@@ -82,7 +87,7 @@ The pack contains **Yazaki's directly downloaded 7282-1060 STEP**, both manufact
 
 Orion job **mdl_d7b7711c712a454c** imported the three pinned STEP files without repair and generated a catalog preview. Yazaki imported as one valid solid with bounds **21.1 × 21.4 × 38.000003 mm**, matching the published envelope. Its tessellated mesh is **not closed**; retain it as reference CAD, not a printable Toyota connector. The Molex models are valid 7-solid / 1-solid references, previously sourced from public mirrors. The catalog is not a mated assembly or shield-fit verification.
 
-Remaining release inputs are narrow: the target plug's straight-on mating face/molded number, its physical cavity map on the exact 2005 V8, and the owned ESP32 maker/revision. No part was ordered and no vehicle was connected.
+Remaining release inputs are narrow: the target plug's straight-on mating face/molded number, its physical cavity map on the exact 2005 V8, and the physical revision/measurements of the now-identified ESP32 listing. No part was ordered and no vehicle was connected.
 
 ## Sources
 
