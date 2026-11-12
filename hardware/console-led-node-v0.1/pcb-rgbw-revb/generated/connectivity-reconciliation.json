@@ -1,0 +1,7 @@
+{
+  "schematic_matches_pcb": true,
+  "components": 73,
+  "connected_pin_instances": 185,
+  "header_positions_match_official_nominal_reference": 32,
+  "physical_header_match_verified": false
+}

@@ -1,5 +1,8 @@
 # RGBW shield Rev A — electrical and enclosure evaluation
 
+For a single vehicle input, onboard fuses and one cable to the lights, use
+the [two-connector Rev B design](../pcb-rgbw-revb/README.md).
+
 Working target: four Diode Dynamics DD7440 RGBW pods in **one shared color
 zone**, controlled by the owner's ShengYang UNO-format ESP32-S3. This is an
 engineering assumption used to advance the draft; the light has not been

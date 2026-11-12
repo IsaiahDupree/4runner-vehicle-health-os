@@ -1,15 +1,20 @@
 # 2005 V8 4Runner console LED node — research and fit-check case
 
-Status: **routed RGBW evaluation draft; physical interfaces and vehicle qualification pending**.
+Status: **two-connector RGBW Rev B evaluation; physical interfaces and vehicle qualification pending**.
 Owner task: 2026-11-07. No parts ordered, functional PCB fabricated, vehicle wiring changed, or printer started.
 
-The current [RGBW Rev A package](pcb-rgbw-reva/README.md) supplies native KiCad
+The [two-connector Rev B package](pcb-rgbw-revb/README.md) places both replaceable
+fuses, reverse-battery and overvoltage protection, regulated ESP32 power and
+the RGBW output on the shield. It uses one switched vehicle input and one
+five-wire LED cable at the case. Use its assembly and pin map for the integrated box.
+
+The earlier [RGBW Rev A package](pcb-rgbw-reva/README.md) supplies native KiCad
 files, four PWM power channels, a protected logic-supply draft, a BOM and
 updated case parts. Its final Orion export has zero ERC/DRC findings and zero
 unfinished connections. Nominal CAD interference checks pass for the revised
-assembly. The [inline harness build sheet](connector-adapter/INLINE-HARNESS.md)
-gives the Toyota-to-shield wiring and checks. The vehicle feed, connector fit,
-pod pinout, controller stack and RF fit still need physical verification.
+assembly. The [Rev A inline harness build sheet](connector-adapter/INLINE-HARNESS.md)
+retains the Toyota pass-through and earlier shield wiring. The vehicle feed,
+connector fit, pod pinout, controller stack and RF fit still need physical verification.
 
 ![Orion-generated fit-check case, lid, carrier drill template and insert coupon](cad/case_overview.png)
 

@@ -1,0 +1,4 @@
+# Keep native CAD, KiCad and verification receipt bytes tied to the Orion job.
+generated/** -text whitespace=cr-at-eol
+generated/**/*.step binary
+generated/**/*.stl binary

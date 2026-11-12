@@ -1,0 +1,188 @@
+{
+  "contract": "vhos_rgbw_two_connector_revb_v1",
+  "outline": [
+    [
+      -53,
+      0
+    ],
+    [
+      68.58,
+      0
+    ],
+    [
+      68.58,
+      10
+    ],
+    [
+      48,
+      10
+    ],
+    [
+      48,
+      43
+    ],
+    [
+      68.58,
+      43
+    ],
+    [
+      68.58,
+      53.34
+    ],
+    [
+      -53,
+      53.34
+    ]
+  ],
+  "upper_mounts": [
+    [
+      -46,
+      4.8
+    ],
+    [
+      -42,
+      50.5
+    ],
+    [
+      -8.5,
+      5
+    ],
+    [
+      -8.75,
+      50.6
+    ]
+  ],
+  "case": {
+    "width_mm": 132,
+    "depth_mm": 76,
+    "body_height_mm": 46,
+    "wall_mm": 2.6,
+    "floor_mm": 3,
+    "lid_mm": 3,
+    "pcb_origin_xy_mm": [
+      56,
+      11.33
+    ],
+    "esp_pcb_bottom_mm": 8.0,
+    "stack_pitch_mm": 15.0,
+    "pcb_thickness_mm": 1.6,
+    "lid_insert_pitch_offset_mm": 6.5,
+    "insert_pilot_mm": 4.0,
+    "insert_depth_mm": 6.2,
+    "lid_boss_diameter_mm": 8.8,
+    "shield_boss_diameter_mm": 8.8,
+    "lower_boss_diameter_mm": 7.0,
+    "ear_extension_mm": 7.0,
+    "ear_hole_mm": 4.3,
+    "nominal_cable_bend_clearance_mm": 36,
+    "lower_support_only_xy_mm": [
+      15.24,
+      50.8
+    ]
+  },
+  "ports": {
+    "J1": {
+      "name": "VEHICLE IN",
+      "mate": "171692-0102",
+      "contact": "76823-0321",
+      "pins": {
+        "1": "GND",
+        "2": "VEH_ACC"
+      },
+      "footprint": "Connector_Molex:Molex_Mega-Fit_76825-0002_2x01_P5.70mm_Horizontal",
+      "mpn": "76825-0002",
+      "xy": [
+        -39,
+        42.2
+      ],
+      "header_extent_mm": {
+        "face_from_pad": -15.9,
+        "back_from_pad": 7.4,
+        "y_from_pad": [
+          -4.175,
+          4.175
+        ],
+        "height": 14.53
+      },
+      "cable_allowance_mm": {
+        "half_width": 7.0,
+        "height": 17.8,
+        "below_pcb": 1.0
+      }
+    },
+    "J2": {
+      "name": "RGBW OUT",
+      "mate": "43025-0800",
+      "contact": "43030-0007",
+      "pins": {
+        "1": "LED_R_NEG",
+        "2": "LED_G_NEG",
+        "3": "LED_B_NEG",
+        "4": "LED_POS",
+        "5": "LED_W_NEG",
+        "6": null,
+        "7": null,
+        "8": null
+      },
+      "footprint": "Connector_Molex:Molex_Micro-Fit_3.0_43045-0800_2x04_P3.00mm_Horizontal",
+      "mpn": "43045-0800",
+      "xy": [
+        -46,
+        13
+      ],
+      "header_extent_mm": {
+        "face_from_pad": -8.92,
+        "back_from_pad": 4.25,
+        "y_from_pad": [
+          -3.575,
+          12.575
+        ],
+        "height": 10.29
+      },
+      "cable_allowance_mm": {
+        "half_width": 10.0,
+        "height": 13.5,
+        "below_pcb": 1.0
+      }
+    }
+  },
+  "fuses": {
+    "F1": {
+      "xy": [
+        -21,
+        46.4
+      ],
+      "in": "VEH_ACC",
+      "out": "ACC_FUSED",
+      "amps": 3,
+      "volts_dc": 58,
+      "element": "0997003.WXN",
+      "label": "MAIN / LED"
+    },
+    "F2": {
+      "xy": [
+        3.5,
+        46
+      ],
+      "in": "LED_POS",
+      "out": "VIN_PROT",
+      "amps": 1,
+      "volts_dc": 32,
+      "element": "ATM-1",
+      "label": "LOGIC"
+    }
+  },
+  "fuse_geometry": {
+    "pitch_x_mm": 9.91,
+    "pitch_y_mm": 3.4,
+    "drill_mm": 1.7,
+    "finished_hole_min_mm": 1.6,
+    "body_x_mm": 16.0,
+    "body_y_mm": 7.37,
+    "holder_z_mm": 7.0,
+    "installed_height_reserve_mm": 15.0,
+    "puller_width_mm": 20.0,
+    "puller_depth_mm": 11.0,
+    "puller_travel_mm": 18.0
+  }
+}

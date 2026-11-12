@@ -1,0 +1,26 @@
+group,quantity,part,application,selection_note
+Board,1,ShengYang D1 UNO ESP32-S3 N16R8 CH340,Lower board,Measure the actual board and confirm its revision
+Board,1,VHOS RGBW Rev B,Upper four-layer shield,Use the generated PCB-BOM for the component reference designators
+Board,1,SparkFun PRT-11417,Four UNO stack headers,One kit supplies 8+10+8+6 positions
+Board,1,Samtec SNT-100-BK-G,JP1 5 V RUN shunt,Fit after verifying power and programming isolation
+Fuses,2,Keystone 3568,F1/F2 PCB MINI holders,See PCB-BOM
+Fuses,1,Littelfuse 0997003.WXN,F1 main and LED fuse,3 A 58 V MINI prototype value
+Fuses,1,Eaton ATM-1,F2 logic fuse,1 A 32 V MINI prototype value
+Case,1,case_base.stl,Printed floor and bosses,Fit coupon and material check first
+Case,1,case_lid.stl,Printed removable lid,Exterior face down
+Case,11,ruthex RX-M3x5.7,Four lid + three ESP32 + four shield insert locations,Confirm fit on the actual print material
+Case,4,M3x8 socket-head machine screw,Lid screws,Measure head clearance and confirm engagement
+Case,7,M3x6 socket-head machine screw,ESP32 and shield screws,Use insulating washers
+Case,7,M3 nylon washer 7 mm OD and 0.5 mm thick,ESP32 and shield screws,Check washer outer diameter against solder pads
+Case,2,M4 cabin mounting fasteners with washers,Two external ears,Fastener length and anchor depend on the verified mounting position
+Vehicle adapter,1,Molex 171692-0102,J1 cable housing,Two-position keyed Mega-Fit receptacle
+Vehicle adapter,2,Molex 76823-0321,J1 socket terminals,14-16 AWG stranded wire with 3.18-3.66 mm insulation OD per Molex
+Vehicle adapter,1,Corsa 090IIU-6P-1 / Yazaki 7282-1060,Toyota pin kit,Confirm keying and use crimp contacts matching each factory conductor
+Vehicle adapter,1,Corsa 090IIU-6S-1 / Yazaki 7283-1060,Toyota socket kit,Confirm matching factory pin housing exists
+Vehicle adapter,As measured,Automotive wire / ground lug / crimps / loom sleeve,J1 power and dedicated return and Toyota pass-through,Size to the verified circuit source protection and load
+LED adapter,1,Molex 43025-0800,J2 cable housing,Eight-position keyed Micro-Fit receptacle
+LED adapter,5,Molex 43030-0007,J2 socket terminals,20 AWG stranded automotive wire with insulation OD at most 1.85 mm
+LED adapter,As measured,Five-conductor harness and sealed pod mate,Protected common positive and four PWM returns,Verify M8 pin functions and aggregate cable load
+LED adapter,1,Diode Dynamics DD4084,Optional matched RGBW M8 donor lead,Identify correct end and map all five circuits before termination
+LED adapter,1,Diode Dynamics DD4088,Conditional four-way M8 branch harness,24 AWG per maker so qualify actual load and voltage drop
+LED load,1-4,Diode Dynamics DD7440,Prototype common-positive RGBW pods,Begin with one sample and measure color and combined current

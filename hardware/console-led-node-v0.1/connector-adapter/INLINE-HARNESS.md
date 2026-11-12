@@ -1,5 +1,9 @@
 # 2005 4Runner V8 inline harness for the RGBW shield
 
+For the box with both fuses inside, use the [Rev B vehicle and LED cable map](../pcb-rgbw-revb/README.md#two-cable-connections).
+This sheet's six Toyota pass-through paths also apply to Rev B. The shield-side
+connections below apply to Rev A.
+
 Build sheet for the ShengYang D1 UNO ESP32-S3 and the [RGBW Rev A shield](../pcb-rgbw-reva/README.md).
 The two Toyota housings carry six straight-through circuits. A fused branch
 takes switched power to the shield through a detachable plug. The shield
