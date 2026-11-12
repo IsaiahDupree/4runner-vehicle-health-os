@@ -34,20 +34,21 @@ remain unresolved. No fabrication, vehicle connection or printing is released.
 
 | Interface | PCB assignment | Evidence boundary |
 | --- | --- | --- |
-| J1, Molex 43045-0600 | 1 ILL1+, 2 ILL1 return, 3 ILL2+, 4 ILL2 return, 5 logic GND, 6 externally fused ACC | Our adapter convention, **not verified Toyota cavity numbering**. ILL circuits lead only to separate test pads. |
-| J1 cable mate | 43025-0600 housing, 43030-0007 contacts | PCB-side interface only; Toyota side is the conditional Yazaki pair in the earlier connector research. |
-| J2, Phoenix Contact 1803303 | 1 R−, 2 G−, 3 B−, 4 W−, 5 dedicated LED return GND | Dry-cabin, unsealed 3.81 mm connector. Cable mate 1803604. These numbers are **not pod M8 cavities**. |
+| J1, Molex 43045-0600 | 1–4 isolated test pads, 5 board GND, 6 externally fused ACC | The inline harness populates J1-6 only. |
+| J1 cable mate | 43025-0600 housing, one 43030-0007 socket | The socket goes in cavity 6. The six Toyota circuits pass through the inline loom. |
+| J2, Phoenix Contact 1803303 | 1 R−, 2 G−, 3 B−, 4 W−, 5 dedicated shield GND | Dry-cabin, unsealed 3.81 mm connector with 1803604 cable mate. Verify the mapping to the pod M8 connector before attaching the loads. |
 | LED common positive | Separate protected LED supply, outside this PCB | The 9–16 V pod range does not qualify a direct vehicle feed against transients. |
 | H1 pad 3 / pad 4 / pad 8 | GPIO18 red / GPIO17 green / GPIO14 blue | Screenshot labels and nominal UNO positions; continuity still requires the actual board. |
 | H4 pad 1 | GPIO2 white PWM | This revision uses A0 for white; the earlier optional illumination-sense proposal is superseded. |
 | H2 pad 1 | GPIO21 driver enable | External 2.2 kΩ pulldown, four input pulldowns and four gate pulldowns establish intended hardware default-off behavior. |
 | JP1 | OPEN by default: logic 5 V isolated from ESP32 5 V header | Close only after checking the actual board's power path, with USB physically disconnected. |
 
-Preserve the original lighter's high-current pass-through outside the board.
-Only a separately fused low-current controller branch enters J1. Never bond an
-illumination return to ground on the basis of its wire color. The console plug
-does not supply CAN telemetry; the existing CAN gateway and wireless link are
-separate. This change implements no firmware or phone/head-unit integration.
+The [inline harness build sheet](../connector-adapter/INLINE-HARNESS.md) routes
+the six original circuits outside the board and brings only verified, fused
+switched positive to J1-6. J1-5 and J2-5 share a PCB ground net. Leave the J1-5
+cable cavity empty and use J2-5 for both controller and LED return so the
+factory console wiring cannot carry LED return current. The existing CAN
+gateway supplies telemetry wirelessly.
 
 ## Circuit choices
 
@@ -67,8 +68,8 @@ intentional. Each channel has a 100 Ω gate resistor, 10 kΩ gate pulldown and
 SMBJ24CA clamp candidate. The clamp's catalog pulse rating does not establish
 protection against arbitrary cable faults or automotive load dump.
 
-The targets of 1.5 A per color and 3 A aggregate LED return are **unqualified
-design limits**, not measured pod currents or demonstrated board ampacity.
+The **unqualified design limits** are 1.5 A per color and 3 A total at J2-5,
+including the measured controller input current with the inline harness.
 Via current, copper temperature, shared return continuity, solder joints,
 connector heating and fault behavior require review before choosing load and
 fuse ratings. Small resistor/capacitor manufacturer suffixes and the stacking

@@ -7,25 +7,24 @@ The current [RGBW Rev A package](pcb-rgbw-reva/README.md) supplies native KiCad
 files, four PWM power channels, a protected logic-supply draft, a BOM and
 updated case parts. Its final Orion export has zero ERC/DRC findings and zero
 unfinished connections. Nominal CAD interference checks pass for the revised
-assembly. The Toyota plug, pod pinout, actual controller stack and RF fit still
-need physical verification. Earlier records below remain historical references.
+assembly. The [inline harness build sheet](connector-adapter/INLINE-HARNESS.md)
+gives the Toyota-to-shield wiring and checks. The vehicle feed, connector fit,
+pod pinout, controller stack and RF fit still need physical verification.
 
 ![Orion-generated fit-check case, lid, carrier drill template and insert coupon](cad/case_overview.png)
 
-The requested system is feasible: the existing CAN gateway supplies telemetry,
-an added ESP32 receives selected validated values, and a protected output stage
-drives added LEDs. The console harness supplies power and possibly discrete
-lighting/switch signals. Its exact cavities and functions are not established
-by these side/rear photographs. A connector breakout cannot expose vehicle
-data that is absent from that connector.
+The existing CAN gateway supplies telemetry wirelessly. An added ESP32
+receives selected validated values and drives the RGBW output stage. The
+inline harness carries the factory console circuits and provides a fused
+switched power branch once the feed is verified.
 
 ## What the photographs establish
 
-| Location in both photographs | Observation and working identification | Confidence / remaining check |
+| Location | Observation and working identification | Remaining check |
 | --- | --- | --- |
 | Black cylindrical component at upper left | Rear of a cigarette-lighter / 12 V socket assembly | Strong visual identification; distinguish the actual socket variant by its label and front view |
 | Beige connector beside that socket | Part of the local socket/illumination wiring | Function inferred from its physical routing; cavity count, mating face and part number unreadable |
-| Loose white multi-pin plug at lower left | Console sub-harness connector; Toyota **IR1**, the cigarette-lighter wiring assembly junction, is a candidate | **Unconfirmed**; photos do not establish cavity count or numbering. Do not buy a six-way connector from this inference |
+| Loose white plug at lower left | Later mating-face photos show a six-contact socket matching the Yazaki **7283-1060** pattern. The catalog mate is **7282-1060** | Confirm latch fit and the factory mating half. **IR1** remains a candidate for its circuit function |
 | Blue connector in black switch housing at right | A console switch connection | Exact switch unidentified without its front legend; no assertion that it is DAC, differential lock or another trim-specific function |
 
 Toyota's reproduced EWD identifies IR1 as the join between instrument-panel
@@ -37,10 +36,9 @@ exact 2005 V8/build-month applicability and connector views still need checking
 against the vehicle. [Toyota EWD connector-location page][ewd-ground],
 [connector list][ewd-connectors], [Toyota TIS][tis].
 
-The manufacturer's actual mating face and cavities must match before purchase.
-Wire color, connector color, a model-wide fitment list, or a housing number
-alone does not establish the mating half. There is no verified all-pin
-Toyota-to-PCB adapter in this package.
+Compare the actual mating face, latch and cavities when ordering the
+pass-through parts. Match circuits by physical terminal alignment and
+continuity during assembly.
 
 ## Parts that can be sourced
 
@@ -48,10 +46,10 @@ The complete candidate list, quantities and unresolved selection conditions are
 in [BOM.csv](BOM.csv). All electronic parts are research candidates, not a
 released fabrication BOM.
 
-The [connector-to-shield research](connector-adapter/README.md) now supplies a
-concrete Yazaki mating-pair candidate, a conditional six-circuit adapter map,
-the exact Molex PCB interface, and official UNO R3 header-coordinate references.
-The Toyota photo/2005 applicability and owned ESP32 board remain unconfirmed.
+The [connector-to-shield research](connector-adapter/README.md) supplies the
+Yazaki mating pair, the Molex PCB interface and official UNO R3 header
+coordinates. The [inline harness parts list](connector-adapter/INLINE-HARNESS.md#parts)
+covers the current cable build.
 
 The subsequent [component CAD collection](cad-references/README.md) records six
 downloaded STEP references, manufacturer versus community provenance, native
@@ -88,24 +86,23 @@ not a final output circuit.
 
 ```mermaid
 flowchart LR
-  H[Verified console power takeoff] --> F[Branch fuse and automotive protection]
+  H[Verified switched accessory feed] --> F[Branch fuse and automotive protection]
   F --> P[5 V logic supply]
   P --> E[UNO-format ESP32 on screw-mounted carrier]
   G[Existing passive CAN gateway] --> A[VHOS iPhone or Android client]
   A -. proposed bonded BLE control .-> E
   G -. optional future direct link .-> E
-  E --> D[LED driver selected for actual LED type]
-  L[Separately fused LED power] --> D
-  D --> N[Added LEDs]
+  E --> D[RGBW low-side drivers]
+  L[Separately fused and protected LED supply] --> N[RGBW pods]
+  N --> D
+  D --> R[Dedicated common ground]
+  E --> R
 ```
 
-Use an OEM mating **pass-through T-harness** if the existing socket is to keep
-working. Preserve its original circuit and current capacity through the loom;
-take only the new fused branch into our PCB. A short pigtail, locking PCB
-header and strain relief let the case support insertion forces. The vehicle
-plug does not support the PCB's weight. A direct Toyota PCB header would be
-an alternative only if its exact mate, retention, drawing and availability
-are established.
+Use the **inline T-harness** to carry the six factory paths. The branch fuse
+feeds J1-6 and the shield ground lands at J2-5 through a dedicated lead. Keep
+the Toyota housings and branch fuse holder outside the printed case. Support
+the cable near the case and mount the PCB on its screw supports.
 
 The user has identified the target controller with a product screenshot:
 **ShengYang listing, purple D1 UNO ESP32-S3 N16R8 / CH340 board**. The earlier
@@ -183,10 +180,8 @@ profile. No cloud compute or GitHub Actions was used.
 
 ## Information needed to qualify the PCB and installation
 
-1. Confirm which photographed plug is the target. Retain a straight-on mating
-   face photo with latch orientation, a rear-wire photo and every molded number.
-   Count cavities, including empty ones. A scale/caliper measurement is needed
-   for any connector retention bracket.
+1. Confirm latch engagement on both ends of the inline harness and check all
+   six original circuit paths. Dry-fit the loom with the console trim closed.
 2. The target is now the user-provided ShengYang D1 UNO ESP32-S3 listing; confirm
    the physical revision and both faces, then measure board, holes,
    header stack, USB access and antenna position. The earlier A/C board and this
@@ -194,11 +189,8 @@ profile. No cloud compute or GitHub Actions was used.
 3. Identify the actual LEDs: new accent/indicator lights or factory lights,
    5 V addressable / 12 V addressable / analog RGB, exact part, length and peak
    load. Select the driver, supply, fuse and connector only after that load is known.
-4. Record exact 2005 V8/VIN build/trim wiring and meter evidence for the chosen
-   feed/ground. Keep every unknown cavity unconnected. Do not bridge unknown
-   pins or assume illumination return is chassis ground. Qualified testing
-   should compare OFF/ACC/ON and lighting/dimmer states with a high-impedance
-   meter; no powered-circuit resistance tests or test-lamp probing of bus/SRS.
+4. Verify the feed and dedicated ground on the 2005 V8 using the
+   [inline harness checkout](connector-adapter/INLINE-HARNESS.md#assembly-and-checks).
 5. Measure the proposed console space, mounting surface and cable extraction
    path, verify current printer/material/profile, and fit the coupon first.
    Then complete the populated PCB/connector model, schematic, protection and

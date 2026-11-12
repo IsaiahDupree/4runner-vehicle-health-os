@@ -1,8 +1,15 @@
 # Toyota console plug → ESP32 shield connection
 
-Research date: 2026-11-07 local. **Draft connector selection and circuit mapping; no vehicle connection or PCB fabrication release.**
+The [inline harness build sheet](INLINE-HARNESS.md) defines the current Rev A
+wiring, parts and checkout steps. This page retains the connector and CAD
+research from November 7, 2026.
 
-The leading identification is **IR1**, the six-cavity connection between the instrument-panel loom and cigarette-lighter sub-loom. The photographed loose white plug has not been seen from its mating face, so its identity, contact gender, keying and numbering remain unconfirmed.
+The later mating-face photos and the supplied Corsa comparison show a white
+six-contact socket in the Yazaki 7283-1060 pattern. The catalog mate is
+**Yazaki 7282-1060**. IR1, the join between the instrument-panel loom and the
+cigarette-lighter sub-loom, remains a candidate for its factory function.
+Check the actual latch engagement and the circuit's electrical behavior on
+the 2005 V8.
 
 ## Concrete plug candidate
 
@@ -12,11 +19,11 @@ Yazaki explicitly lists these two housings as mates. Its male housing is 38.0 mm
 
 | Role | Part / purchase lead | Evidence status |
 | --- | --- | --- |
-| Candidate Toyota-side pin housing | **Yazaki 7282-1060**, Corsa **090IIU-6P-1** kit | Manufacturer mating pair confirmed; exact photo/2005 vehicle match pending. Supplier cross-reference: Toyota **90980-10796** |
-| Candidate opposite socket housing for a pass-through loom | **Yazaki 7283-1060**, Corsa **090IIU-6S-1** kit | Manufacturer mating pair confirmed; supplier cross-reference includes Toyota **90980-10797**. Check exact keying/retainer revision |
-| Small-wire male contact | **Yazaki 7114-4020** | Cataloged for 7282-1060; 0.30–0.50 mm² wire. Candidate for the new fused branch only |
+| Toyota-side pin housing | **Yazaki 7282-1060**, Corsa **090IIU-6P-1** kit | Catalog mate for the pictured socket pattern. Supplier cross-reference Toyota **90980-10796**. Physical fit pending |
+| Opposite socket housing for the inline harness | **Yazaki 7283-1060**, Corsa **090IIU-6S-1** kit | Supplier cross-reference includes Toyota **90980-10797**. Check the factory mating half and retention |
+| Small-wire male contact | **Yazaki 7114-4020** | Cataloged for 7282-1060 with 0.30–0.50 mm² wire. Select each pass-through contact by actual wire size |
 | Matching small-wire female contact | **Yazaki 7116-5041-02** | Cataloged for 7283-1060 and mates with 7114-4020; 0.30–0.50 mm² AVSS/CAVS/CAVUS or 0.50 mm² AVS |
-| New adapter cable end | **Molex 43025-0600**, six **43030-0007** sockets | Six-way Micro-Fit 3.0 receptacle; 20/22/24 AWG contacts, insulation OD ≤1.85 mm |
+| New adapter cable end | **Molex 43025-0600**, one **43030-0007** socket | Populate J1-6 only. Socket accepts 20/22/24 AWG with insulation OD ≤1.85 mm |
 | Shield PCB connector J1 | **Molex 43045-0600** | Six-way, 3 mm pitch, right-angle through-hole PCB header; matches the Micro-Fit cable end |
 | Shield-to-controller headers | **SparkFun PRT-11417** | UNO R3 kit: 2 × eight-pin, 1 × ten-pin, 1 × six-pin. Physical compatibility with the owned ESP32 revision still pending |
 
@@ -24,39 +31,30 @@ Corsa listed the pin kit at $3.14 and socket kit at $3.03 during retrieval; Spar
 
 ## Connection to the PCB on top of the controller
 
-```mermaid
-flowchart LR
-  CAR[Confirmed Toyota console connector] --> T[Matching six-circuit pass-through loom]
-  T --> OEM[Original console socket and illumination]
-  T --> BR[Separately fused low-current branch]
-  BR --> C[Molex 43025-0600 cable housing]
-  C --> J[Molex 43045-0600 on shield PCB]
-  J --> P[Reverse/transient protection and regulated 5 V]
-  P --> H[UNO-format header power connection]
-  H --> E[Owned ESP32 board]
-  J --> S[Optional protected illumination sensing]
-  S --> E
-  G[Existing CAN ESP32 gateway] -. wireless telemetry .-> E
-```
+The inline loom carries all six original circuits. It takes verified
+switched positive through a branch fuse to J1-6. The shield's dedicated return
+lands at J2-5. The Toyota housings and fuse holder sit outside the case, and
+the shield mounts on the controller's headers and screw supports. See the
+[wiring diagram and continuity table](INLINE-HARNESS.md#wiring).
 
-This satisfies the requested plug-in PCB arrangement with a **short adapter loom**. The Toyota crimp housing can be captured by a custom case bracket if desired; the PCB itself mounts on the controller's headers and screw supports. Support the cable/connector insertion force in the case. The bulky Toyota housing is not soldered directly to the shield.
-
-The Micro-Fit and Toyota cavity arrangements differ. Assemble by **molded cavity numbers and continuity**, never by matching spatial positions, wire colors, or guessed front/rear views. `PINMAP-DRAFT.csv` is the numbered adapter proposal, conditional on confirming IR1 and its exact 2005 applicability.
-
-## Six-circuit map — adjacent-year reference, not the vehicle pinout
+## 2006 IR1 circuit reference
 
 The accessible factory **2006 EM00T0U** supplies this reference: overall diagram **printed p. 447** (PDF page 33), and cigarette-lighter system **printed pp. 296–297** (PDF pages 340–341). The exact 2005 manual is **EWD615U**, whose corresponding pages were not obtained. Do not relabel 2003/2006 data as verified 2005 V8 wiring.
 
-| Candidate IR1 cavity | Factory 2006 circuit / wire | Proposed J1 cavity | Shield destination |
-| --- | --- | --- | --- |
-| 1 | Ashtray illumination feed, G (green) | 1 | Separate breakout/test point; optional protected sense later |
-| 2 | Ashtray illumination return, W–G on main loom; W–B on lamp sub-loom | 2 | Separate breakout; **not tied to chassis/power ground** |
-| 3 | Lighter illumination feed, G | 3 | Separate breakout/test point; optional protected sense later |
-| 4 | Lighter illumination return, W–G on main loom; W–B on lamp sub-loom | 4 | Separate breakout; **not tied to chassis/power ground** |
-| 5 | Lighter power ground, W–B | 5 | Power ground after confirmation |
-| 6 | CIG accessory feed, P–L (pink/blue); drawing shows 10 A CIG upstream fuse | 6 | New branch fuse → protection → buck regulator |
+| IR1 cavity | Factory 2006 circuit / wire |
+| --- | --- |
+| 1 | Ashtray illumination feed, G (green) |
+| 2 | Ashtray illumination return, W–G on main loom and W–B on lamp sub-loom |
+| 3 | Lighter illumination feed, G |
+| 4 | Lighter illumination return, W–G on main loom and W–B on lamp sub-loom |
+| 5 | Lighter power ground, W–B |
+| 6 | CIG accessory feed, P–L (pink/blue), shown on a 10 A fuse |
 
-Only cavities 5 and 6 would be needed to power a basic node after confirmation. Optional 1–4 provide lighting/dimmer observation with a designed input stage; **no raw vehicle voltage reaches GPIO**. Preserve all six original paths outside the PCB. An upstream 10 A factory fuse is not protection for this new small branch or Micro-Fit wiring. LED-load power needs its own reviewed current budget and fuse.
+`PINMAP-DRAFT.csv` preserves the earlier six-wire shield proposal. Use the
+[current inline harness wiring](INLINE-HARNESS.md#wiring) for assembly. The
+[April 2005 owner's manual](https://assets.sia.toyota.com/publications/en/om-s/OM35860U/pdf/OM35860U.pdf#page=418)
+lists the CIG position as unused. Measure the proposed feed on the actual
+truck before adding the tee.
 
 The documented IR1 circuits contain **no CAN-H/CAN-L pair**. Telemetry reaches this node from the existing gateway. BLE/Wi-Fi topology and GPIO allocation are separate firmware work.
 
@@ -87,7 +85,9 @@ The pack contains **Yazaki's directly downloaded 7282-1060 STEP**, both manufact
 
 Orion job **mdl_d7b7711c712a454c** imported the three pinned STEP files without repair and generated a catalog preview. Yazaki imported as one valid solid with bounds **21.1 × 21.4 × 38.000003 mm**, matching the published envelope. Its tessellated mesh is **not closed**; retain it as reference CAD, not a printable Toyota connector. The Molex models are valid 7-solid / 1-solid references, previously sourced from public mirrors. The catalog is not a mated assembly or shield-fit verification.
 
-Remaining release inputs are narrow: the target plug's straight-on mating face/molded number, its physical cavity map on the exact 2005 V8, and the physical revision/measurements of the now-identified ESP32 listing. No part was ordered and no vehicle was connected.
+Remaining fit inputs are the actual Toyota latch and cavity alignment,
+switched feed on this 2005 V8, and physical measurements of the identified
+ESP32 revision.
 
 ## Sources
 
