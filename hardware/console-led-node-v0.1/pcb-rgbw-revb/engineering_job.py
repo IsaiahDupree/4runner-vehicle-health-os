@@ -14,7 +14,7 @@ import time
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
-from design import CONTRACT, NAME, REFERENCE
+from design import CONTRACT, NAME, REFERENCE, REV_C_NAME
 
 
 JOB_TYPE = "pcb.vhos_rgbw_two_connector"
@@ -30,7 +30,9 @@ ROUTED_SHIELD_SHA = "3ec61f463fe32eb3731628f4442ddb74d17c380db6bf20c91a8dc4dba24
 INSERT_MODEL = "ruthex_RX-M3x5_7.stp"
 INSERT_MODEL_SHA = "3686e4730b18fa3f0a83585da28dc7eca70e5da21cedd3f75f3205c5ad11b917"
 TOYOTA_POWER_STAGE = "toyota-power-case"
-SERVICE_STAGES = ("service-case", "durable-case", TOYOTA_POWER_STAGE)
+TOYOTA_REV_C_STAGE = "toyota-rev-c"
+TOYOTA_STAGES = (TOYOTA_POWER_STAGE, TOYOTA_REV_C_STAGE)
+SERVICE_STAGES = ("service-case", "durable-case", *TOYOTA_STAGES)
 CASE_STAGES = ("jlc-case", "jlc-lite-case", *SERVICE_STAGES)
 STAGES = ("fit", "finish", *CASE_STAGES)
 TOYOTA_INPUTS = {
@@ -75,7 +77,7 @@ def validate(params):
     if params["stage"] not in STAGES or type(params["timeout_sec"]) is not int or not 60 <= params["timeout_sec"] <= 900:
         raise ValueError("unsupported stage or deadline")
     inputs = {MODULE: MODULE_SHA}
-    if params["stage"] == TOYOTA_POWER_STAGE:
+    if params["stage"] in TOYOTA_STAGES:
         inputs.update(TOYOTA_INPUTS)
     elif params["stage"] in CASE_STAGES:
         inputs[ROUTED_SHIELD] = ROUTED_SHIELD_SHA
@@ -122,22 +124,42 @@ def execute(params, out):
         if process.returncode != 0:
             raise RuntimeError(f"{label} exited {process.returncode}")
 
-    pcb, sch = out / (NAME + ".kicad_pcb"), out / (NAME + ".kicad_sch")
+    rev_c = params["stage"] == TOYOTA_REV_C_STAGE
+    output_name = REV_C_NAME if rev_c else NAME
+    pcb, sch = out / (output_name + ".kicad_pcb"), out / (output_name + ".kicad_sch")
     pcb_tool = [PYTHON, "-I", "-B", ROOT / "native_pcb.py"]
     cad_tool = [sys.executable, "-I", "-B", ROOT / "mechanical_audit.py"]
+
+    def fabrication(fab):
+        gerbers = fab / "gerbers"
+        gerbers.mkdir(parents=True)
+        run("gerber", CLI, "pcb", "export", "gerbers", "-o", gerbers,
+            "-l", "F.Cu,In1.Cu,In2.Cu,B.Cu,F.Mask,B.Mask,F.SilkS,B.SilkS,F.Paste,Edge.Cuts", pcb)
+        run("drill", CLI, "pcb", "export", "drill", "--format", "excellon", "--excellon-separate-th",
+            "--generate-map", "--map-format", "pdf", "-o", gerbers, pcb)
+        run("placement", CLI, "pcb", "export", "pos", "--format", "csv", "--units", "mm",
+            "--side", "front", "--smd-only", "-o", fab / "SMT-placement.csv", pcb)
+
     try:
-        if params["stage"] == TOYOTA_POWER_STAGE:
+        if params["stage"] in TOYOTA_STAGES:
             from toyota_power import check_reports, prepare_native
 
-            prepare_native(ROOT / "inputs", out, NAME)
+            prepare_native(ROOT / "inputs", out, NAME, dedicated_pads=rev_c)
+            if rev_c:
+                run("direct-lead-pads", *pcb_tool, "direct-lead-pads", "--out", out)
             run("erc", CLI, "sch", "erc", "--format", "json", "--severity-all", "-o", out / "erc.json", sch)
             run("drc", CLI, "pcb", "drc", "--format", "json", "--severity-all", "--schematic-parity", "-o", out / "drc.json", pcb)
             findings = check_reports(out)
+            if rev_c:
+                fabrication(out / "prototype-fabrication")
+                run("schematic-pdf", CLI, "sch", "export", "pdf", "-o", out / "schematic.pdf", sch)
+                run("shield-render", CLI, "pcb", "render", "--width", "1800", "--height", "1100",
+                    "--quality", "basic", "--background", "opaque", "--side", "top", "-o", out / "shield.png", pcb)
             run("shield-step", CLI, "pcb", "export", "step", "--subst-models", "--no-dnp", "--user-origin", "100x153.34mm",
                 "-f", "-o", out / ROUTED_SHIELD, pcb, limit=160)
             run("toyota-power-case", *cad_tool, TOYOTA_POWER_STAGE, "--out", out, limit=370)
             run("support-free-print-screen", sys.executable, "-I", "-B", ROOT / "print_screen.py", "--out", out, limit=195)
-            return {"stage": TOYOTA_POWER_STAGE, "pcb_findings": findings,
+            return {"stage": params["stage"], "pcb_findings": findings,
                     "physical_fit_verified": False, "manufacturing_released": False}
         if params["stage"] in CASE_STAGES:
             shutil.copyfile(ROOT / "inputs" / ROUTED_SHIELD, out / ROUTED_SHIELD)
@@ -175,14 +197,7 @@ def execute(params, out):
                     **{key: len(drc.get(key, [])) for key in ("violations", "unconnected_items", "schematic_parity")}}
         if params["stage"] == "finish" and not any(findings.values()):
             fab = out / "prototype-fabrication"
-            gerbers = fab / "gerbers"
-            gerbers.mkdir(parents=True)
-            run("gerber", CLI, "pcb", "export", "gerbers", "-o", gerbers,
-                "-l", "F.Cu,In1.Cu,In2.Cu,B.Cu,F.Mask,B.Mask,F.SilkS,B.SilkS,F.Paste,Edge.Cuts", pcb)
-            run("drill", CLI, "pcb", "export", "drill", "--format", "excellon", "--excellon-separate-th", "--generate-map",
-                "--map-format", "pdf", "-o", gerbers, pcb)
-            run("placement", CLI, "pcb", "export", "pos", "--format", "csv", "--units", "mm",
-                "--side", "front", "--smd-only", "-o", fab / "SMT-placement.csv", pcb)
+            fabrication(fab)
             shutil.copyfile(out / "PCB-BOM.csv", fab / "PCB-BOM.csv")
         return {"stage": params["stage"], "pcb_findings": findings,
                 "physical_fit_verified": False, "manufacturing_released": False}
@@ -194,8 +209,9 @@ def execute(params, out):
                   "sources": {key: sha(path) for key, path in source_files().items()},
                   "esp_module_reference_sha256": MODULE_SHA, "artifacts": artifacts,
                   "manufacturing_released": False, "vehicle_fit_or_electrical_qualified": False}
-        if params["stage"] == TOYOTA_POWER_STAGE:
-            report["contract"] = "vhos_rgbw_revb_toyota_power_v1"
+        if params["stage"] in TOYOTA_STAGES:
+            report["contract"] = {TOYOTA_POWER_STAGE: "vhos_rgbw_revb_toyota_power_v1",
+                                  TOYOTA_REV_C_STAGE: "vhos_rgbw_revc_toyota_power_v1"}[params["stage"]]
             report["toyota_power_inputs"] = TOYOTA_INPUTS
         elif params["stage"] in CASE_STAGES:
             report["published_routed_shield_sha256"] = ROUTED_SHIELD_SHA

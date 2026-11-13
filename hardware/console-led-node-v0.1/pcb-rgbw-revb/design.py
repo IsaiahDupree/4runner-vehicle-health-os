@@ -14,6 +14,7 @@ from circuit import design as rev_a_design
 
 
 NAME = "vhos_rgbw_revb"
+REV_C_NAME = "vhos_rgbw_revc"
 CONFIG = json.loads((ROOT / "engineering-inputs.json").read_text())
 CONTRACT = CONFIG["contract"]
 OUTLINE = CONFIG["outline"]

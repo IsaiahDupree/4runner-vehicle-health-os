@@ -466,7 +466,8 @@ def enclosure(out, g=CASE, *, render=True, service=None, durable=None, toyota=No
     }
     if toyota:
         report["geometry_authority"].update({
-            "shield": "Reopened KiCad STEP with both headers marked DNP",
+            "shield": ("Reopened KiCad STEP with dedicated wire pads" if (out / "harness-pads.json").is_file()
+                       else "Reopened KiCad STEP with both headers marked DNP"),
             "ports": "Captive wire exits and case-mounted tie saddles",
             "mating_cables": "Sleeve tolerance screening plus nominal jacket illustrations",
         })

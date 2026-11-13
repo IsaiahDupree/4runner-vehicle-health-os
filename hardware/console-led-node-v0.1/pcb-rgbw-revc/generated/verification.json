@@ -1,0 +1,46 @@
+{
+  "contract": "vhos_rgbw_revc_toyota_power_v1",
+  "orion_job_id": "mdl_9cd769d3508248e5",
+  "source_set_sha256": "30747bef51507bde62b37614e119ca73f734dbd85c2315dcbe771674e3dbc980",
+  "engineering_manifest_sha256": "cac0c2ae4464926114a606e2f34c9290892052cc7aaa51563928062e444bdf04",
+  "kicad_findings": {
+    "violations": 0,
+    "unconnected_items": 0,
+    "schematic_parity": 0,
+    "erc": 0
+  },
+  "through_hole_wire_pads": 7,
+  "obsolete_holes_removed": 6,
+  "track_segments_preserved": 438,
+  "vias_preserved": 93,
+  "board_outline_preserved": true,
+  "assembly_cpl_checked_against_native_placements": 55,
+  "case_checks_passed": 61,
+  "tool_axes_passed": 11,
+  "supports_off_slices_passed": 5,
+  "case_stl_matches_revb_sha256": {
+    "front_ports_coupon.stl": "1302e94eab041193a7b6d30d9af3ceccccdf974db721146c41e0dc6e9f058aa3",
+    "m3_tolerance_coupon.stl": "a89ac2d4d18eae95677b1699e2e9716e10f92f72cc83daa6b3851e408548a3b3",
+    "case_lid.stl": "033d8fb5ad2de59e578d0730d8eaa3a8a956063c690663ebcc73a1d2308c73bd",
+    "front_lid_coupon.stl": "0865b8fbd26195784fb8f4c6321815da3af4b72b47e294c2e65c1d5ab3143e87",
+    "case_base.stl": "45d2ba37e62558a412beb991aad8d352abc0cdfb889bc2acc8e042aa5221425c"
+  },
+  "physical_vehicle_power_and_fit_verified": false,
+  "manufacturing_released": false,
+  "published_sha256": {
+    "vhos_rgbw_revc.kicad_pcb": "9e01cb47235a15026c800d11aab8909cbcd61462a88d20f5b9ebbf30e6172835",
+    "vhos_rgbw_revc.kicad_pro": "77f51773a3f8315bbf246fc3e66ccf7a0b9f1afa55ace4a3f21aec9179e29652",
+    "vhos_rgbw_revc.kicad_sch": "1deb8ffcb64fbd2022457119502265404ce1cb59b96e4575cabc94dceb1a7cd1",
+    "VHOS.kicad_sym": "53b1b5095a8b70dff597986570166321d262934a6a760a3966cd1b2d93cbf220",
+    "fp-lib-table": "db27f0aad0ed086de92cbfd621762e5058981f5f2b6e842ec148ec110845c280",
+    "sym-lib-table": "5a80d57842424b2909cd984fb09651532180d1d8f31a7005f05e4b4dbb2760bf",
+    "models/MINI-3568.step": "66526bf041e5a75d96b72a060ffd766633e7abbaa5696d8b27927e055e6808fa",
+    "VHOS_RevB.pretty/Keystone_3568_MINI_Vertical.kicad_mod": "07b7893b9ab9268c1d536c3374d2d3ff0bde9437766565bb83e67cd462057c98",
+    "VHOS_RevB.pretty/RGBW_Output_5_Pads.kicad_mod": "832d5c703394719075d69fd7fed317f9b8af18222cff463a8d45a733a95a0505",
+    "VHOS_RevB.pretty/Toyota_Power_2_Pads.kicad_mod": "d1ba564d9de134fdd7c9fc474880ecce98e11b85b996d3378fbac6ec8e7b775d",
+    "4Runner_RGBW_RevC_Shield.step": "cd06d3337a19db3205d5f25a04da76ebf24f498ac6d26e9ed76d2bd8f0c47831",
+    "4Runner_RGBW_RevC_Gerbers.zip": "ca19c0c3db73658309d0c703188f5d54f9a22f3fa65641a5c250c26aa6dfb1e6",
+    "shield.png": "aefcb9bec07def93b2c52fbcb8d2f9b167407e23fa6b86ead081e748bca7bfa4",
+    "harness-pads.json": "1d5c0659ea3913635e00d4842bff13b3f041e8bc4d713b9637d2c5a39bae3c81"
+  }
+}

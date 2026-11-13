@@ -12,7 +12,7 @@ import uuid
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from design import (CASE, FUSE_GEOMETRY, FUSE_HOLDER, FUSES, NAME, OUTLINE, PORTS,
-                    REFERENCE, UPPER_MOUNTS, design, minimum_width)
+                    REFERENCE, REV_C_NAME, UPPER_MOUNTS, design, minimum_width)
 
 
 spec = importlib.util.spec_from_file_location("vhos_rev_a_kicad", REFERENCE / "native_pcb.py")
@@ -410,6 +410,82 @@ def import_route(out):
               "thermal_and_fault_limits_measured": False})
 
 
+def direct_lead_pads(out):
+    """Convert the two connector footprints to wire terminations in place."""
+    from toyota_power import DIRECT_LEADS, REVB_PADS, SPEC
+
+    path = out / (REV_C_NAME + ".kicad_pcb")
+    board = pcbnew.LoadBoard(str(path))
+    plugin = pcbnew.PCB_IO_MGR.FindPlugin(pcbnew.PCB_IO_MGR.KICAD_SEXP)
+    library = out / "VHOS_RevB.pretty"
+    footprints = {fp.GetReference(): fp for fp in board.GetFootprints()}
+    labels = {"GND": "GND", "VEH_ACC": "+12V", "LED_R_NEG": "R-", "LED_G_NEG": "G-",
+              "LED_B_NEG": "B-", "LED_POS": "+12V", "LED_W_NEG": "W-"}
+    receipt = {}
+    for ref, (name, value) in DIRECT_LEADS.items():
+        footprint = footprints[ref]
+        if footprint.GetFPID().GetUniStringLibId() != REVB_PADS[ref]:
+            raise ValueError(f"Unexpected {ref} source footprint")
+        expected = SPEC["pad_assignments"][ref]
+        pads = {p.GetNumber(): p for p in footprint.Pads() if p.GetNumber() in expected}
+        if {pin: pad.GetNetname().lstrip('/') for pin, pad in pads.items()} != expected:
+            raise ValueError(f"{ref} solder pad assignments changed")
+        unused = [p for p in footprint.Pads() if p.GetNumber() not in expected]
+        if len(unused) != {"J1": 1, "J2": 5}[ref] or any(
+            not (p.GetAttribute() == pcbnew.PAD_ATTRIB_NPTH or p.GetNetname().startswith(f"unconnected-({ref}-Pad"))
+            for p in unused
+        ):
+            raise ValueError(f"{ref} has unexpected legacy pads")
+        termination = pcbnew.FOOTPRINT(board)
+        termination.SetFPID(pcbnew.LIB_ID("VHOS_RevB", name))
+        termination.SetLibDescription("Direct-solder wire terminations with off-board strain relief")
+        termination.SetKeywords("wire solder pad")
+        termination.SetReference(ref)
+        termination.SetValue(value)
+        termination.SetPath(footprint.GetPath())
+        termination.SetPosition(footprint.GetPosition())
+        termination.SetLayer(pcbnew.F_Cu)
+        termination.SetAttributes(pcbnew.FP_THROUGH_HOLE | pcbnew.FP_EXCLUDE_FROM_BOM | pcbnew.FP_EXCLUDE_FROM_POS_FILES)
+        for field, offset in ((termination.Reference(), -2.5), (termination.Value(), 2.5)):
+            anchor = footprint.GetPosition()
+            field.SetPosition(pcbnew.VECTOR2I(anchor.x + pcbnew.FromMM(4), anchor.y + pcbnew.FromMM(offset)))
+            field.SetLayer(pcbnew.F_Fab)
+        for pad in pads.values():
+            copy = pcbnew.PAD(pad)
+            copy.SetParent(termination)
+            copy.SetPosition(pad.GetPosition())
+            termination.Add(copy)
+        plugin.FootprintSave(str(library), termination)
+        board.Remove(footprint)
+        board.Add(termination)
+        (library / (REVB_PADS[ref].split(":")[1] + ".kicad_mod")).unlink()
+        receipt[ref] = {
+            "function": "vehicle_power_input" if ref == "J1" else "rgbw_output",
+            "legacy_holes_removed": len(unused),
+            "pads": {},
+        }
+        for pin, pad in sorted(pads.items()):
+            x, y = (pcbnew.ToMM(axis) for axis in pad.GetPosition())
+            drill = pcbnew.ToMM(pad.GetDrillSize().x)
+            receipt[ref]["pads"][pin] = {"net": expected[pin], "xy_mm": [x, y], "drill_mm": drill}
+            dx, dy = (0, 2.6) if ref == "J1" else ((2.2, 0) if pin == "5" else (-3.0, 0))
+            base.text(board, labels[expected[pin]], (x + dx - 100, 153.34 - y - dy), .85)
+
+    new_labels = {"4RUNNER RGBW B": "4RUNNER RGBW C", "J1 VEHICLE IN": "TOYOTA POWER IN", "J2 RGBW OUT": "RGBW OUT"}
+    for item in board.GetDrawings():
+        if item.GetClass() == "PCB_TEXT" and item.GetText() in new_labels:
+            item.SetText(new_labels.pop(item.GetText()))
+    if new_labels:
+        raise ValueError(f"Missing original board labels: {new_labels}")
+    title = board.GetTitleBlock()
+    title.SetTitle("4Runner Toyota-powered RGBW shield")
+    title.SetRevision("C")
+    board.SetTitleBlock(title)
+    pcbnew.ZONE_FILLER(board).Fill(board.Zones())
+    pcbnew.SaveBoard(str(path), board, True)
+    save_json(out / "harness-pads.json", receipt)
+
+
 def main():
     if platform.system() != "Windows" or platform.node().split(".")[0].casefold() != "orion":
         raise RuntimeError("Orion native KiCad required")
@@ -419,10 +495,11 @@ def main():
     if pcbnew.GetBuildVersion() != "10.0.6":
         raise RuntimeError("KiCad 10.0.6 required")
     parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices=["build", "import", "reconcile"])
+    parser.add_argument("action", choices=["build", "import", "reconcile", "direct-lead-pads"])
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
-    {"build": build, "import": import_route, "reconcile": base.reconcile}[args.action](args.out)
+    {"build": build, "import": import_route, "reconcile": base.reconcile,
+     "direct-lead-pads": direct_lead_pads}[args.action](args.out)
 
 
 if __name__ == "__main__":

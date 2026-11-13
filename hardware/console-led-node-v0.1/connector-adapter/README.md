@@ -1,6 +1,6 @@
 # Toyota console plug → ESP32 shield connection
 
-Use the [Toyota-powered Rev B build guide](../pcb-rgbw-revb/TOYOTA-POWER-BUILD.md)
+Use the [Toyota-powered Rev C build guide](../pcb-rgbw-revc/README.md)
 for the current two-wire power input from the photographed white socket. The
 [Rev A inline harness build sheet](INLINE-HARNESS.md) records the earlier
 wiring. This page retains the connector and CAD research from November 7,

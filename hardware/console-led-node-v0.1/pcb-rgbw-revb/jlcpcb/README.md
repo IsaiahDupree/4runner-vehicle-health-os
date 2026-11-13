@@ -1,7 +1,7 @@
 # JLCPCB prototype package for the 4Runner RGBW controller
 
-For the current [Toyota-powered captive-lead build](../TOYOTA-POWER-BUILD.md),
-use the [LM5169 SMT-only BOM](truck-lm5169-smt/BOM.csv) and matching
+For the current [Toyota-powered captive-lead build](../../pcb-rgbw-revc/README.md),
+use the Rev C Gerbers with the [LM5169 SMT-only BOM](truck-lm5169-smt/BOM.csv) and matching
 [CPL](truck-lm5169-smt/CPL.csv). The assembly and pricing comparisons below
 document the earlier plug-equipped options.
 

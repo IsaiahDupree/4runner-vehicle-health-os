@@ -1,0 +1,70 @@
+{
+  "J1": {
+    "function": "vehicle_power_input",
+    "legacy_holes_removed": 1,
+    "pads": {
+      "1": {
+        "net": "GND",
+        "xy_mm": [
+          61.0,
+          111.14
+        ],
+        "drill_mm": 1.8
+      },
+      "2": {
+        "net": "VEH_ACC",
+        "xy_mm": [
+          66.5,
+          111.14
+        ],
+        "drill_mm": 1.8
+      }
+    }
+  },
+  "J2": {
+    "function": "rgbw_output",
+    "legacy_holes_removed": 5,
+    "pads": {
+      "1": {
+        "net": "LED_R_NEG",
+        "xy_mm": [
+          54.0,
+          140.34
+        ],
+        "drill_mm": 1.02
+      },
+      "2": {
+        "net": "LED_G_NEG",
+        "xy_mm": [
+          54.0,
+          137.34
+        ],
+        "drill_mm": 1.02
+      },
+      "3": {
+        "net": "LED_B_NEG",
+        "xy_mm": [
+          54.0,
+          134.34
+        ],
+        "drill_mm": 1.02
+      },
+      "4": {
+        "net": "LED_POS",
+        "xy_mm": [
+          54.0,
+          131.34
+        ],
+        "drill_mm": 1.02
+      },
+      "5": {
+        "net": "LED_W_NEG",
+        "xy_mm": [
+          57.0,
+          140.34
+        ],
+        "drill_mm": 1.02
+      }
+    }
+  }
+}

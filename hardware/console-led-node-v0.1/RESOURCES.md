@@ -1,31 +1,30 @@
 # 4Runner console LED controller resources
 
-The current prototype is the **Toyota-powered Rev B for the 2005 V8 4Runner**.
+The current prototype is the **Toyota-powered Rev C for the 2005 V8 4Runner**.
 The photographed white six-contact Toyota plug is the box's only wired
 input. The shield uses its switched 12 V and ground to power the ESP32-S3
 and drive the RGBW lights through the output cable. Vehicle data comes
 wirelessly from the existing classic CAN ESP32 running the MrDIY VHOS target.
-[Build guide](pcb-rgbw-revb/TOYOTA-POWER-BUILD.md) ·
-[Build definition](pcb-rgbw-revb/toyota-power.json) ·
+[Rev C build guide](pcb-rgbw-revc/README.md) ·
+[Shared harness and case definition](pcb-rgbw-revb/toyota-power.json) ·
 [Pinned gateway firmware](https://github.com/IsaiahDupree/4runner-vhos-firmware/tree/a523483abc984a406c73659653571198e46b04a0/targets/mrdiy-esp32-v13).
 
 ## Build files
 
 | Resource | What to use |
 | --- | --- |
-| Wiring and shopping | [Toyota power and RGBW lead assignments](pcb-rgbw-revb/TOYOTA-POWER-BUILD.md#power-and-lighting-leads) · [Parts list](pcb-rgbw-revb/TOYOTA-POWER-PARTS.csv) |
-| PCB fabrication | [Rev B four-layer Gerbers and drills](pcb-rgbw-revb/generated/Prototype_PCB_Gerbers.zip) |
+| Wiring and shopping | [Rev C shield pad assignments](pcb-rgbw-revc/README.md) · [Shared harness and case parts](pcb-rgbw-revb/TOYOTA-POWER-PARTS.csv) |
+| PCB model | [KiCad project](pcb-rgbw-revc/generated/vhos_rgbw_revc.kicad_pro) · [Shield STEP](pcb-rgbw-revc/generated/4Runner_RGBW_RevC_Shield.step) · [Board preview](pcb-rgbw-revc/generated/shield.png) |
+| PCB fabrication | [Rev C four-layer Gerbers and drills](pcb-rgbw-revc/generated/4Runner_RGBW_RevC_Gerbers.zip) |
 | JLCPCB assembly | [LM5169 SMT-only BOM](pcb-rgbw-revb/jlcpcb/truck-lm5169-smt/BOM.csv) · [Matching placement file](pcb-rgbw-revb/jlcpcb/truck-lm5169-smt/CPL.csv) |
 | Matched case | [Base STL](pcb-rgbw-revb/toyota-power-cad/case_base.stl) · [Lid STL](pcb-rgbw-revb/toyota-power-cad/case_lid.stl) |
 | Fit samples | [Cable-saddle coupon](pcb-rgbw-revb/toyota-power-cad/front_ports_coupon.stl) · [Lid slice](pcb-rgbw-revb/toyota-power-cad/front_lid_coupon.stl) · [M3 insert and screw coupon](pcb-rgbw-revb/toyota-power-cad/m3_tolerance_coupon.stl) |
-| Digital checks | [Verification receipt](pcb-rgbw-revb/toyota-power-cad/verification.json) · [Cable clearance and strain-relief geometry](pcb-rgbw-revb/toyota-power-cad/toyota-leads-fit.json) · [Tool access](pcb-rgbw-revb/toyota-power-cad/tool-access.json) · [Supports-off slices](pcb-rgbw-revb/toyota-power-cad/support-free.json) |
+| Digital checks | [Rev C verification receipt](pcb-rgbw-revc/generated/verification.json) · [Cable clearance and strain-relief geometry](pcb-rgbw-revb/toyota-power-cad/toyota-leads-fit.json) · [Tool access](pcb-rgbw-revb/toyota-power-cad/tool-access.json) · [Supports-off slices](pcb-rgbw-revb/toyota-power-cad/support-free.json) |
 
-The offline resource archive is named **4Runner-Console-LED-Resources.zip**.
-Open its `START-HERE.md` for the owner's connector photos, picture sheets,
-direct-lead KiCad project, editable FreeCAD assembly, STEP, print files,
-datasheets and CAD references. The assembly records are tied to Git revision
-`8ebaa83635c269ae31eaca5341b3d3f5f0a0d084` and Orion job
-`mdl_9c8b7e658ae84edc`.
+The Rev C package is **4Runner-RGBW-RevC-Prototype.zip**. Open its
+`START-HERE.md` for the native board, STEP, fabrication and assembly files.
+The offline **4Runner-Console-LED-Resources.zip** preserves the owner's
+connector photos, datasheets, CAD references and Rev B project history.
 
 ## Connector, lighting and CAD references
 
@@ -74,5 +73,6 @@ the gateway's one BLE client. That device forwards data or lighting commands
 to the lighting ESP32-S3.
 [Gateway configuration](https://github.com/IsaiahDupree/4runner-vhos-firmware/blob/a523483abc984a406c73659653571198e46b04a0/targets/mrdiy-esp32-v13/sdkconfig.defaults#L22).
 
-The [earlier two-plug Rev B](pcb-rgbw-revb/README.md) and
-[Rev A](pcb-rgbw-reva/README.md) remain available for design history.
+The [captive-lead Rev B](pcb-rgbw-revb/TOYOTA-POWER-BUILD.md),
+[two-plug Rev B](pcb-rgbw-revb/README.md) and [Rev A](pcb-rgbw-reva/README.md)
+remain available for design history.

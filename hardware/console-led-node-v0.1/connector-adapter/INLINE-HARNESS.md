@@ -1,6 +1,6 @@
 # 2005 4Runner V8 Rev A inline harness reference
 
-Use the [Toyota-powered Rev B build sheet](../pcb-rgbw-revb/TOYOTA-POWER-BUILD.md)
+Use the [Toyota-powered Rev C build guide](../pcb-rgbw-revc/README.md)
 for the current build. Its single Toyota input powers both the ESP32-S3 and
 the RGBW lights. The wiring below records the earlier Rev A prototype.
 
