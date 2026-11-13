@@ -204,12 +204,20 @@ def add_feature(doc, parent, name, label, shape, source, color):
 
 
 def assembly(out, g, base, lid, shield, lower, lower_components, ports, lid_axes, upper_axes,
-             lower_axes, fuses, *, accurate_depth=False):
+             lower_axes, fuses, *, accurate_depth=False, captive_loom=None):
     height = g["body_height_mm"]
     pcb_top = g["esp_pcb_bottom_mm"] + g["stack_pitch_mm"] + g["pcb_thickness_mm"]
     seats, paths = tool_checks(g, base, lid, shield, lower, lid_axes, upper_axes, lower_axes, fuses)
-    tool_report = {"contract": SPEC["definition"], "interface": SPEC["interface"],
-                   "envelopes": TOOLS, "states": SPEC["service_states"], "axes": seats,
+    states = dict(SPEC["service_states"])
+    interface = SPEC["interface"]
+    if captive_loom is not None:
+        from toyota_power import SPEC as POWER
+
+        interface = POWER["definition"]
+        states["plug_service"] = "Unplug the vehicle-side and lamp-side mates outside the box."
+        states["lead_service"] = "Remove the lid and release the case-side ties to service the leads."
+    tool_report = {"contract": SPEC["definition"], "interface": interface,
+                   "envelopes": TOOLS, "states": states, "axes": seats,
                    "cavity_checks_passed": all(seat["pass"] for seat in seats),
                    "actual_tool_and_print_verified": False}
     (out / "tool-access.json").write_text(json.dumps(tool_report, indent=2) + "\n", encoding="utf-8")
@@ -225,7 +233,8 @@ def assembly(out, g, base, lid, shield, lower, lower_components, ports, lid_axes
     groups = {}
     for key, label in (
         ("Print", "Printable enclosure"), ("PCB", "Two-board stack"),
-        ("Hardware", "Inserts, screws and fuses"), ("Loom", "Vehicle and light cable mates"),
+        ("Hardware", "Inserts, screws and fuses"),
+        ("Loom", "Captive Toyota power and LED leads" if captive_loom is not None else "Vehicle and light cable mates"),
     ):
         groups[key] = doc.addObject("App::DocumentObjectGroup", key)
         groups[key].Label = label
@@ -238,7 +247,8 @@ def assembly(out, g, base, lid, shield, lower, lower_components, ports, lid_axes
         return obj
 
     add("Print", "Base", "Base · 3201 PA-F", base, "Reopened printable case STEP", materials["base"])
-    add("Print", "Lid", "Lid · labeled latch reliefs", lid, "Reopened printable case STEP", materials["lid"], 5)
+    add("Print", "Lid", "Lid · labeled cable exits" if captive_loom is not None else "Lid · labeled latch reliefs",
+        lid, "Reopened printable case STEP", materials["lid"], 5)
     stack_solids = []
     for solid in shield.Solids:
         b = solid.BoundBox
@@ -277,7 +287,9 @@ def assembly(out, g, base, lid, shield, lower, lower_components, ports, lid_axes
                 (220, 225, 226), level)
         add("Hardware", f"Screw{index}", f"{name} · M3 × {length:g}", socket_screw(x, y, screw_z, length),
             SPEC["source_notes"]["screws"], materials["screw"], level)
-    for port in ports:
+    for name, label, shape, source, color in captive_loom or ():
+        add("Loom", name, label, shape, source, color)
+    for port in () if captive_loom is not None else ports:
         ref = port["ref"]
         shape, wires = cable_mate(ref, port, pcb_top)
         add("Loom", ref + "Mate", ref + " · " + port["purpose"], shape, SPEC["source_notes"]["cable_plugs"],
@@ -309,7 +321,7 @@ def assembly(out, g, base, lid, shield, lower, lower_components, ports, lid_axes
     tool_doc.recompute()
     tool_doc.saveAs(str(out / "4Runner_Insert_Tool_Paths.FCStd"))
     App.closeDocument(tool_doc.Name)
-    views(out, rendered, base, paths, accurate_depth=accurate_depth)
+    views(out, rendered, base, paths, accurate_depth=accurate_depth, captive=captive_loom is not None)
 
 
 def depth_render(triangles, scale, cx, cy, QtGui):
@@ -341,14 +353,17 @@ def depth_render(triangles, scale, cx, cy, QtGui):
     return QtGui.QImage(rgb.data, width, height, width * 3, QtGui.QImage.Format_RGB888).copy()
 
 
-def views(out, rendered, base, paths, *, accurate_depth=False):
+def views(out, rendered, base, paths, *, accurate_depth=False, captive=False):
     from PySide2 import QtCore, QtGui, QtWidgets
 
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
     views_to_render = [
-        ("closed.png", "4Runner RGBW controller", "Closed case · vehicle input and RGBW output",
+        ("closed.png", "4Runner RGBW controller",
+         "Captive Toyota power lead and RGBW lead" if captive else "Closed case · vehicle input and RGBW output",
          [(shape, color) for _, shape, color, _ in rendered], V(-1.15, -.8, 1.85)),
-        ("open.png", "Fuses and cable connections", "F1 3 A main and LED · F2 1 A logic · both plugs seated",
+        ("open.png", "Fuses and cable connections",
+         "F1 3 A main and LED · F2 1 A logic · case-mounted cable relief"
+         if captive else "F1 3 A main and LED · F2 1 A logic · both plugs seated",
          [(shape, color) for name, shape, color, level in rendered if name != "Lid" and level < 10],
          V(-1.05, -.78, 2.6)),
         ("exploded.png", "Two-board assembly", "Screw lid · fused RGBW shield · ESP32-S3 UNO · nylon base",

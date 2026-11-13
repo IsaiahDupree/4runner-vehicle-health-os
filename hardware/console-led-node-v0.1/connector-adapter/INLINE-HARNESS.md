@@ -1,5 +1,8 @@
 # 2005 4Runner V8 inline harness for the RGBW shield
 
+Use the [Toyota-powered Rev B build sheet](../pcb-rgbw-revb/TOYOTA-POWER-BUILD.md)
+for the current two-wire power takeoff and captive cable terminations.
+
 For the box with both fuses inside, use the [Rev B vehicle and LED cable map](../pcb-rgbw-revb/README.md#two-cable-connections).
 This sheet's six Toyota pass-through paths also apply to Rev B. The shield-side
 connections below apply to Rev A.

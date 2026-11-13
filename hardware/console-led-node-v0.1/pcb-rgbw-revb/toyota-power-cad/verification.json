@@ -1,0 +1,39 @@
+{
+  "contract": "vhos_rgbw_revb_toyota_power_v1",
+  "orion_job_id": "mdl_9c8b7e658ae84edc",
+  "source_set_sha256": "0fcae363104ddf0d5fe2883f6d409c18ab8ec39194618e83abeade048f8927ff",
+  "engineering_manifest_sha256": "6946dfa8f014a18fd3fc4a0020259d3e8a9765c2e6c239a906e859e8bc667885",
+  "case_checks_passed": 61,
+  "tool_axes_passed": 11,
+  "supports_off_slices_passed": 5,
+  "kicad_findings": {
+    "erc": 0,
+    "violations": 0,
+    "unconnected_items": 0,
+    "schematic_parity": 0
+  },
+  "native_sha256": {
+    "case_base.stl": "45d2ba37e62558a412beb991aad8d352abc0cdfb889bc2acc8e042aa5221425c",
+    "case_lid.stl": "033d8fb5ad2de59e578d0730d8eaa3a8a956063c690663ebcc73a1d2308c73bd",
+    "front_ports_coupon.stl": "1302e94eab041193a7b6d30d9af3ceccccdf974db721146c41e0dc6e9f058aa3",
+    "front_lid_coupon.stl": "0865b8fbd26195784fb8f4c6321815da3af4b72b47e294c2e65c1d5ab3143e87",
+    "m3_tolerance_coupon.stl": "a89ac2d4d18eae95677b1699e2e9716e10f92f72cc83daa6b3851e408548a3b3",
+    "mechanical-observation.json": "372839f64723e9ddf6c1cf0865e07ca9e960ba119745cfbecc87e45467e26636",
+    "toyota-leads-fit.json": "dd7d1d4d70f18af4a18bbd29beb2d0beedc8d818cb7e5d13de17e117d6df229a",
+    "tool-access.json": "34cf960800c61e64a322087f314e1ef1ec4b1b1bb81b9f9a1e88ea0569a7423b",
+    "support-free.json": "cd2b6c54a96fc845c41a0b91c5f0ef88be440386f45da311fd7bc3338046ef80"
+  },
+  "published_sha256": {
+    "case_base.stl": "45d2ba37e62558a412beb991aad8d352abc0cdfb889bc2acc8e042aa5221425c",
+    "case_lid.stl": "033d8fb5ad2de59e578d0730d8eaa3a8a956063c690663ebcc73a1d2308c73bd",
+    "front_ports_coupon.stl": "1302e94eab041193a7b6d30d9af3ceccccdf974db721146c41e0dc6e9f058aa3",
+    "front_lid_coupon.stl": "0865b8fbd26195784fb8f4c6321815da3af4b72b47e294c2e65c1d5ab3143e87",
+    "m3_tolerance_coupon.stl": "a89ac2d4d18eae95677b1699e2e9716e10f92f72cc83daa6b3851e408548a3b3",
+    "mechanical-observation.json": "2426e9cc7ddfbe51dc230dde894e3a4ac39d3f6148c58e29386b77f59af4df22",
+    "toyota-leads-fit.json": "b509360f8cf15be86a9b70c3d6cd71036219e5c0de93e010fbb524f0d9b964c9",
+    "tool-access.json": "aabee841341bebdcb47c055f86b23b912ab2e9288635a2d95e9410076270ea28",
+    "support-free.json": "5d0c5855e3a873c0f7e31a5e93c53bee9245f311582e8a82a5e355c002c1913b"
+  },
+  "physical_vehicle_power_and_fit_verified": false,
+  "lighting_relay_implemented": false
+}

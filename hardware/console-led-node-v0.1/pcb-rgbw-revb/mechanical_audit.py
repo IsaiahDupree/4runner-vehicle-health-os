@@ -25,7 +25,7 @@ def launch(mode, out):
         raise RuntimeError("FreeCAD unavailable")
     code = (f"import sys\nsys.path.insert(0, {str(ROOT)!r})\n"
             f"from mechanical_audit import execute\nexecute({mode!r}, {str(out)!r})\n")
-    run_freecad(native, code, out, {"service-case": 260, "durable-case": 340}.get(mode, 140))
+    run_freecad(native, code, out, {"service-case": 260, "durable-case": 340, "toyota-power-case": 340}.get(mode, 140))
 
 
 def execute(mode, output):
@@ -38,18 +38,21 @@ def execute(mode, output):
     out = Path(output)
     if mode == "models":
         component_models(out)
-    elif mode in {"jlc-case", "jlc-lite-case", "service-case", "durable-case"}:
+    elif mode in {"jlc-case", "jlc-lite-case", "service-case", "durable-case", "toyota-power-case"}:
         dimensions = {**CASE, "insert_depth_mm": 7.0, "lower_boss_diameter_mm": 8.0}
         if mode in {"jlc-lite-case", "service-case"}:
             dimensions["panel_mm"] = 2.0
         service = None
         durable = None
-        if mode in {"service-case", "durable-case"}:
+        toyota = None
+        if mode in {"service-case", "durable-case", "toyota-power-case"}:
             import service_case as service
-        if mode == "durable-case":
+        if mode in {"durable-case", "toyota-power-case"}:
             import durable_case as durable
             dimensions = durable.dimensions(dimensions)
-        base = enclosure(out, dimensions, render=False, service=service, durable=durable)
+        if mode == "toyota-power-case":
+            import toyota_power_case as toyota
+        base = enclosure(out, dimensions, render=False, service=service, durable=durable, toyota=toyota)
         if not durable:
             manufacturing_coupon(out, base, dimensions, end_relief=service is not None)
     else:
@@ -213,7 +216,7 @@ def lighten_panels(base, lid, g, board_axes):
     return base, lid
 
 
-def enclosure(out, g=CASE, *, render=True, service=None, durable=None):
+def enclosure(out, g=CASE, *, render=True, service=None, durable=None, toyota=None):
     width, depth, height = (g[k] for k in ("width_mm", "depth_mm", "body_height_mm"))
     wall, floor, lid_thickness = (g[k] for k in ("wall_mm", "floor_mm", "lid_mm"))
     origin_x, origin_y = g["pcb_origin_xy_mm"]
@@ -254,7 +257,7 @@ def enclosure(out, g=CASE, *, render=True, service=None, durable=None):
     openings = []
     cable_bodies = {}
     insertion_corridors = {}
-    for ref_name, port in PORTS.items():
+    for ref_name, port in (() if toyota else PORTS.items()):
         ax, ay = port["xy"]
         dims, cable = port["header_extent_mm"], port["cable_allowance_mm"]
         face_x = origin_x + ax + dims["face_from_pad"]
@@ -274,7 +277,10 @@ def enclosure(out, g=CASE, *, render=True, service=None, durable=None):
                          "center_y_mm": round(center_y, 3), "width_mm": 2 * half,
                          "floor_z_mm": round(bottom, 3), "top_open_to_lid": True})
 
-    if durable:
+    if toyota:
+        openings = toyota.openings(g, PORTS)
+        shell, lid = toyota.enclosure_parts(shell, g, lid_axes, openings)
+    elif durable:
         shell = durable.front_details(shell, g, openings)
         lid = durable.lid_shell(g, lid_axes, openings)
     else:
@@ -422,7 +428,10 @@ def enclosure(out, g=CASE, *, render=True, service=None, durable=None):
                           "volume_reduction_percent": round(100 * (1 - current / previous), 2)}
     # The lid and base are generated as a pair. The coupon uses the actual
     # port walls so a failed sample can be corrected without a full print.
-    if durable:
+    if toyota:
+        coupon_reports = toyota.audit(out, g, base, actual_lid, installed_lid,
+                                      shield, lower, fuses, openings, lid_axes, results)
+    elif durable:
         coupon_reports = durable.check_and_export(out, g, base, actual_lid, installed_lid,
                                                   shield, lower, fuses, openings, lid_axes, results)
     else:
@@ -455,14 +464,21 @@ def enclosure(out, g=CASE, *, render=True, service=None, durable=None):
                                "esp_module": "Espressif reference STEP at estimated placement"},
         "physical_fit_verified": False, "thermal_or_vibration_qualified": False,
     }
+    if toyota:
+        report["geometry_authority"].update({
+            "shield": "Reopened KiCad STEP with both headers marked DNP",
+            "ports": "Captive wire exits and case-mounted tie saddles",
+            "mating_cables": "Sleeve tolerance screening plus nominal jacket illustrations",
+        })
     if panel_evidence:
         report["print_panel_comparison"] = panel_evidence
     (out / "mechanical-observation.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     if not report["passed_nominal_interference"]:
         raise RuntimeError("nominal clearance findings; see mechanical-observation.json")
     if service:
-        service.assembly(out, g, base, installed_lid, shield, lower, lower_components,
-                         openings, lid_axes, upper_axes, lower_fasteners, fuses, accurate_depth=durable is not None)
+        service.assembly(out, g, base, installed_lid, shield, lower, lower_components, openings, lid_axes,
+                         upper_axes, lower_fasteners, fuses, accurate_depth=durable is not None,
+                         captive_loom=toyota.loom(openings) if toyota else None)
     if render:
         preview(out / "open_case.png", base, lower, shield, fuses, measures, board_width)
     return base
@@ -530,7 +546,8 @@ def preview(path, shell, controller, shield, fuses, fasteners, board_width):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("mode", choices=["models", "assembly", "jlc-case", "jlc-lite-case", "service-case", "durable-case"])
+    parser.add_argument("mode", choices=["models", "assembly", "jlc-case", "jlc-lite-case", "service-case",
+                                         "durable-case", "toyota-power-case"])
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     launch(args.mode, args.out.resolve())

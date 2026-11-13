@@ -14,7 +14,7 @@ from urllib.request import Request, urlopen
 
 from engineering_job import (CASE_STAGES, INSERT_MODEL, INSERT_MODEL_SHA, JOB_TYPE, MODULE,
                              MODULE_SHA, ROOT, ROUTED_SHIELD, ROUTED_SHIELD_SHA, SERVICE_STAGES, STAGES,
-                             sha, source_files, source_pin)
+                             TOYOTA_INPUTS, TOYOTA_POWER_STAGE, sha, source_files, source_pin)
 
 
 ARTIFACTS = ROOT.parents[3] / "artifacts/4runner-rgbw-shield-revb-2026-11-12"
@@ -50,7 +50,12 @@ def start(identity, folder, stage):
     control = f"C:/orion/control/{ACTOR}-{identity}"
     socket = f"/tmp/{ACTOR}-{identity}.sock"
     inputs = {MODULE: (MODULE_SHA, ROOT.parents[3] / "artifacts/4runner-console-cad-2026-11-07" / MODULE)}
-    if stage in CASE_STAGES:
+    if stage == TOYOTA_POWER_STAGE:
+        inputs.update({name: (digest, ROOT / "generated" / name) for name, digest in TOYOTA_INPUTS.items()})
+        toyota = "Yazaki_7282-1060.stp"
+        inputs[toyota] = (TOYOTA_INPUTS[toyota],
+                          ROOT.parents[3] / "artifacts/4runner-console-connector-map-2026-11-07/references" / toyota)
+    elif stage in CASE_STAGES:
         inputs[ROUTED_SHIELD] = (ROUTED_SHIELD_SHA, ARTIFACTS / "finish-04" / "output" / ROUTED_SHIELD)
     if stage in SERVICE_STAGES:
         inputs[INSERT_MODEL] = (INSERT_MODEL_SHA, ROOT.parents[3] / "artifacts/4runner-console-cad-2026-11-07" / INSERT_MODEL)
@@ -76,7 +81,9 @@ def start(identity, folder, stage):
             shutil.copyfile(source, target)
         (staging / "inputs").mkdir()
         for name, reference in references.items():
-            shutil.copyfile(reference, staging / "inputs" / name)
+            target = staging / "inputs" / name
+            target.parent.mkdir(exist_ok=True, parents=True)
+            shutil.copyfile(reference, target)
         subprocess.run(["scp", "-q", "-r", "-o", "BatchMode=yes", str(staging) + "/.", f"orion:{work}/"],
                        check=True, timeout=45)
     boot = (f"$taskArgs = '-I -B {work}/run_isolated_engineering.py --control-root C:/orion/control-plane "
@@ -111,7 +118,7 @@ def start(identity, folder, stage):
     if capability["source_sha256"] != source_pin() or set(capability["job_types"]) != {JOB_TYPE}:
         raise RuntimeError("task controller source pin mismatch")
     params = {"stage": stage, "expected_source_set_sha256": source_pin(), "evaluation_only": True,
-              "timeout_sec": {"finish": 880, "durable-case": 660}.get(stage, 360)}
+              "timeout_sec": {"finish": 880, "durable-case": 660, TOYOTA_POWER_STAGE: 850}.get(stage, 360)}
     result = call("modeling.submit", {"job_type": JOB_TYPE, "params": params}, f"{ACTOR}-{identity}")
     record(folder / "submission.json", result)
     return result

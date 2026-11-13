@@ -266,16 +266,17 @@ def header_roof_pad(g, port):
     return rounded(x0, center - 2.0, pad_bottom, x1 - x0, 4.0, .15 - pad_bottom, .65)
 
 
-def fit_coupons(out, g, base, lid):
+def fit_coupons(out, g, base, lid, *, front_x_max=9.5, front_span=(15.5, 49.5)):
     """Reproduce the front-end fit and calibrate the insert and fastener holes."""
     highest = g["body_height_mm"]
-    band = box(-7, 15.5, 0, 16.5, 49.5, highest)
+    y, width = front_span
+    band = box(-7, y, 0, front_x_max + 7, width, highest)
     front = base.common(band).removeSplitter()
     if len(front.Solids) != 1:
         raise ValueError("the front port coupon must be one printable solid")
     actual_front, ports_report = export_printable(front, "front_ports_coupon", out)
-    # The mating section carries both actual lid-side finger reliefs.
-    sample_lid = lid.common(box(0, 15.5, -g["body_height_mm"], 13.0, 49.5,
+    # The mating section carries both actual cable exit closures.
+    sample_lid = lid.common(box(0, y, -g["body_height_mm"], 13.0, width,
                                 g["lid_mm"] + g["body_height_mm"] + .2)).removeSplitter()
     actual_lid, lid_report = export_printable(sample_lid, "front_lid_coupon", out, flip=True)
     ladder = rounded(0, 0, 0, 43, 14, 3.2, 2.5)

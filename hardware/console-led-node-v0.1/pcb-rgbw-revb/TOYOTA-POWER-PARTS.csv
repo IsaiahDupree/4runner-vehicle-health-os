@@ -1,0 +1,24 @@
+Group,Quantity per unit,Part or specification,Use,Source or qualification
+Boards,1,ShengYang D1 UNO ESP32-S3 N16R8 CH340,Existing lighting controller,Verify board revision and 5 V path
+Boards,1,VHOS RGBW Rev B four-layer shield,Direct-lead solder population,Use LM5169 SMT-only BOM and CPL plus Rev B Gerbers
+Boards,1 kit,SparkFun PRT-11417,Four stack headers,https://www.sparkfun.com/arduino-stackable-header-kit-r3.html
+Boards,1,Coilcraft MSS1246T-683MLC,L1 shield inductor,Fit before bench power
+Boards,1 each,Samtec TSW-102-07-G-S and SNT-100-BK-G,5 V RUN header and shunt,Verify USB and 5 V paths before fitting shunt
+Fuses,2,Keystone 3568,PCB-mounted MINI fuse holders,https://www.keyelco.com/product.cfm/product_id/306
+Fuses,1,Littelfuse 0997003.WXN,F1 3 A / 58 V main and lighting fuse,Prototype value pending vehicle branch validation
+Fuses,1,Eaton ATM-1,F2 1 A / 32 V logic fuse,Prototype value pending bench validation
+Printed case,1 matched pair,Direct-lead base and lid,Case and saddle protection,Use actual jacket and tie fit coupon before full print
+Hardware,11,ruthex RX-M3x5.7,Heat-set inserts,4 lid plus 4 shield plus 3 lower board
+Hardware,4,M3 x 8 socket-head screws,Lid,Verify engagement
+Hardware,7 each,M3 x 6 socket-head screw and 7 mm OD x 0.5 mm M3 insulating washer,Board mounts,Verify clearance on the exact boards
+Hardware,2,M4 mounting screws and washers,Case ears,Length and anchor depend on measured console mount
+Hardware,4,HellermannTyton T18R-PA66HS-BK 111-01250 or equivalent,Two 2.5 mm ties per captive lead,https://www.hellermanntyton.com/products/cable-ties-inside-serrated/t18r/111-01250
+Power lead,1,Yazaki 7282-1060 / Corsa 090IIU-6P-1,Candidate pin mate for the existing white Toyota socket,https://www.corsa-technic.com/item.php?item_id=1359
+Power lead,2,Sized pin crimp contacts supplied with kit,Verified switched positive and power return only,Check exact wire cross-section and molded cavity IDs on vehicle
+Power lead,As measured,Two-conductor automotive wire and abrasion sleeve,Power pigtail and saddle grip,Fit the 1.8 mm nominal PCB holes and the verified crimp terminals
+Power lead,As needed,Source-side fuse and holder sized to branch wire,Protect added branch at takeoff if required,Choose after verifying source fuse and load
+Lighting lead,As measured,Five-conductor automotive wire and abrasion sleeve,RGBW captive output,Fit the 1.02 mm nominal PCB holes and verify total load
+Lighting lead,1,Diode Dynamics DD4083 or DD4084 five-pin M8 extension,Candidate donor lead for LED-side mating end,https://www.diodedynamics.com/rgbw-m8-5-pin-extension-wire.html
+Lighting lead,1,Diode Dynamics DD7440,Initial common-positive RGBW test pod,https://www.diodedynamics.com/stage-series-rgbw-led-rock-light-one.html
+Lighting lead,Optional,Diode Dynamics DD4088,M8 four-way splitter for one zone,Verify actual total load and voltage drop before using
+Data,Existing,Classic ESP32 with MrDIY CAN Shield v1.3+,Existing VHOS wireless data source,https://github.com/IsaiahDupree/4runner-vhos-firmware/tree/a523483abc984a406c73659653571198e46b04a0/targets/mrdiy-esp32-v13

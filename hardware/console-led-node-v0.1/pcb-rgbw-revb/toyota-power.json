@@ -1,0 +1,61 @@
+{
+  "definition": "vhos_rgbw_revb_toyota_power_v1",
+  "vehicle_power": {
+    "factory_socket_pattern": "Yazaki 7283-1060",
+    "candidate_pin_housing": "Yazaki 7282-1060",
+    "corsa_kit": "090IIU-6P-1",
+    "populate_only": [
+      "verified_switched_12V",
+      "verified_power_return"
+    ],
+    "physical_cavities_verified": false,
+    "connector_fits_vehicle_verified": false
+  },
+  "pad_assignments": {
+    "J1": {
+      "1": "GND",
+      "2": "VEH_ACC"
+    },
+    "J2": {
+      "1": "LED_R_NEG",
+      "2": "LED_G_NEG",
+      "3": "LED_B_NEG",
+      "4": "LED_POS",
+      "5": "LED_W_NEG"
+    }
+  },
+  "gateway": {
+    "repository": "IsaiahDupree/4runner-vhos-firmware",
+    "source_revision": "a523483abc984a406c73659653571198e46b04a0",
+    "target": "targets/mrdiy-esp32-v13",
+    "configured_ble_connections": 1,
+    "proposed_relay": "One iOS or Android VHOS client relays fresh validated data or bounded lighting commands to the ESP32-S3",
+    "lighting_transport_verified": false
+  },
+  "case": {
+    "front_doubler_mm": 2.4,
+    "loose_passage_mm": [
+      12.0,
+      11.0
+    ],
+    "lead_nominal_od_mm": {
+      "J1": 5.5,
+      "J2": 5.5
+    },
+    "lead_max_screen_od_mm": 8.0,
+    "cable_display_length_mm": 50.0,
+    "lead_seat_z_mm": 37.45,
+    "lateral_allowance_mm": 0.65,
+    "tie_slot_centers_x_mm": [
+      4.9,
+      8.7
+    ],
+    "tie_strap_width_mm": 2.5,
+    "tie_strap_thickness_screen_mm": 1.08,
+    "tie_slot_width_mm": 3.2,
+    "tie_slot_floor_z_mm": 33.45,
+    "tie_slot_eave_z_mm": 34.45,
+    "saddle_end_x_mm": 10.9,
+    "saddle_half_width_mm": 5.9
+  }
+}

@@ -1,5 +1,8 @@
 # Two-connector 4Runner RGBW shield and case
 
+Use the [Toyota-powered Rev B build sheet](TOYOTA-POWER-BUILD.md) for the current
+captive-lead variant. This page documents the earlier two-plug assembly.
+
 Rev B integrates the protected power path and both replaceable fuses onto
 the RGBW shield. The shield stacks on the ShengYang D1 UNO ESP32-S3. Four
 independent shield mounts carry plug and fuse handling loads into the base.

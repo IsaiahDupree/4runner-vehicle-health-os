@@ -1,0 +1,188 @@
+{
+  "contract": "vhos_rgbw_revb_toyota_power_v1",
+  "case": {
+    "front_doubler_mm": 2.4,
+    "loose_passage_mm": [
+      12.0,
+      11.0
+    ],
+    "lead_nominal_od_mm": {
+      "J1": 5.5,
+      "J2": 5.5
+    },
+    "lead_max_screen_od_mm": 8.0,
+    "cable_display_length_mm": 50.0,
+    "lead_seat_z_mm": 37.45,
+    "lateral_allowance_mm": 0.65,
+    "tie_slot_centers_x_mm": [
+      4.9,
+      8.7
+    ],
+    "tie_strap_width_mm": 2.5,
+    "tie_strap_thickness_screen_mm": 1.08,
+    "tie_slot_width_mm": 3.2,
+    "tie_slot_floor_z_mm": 33.45,
+    "tie_slot_eave_z_mm": 34.45,
+    "saddle_end_x_mm": 10.9,
+    "saddle_half_width_mm": 5.9
+  },
+  "checks": [
+    {
+      "check": "J1_8mm_sleeve_offset_-0.65",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1_8mm_sleeve_offset_0.65",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1_vertical_cable_loading",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1_continuous_wall_anchor",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1_tie_1_strap_through",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1_tie_1_roof_continuity",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1_tie_2_strap_through",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1_tie_2_roof_continuity",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1_tie_1_head_service",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1_tie_2_head_service",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1_reinforced_exit_wall",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J2_8mm_sleeve_offset_-0.65",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J2_8mm_sleeve_offset_0.65",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J2_vertical_cable_loading",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J2_continuous_wall_anchor",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J2_tie_1_strap_through",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J2_tie_1_roof_continuity",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J2_tie_2_strap_through",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J2_tie_2_roof_continuity",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J2_tie_1_head_service",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J2_tie_2_head_service",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J2_reinforced_exit_wall",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_screw_1_clearance",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_screw_2_clearance",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_screw_3_clearance",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_screw_4_clearance",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_at_0.4_mm_lift",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_at_1.4_mm_lift",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_at_4_mm_lift",
+      "interference_mm3": 0,
+      "pass": true
+    },
+    {
+      "check": "lid_at_12_mm_lift",
+      "interference_mm3": 0,
+      "pass": true
+    },
+    {
+      "check": "lid_at_18_mm_lift",
+      "interference_mm3": 0,
+      "pass": true
+    }
+  ],
+  "physical_harness_fit_verified": false,
+  "tie_pull_or_vibration_verified": false
+}

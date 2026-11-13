@@ -154,7 +154,9 @@ def main(out):
         if sha(path) != pin:
             raise ValueError(f"Unexpected Cura geometry screen input {path.name}")
     meshes = {name: mesh_report(out / (name + ".stl")) for name in PARTS}
-    report = {"contract": "vhos_rgbw_revb_support_free_geometry_v1", "mesh_checks": meshes,
+    fit_path = out / "toyota-leads-fit.json"
+    subject = json.loads(fit_path.read_text(encoding="utf-8"))["contract"] if fit_path.exists() else "vhos_rgbw_revb_durable_case_v1"
+    report = {"contract": "vhos_rgbw_revb_support_free_geometry_v1", "subject": subject, "mesh_checks": meshes,
               "printer": "FLSUN V400", "cura_engine": "5.9.0", "settings": SETTINGS,
               "reference_profile_id": PROFILE_ID, "reference_profile_sha256": PROFILE_PIN,
               "runtime_pins": {path.name: pin for path, pin in RUNTIME_PINS.items()},

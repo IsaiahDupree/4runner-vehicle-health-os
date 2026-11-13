@@ -29,15 +29,30 @@ ROUTED_SHIELD = "routed_shield.step"
 ROUTED_SHIELD_SHA = "3ec61f463fe32eb3731628f4442ddb74d17c380db6bf20c91a8dc4dba24a3bc5"
 INSERT_MODEL = "ruthex_RX-M3x5_7.stp"
 INSERT_MODEL_SHA = "3686e4730b18fa3f0a83585da28dc7eca70e5da21cedd3f75f3205c5ad11b917"
-SERVICE_STAGES = ("service-case", "durable-case")
+TOYOTA_POWER_STAGE = "toyota-power-case"
+SERVICE_STAGES = ("service-case", "durable-case", TOYOTA_POWER_STAGE)
 CASE_STAGES = ("jlc-case", "jlc-lite-case", *SERVICE_STAGES)
 STAGES = ("fit", "finish", *CASE_STAGES)
+TOYOTA_INPUTS = {
+    f"{NAME}.kicad_pcb": "87f9f5e0db2bc6084c099ba96d07285ab6fa8b7da0584c1f6a04517f3bc1f79b",
+    f"{NAME}.kicad_sch": "054ab60e01cb183434d4a7097e09080d37df221d8a45aaa84a5ed9ad65bcae3f",
+    f"{NAME}.kicad_pro": "a57a07e4fa134657c4b0aef95275871c4afa2ed8779fca6fc0c90b4c49489b5e",
+    "models/MINI-3568.step": "66526bf041e5a75d96b72a060ffd766633e7abbaa5696d8b27927e055e6808fa",
+    "fp-lib-table": "db27f0aad0ed086de92cbfd621762e5058981f5f2b6e842ec148ec110845c280",
+    "sym-lib-table": "5a80d57842424b2909cd984fb09651532180d1d8f31a7005f05e4b4dbb2760bf",
+    "VHOS.kicad_sym": "401a907a358c3b5d0887b80b4d883a8103bbe91b690f7bdac37b2a100102962a",
+    "VHOS_RevB.pretty/Keystone_3568_MINI_Vertical.kicad_mod": "07b7893b9ab9268c1d536c3374d2d3ff0bde9437766565bb83e67cd462057c98",
+    "VHOS_RevB.pretty/Molex_Mega-Fit_76825-0002_2x01_P5.70mm_Horizontal.kicad_mod": "b1057767ac1304a69ed7dccc05811cc2d52a172e0df05316a5b7f479a376eb46",
+    "VHOS_RevB.pretty/Molex_Micro-Fit_3.0_43045-0800_2x04_P3.00mm_Horizontal.kicad_mod": "081204a5e6b56b9e233c1e3e6af8040072907a80856bb5ab65a831cf0ebde8f9",
+    "Yazaki_7282-1060.stp": "3a395c88b0391df2321a68c37f330d390038b7a9a3875ca3417d1235ee711eb5",
+}
 
 
 def source_files():
     return {**{name: ROOT / name for name in ("design.py", "native_pcb.py", "mechanical_audit.py", "engineering_job.py",
                                              "engineering-inputs.json", "service_case.py", "service-case.json",
-                                             "durable_case.py", "durable-case.json", "print_screen.py")},
+                                             "durable_case.py", "durable-case.json", "print_screen.py",
+                                             "toyota_power.py", "toyota_power_case.py", "toyota-power.json")},
             "run_isolated_engineering.py": (ROOT / "run_isolated_engineering.py") if (ROOT / "run_isolated_engineering.py").exists()
             else REFERENCE / "run_isolated_engineering.py",
             **{f"reference/{name}": REFERENCE / name for name in ("circuit.py", "native_pcb.py", "engineering-inputs.json")}}
@@ -60,7 +75,9 @@ def validate(params):
     if params["stage"] not in STAGES or type(params["timeout_sec"]) is not int or not 60 <= params["timeout_sec"] <= 900:
         raise ValueError("unsupported stage or deadline")
     inputs = {MODULE: MODULE_SHA}
-    if params["stage"] in CASE_STAGES:
+    if params["stage"] == TOYOTA_POWER_STAGE:
+        inputs.update(TOYOTA_INPUTS)
+    elif params["stage"] in CASE_STAGES:
         inputs[ROUTED_SHIELD] = ROUTED_SHIELD_SHA
     if params["stage"] in SERVICE_STAGES:
         inputs[INSERT_MODEL] = INSERT_MODEL_SHA
@@ -74,7 +91,7 @@ def validate(params):
 def register(modeling):
     modeling.JOB_TYPES[JOB_TYPE] = {
         "runtime": "python", "script": Path(__file__),
-        "description": "Native KiCad Rev B and two-port FreeCAD enclosure fit evaluation",
+        "description": "Native KiCad Rev B and FreeCAD enclosure fit evaluation",
         "params": {"stage": "/".join(STAGES), "expected_source_set_sha256": "source pin",
                    "timeout_sec": "60..900", "evaluation_only": "true"},
     }
@@ -109,6 +126,19 @@ def execute(params, out):
     pcb_tool = [PYTHON, "-I", "-B", ROOT / "native_pcb.py"]
     cad_tool = [sys.executable, "-I", "-B", ROOT / "mechanical_audit.py"]
     try:
+        if params["stage"] == TOYOTA_POWER_STAGE:
+            from toyota_power import check_reports, prepare_native
+
+            prepare_native(ROOT / "inputs", out, NAME)
+            run("erc", CLI, "sch", "erc", "--format", "json", "--severity-all", "-o", out / "erc.json", sch)
+            run("drc", CLI, "pcb", "drc", "--format", "json", "--severity-all", "--schematic-parity", "-o", out / "drc.json", pcb)
+            findings = check_reports(out)
+            run("shield-step", CLI, "pcb", "export", "step", "--subst-models", "--no-dnp", "--user-origin", "100x153.34mm",
+                "-f", "-o", out / ROUTED_SHIELD, pcb, limit=160)
+            run("toyota-power-case", *cad_tool, TOYOTA_POWER_STAGE, "--out", out, limit=370)
+            run("support-free-print-screen", sys.executable, "-I", "-B", ROOT / "print_screen.py", "--out", out, limit=195)
+            return {"stage": TOYOTA_POWER_STAGE, "pcb_findings": findings,
+                    "physical_fit_verified": False, "manufacturing_released": False}
         if params["stage"] in CASE_STAGES:
             shutil.copyfile(ROOT / "inputs" / ROUTED_SHIELD, out / ROUTED_SHIELD)
             durable = params["stage"] == "durable-case"
@@ -164,7 +194,10 @@ def execute(params, out):
                   "sources": {key: sha(path) for key, path in source_files().items()},
                   "esp_module_reference_sha256": MODULE_SHA, "artifacts": artifacts,
                   "manufacturing_released": False, "vehicle_fit_or_electrical_qualified": False}
-        if params["stage"] in CASE_STAGES:
+        if params["stage"] == TOYOTA_POWER_STAGE:
+            report["contract"] = "vhos_rgbw_revb_toyota_power_v1"
+            report["toyota_power_inputs"] = TOYOTA_INPUTS
+        elif params["stage"] in CASE_STAGES:
             report["published_routed_shield_sha256"] = ROUTED_SHIELD_SHA
         if params["stage"] in SERVICE_STAGES:
             report["ruthex_reference_sha256"] = INSERT_MODEL_SHA

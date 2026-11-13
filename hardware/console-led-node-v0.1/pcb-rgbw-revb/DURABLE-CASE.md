@@ -1,5 +1,9 @@
 # Reinforced, support-free 4Runner RGBW enclosure
 
+The [Toyota-powered build](TOYOTA-POWER-BUILD.md) uses its own matched base
+and lid with strain relief for the captive wires. This document describes the
+earlier enclosure for removable Molex plugs.
+
 This matched base and lid fit the existing Rev B RGBW shield and the
 UNO-format ESP32-S3. J1 is the Molex Mega-Fit vehicle-power port. J2 is the
 Molex Micro-Fit RGBW port. Use the [existing wiring map](README.md#two-cable-connections).

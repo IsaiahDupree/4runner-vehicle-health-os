@@ -1,0 +1,145 @@
+{
+  "contract": "vhos_rgbw_revb_support_free_geometry_v1",
+  "subject": "vhos_rgbw_revb_toyota_power_v1",
+  "mesh_checks": {
+    "case_base": {
+      "sha256": "45d2ba37e62558a412beb991aad8d352abc0cdfb889bc2acc8e042aa5221425c",
+      "facets": 11044,
+      "bed_contact_area_mm2": 10259.189,
+      "maximum_downward_overhang_deg_from_vertical": 45.0,
+      "surface_over_45_5_deg_mm2": 0.0,
+      "largest_steep_facets": [],
+      "bad_edge_count": 0,
+      "inconsistent_winding_edges": 0,
+      "duplicate_facets": 0,
+      "edge_connected": true,
+      "pass": true
+    },
+    "case_lid": {
+      "sha256": "033d8fb5ad2de59e578d0730d8eaa3a8a956063c690663ebcc73a1d2308c73bd",
+      "facets": 5356,
+      "bed_contact_area_mm2": 9842.877,
+      "maximum_downward_overhang_deg_from_vertical": 42.339,
+      "surface_over_45_5_deg_mm2": 0.0,
+      "largest_steep_facets": [],
+      "bad_edge_count": 0,
+      "inconsistent_winding_edges": 0,
+      "duplicate_facets": 0,
+      "edge_connected": true,
+      "pass": true
+    },
+    "front_ports_coupon": {
+      "sha256": "1302e94eab041193a7b6d30d9af3ceccccdf974db721146c41e0dc6e9f058aa3",
+      "facets": 1734,
+      "bed_contact_area_mm2": 782.985,
+      "maximum_downward_overhang_deg_from_vertical": 45.0,
+      "surface_over_45_5_deg_mm2": 0.0,
+      "largest_steep_facets": [],
+      "bad_edge_count": 0,
+      "inconsistent_winding_edges": 0,
+      "duplicate_facets": 0,
+      "edge_connected": true,
+      "pass": true
+    },
+    "front_lid_coupon": {
+      "sha256": "0865b8fbd26195784fb8f4c6321815da3af4b72b47e294c2e65c1d5ab3143e87",
+      "facets": 780,
+      "bed_contact_area_mm2": 576.092,
+      "maximum_downward_overhang_deg_from_vertical": 30.301,
+      "surface_over_45_5_deg_mm2": 0.0,
+      "largest_steep_facets": [],
+      "bad_edge_count": 0,
+      "inconsistent_winding_edges": 0,
+      "duplicate_facets": 0,
+      "edge_connected": true,
+      "pass": true
+    },
+    "m3_tolerance_coupon": {
+      "sha256": "a89ac2d4d18eae95677b1699e2e9716e10f92f72cc83daa6b3851e408548a3b3",
+      "facets": 3262,
+      "bed_contact_area_mm2": 585.286,
+      "maximum_downward_overhang_deg_from_vertical": 0.0,
+      "surface_over_45_5_deg_mm2": 0.0,
+      "largest_steep_facets": [],
+      "bad_edge_count": 0,
+      "inconsistent_winding_edges": 0,
+      "duplicate_facets": 0,
+      "edge_connected": true,
+      "pass": true
+    }
+  },
+  "printer": "FLSUN V400",
+  "cura_engine": "5.9.0",
+  "settings": {
+    "layer_height": "0.2",
+    "layer_height_0": "0.2",
+    "machine_nozzle_size": "0.4",
+    "line_width": "0.42",
+    "wall_line_width_0": "0.42",
+    "wall_line_width_x": "0.42",
+    "wall_line_count": "5",
+    "wall_thickness": "2.1",
+    "top_layers": "5",
+    "bottom_layers": "5",
+    "support_enable": "false",
+    "support_mesh": "false",
+    "adhesion_type": "none",
+    "infill_sparse_density": "25",
+    "infill_line_distance": "1.68",
+    "infill_pattern": "grid",
+    "speed_print": "45",
+    "speed_wall": "35",
+    "speed_layer_0": "20",
+    "material_diameter": "1.75",
+    "material_flow": "100"
+  },
+  "reference_profile_id": "v400-owner-current",
+  "reference_profile_sha256": "f709f82daca287bc36b8ed4ccfd0b652794c97aecaab046259e0a908eb80285a",
+  "runtime_pins": {
+    "CuraEngine.exe": "4980e6fed2e8e562699d15e14dae0ce02a323069d18d3a54b8ee56696fd83dd5",
+    "flsun_v400.def.json": "ee1611945a05136f311c449118648e46c4010d13ae484cda4435265e287a23e8",
+    "fdmprinter.def.json": "7c517d0f37616bb5abc442c7f4502da2adf87dc56f445ae966867ae4eadf873e",
+    "fdmextruder.def.json": "63b347eeb6d5b827b86c19f278010571e09ec6bca0e5030669e6d82be151d332",
+    "flsun_v400_extruder_0.def.json": "5113ed43f60f838f0d4ef8f0879644b1a476a0bb9c7c375a3cd8c49947d280ae"
+  },
+  "physical_print_verified": false,
+  "gcode_released": false,
+  "offline_slices": {
+    "case_base": {
+      "exit_code": 0,
+      "layer_count": 230,
+      "support_segments": 0,
+      "wall_segments": 802,
+      "pass": true
+    },
+    "case_lid": {
+      "exit_code": 0,
+      "layer_count": 24,
+      "support_segments": 0,
+      "wall_segments": 52,
+      "pass": true
+    },
+    "front_ports_coupon": {
+      "exit_code": 0,
+      "layer_count": 230,
+      "support_segments": 0,
+      "wall_segments": 616,
+      "pass": true
+    },
+    "front_lid_coupon": {
+      "exit_code": 0,
+      "layer_count": 16,
+      "support_segments": 0,
+      "wall_segments": 16,
+      "pass": true
+    },
+    "m3_tolerance_coupon": {
+      "exit_code": 0,
+      "layer_count": 45,
+      "support_segments": 0,
+      "wall_segments": 103,
+      "pass": true
+    }
+  },
+  "supports_disabled_all_parts_passed": true
+}

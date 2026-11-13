@@ -1,12 +1,14 @@
 # 2005 V8 4Runner console LED node — research and fit-check case
 
-Status: **two-connector RGBW Rev B evaluation; physical interfaces and vehicle qualification pending**.
+**Current build** [Toyota-powered Rev B with captive leads and the existing CAN ESP32](pcb-rgbw-revb/TOYOTA-POWER-BUILD.md).
+The white Toyota socket supplies verified switched power and return. The existing
+classic ESP32/MrDIY gateway is the wireless vehicle-data source.
 Owner task: 2026-11-07. No parts ordered, functional PCB fabricated, vehicle wiring changed, or printer started.
 
-The [two-connector Rev B package](pcb-rgbw-revb/README.md) places both replaceable
+The [earlier two-connector Rev B package](pcb-rgbw-revb/README.md) places both replaceable
 fuses, reverse-battery and overvoltage protection, regulated ESP32 power and
 the RGBW output on the shield. It uses one switched vehicle input and one
-five-wire LED cable at the case. Use its assembly and pin map for the integrated box.
+five-wire LED cable at the case. Its assembly instructions document that earlier population.
 
 The earlier [RGBW Rev A package](pcb-rgbw-reva/README.md) supplies native KiCad
 files, four PWM power channels, a protected logic-supply draft, a BOM and
@@ -18,10 +20,8 @@ connector fit, pod pinout, controller stack and RF fit still need physical verif
 
 ![Orion-generated fit-check case, lid, carrier drill template and insert coupon](cad/case_overview.png)
 
-The existing CAN gateway supplies telemetry wirelessly. An added ESP32
-receives selected validated values and drives the RGBW output stage. The
-inline harness carries the factory console circuits and provides a fused
-switched power branch once the feed is verified.
+The electrical diagrams and original inline harness in the sections below
+record the earlier evaluation revisions.
 
 ## What the photographs establish
 
