@@ -9,9 +9,10 @@ The assembled cabin box uses two latched cable plugs during operation.
 
 | Prototype files | Contents |
 | --- | --- |
+| [JLCPCB quote package](jlcpcb/README.md) | Stocked parts, upload-ready BOM and placement files, assembly estimates, hand-assembly sources and revised SLS print files. |
 | [KiCad project](generated/vhos_rgbw_revb.kicad_pro) · [schematic](generated/schematic.pdf) · [shield render](generated/shield.png) | PCB placement and routing, with local connector and fuse libraries. |
 | [Gerbers and drills](generated/Prototype_PCB_Gerbers.zip) · [PCB BOM](generated/PCB-BOM.csv) · [SMT placement](generated/SMT-placement.csv) | Four-layer board plots, separate plated and non-plated drills, and top-side assembly data for a bench prototype. |
-| [Base](generated/case_base.stl) · [lid](generated/case_lid.stl) · [port coupon](generated/connector_fit_coupon.stl) · [FreeCAD assembly](generated/installed_assembly.FCStd) | Print-ready geometry for a nominal fit check and editable case inputs. |
+| [Corrected base](jlcpcb/print/case_base.stl) · [lid](jlcpcb/print/case_lid.stl) · [ports and inserts coupon](jlcpcb/print/ports_and_inserts_coupon.stl) · [Rev B reference assembly](generated/installed_assembly.FCStd) | Printable enclosure geometry with the updated insert pockets and the original editable stack reference. |
 | [Digital verification](generated/verification.json) · [mechanical checks](generated/mechanical-observation.json) | KiCad findings, matched pins, closed meshes and assembly clearances. |
 
 ```mermaid
@@ -91,15 +92,15 @@ integration with the wireless gateway and clients.
 
 ## Assembly sequence
 
-1. **Fit coupon and hardware.** Place the coupon with its exterior wall on
-   the print bed. Check the two exact cable mates before printing the whole
-   case. Measure the ESP32 board hole
+1. **Fit coupon and hardware.** Use the updated coupon to check both cable
+   mates and all three heat-set boss types before printing the full case.
+   Use the same material and finish for both prints. Measure the ESP32 board hole
    centers, header top height and underside solder clearance. Check the 15 mm
    board-to-board pitch, engagement of all four headers and antenna position.
 2. **Print the base and lid.** The closed case is 132 × 76 × 49 mm before
    screw heads, or 146 mm across the mounting ears. The open-top connector
-   slots let the shield lower into place. Print the base on the floor and
-   the lid on its exterior face. Confirm the slicing preview, heat-set fit
+   slots let the shield lower into place. For a local FDM fit print, place
+   the base on the floor and the lid on its exterior face. Confirm the heat-set fit
    and vehicle clearance around both cable exits. The lid covers the fuse
    pull paths during normal operation.
 3. **Assemble the two-board stack.** Heat-set the M3 inserts. Fit the ESP32 to

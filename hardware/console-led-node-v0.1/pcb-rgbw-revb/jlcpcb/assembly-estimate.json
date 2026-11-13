@@ -1,0 +1,99 @@
+{
+  "economic_smt_joints_per_board": 158,
+  "modeled_economic_assembly": [
+    {
+      "variant": "truck-smt",
+      "boards_assembled": 2,
+      "parts_usd": "60.09",
+      "feeder_usd": "58.33",
+      "setup_and_stencil_usd": "9.71",
+      "placement_and_manual_usd": "0.51",
+      "subtotal_usd": "128.63",
+      "if_U4_xray_required_usd": "131.91"
+    },
+    {
+      "variant": "truck-smt",
+      "boards_assembled": 5,
+      "parts_usd": "130.73",
+      "feeder_usd": "58.33",
+      "setup_and_stencil_usd": "9.71",
+      "placement_and_manual_usd": "1.26",
+      "subtotal_usd": "200.03",
+      "if_U4_xray_required_usd": "208.23"
+    },
+    {
+      "variant": "truck-smt",
+      "boards_assembled": 10,
+      "parts_usd": "241.91",
+      "feeder_usd": "58.33",
+      "setup_and_stencil_usd": "9.71",
+      "placement_and_manual_usd": "2.53",
+      "subtotal_usd": "312.48",
+      "if_U4_xray_required_usd": "328.88"
+    },
+    {
+      "variant": "truck-mixed",
+      "boards_assembled": 2,
+      "parts_usd": "63.59",
+      "feeder_usd": "64.47",
+      "setup_and_stencil_usd": "9.71",
+      "placement_and_manual_usd": "4.41",
+      "subtotal_usd": "142.18",
+      "if_U4_xray_required_usd": "145.46"
+    },
+    {
+      "variant": "truck-mixed",
+      "boards_assembled": 5,
+      "parts_usd": "139.48",
+      "feeder_usd": "64.47",
+      "setup_and_stencil_usd": "9.71",
+      "placement_and_manual_usd": "5.66",
+      "subtotal_usd": "219.32",
+      "if_U4_xray_required_usd": "227.52"
+    },
+    {
+      "variant": "truck-mixed",
+      "boards_assembled": 10,
+      "parts_usd": "256.36",
+      "feeder_usd": "64.47",
+      "setup_and_stencil_usd": "9.71",
+      "placement_and_manual_usd": "7.75",
+      "subtotal_usd": "338.29",
+      "if_U4_xray_required_usd": "354.69"
+    },
+    {
+      "variant": "bench-smt",
+      "boards_assembled": 2,
+      "parts_usd": "36.78",
+      "feeder_usd": "58.33",
+      "setup_and_stencil_usd": "9.71",
+      "placement_and_manual_usd": "0.51",
+      "subtotal_usd": "105.33",
+      "if_U4_xray_required_usd": "108.61"
+    },
+    {
+      "variant": "bench-smt",
+      "boards_assembled": 5,
+      "parts_usd": "72.46",
+      "feeder_usd": "58.33",
+      "setup_and_stencil_usd": "9.71",
+      "placement_and_manual_usd": "1.26",
+      "subtotal_usd": "141.76",
+      "if_U4_xray_required_usd": "149.96"
+    },
+    {
+      "variant": "bench-smt",
+      "boards_assembled": 10,
+      "parts_usd": "132.14",
+      "feeder_usd": "58.33",
+      "setup_and_stencil_usd": "9.71",
+      "placement_and_manual_usd": "2.53",
+      "subtotal_usd": "202.71",
+      "if_U4_xray_required_usd": "219.11"
+    }
+  ],
+  "feeder_savings_vs_original_all_parts_available_usd": "30.70",
+  "feeder_savings_from_original_stocked_passives_usd": "27.63",
+  "fee_free_basic_replacement_for_original_shortage": 1,
+  "bench_u1_two_board_optional_preorder_premium_usd": "5.12"
+}

@@ -12,7 +12,7 @@ import time
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from engineering_job import JOB_TYPE, MODULE, MODULE_SHA, ROOT, sha, source_files, source_pin
+from engineering_job import JOB_TYPE, MODULE, MODULE_SHA, ROOT, ROUTED_SHIELD, ROUTED_SHIELD_SHA, sha, source_files, source_pin
 
 
 ARTIFACTS = ROOT.parents[3] / "artifacts/4runner-rgbw-shield-revb-2026-11-12"
@@ -47,11 +47,16 @@ def start(identity, folder, stage):
     work = f"C:/orion/projects/{ACTOR}-{identity}"
     control = f"C:/orion/control/{ACTOR}-{identity}"
     socket = f"/tmp/{ACTOR}-{identity}.sock"
-    candidates = [ROOT / "inputs" / MODULE,
-                  ROOT.parents[3] / "artifacts/4runner-console-cad-2026-11-07" / MODULE]
-    reference = next((p for p in candidates if p.is_file() and sha(p) == MODULE_SHA), None)
-    if reference is None:
-        raise FileNotFoundError(f"Source-pinned {MODULE} required in {ROOT / 'inputs'}")
+    inputs = {MODULE: (MODULE_SHA, ROOT.parents[3] / "artifacts/4runner-console-cad-2026-11-07" / MODULE)}
+    if stage == "jlc-case":
+        inputs[ROUTED_SHIELD] = (ROUTED_SHIELD_SHA, ARTIFACTS / "finish-04" / "output" / ROUTED_SHIELD)
+    references = {}
+    for name, (expected, fallback) in inputs.items():
+        candidates = (ROOT / "inputs" / name, fallback)
+        reference = next((path for path in candidates if path.is_file() and sha(path) == expected), None)
+        if reference is None:
+            raise FileNotFoundError(f"Source-pinned {name} required at one of {candidates}")
+        references[name] = reference
     for path in source_files().values():
         if path.suffix == ".py":
             compile(path.read_text(), str(path), "exec")
@@ -61,12 +66,13 @@ def start(identity, folder, stage):
            f"New-Item -ItemType Directory -Force '{work}/inputs','{control}' | Out-Null")
     with tempfile.TemporaryDirectory(prefix="vhos-revb-stage-") as tmp:
         staging = Path(tmp)
-        for name, source in source_files().items():
-            target = staging / name
+        for relative_path, source in source_files().items():
+            target = staging / relative_path
             target.parent.mkdir(exist_ok=True, parents=True)
             shutil.copyfile(source, target)
         (staging / "inputs").mkdir()
-        shutil.copyfile(reference, staging / "inputs" / MODULE)
+        for name, reference in references.items():
+            shutil.copyfile(reference, staging / "inputs" / name)
         subprocess.run(["scp", "-q", "-r", "-o", "BatchMode=yes", str(staging) + "/.", f"orion:{work}/"],
                        check=True, timeout=45)
     boot = (f"$taskArgs = '-I -B {work}/run_isolated_engineering.py --control-root C:/orion/control-plane "
@@ -149,7 +155,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=["start", "status", "fetch", "stop"])
     parser.add_argument("identity")
-    parser.add_argument("--stage", choices=["fit", "finish"], default="fit")
+    parser.add_argument("--stage", choices=["fit", "finish", "jlc-case"], default="fit")
     args = parser.parse_args()
     if not re.fullmatch(r"[a-z0-9][a-z0-9-]{1,25}", args.identity):
         raise ValueError("invalid task identity")

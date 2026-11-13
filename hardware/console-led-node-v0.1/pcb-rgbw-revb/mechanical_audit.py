@@ -38,6 +38,10 @@ def execute(mode, output):
     out = Path(output)
     if mode == "models":
         component_models(out)
+    elif mode == "jlc-case":
+        dimensions = {**CASE, "insert_depth_mm": 7.0, "lower_boss_diameter_mm": 8.0}
+        base = enclosure(out, dimensions, render=False)
+        manufacturing_coupon(out, base, dimensions)
     else:
         enclosure(out)
 
@@ -115,8 +119,69 @@ def export_printable(shape, name, out, *, flip=False):
                     "bounds_mm": [round(x, 3) for x in (bounds.XLength, bounds.YLength, bounds.ZLength)]}
 
 
-def enclosure(out):
-    g = CASE
+def manufacturing_coupon(out, base, g):
+    """Use regions of the print base to sample both ports and all three boss types."""
+    height, depth, floor = (g[key] for key in ("body_height_mm", "depth_mm", "floor_mm"))
+    offset = g["lid_insert_pitch_offset_mm"]
+    ox, oy = g["pcb_origin_xy_mm"]
+    lower_z = g["esp_pcb_bottom_mm"]
+    shield_z = lower_z + g["stack_pitch_mm"]
+    pilot, insert_depth = g["insert_pilot_mm"], g["insert_depth_mm"]
+    port_region = box(0, 14, 0, g["wall_mm"] + 2.7, 49, height)
+    corner = box(0, 62.5, 0, 12, depth - 62.5, height)
+    upper_x, upper_y = max(((ox + x, oy + y) for x, y in UPPER_MOUNTS if ox + x < 20),
+                           key=lambda axis: axis[1])
+    holes = json.loads((REFERENCE / "engineering-inputs.json").read_text())["headers"]["mounting_holes"]
+    lower_hole = min((p for p in holes if [p["x_mm"], p["y_mm"]] != g["lower_support_only_xy_mm"]),
+                     key=lambda p: p["x_mm"])
+    lower_x, lower_y = ox + lower_hole["x_mm"], oy + lower_hole["y_mm"]
+    lower_offset = (13 - lower_x, 25 - lower_y, 0)
+    upper_boss = box(upper_x - 5, upper_y - 5, 0, 10, 10, shield_z)
+    lower_boss = box(lower_x - 5, lower_y - 5, 0, 10, 10, lower_z)
+    upper_floor = box(0, upper_y - 5, 0, upper_x + 5, 10, floor)
+    lower_floor = box(0, 20, 0, 18, 10, floor)
+
+    sample = base.common(port_region).fuse([base.common(region) for region in
+        (corner, upper_boss, upper_floor, lower_floor)] + [translated(base.common(lower_boss), *lower_offset)])
+    # The reinforcing floor also intersects the shallow controller pilot.
+    # Restore the cut from the original blind end up to the boss top.
+    sample = sample.cut(cylinder(13, 25, lower_z - insert_depth, pilot, insert_depth + .1)).removeSplitter()
+    actual, report = export_printable(sample, "ports_and_inserts_coupon", out)
+
+    checks = []
+    for name, region, delta in (("J1_J2_port_wall", port_region, (0, 0, 0)),
+                                ("lid_corner", corner, (0, 0, 0)),
+                                ("shield_boss", upper_boss, (0, 0, 0)),
+                                ("controller_boss", lower_boss, lower_offset)):
+        # Compare the reopened STEP with the exact base regions, including the pilot in the floor.
+        original = translated(base.common(region), *delta)
+        printed = actual.common(translated(region, *delta))
+        difference = original.cut(printed).Volume + printed.cut(original).Volume
+        checks.append({"check": name, "symmetric_difference_mm3": round(difference, 6),
+                       "pass": difference < .01})
+
+    min_x, min_y = actual.BoundBox.XMin, actual.BoundBox.YMin
+    bosses = []
+    for name, x, y, z in (("lid", offset, depth - offset, height),
+                          ("shield", upper_x, upper_y, shield_z), ("controller", 13, 25, lower_z)):
+        gauge = cylinder(x, y, z - insert_depth, pilot, insert_depth)
+        end = cylinder(x, y, z - insert_depth - .25, pilot * .9, .2)
+        interference = actual.common(gauge).Volume
+        missing_floor = end.Volume - actual.common(end).Volume
+        checks.append({"check": name + "_open_pilot_blind_end", "pilot_interference_mm3": round(interference, 6),
+                       "missing_end_material_mm3": round(missing_floor, 6),
+                       "pass": interference < .01 and abs(missing_floor) < .01})
+        bosses.append({"type": name, "pilot_xyz_mm": [round(x - min_x, 2), round(y - min_y, 2), z]})
+
+    evidence = {"process": "JLC3DP SLS 3201 PA-F, standard finish", "sample": report, "checks": checks,
+                "bosses": bosses, "pilot_diameter_mm": pilot, "blind_depth_mm": insert_depth,
+                "physical_fit_verified": False, "insert_retention_tested": False}
+    (out / "ports-and-inserts-coupon-checks.json").write_text(json.dumps(evidence, indent=2) + "\n", encoding="utf-8")
+    if not all(row["pass"] for row in checks):
+        raise RuntimeError("coupon regions differ from the print case base")
+
+
+def enclosure(out, g=CASE, *, render=True):
     width, depth, height = (g[k] for k in ("width_mm", "depth_mm", "body_height_mm"))
     wall, floor, lid_thickness = (g[k] for k in ("wall_mm", "floor_mm", "lid_mm"))
     origin_x, origin_y = g["pcb_origin_xy_mm"]
@@ -303,7 +368,9 @@ def enclosure(out):
     (out / "mechanical-observation.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     if not report["passed_nominal_interference"]:
         raise RuntimeError("nominal clearance findings; see mechanical-observation.json")
-    preview(out / "open_case.png", base, lower, shield, fuses, measures, board_width)
+    if render:
+        preview(out / "open_case.png", base, lower, shield, fuses, measures, board_width)
+    return base
 
 
 def preview(path, shell, controller, shield, fuses, fasteners, board_width):
@@ -368,7 +435,7 @@ def preview(path, shell, controller, shield, fuses, fasteners, board_width):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("mode", choices=["models", "assembly"])
+    parser.add_argument("mode", choices=["models", "assembly", "jlc-case"])
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     launch(args.mode, args.out.resolve())

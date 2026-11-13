@@ -1,0 +1,31 @@
+{
+  "orion_job_id": "mdl_d68906f0bb214c1b",
+  "source_set_sha256": "d1a6effe215bf8fcd1a5d76a01b20ef42109dc8b5d6ddb830ea0b17f1bd1d016",
+  "native_manifest_sha256": "66104a6a4cdaf4645827955090b748e27ca12e001eee1a4cc14b38e6143db6da",
+  "source_commit_of_routed_shield": "94b40aca84e0b9ec02733ed880a0ae316addabdc",
+  "routed_shield_step_sha256": "3ec61f463fe32eb3731628f4442ddb74d17c380db6bf20c91a8dc4dba24a3bc5",
+  "mechanical_checks_passed": 38,
+  "coupon_checks_passed": 7,
+  "published_sha256": {
+    "case_base.stl": "125810590e7c030e7d6e7e42c949eb144e3c25bfb460bea603342944099f008d",
+    "case_base.step": "ea182ee8fd238c4ee8b64899f888d481ab65b639581fdf67afda75030095994f",
+    "case_lid.stl": "fc6b42a933aff031a7c5789d0064b82cc8f105ecb001a815425fbf9316cc5445",
+    "case_lid.step": "33c9d35cd34acea0691effb8f8ce40fe97a8fb104952ada94c92b2fc224a1f6a",
+    "ports_and_inserts_coupon.stl": "8899c1abbcb809c901a8b754adeb1a67d76b07a440a118c7bd9e77e82946a86c",
+    "ports_and_inserts_coupon.step": "12ae3f4014f0d4094b5aed1f339e3a7d53634cbcd318254bedf486a2ddf4e936",
+    "ports-and-inserts-coupon-checks.json": "19e958afb8f34d684324df516308483bc7069a198c3a9589522a32c2b16d79dd",
+    "mechanical-observation.json": "f62c769bdce8ac22ce494247e062b0df7414cdccd175b993ec50bedd4b45ee23"
+  },
+  "physical_fit_verified": false,
+  "process_qualified": false,
+  "orion_sha256": {
+    "case_base.stl": "125810590e7c030e7d6e7e42c949eb144e3c25bfb460bea603342944099f008d",
+    "case_base.step": "ea182ee8fd238c4ee8b64899f888d481ab65b639581fdf67afda75030095994f",
+    "case_lid.stl": "fc6b42a933aff031a7c5789d0064b82cc8f105ecb001a815425fbf9316cc5445",
+    "case_lid.step": "33c9d35cd34acea0691effb8f8ce40fe97a8fb104952ada94c92b2fc224a1f6a",
+    "ports_and_inserts_coupon.stl": "8899c1abbcb809c901a8b754adeb1a67d76b07a440a118c7bd9e77e82946a86c",
+    "ports_and_inserts_coupon.step": "12ae3f4014f0d4094b5aed1f339e3a7d53634cbcd318254bedf486a2ddf4e936",
+    "ports-and-inserts-coupon-checks.json": "2851c56e330c88f1e44635c4d2a29ad4bb4db3b060d4692614d1f5ff76dd99ff",
+    "mechanical-observation.json": "2d51e4ff80205d28ba25f0b4e8bb82377c0ab6425de4d19693b78b31e43c9e2a"
+  }
+}

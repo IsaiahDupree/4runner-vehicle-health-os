@@ -1,0 +1,24 @@
+Placement or role,Quantity per unit,Exact part or specification,Used with,Source,Fit or assembly note
+L1,1,Coilcraft MSS1246T-683MLC,All builds,https://www.mouser.com/en/ProductDetail/Coilcraft/MSS1246T-683MLC?qs=zCSbvcPd3paxUT6FfGLWRw%3D%3D,Fit the exact 68 uH inductor to both top pads before any power is applied
+F1 and F2 holders,2,Keystone 3568,All builds,https://www.digikey.com/en/products/detail/keystone-electronics/3568/2137306,Vertical through-hole. Preserve 1.70 mm nominal plated drills and at least 1.60 mm finished diameter.
+F1 fuse element,1,Littelfuse 0997003.WXN,All builds,https://www.digikey.com/en/products/detail/littelfuse-inc/0997003-WXN/701055,3 A 58 V MINI element
+F2 fuse element,1,Eaton ATM-1,All builds,https://www.mouser.com/en/ProductDetail/Bussmann-Eaton/ATM-1?qs=67eC1vNVLiXluUOuCQSxUw%3D%3D,1 A 32 V MINI element. Mouser lists one fuse per sale unit.
+H1-H4,1 kit,SparkFun PRT-11417,All builds,https://www.sparkfun.com/arduino-stackable-header-kit-r3.html,Four long-tail UNO stack headers. Dry-seat the exact ESP32 board before soldering.
+JP1 header,1,Samtec TSW-102-07-G-S,All builds,https://www.digikey.com/en/products/detail/samtec-inc/TSW-102-07-G-S/1101325,Through-hole 5 V RUN header
+JP1 shunt,1,Samtec SNT-100-BK-G,All builds,https://www.digikey.com/en/products/detail/samtec-inc/SNT-100-BK-G/1756763,Install only after the 5 V rail and lower-board USB isolation checks
+J1 board header,1,Molex 76825-0002,SMT-only builds,https://www.mouser.com/en/ProductDetail/Molex/76825-0002?qs=KpdAywxU011SrMvnYgR78w%3D%3D,JLC C586017 in the mixed assembly file. Seat the locator and mate before checking the case.
+J2 board header,1,Molex 43045-0800,SMT-only builds,https://www.digikey.com/en/products/detail/molex/0430450800/252529,JLC C122422 in the mixed assembly file. Verify cavity numbers on the drawing and the part.
+J1 cable housing,1,Molex 171692-0102,All builds,https://www.lcsc.com/product-detail/housings-wire-to-board-wire-to-wire_molex-1716920102_C185158.html,Keyed vehicle power cable
+J1 contacts,2 plus spares,Molex 76823-0321,All builds,https://www.lcsc.com/product-detail/housing-contact_molex-768230321_C293693.html,14–16 AWG stranded and insulation OD per Molex drawing
+J2 cable housing,1,Molex 43025-0800,All builds,https://www.lcsc.com/product-detail/housings-wire-to-board-wire-to-wire_molex-430250800_C127351.html,Keyed LED cable
+J2 contacts,5 plus spares,Molex 43030-0007,All builds,https://www.lcsc.com/product-detail/housing-contact_molex-430300007_C293530.html,20 AWG stranded with insulation OD at most 1.85 mm for this design
+Toyota pin kit,1,Corsa 090IIU-6P-1 / Yazaki 7282-1060,Truck loom,https://www.corsa-technic.com/item.php?item_id=1359,Confirm keying and the crimp range for the factory conductors
+Toyota socket kit,1,Corsa 090IIU-6S-1 / Yazaki 7283-1060,Truck loom,https://www.corsa-technic.com/item.php?item_id=1360,Confirm a matching factory pin housing exists. Carry all six paths straight through.
+Case inserts,11 plus 3 for coupon,ruthex RX-M3x5.7,Printed case,https://www.ruthex.de/products/ruthex-gewindeeinsatz-m3-100-stuck-rx-m3x5-7-messing-gewindebuchsen,Use the updated JLC case base. Check bore and insert retention on the same-material coupon.
+Case lid screws,4,M3 × 8 mm socket-head machine screw,Printed case,,Check tip engagement and access after installing the inserts
+Board screws and washers,7 each,M3 × 6 mm socket-head screw / 7 mm OD × 0.5 mm insulating washer,Printed case,,Check washer and component clearance on both boards
+Vehicle mounting fasteners,2,M4 with washers,Printed case,,Choose the screw length and anchor after measuring the console mounting location
+Lower board,1,Owned ShengYang D1 UNO ESP32-S3 N16R8 CH340,All builds,,Dry-fit and confirm actual pin labels and regulated 5 V feed before fitting JP1
+Vehicle takeoff and ground,As measured,Automotive stranded wire / ground lug / crimps / loom sleeve,Truck loom,,Verify the source fuse and branch protection before using the two-position power plug
+RGBW pod,1 initially,Diode Dynamics DD7440,LED loom,https://www.diodedynamics.com/stage-series-rgbw-led-rock-light-one.html,Measure the common-positive pinout and one-pod current before sizing the final loom
+RGBW pigtail,1,Diode Dynamics DD4083 or DD4084,LED loom,https://www.diodedynamics.com/rgbw-m8-5-pin-extension-wire.html,Use DD4083 for a 1 m bench donor or DD4084 for 3 m. Map all five conductors and confirm polarity with the actual pod before termination.

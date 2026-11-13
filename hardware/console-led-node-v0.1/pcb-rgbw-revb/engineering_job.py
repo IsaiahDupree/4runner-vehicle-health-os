@@ -25,6 +25,8 @@ JAVA = Path("C:/PCBToolchains/java25/jdk-25.0.4.1+1-jre/bin/java.exe")
 ROUTER = Path("C:/PCBToolchains/freerouting/2.5.0/freerouting-2.5.0.jar")
 MODULE = "ESP32-S3-WROOM-1.step"
 MODULE_SHA = "02e192087a1a2268ccbe7bf667ef04884370fc76c994484bf85654dfa7407ef6"
+ROUTED_SHIELD = "routed_shield.step"
+ROUTED_SHIELD_SHA = "3ec61f463fe32eb3731628f4442ddb74d17c380db6bf20c91a8dc4dba24a3bc5"
 
 
 def source_files():
@@ -48,11 +50,15 @@ def validate(params):
         raise ValueError("exact two-connector job parameters required")
     if params["expected_source_set_sha256"] != source_pin() or params["evaluation_only"] is not True:
         raise ValueError("source pin or evaluation flag mismatch")
-    if params["stage"] not in {"fit", "finish"} or type(params["timeout_sec"]) is not int or not 60 <= params["timeout_sec"] <= 900:
+    if params["stage"] not in {"fit", "finish", "jlc-case"} or type(params["timeout_sec"]) is not int or not 60 <= params["timeout_sec"] <= 900:
         raise ValueError("unsupported stage or deadline")
-    asset = ROOT / "inputs" / MODULE
-    if asset.is_symlink() or not asset.is_file() or sha(asset) != MODULE_SHA:
-        raise ValueError("Espressif reference STEP hash mismatch")
+    inputs = {MODULE: MODULE_SHA}
+    if params["stage"] == "jlc-case":
+        inputs[ROUTED_SHIELD] = ROUTED_SHIELD_SHA
+    for name, expected in inputs.items():
+        asset = ROOT / "inputs" / name
+        if asset.is_symlink() or not asset.is_file() or sha(asset) != expected:
+            raise ValueError(f"{name} reference STEP hash mismatch")
     return dict(params)
 
 
@@ -60,7 +66,7 @@ def register(modeling):
     modeling.JOB_TYPES[JOB_TYPE] = {
         "runtime": "python", "script": Path(__file__),
         "description": "Native KiCad Rev B and two-port FreeCAD enclosure fit evaluation",
-        "params": {"stage": "fit/finish", "expected_source_set_sha256": "source pin",
+        "params": {"stage": "fit/finish/jlc-case", "expected_source_set_sha256": "source pin",
                    "timeout_sec": "60..900", "evaluation_only": "true"},
     }
 
@@ -94,6 +100,10 @@ def execute(params, out):
     pcb_tool = [PYTHON, "-I", "-B", ROOT / "native_pcb.py"]
     cad_tool = [sys.executable, "-I", "-B", ROOT / "mechanical_audit.py"]
     try:
+        if params["stage"] == "jlc-case":
+            shutil.copyfile(ROOT / "inputs" / ROUTED_SHIELD, out / ROUTED_SHIELD)
+            run("manufacturing-case", *cad_tool, "jlc-case", "--out", out, limit=155)
+            return {"stage": params["stage"], "physical_fit_verified": False, "manufacturing_released": False}
         run("part-models", *cad_tool, "models", "--out", out, limit=155)
         run("native-build", *pcb_tool, "build", "--out", out)
         run("netlist", CLI, "sch", "export", "netlist", "--format", "kicadxml", "-o", out / "schematic.net.xml", sch)
@@ -141,6 +151,8 @@ def execute(params, out):
                   "sources": {key: sha(path) for key, path in source_files().items()},
                   "esp_module_reference_sha256": MODULE_SHA, "artifacts": artifacts,
                   "manufacturing_released": False, "vehicle_fit_or_electrical_qualified": False}
+        if params["stage"] == "jlc-case":
+            report["published_routed_shield_sha256"] = ROUTED_SHIELD_SHA
         (out / "engineering-manifest.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
 
 

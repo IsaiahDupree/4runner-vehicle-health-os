@@ -1,0 +1,85 @@
+{
+  "process": "JLC3DP SLS 3201 PA-F, standard finish",
+  "sample": {
+    "step": "ports_and_inserts_coupon.step",
+    "stl": "ports_and_inserts_coupon.stl",
+    "closed_mesh": true,
+    "facets": 1760,
+    "solid_volume_mm3": 11611.02,
+    "bounds_mm": [
+      19.0,
+      62.0,
+      46.0
+    ]
+  },
+  "checks": [
+    {
+      "check": "J1_J2_port_wall",
+      "symmetric_difference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_corner",
+      "symmetric_difference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "shield_boss",
+      "symmetric_difference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "controller_boss",
+      "symmetric_difference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_open_pilot_blind_end",
+      "pilot_interference_mm3": 0.0,
+      "missing_end_material_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "shield_open_pilot_blind_end",
+      "pilot_interference_mm3": 0.0,
+      "missing_end_material_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "controller_open_pilot_blind_end",
+      "pilot_interference_mm3": 0.0,
+      "missing_end_material_mm3": 0.0,
+      "pass": true
+    }
+  ],
+  "bosses": [
+    {
+      "type": "lid",
+      "pilot_xyz_mm": [
+        6.5,
+        55.5,
+        46
+      ]
+    },
+    {
+      "type": "shield",
+      "pilot_xyz_mm": [
+        14.0,
+        47.83,
+        23.0
+      ]
+    },
+    {
+      "type": "controller",
+      "pilot_xyz_mm": [
+        13.0,
+        11.0,
+        8.0
+      ]
+    }
+  ],
+  "pilot_diameter_mm": 4.0,
+  "blind_depth_mm": 7.0,
+  "physical_fit_verified": false,
+  "insert_retention_tested": false
+}

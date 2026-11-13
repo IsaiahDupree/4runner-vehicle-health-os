@@ -6,8 +6,8 @@ Board,1,Samtec SNT-100-BK-G,JP1 5 V RUN shunt,Fit after verifying power and prog
 Fuses,2,Keystone 3568,F1/F2 PCB MINI holders,See PCB-BOM
 Fuses,1,Littelfuse 0997003.WXN,F1 main and LED fuse,3 A 58 V MINI prototype value
 Fuses,1,Eaton ATM-1,F2 logic fuse,1 A 32 V MINI prototype value
-Case,1,case_base.stl,Printed floor and bosses,Fit coupon and material check first
-Case,1,case_lid.stl,Printed removable lid,Exterior face down
+Case,1,jlcpcb/print/case_base.stl,Printed floor and bosses,Use the ports and inserts coupon in the same material first
+Case,1,jlcpcb/print/case_lid.stl,Printed removable lid,Exterior face down for a local FDM fit print
 Case,11,ruthex RX-M3x5.7,Four lid + three ESP32 + four shield insert locations,Confirm fit on the actual print material
 Case,4,M3x8 socket-head machine screw,Lid screws,Measure head clearance and confirm engagement
 Case,7,M3x6 socket-head machine screw,ESP32 and shield screws,Use insulating washers
