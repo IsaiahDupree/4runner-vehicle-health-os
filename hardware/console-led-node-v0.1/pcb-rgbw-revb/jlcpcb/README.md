@@ -1,5 +1,8 @@
 # JLCPCB prototype package for the 4Runner RGBW controller
 
+The [PCB and JLCPCB prototype guide](../../../../docs/hardware/PCB-JLCPCB-PROTOTYPE-GUIDE.md)
+captures the design, assembly and sourcing workflow for reuse on the next board.
+
 The [lower-cost LM5169 assembly and lightweight print package](COST-PASS.md)
 adds a pin-compatible automotive buck option, two more factory-installable
 parts and a smaller nylon volume. The original Rev B choices follow below.
