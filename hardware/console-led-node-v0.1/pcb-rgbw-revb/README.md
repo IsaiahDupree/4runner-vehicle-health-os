@@ -9,6 +9,7 @@ The assembled cabin box uses two latched cable plugs during operation.
 
 | Prototype files | Contents |
 | --- | --- |
+| [Service-access enclosure](SERVICE-CASE.md) | Labeled cable openings, lighter nylon case, and CAD-checked insert and screw paths. |
 | [JLCPCB quote package](jlcpcb/README.md) | Stocked parts, upload-ready BOM and placement files, assembly estimates, hand-assembly sources and revised SLS print files. |
 | [KiCad project](generated/vhos_rgbw_revb.kicad_pro) · [schematic](generated/schematic.pdf) · [shield render](generated/shield.png) | PCB placement and routing, with local connector and fuse libraries. |
 | [Gerbers and drills](generated/Prototype_PCB_Gerbers.zip) · [PCB BOM](generated/PCB-BOM.csv) · [SMT placement](generated/SMT-placement.csv) | Four-layer board plots, separate plated and non-plated drills, and top-side assembly data for a bench prototype. |

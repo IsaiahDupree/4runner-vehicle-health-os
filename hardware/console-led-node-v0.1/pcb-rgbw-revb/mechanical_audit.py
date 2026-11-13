@@ -25,7 +25,7 @@ def launch(mode, out):
         raise RuntimeError("FreeCAD unavailable")
     code = (f"import sys\nsys.path.insert(0, {str(ROOT)!r})\n"
             f"from mechanical_audit import execute\nexecute({mode!r}, {str(out)!r})\n")
-    run_freecad(native, code, out, 140)
+    run_freecad(native, code, out, 260 if mode == "service-case" else 140)
 
 
 def execute(mode, output):
@@ -38,12 +38,15 @@ def execute(mode, output):
     out = Path(output)
     if mode == "models":
         component_models(out)
-    elif mode in {"jlc-case", "jlc-lite-case"}:
+    elif mode in {"jlc-case", "jlc-lite-case", "service-case"}:
         dimensions = {**CASE, "insert_depth_mm": 7.0, "lower_boss_diameter_mm": 8.0}
-        if mode == "jlc-lite-case":
+        if mode in {"jlc-lite-case", "service-case"}:
             dimensions["panel_mm"] = 2.0
-        base = enclosure(out, dimensions, render=False)
-        manufacturing_coupon(out, base, dimensions)
+        service = None
+        if mode == "service-case":
+            import service_case as service
+        base = enclosure(out, dimensions, render=False, service=service)
+        manufacturing_coupon(out, base, dimensions, end_relief=service is not None)
     else:
         enclosure(out)
 
@@ -121,7 +124,7 @@ def export_printable(shape, name, out, *, flip=False):
                     "bounds_mm": [round(x, 3) for x in (bounds.XLength, bounds.YLength, bounds.ZLength)]}
 
 
-def manufacturing_coupon(out, base, g):
+def manufacturing_coupon(out, base, g, *, end_relief=False):
     """Use regions of the print base to sample both ports and all three boss types."""
     height, depth, floor = (g[key] for key in ("body_height_mm", "depth_mm", "floor_mm"))
     offset = g["lid_insert_pitch_offset_mm"]
@@ -129,7 +132,7 @@ def manufacturing_coupon(out, base, g):
     lower_z = g["esp_pcb_bottom_mm"]
     shield_z = lower_z + g["stack_pitch_mm"]
     pilot, insert_depth = g["insert_pilot_mm"], g["insert_depth_mm"]
-    port_region = box(0, 14, 0, g["wall_mm"] + 2.7, 49, height)
+    port_region = box(0, 14, 0, g["wall_mm"] + 2.7, 52 if end_relief else 49, height)
     corner = box(0, 62.5, 0, 12, depth - 62.5, height)
     upper_x, upper_y = max(((ox + x, oy + y) for x, y in UPPER_MOUNTS if ox + x < 20),
                            key=lambda axis: axis[1])
@@ -205,7 +208,7 @@ def lighten_panels(base, lid, g, board_axes):
     return base, lid
 
 
-def enclosure(out, g=CASE, *, render=True):
+def enclosure(out, g=CASE, *, render=True, service=None):
     width, depth, height = (g[k] for k in ("width_mm", "depth_mm", "body_height_mm"))
     wall, floor, lid_thickness = (g[k] for k in ("wall_mm", "floor_mm", "lid_mm"))
     origin_x, origin_y = g["pcb_origin_xy_mm"]
@@ -271,6 +274,8 @@ def enclosure(out, g=CASE, *, render=True):
     if "panel_mm" in g:
         print_reference = shell, lid
         shell, lid = lighten_panels(shell, lid, g, upper_axes + lower_axes)
+    if service:
+        shell, lid = service.add_print_features(shell, lid, g, openings)
     shell = shell.removeSplitter()
     lid = lid.removeSplitter()
     base, base_report = export_printable(shell, "case_base", out)
@@ -301,12 +306,14 @@ def enclosure(out, g=CASE, *, render=True):
         sockets.append(box(origin_x + x0 - 1.24, origin_y + pads[0]["y_mm"] - 1.24,
                            lower_top, x1 - x0 + 2.48, 2.48, 8.5))
     module = reopen(ROOT / "inputs" / "ESP32-S3-WROOM-1.step")
-    module.rotate(V(0, 0, 0), V(0, 0, 1), -90)
+    module.rotate(V(0, 0, 0), V(0, 0, 1), 90 if service else -90)
     b = module.BoundBox
     module.translate(V(origin_x + 42.5 - b.XMin, origin_y + 13 - b.YMin, lower_top - b.ZMin))
     usb = box(origin_x - 1.5, origin_y + 29.5, lower_top, 8.5, 8.0, 3.4)
     barrel = box(origin_x - 2.0, origin_y + 5.8, lower_top, 12.2, 9.0, 10.4)
     lower = Part.makeCompound([lower_board, module, usb, barrel] + sockets)
+    lower_components = {"PCB": lower_board, "ESP32 module": module, "USB-C": usb, "Barrel jack": barrel,
+                        **{group["name"]: shape for group, shape in zip(ref["headers"]["headers"], sockets)}}
 
     fuses = {}
     fuse_service = {}
@@ -366,15 +373,16 @@ def enclosure(out, g=CASE, *, render=True):
     panel_evidence = None
     if print_reference:
         original_base, original_lid = print_reference
+        protected_rim = wall + 1 if service else 0
         base_regions = [
-            box(0, 0, 0, wall, depth, height),
+            box(0, 0, 0, wall, depth, height - 4 if service else height),
             box(-ears, depth / 2 - 8, 0, ears + 12, 16, floor),
             box(width - 12, depth / 2 - 8, 0, ears + 12, 16, floor),
-            box(0, 0, height - 4, width, depth, 4),
+            box(protected_rim, 0, height - 4, width - protected_rim, depth, 4),
             *(cylinder(x, y, 0, 13.9, floor) for x, y in upper_axes + lower_axes),
         ]
         lid_regions = [
-            box(0, 0, -1.2, width, depth, 1.5),
+            box(11.5 if service else 0, 0, -1.2, width - (11.5 if service else 0), depth, 1.5),
             *(cylinder(x, y, 0, 7, lid_thickness) for x, y in lid_axes),
         ]
         for name, original, actual, regions in (
@@ -434,6 +442,9 @@ def enclosure(out, g=CASE, *, render=True):
     (out / "mechanical-observation.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     if not report["passed_nominal_interference"]:
         raise RuntimeError("nominal clearance findings; see mechanical-observation.json")
+    if service:
+        service.assembly(out, g, base, installed_lid, shield, lower, lower_components,
+                         openings, lid_axes, upper_axes, lower_fasteners, fuses)
     if render:
         preview(out / "open_case.png", base, lower, shield, fuses, measures, board_width)
     return base
@@ -501,7 +512,7 @@ def preview(path, shell, controller, shield, fuses, fasteners, board_width):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("mode", choices=["models", "assembly", "jlc-case", "jlc-lite-case"])
+    parser.add_argument("mode", choices=["models", "assembly", "jlc-case", "jlc-lite-case", "service-case"])
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     launch(args.mode, args.out.resolve())

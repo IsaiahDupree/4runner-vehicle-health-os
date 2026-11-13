@@ -12,8 +12,9 @@ import time
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from engineering_job import (CASE_STAGES, JOB_TYPE, MODULE, MODULE_SHA, ROOT, ROUTED_SHIELD,
-                             ROUTED_SHIELD_SHA, STAGES, sha, source_files, source_pin)
+from engineering_job import (CASE_STAGES, INSERT_MODEL, INSERT_MODEL_SHA, JOB_TYPE, MODULE,
+                             MODULE_SHA, ROOT, ROUTED_SHIELD, ROUTED_SHIELD_SHA, STAGES,
+                             sha, source_files, source_pin)
 
 
 ARTIFACTS = ROOT.parents[3] / "artifacts/4runner-rgbw-shield-revb-2026-11-12"
@@ -51,6 +52,8 @@ def start(identity, folder, stage):
     inputs = {MODULE: (MODULE_SHA, ROOT.parents[3] / "artifacts/4runner-console-cad-2026-11-07" / MODULE)}
     if stage in CASE_STAGES:
         inputs[ROUTED_SHIELD] = (ROUTED_SHIELD_SHA, ARTIFACTS / "finish-04" / "output" / ROUTED_SHIELD)
+    if stage == "service-case":
+        inputs[INSERT_MODEL] = (INSERT_MODEL_SHA, ROOT.parents[3] / "artifacts/4runner-console-cad-2026-11-07" / INSERT_MODEL)
     references = {}
     for name, (expected, fallback) in inputs.items():
         candidates = (ROOT / "inputs" / name, fallback)

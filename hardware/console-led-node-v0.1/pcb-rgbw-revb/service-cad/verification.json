@@ -1,0 +1,37 @@
+{
+  "job_id": "mdl_64f457f67a8e4601",
+  "source_set_sha256": "10401dfcda49ac958fd19477a3c459432548a9a6f0ec73ddf1b97863863494ea",
+  "native_manifest_sha256": "489e2b850a026f41fc2e661e630c192d41fc9e9bc0f175955d89dd3186f6b802",
+  "reference_routed_shield_sha256": "3ec61f463fe32eb3731628f4442ddb74d17c380db6bf20c91a8dc4dba24a3bc5",
+  "reference_insert_sha256": "3686e4730b18fa3f0a83585da28dc7eca70e5da21cedd3f75f3205c5ad11b917",
+  "case_checks_passed": 44,
+  "coupon_checks_passed": 7,
+  "insert_and_screw_axes_passed": 11,
+  "orion_sha256": {
+    "case_base.stl": "5f127c270f857d0e8f43c5cc7b32659a3bf5cd539a7547ff97fecb23b1b7f825",
+    "case_lid.stl": "ca10f3c4d8982c646fd4954c7bcfb81d6da354eb0e6c90352ff2b4ef150f38ea",
+    "ports_and_inserts_coupon.stl": "3dc1bbd4f19ff8688a1e7d0013e693e41c21d7e75ed86b34fa3ca842bacb6f1f",
+    "case_base.step": "c45f6650772d613f147034d1ac815d66da80c4fed13f297115e50dc90ee2192a",
+    "case_lid.step": "d34752810cefe1f8b776eb2342235497ffb13fc0fd1dbe58e07a44d98ff22e2d",
+    "ports_and_inserts_coupon.step": "c78b2cd6937bae3a1d0ff54b794286b8bf66f43718426d781e9142ab498aeb9e",
+    "tool-access.json": "e8b9868ee5c55a46ec0c9a8ff6c9f53db58b0cf775bb2132e4595a4565d9072f",
+    "mechanical-observation.json": "83413e12bd9abc069d1762bdda8b24c53f2d0a62eb4ed96facac535f1285ffd3",
+    "ports-and-inserts-coupon-checks.json": "2857f2c844beaa458587f2c107fa03127413e5aabce24be0a1bf286c31f31e45",
+    "4Runner_Service_Assembly.FCStd": "ffb82314aee7852360151cb22a5eaa6682acc6a589695ab231a01b51714da285",
+    "4Runner_Service_Assembly.step": "ee247710329e66ce8b2f06ae129718a62b0a804a2f44e7a3c213f71dd0f3a3fb",
+    "4Runner_Insert_Tool_Paths.FCStd": "c1da7c231c7cf47e2b6d86bef269b6dcddea6d0c7696efdc7648e3dc4d666ee5",
+    "closed.png": "97a006fd70e93a2051bcc70d2f0578fbcbd2083f6832fd2d6b98926ee722a460",
+    "open.png": "478405a80e9ea2f776034f0d688280f861e60f7191edf0ce2ae720aa9e3aed35",
+    "exploded.png": "dadf3ed4c66cd47e6c1e6c14b61cdb1d2a158914e8dc93c75953d0ce899b0c8c",
+    "insert-access.png": "026e1b7bea712c90099883a5249324334e0780e285aac73ed16424e18f2f0ca2"
+  },
+  "published_sha256": {
+    "tool-access.json": "926d42cb1b0561c13020e1bd40dc42b32b4ae89fcebd2a6894195f58cb49141d",
+    "mechanical-observation.json": "da05c052743a18063e4537e1f0098e4406bfef95c344e53112636807ff59aff9",
+    "ports-and-inserts-coupon-checks.json": "9db683324c15b11430e4d4ad392d35dd639d6685063a32e08c7632a5c8e4dc90",
+    "case_base.stl": "5f127c270f857d0e8f43c5cc7b32659a3bf5cd539a7547ff97fecb23b1b7f825",
+    "case_lid.stl": "ca10f3c4d8982c646fd4954c7bcfb81d6da354eb0e6c90352ff2b4ef150f38ea",
+    "ports_and_inserts_coupon.stl": "3dc1bbd4f19ff8688a1e7d0013e693e41c21d7e75ed86b34fa3ca842bacb6f1f"
+  },
+  "physical_fit_verified": false
+}
