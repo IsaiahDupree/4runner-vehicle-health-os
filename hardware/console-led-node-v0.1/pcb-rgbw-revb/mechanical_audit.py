@@ -38,8 +38,10 @@ def execute(mode, output):
     out = Path(output)
     if mode == "models":
         component_models(out)
-    elif mode == "jlc-case":
+    elif mode in {"jlc-case", "jlc-lite-case"}:
         dimensions = {**CASE, "insert_depth_mm": 7.0, "lower_boss_diameter_mm": 8.0}
+        if mode == "jlc-lite-case":
+            dimensions["panel_mm"] = 2.0
         base = enclosure(out, dimensions, render=False)
         manufacturing_coupon(out, base, dimensions)
     else:
@@ -181,6 +183,28 @@ def manufacturing_coupon(out, base, g):
         raise RuntimeError("coupon regions differ from the print case base")
 
 
+def lighten_panels(base, lid, g, board_axes):
+    """Pocket the broad faces while retaining the port wall and fastener load paths."""
+    width, depth, height = (g[k] for k in ("width_mm", "depth_mm", "body_height_mm"))
+    wall, floor, lid_thickness, panel = (g[k] for k in ("wall_mm", "floor_mm", "lid_mm", "panel_mm"))
+    rim, mid_web = 12.5, 6.5
+    pocket_width = (width - 2 * rim - mid_web) / 2
+    panel_starts = (rim, rim + pocket_width + mid_web)
+    floor_supports = Part.makeCompound([cylinder(x, y, -.1, 14, floor + .1) for x, y in board_axes])
+    for x in panel_starts:
+        floor_pocket = rounded(x, 8, -.1, pocket_width, depth - 16, floor - panel + .1, 3)
+        base = base.cut(floor_pocket.cut(floor_supports))
+        lid = lid.cut(rounded(x, 8, panel, pocket_width, depth - 16, lid_thickness - panel + .1, 3))
+    # Leave full-height corners, a full-thickness locating band, and all of
+    # the connector wall. The cuts extend inward through the existing cavity.
+    wall_pocket_depth = wall - panel + 4
+    for y in (panel, depth - panel - wall_pocket_depth):
+        base = base.cut(rounded(13, y, 6, width - 26, wall_pocket_depth, height - 10, 1))
+    base = base.cut(rounded(width - panel - wall_pocket_depth, 13, 6,
+                            wall_pocket_depth, depth - 26, height - 10, 1))
+    return base, lid
+
+
 def enclosure(out, g=CASE, *, render=True):
     width, depth, height = (g[k] for k in ("width_mm", "depth_mm", "body_height_mm"))
     wall, floor, lid_thickness = (g[k] for k in ("wall_mm", "floor_mm", "lid_mm"))
@@ -243,6 +267,10 @@ def enclosure(out, g=CASE, *, render=True):
         lid = lid.fuse(box(11.5, y, -1.2, width - 23, 1.2, 1.5))
     for x, y in lid_axes:
         lid = lid.cut(cylinder(x, y, -.2, 3.3, lid_thickness + .4))
+    print_reference = None
+    if "panel_mm" in g:
+        print_reference = shell, lid
+        shell, lid = lighten_panels(shell, lid, g, upper_axes + lower_axes)
     shell = shell.removeSplitter()
     lid = lid.removeSplitter()
     base, base_report = export_printable(shell, "case_base", out)
@@ -335,6 +363,42 @@ def enclosure(out, g=CASE, *, render=True):
     measure("board_fastener_head_and_washer_shield", measures, shield)
     measure("board_fastener_head_and_washer_controller", measures, lower)
     measure("board_fastener_head_and_washer_lid", measures, installed_lid)
+    panel_evidence = None
+    if print_reference:
+        original_base, original_lid = print_reference
+        base_regions = [
+            box(0, 0, 0, wall, depth, height),
+            box(-ears, depth / 2 - 8, 0, ears + 12, 16, floor),
+            box(width - 12, depth / 2 - 8, 0, ears + 12, 16, floor),
+            box(0, 0, height - 4, width, depth, 4),
+            *(cylinder(x, y, 0, 13.9, floor) for x, y in upper_axes + lower_axes),
+        ]
+        lid_regions = [
+            box(0, 0, -1.2, width, depth, 1.5),
+            *(cylinder(x, y, 0, 7, lid_thickness) for x, y in lid_axes),
+        ]
+        for name, original, actual, regions in (
+            ("base_ports_locators_and_mount_supports", original_base, base, base_regions),
+            ("lid_locating_ribs_and_screw_seats", original_lid, actual_lid, lid_regions),
+        ):
+            missing = sum(original.common(region).cut(actual).Volume for region in regions)
+            results.append({"check": name, "removed_support_material_mm3": round(missing, 6),
+                            "pass": missing < .015})
+        panel = g["panel_mm"]
+        for name, actual, gauge in (
+            ("floor_panel_thickness", base, box(30, 30, floor - panel, 2, 2, panel)),
+            ("lid_panel_thickness", actual_lid, box(30, 30, 0, 2, 2, panel)),
+            ("long_wall_panel_thickness", base, box(30, 0, 24, 2, panel, 2)),
+            ("rear_wall_panel_thickness", base, box(width - panel, 30, 24, panel, 2, 2)),
+        ):
+            missing = gauge.Volume - actual.common(gauge).Volume
+            results.append({"check": name, "missing_panel_material_mm3": round(missing, 6),
+                            "pass": abs(missing) < .015})
+        previous = original_base.Volume + original_lid.Volume
+        current = base.Volume + actual_lid.Volume
+        panel_evidence = {"reference": "unrelieved JLC3DP base and lid",
+                          "reference_volume_mm3": round(previous, 2), "panel_volume_mm3": round(current, 2),
+                          "volume_reduction_percent": round(100 * (1 - current / previous), 2)}
     # The lid and base are generated as a pair. The coupon uses the actual
     # port walls so a failed sample can be corrected without a full print.
     coupon = base.common(box(0, 14, 0, wall + 2.7, 49, height)).removeSplitter()
@@ -365,6 +429,8 @@ def enclosure(out, g=CASE, *, render=True):
                                "esp_module": "Espressif reference STEP at estimated placement"},
         "physical_fit_verified": False, "thermal_or_vibration_qualified": False,
     }
+    if panel_evidence:
+        report["print_panel_comparison"] = panel_evidence
     (out / "mechanical-observation.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     if not report["passed_nominal_interference"]:
         raise RuntimeError("nominal clearance findings; see mechanical-observation.json")
@@ -435,7 +501,7 @@ def preview(path, shell, controller, shield, fuses, fasteners, board_width):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("mode", choices=["models", "assembly", "jlc-case"])
+    parser.add_argument("mode", choices=["models", "assembly", "jlc-case", "jlc-lite-case"])
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     launch(args.mode, args.out.resolve())

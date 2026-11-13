@@ -1,9 +1,10 @@
 Placement or role,Quantity per unit,Exact part or specification,Used with,Source,Fit or assembly note
 L1,1,Coilcraft MSS1246T-683MLC,All builds,https://www.mouser.com/en/ProductDetail/Coilcraft/MSS1246T-683MLC?qs=zCSbvcPd3paxUT6FfGLWRw%3D%3D,Fit the exact 68 uH inductor to both top pads before any power is applied
-F1 and F2 holders,2,Keystone 3568,All builds,https://www.digikey.com/en/products/detail/keystone-electronics/3568/2137306,Vertical through-hole. Preserve 1.70 mm nominal plated drills and at least 1.60 mm finished diameter.
-F1 fuse element,1,Littelfuse 0997003.WXN,All builds,https://www.digikey.com/en/products/detail/littelfuse-inc/0997003-WXN/701055,3 A 58 V MINI element
+F1 and F2 holders,2,Keystone 3568,Builds without factory fuse holders,https://www.mouser.com/c/?q=534-3568,Vertical through-hole. Preserve 1.70 mm nominal plated drills and at least 1.60 mm finished diameter.
+F1 and F2 holders,2,Keystone 3568-10,truck-lm5169-fuses,https://jlcpcb.com/partdetail/Keystone-356810/C3205378,Factory through-hole option in red. Label F1 3 A and F2 1 A. Insert both fuse elements locally.
+F1 fuse element,1,Littelfuse 0997003.WXN,All builds,https://www.mouser.com/en/ProductDetail/Littelfuse/0997003.WXN?qs=bpnLQM2ZShxe%2FpZJCwjNUA%3D%3D,3 A 58 V MINI element
 F2 fuse element,1,Eaton ATM-1,All builds,https://www.mouser.com/en/ProductDetail/Bussmann-Eaton/ATM-1?qs=67eC1vNVLiXluUOuCQSxUw%3D%3D,1 A 32 V MINI element. Mouser lists one fuse per sale unit.
-H1-H4,1 kit,SparkFun PRT-11417,All builds,https://www.sparkfun.com/arduino-stackable-header-kit-r3.html,Four long-tail UNO stack headers. Dry-seat the exact ESP32 board before soldering.
+H1-H4,1 kit,SparkFun PRT-11417,All builds,https://www.mouser.com/en/ProductDetail/SparkFun/PRT-11417?qs=WyAARYrbSnb%252BtXjDIp5vcQ%3D%3D,Four long-tail UNO stack headers. Dry-seat the exact ESP32 board before soldering.
 JP1 header,1,Samtec TSW-102-07-G-S,All builds,https://www.digikey.com/en/products/detail/samtec-inc/TSW-102-07-G-S/1101325,Through-hole 5 V RUN header
 JP1 shunt,1,Samtec SNT-100-BK-G,All builds,https://www.digikey.com/en/products/detail/samtec-inc/SNT-100-BK-G/1756763,Install only after the 5 V rail and lower-board USB isolation checks
 J1 board header,1,Molex 76825-0002,SMT-only builds,https://www.mouser.com/en/ProductDetail/Molex/76825-0002?qs=KpdAywxU011SrMvnYgR78w%3D%3D,JLC C586017 in the mixed assembly file. Seat the locator and mate before checking the case.

@@ -27,6 +27,8 @@ MODULE = "ESP32-S3-WROOM-1.step"
 MODULE_SHA = "02e192087a1a2268ccbe7bf667ef04884370fc76c994484bf85654dfa7407ef6"
 ROUTED_SHIELD = "routed_shield.step"
 ROUTED_SHIELD_SHA = "3ec61f463fe32eb3731628f4442ddb74d17c380db6bf20c91a8dc4dba24a3bc5"
+CASE_STAGES = ("jlc-case", "jlc-lite-case")
+STAGES = ("fit", "finish", *CASE_STAGES)
 
 
 def source_files():
@@ -50,10 +52,10 @@ def validate(params):
         raise ValueError("exact two-connector job parameters required")
     if params["expected_source_set_sha256"] != source_pin() or params["evaluation_only"] is not True:
         raise ValueError("source pin or evaluation flag mismatch")
-    if params["stage"] not in {"fit", "finish", "jlc-case"} or type(params["timeout_sec"]) is not int or not 60 <= params["timeout_sec"] <= 900:
+    if params["stage"] not in STAGES or type(params["timeout_sec"]) is not int or not 60 <= params["timeout_sec"] <= 900:
         raise ValueError("unsupported stage or deadline")
     inputs = {MODULE: MODULE_SHA}
-    if params["stage"] == "jlc-case":
+    if params["stage"] in CASE_STAGES:
         inputs[ROUTED_SHIELD] = ROUTED_SHIELD_SHA
     for name, expected in inputs.items():
         asset = ROOT / "inputs" / name
@@ -66,7 +68,7 @@ def register(modeling):
     modeling.JOB_TYPES[JOB_TYPE] = {
         "runtime": "python", "script": Path(__file__),
         "description": "Native KiCad Rev B and two-port FreeCAD enclosure fit evaluation",
-        "params": {"stage": "fit/finish/jlc-case", "expected_source_set_sha256": "source pin",
+        "params": {"stage": "/".join(STAGES), "expected_source_set_sha256": "source pin",
                    "timeout_sec": "60..900", "evaluation_only": "true"},
     }
 
@@ -100,9 +102,9 @@ def execute(params, out):
     pcb_tool = [PYTHON, "-I", "-B", ROOT / "native_pcb.py"]
     cad_tool = [sys.executable, "-I", "-B", ROOT / "mechanical_audit.py"]
     try:
-        if params["stage"] == "jlc-case":
+        if params["stage"] in CASE_STAGES:
             shutil.copyfile(ROOT / "inputs" / ROUTED_SHIELD, out / ROUTED_SHIELD)
-            run("manufacturing-case", *cad_tool, "jlc-case", "--out", out, limit=155)
+            run("manufacturing-case", *cad_tool, params["stage"], "--out", out, limit=155)
             return {"stage": params["stage"], "physical_fit_verified": False, "manufacturing_released": False}
         run("part-models", *cad_tool, "models", "--out", out, limit=155)
         run("native-build", *pcb_tool, "build", "--out", out)

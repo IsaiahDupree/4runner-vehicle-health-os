@@ -12,7 +12,8 @@ import time
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from engineering_job import JOB_TYPE, MODULE, MODULE_SHA, ROOT, ROUTED_SHIELD, ROUTED_SHIELD_SHA, sha, source_files, source_pin
+from engineering_job import (CASE_STAGES, JOB_TYPE, MODULE, MODULE_SHA, ROOT, ROUTED_SHIELD,
+                             ROUTED_SHIELD_SHA, STAGES, sha, source_files, source_pin)
 
 
 ARTIFACTS = ROOT.parents[3] / "artifacts/4runner-rgbw-shield-revb-2026-11-12"
@@ -48,7 +49,7 @@ def start(identity, folder, stage):
     control = f"C:/orion/control/{ACTOR}-{identity}"
     socket = f"/tmp/{ACTOR}-{identity}.sock"
     inputs = {MODULE: (MODULE_SHA, ROOT.parents[3] / "artifacts/4runner-console-cad-2026-11-07" / MODULE)}
-    if stage == "jlc-case":
+    if stage in CASE_STAGES:
         inputs[ROUTED_SHIELD] = (ROUTED_SHIELD_SHA, ARTIFACTS / "finish-04" / "output" / ROUTED_SHIELD)
     references = {}
     for name, (expected, fallback) in inputs.items():
@@ -155,7 +156,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=["start", "status", "fetch", "stop"])
     parser.add_argument("identity")
-    parser.add_argument("--stage", choices=["fit", "finish", "jlc-case"], default="fit")
+    parser.add_argument("--stage", choices=STAGES, default="fit")
     args = parser.parse_args()
     if not re.fullmatch(r"[a-z0-9][a-z0-9-]{1,25}", args.identity):
         raise ValueError("invalid task identity")

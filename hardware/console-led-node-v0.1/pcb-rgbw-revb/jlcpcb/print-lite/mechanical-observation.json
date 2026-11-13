@@ -1,0 +1,383 @@
+{
+  "dimensions": {
+    "width_mm": 132,
+    "depth_mm": 76,
+    "body_height_mm": 46,
+    "wall_mm": 2.6,
+    "floor_mm": 3,
+    "lid_mm": 3,
+    "pcb_origin_xy_mm": [
+      56,
+      11.33
+    ],
+    "esp_pcb_bottom_mm": 8.0,
+    "stack_pitch_mm": 15.0,
+    "pcb_thickness_mm": 1.6,
+    "lid_insert_pitch_offset_mm": 6.5,
+    "insert_pilot_mm": 4.0,
+    "insert_depth_mm": 7.0,
+    "lid_boss_diameter_mm": 8.8,
+    "shield_boss_diameter_mm": 8.8,
+    "lower_boss_diameter_mm": 8.0,
+    "ear_extension_mm": 7.0,
+    "ear_hole_mm": 4.3,
+    "nominal_cable_bend_clearance_mm": 36,
+    "lower_support_only_xy_mm": [
+      15.24,
+      50.8
+    ],
+    "panel_mm": 2.0
+  },
+  "port_windows": [
+    {
+      "ref": "J1",
+      "purpose": "VEHICLE IN",
+      "face_x_mm": 1.1,
+      "center_y_mm": 53.53,
+      "width_mm": 14.9,
+      "floor_z_mm": 23.1,
+      "top_open_to_lid": true
+    },
+    {
+      "ref": "J2",
+      "purpose": "RGBW OUT",
+      "face_x_mm": 1.08,
+      "center_y_mm": 28.83,
+      "width_mm": 20.9,
+      "floor_z_mm": 23.1,
+      "top_open_to_lid": true
+    }
+  ],
+  "lid_mounts_xy_mm": [
+    [
+      6.5,
+      6.5
+    ],
+    [
+      6.5,
+      69.5
+    ],
+    [
+      125.5,
+      6.5
+    ],
+    [
+      125.5,
+      69.5
+    ]
+  ],
+  "shield_mounts_xy_mm": [
+    [
+      10,
+      16.13
+    ],
+    [
+      14,
+      61.83
+    ],
+    [
+      47.5,
+      16.33
+    ],
+    [
+      47.25,
+      61.93
+    ]
+  ],
+  "controller_fasteners_xy_mm": [
+    [
+      122.04,
+      46.89
+    ],
+    [
+      122.04,
+      18.95
+    ],
+    [
+      69.97,
+      13.870000000000001
+    ]
+  ],
+  "controller_support_only_xy_mm": [
+    71.24,
+    62.129999999999995
+  ],
+  "fuse_to_lid_vertical_clearance_mm": 6.4,
+  "checks": [
+    {
+      "check": "shield_against_base",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "shield_against_lid",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "controller_against_base",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "controller_against_lid",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "F1_against_base",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "F1_against_lid",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "F2_against_base",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "F2_against_lid",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1_against_base",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1_against_lid",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J2_against_base",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J2_against_lid",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "shield_against_controller",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_seats_on_base",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1_mating_corridor_against_base",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1_mating_corridor_against_lid",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J2_mating_corridor_against_base",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J2_mating_corridor_against_lid",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "F1_vertical_puller_base_lid_removed",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "F1_vertical_puller_shield_lid_removed",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "F1_vertical_puller_other_fuse",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "F2_vertical_puller_base_lid_removed",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "F2_vertical_puller_shield_lid_removed",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "F2_vertical_puller_other_fuse",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "upper_screw_1_driver_shield",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "upper_screw_1_driver_base",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "upper_screw_2_driver_shield",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "upper_screw_2_driver_base",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "upper_screw_3_driver_shield",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "upper_screw_3_driver_base",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "upper_screw_4_driver_shield",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "upper_screw_4_driver_base",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lower_screw_1_before_shield",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lower_screw_2_before_shield",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lower_screw_3_before_shield",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board_fastener_head_and_washer_shield",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board_fastener_head_and_washer_controller",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board_fastener_head_and_washer_lid",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "base_ports_locators_and_mount_supports",
+      "removed_support_material_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_locating_ribs_and_screw_seats",
+      "removed_support_material_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "floor_panel_thickness",
+      "missing_panel_material_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_panel_thickness",
+      "missing_panel_material_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "long_wall_panel_thickness",
+      "missing_panel_material_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "rear_wall_panel_thickness",
+      "missing_panel_material_mm3": 0.0,
+      "pass": true
+    }
+  ],
+  "passed_nominal_interference": true,
+  "printable": [
+    {
+      "step": "case_base.step",
+      "stl": "case_base.stl",
+      "closed_mesh": true,
+      "facets": 9292,
+      "solid_volume_mm3": 78239.99,
+      "bounds_mm": [
+        146.0,
+        76.0,
+        46.0
+      ]
+    },
+    {
+      "step": "case_lid.step",
+      "stl": "case_lid.stl",
+      "closed_mesh": true,
+      "facets": 2316,
+      "solid_volume_mm3": 24251.53,
+      "bounds_mm": [
+        132.0,
+        76.0,
+        4.2
+      ]
+    },
+    {
+      "step": "connector_fit_coupon.step",
+      "stl": "connector_fit_coupon.stl",
+      "closed_mesh": true,
+      "facets": 52,
+      "solid_volume_mm3": 4125.77,
+      "bounds_mm": [
+        5.3,
+        49.0,
+        46.0
+      ]
+    }
+  ],
+  "geometry_authority": {
+    "shield": "reopened KiCad STEP",
+    "ports": "drawing and footprint envelopes",
+    "mating_cables": "conservative straight-extraction envelopes",
+    "fuses": "installed height reserve",
+    "lower_board": "UNO reference and photo estimates",
+    "esp_module": "Espressif reference STEP at estimated placement"
+  },
+  "physical_fit_verified": false,
+  "thermal_or_vibration_qualified": false,
+  "print_panel_comparison": {
+    "reference": "unrelieved JLC3DP base and lid",
+    "reference_volume_mm3": 119441.11,
+    "panel_volume_mm3": 102491.52,
+    "volume_reduction_percent": 14.19
+  }
+}

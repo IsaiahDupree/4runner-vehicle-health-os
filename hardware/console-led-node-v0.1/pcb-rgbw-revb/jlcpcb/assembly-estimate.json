@@ -4,92 +4,178 @@
     {
       "variant": "truck-smt",
       "boards_assembled": 2,
-      "parts_usd": "60.09",
+      "parts_usd": "60.05",
       "feeder_usd": "58.33",
       "setup_and_stencil_usd": "9.71",
+      "manual_joints_per_board": 0,
       "placement_and_manual_usd": "0.51",
-      "subtotal_usd": "128.63",
-      "if_U4_xray_required_usd": "131.91"
+      "subtotal_usd": "128.60",
+      "if_U4_xray_required_usd": "131.88"
     },
     {
       "variant": "truck-smt",
       "boards_assembled": 5,
-      "parts_usd": "130.73",
+      "parts_usd": "130.69",
       "feeder_usd": "58.33",
       "setup_and_stencil_usd": "9.71",
+      "manual_joints_per_board": 0,
       "placement_and_manual_usd": "1.26",
-      "subtotal_usd": "200.03",
-      "if_U4_xray_required_usd": "208.23"
+      "subtotal_usd": "200.00",
+      "if_U4_xray_required_usd": "208.20"
     },
     {
       "variant": "truck-smt",
       "boards_assembled": 10,
-      "parts_usd": "241.91",
+      "parts_usd": "241.86",
       "feeder_usd": "58.33",
       "setup_and_stencil_usd": "9.71",
+      "manual_joints_per_board": 0,
       "placement_and_manual_usd": "2.53",
-      "subtotal_usd": "312.48",
-      "if_U4_xray_required_usd": "328.88"
+      "subtotal_usd": "312.43",
+      "if_U4_xray_required_usd": "328.83"
     },
     {
       "variant": "truck-mixed",
       "boards_assembled": 2,
-      "parts_usd": "63.59",
+      "parts_usd": "63.55",
       "feeder_usd": "64.47",
       "setup_and_stencil_usd": "9.71",
+      "manual_joints_per_board": 10,
       "placement_and_manual_usd": "4.41",
-      "subtotal_usd": "142.18",
-      "if_U4_xray_required_usd": "145.46"
+      "subtotal_usd": "142.15",
+      "if_U4_xray_required_usd": "145.43"
     },
     {
       "variant": "truck-mixed",
       "boards_assembled": 5,
-      "parts_usd": "139.48",
+      "parts_usd": "139.45",
       "feeder_usd": "64.47",
       "setup_and_stencil_usd": "9.71",
+      "manual_joints_per_board": 10,
       "placement_and_manual_usd": "5.66",
-      "subtotal_usd": "219.32",
-      "if_U4_xray_required_usd": "227.52"
+      "subtotal_usd": "219.29",
+      "if_U4_xray_required_usd": "227.49"
     },
     {
       "variant": "truck-mixed",
       "boards_assembled": 10,
-      "parts_usd": "256.36",
+      "parts_usd": "256.31",
       "feeder_usd": "64.47",
       "setup_and_stencil_usd": "9.71",
+      "manual_joints_per_board": 10,
       "placement_and_manual_usd": "7.75",
-      "subtotal_usd": "338.29",
-      "if_U4_xray_required_usd": "354.69"
+      "subtotal_usd": "338.24",
+      "if_U4_xray_required_usd": "354.64"
     },
     {
       "variant": "bench-smt",
       "boards_assembled": 2,
-      "parts_usd": "36.78",
+      "parts_usd": "36.75",
       "feeder_usd": "58.33",
       "setup_and_stencil_usd": "9.71",
+      "manual_joints_per_board": 0,
       "placement_and_manual_usd": "0.51",
-      "subtotal_usd": "105.33",
-      "if_U4_xray_required_usd": "108.61"
+      "subtotal_usd": "105.29",
+      "if_U4_xray_required_usd": "108.57"
     },
     {
       "variant": "bench-smt",
       "boards_assembled": 5,
-      "parts_usd": "72.46",
+      "parts_usd": "72.43",
       "feeder_usd": "58.33",
       "setup_and_stencil_usd": "9.71",
+      "manual_joints_per_board": 0,
       "placement_and_manual_usd": "1.26",
-      "subtotal_usd": "141.76",
-      "if_U4_xray_required_usd": "149.96"
+      "subtotal_usd": "141.73",
+      "if_U4_xray_required_usd": "149.93"
     },
     {
       "variant": "bench-smt",
       "boards_assembled": 10,
-      "parts_usd": "132.14",
+      "parts_usd": "132.09",
       "feeder_usd": "58.33",
       "setup_and_stencil_usd": "9.71",
+      "manual_joints_per_board": 0,
       "placement_and_manual_usd": "2.53",
-      "subtotal_usd": "202.71",
-      "if_U4_xray_required_usd": "219.11"
+      "subtotal_usd": "202.66",
+      "if_U4_xray_required_usd": "219.06"
+    },
+    {
+      "variant": "truck-lm5169-smt",
+      "boards_assembled": 2,
+      "parts_usd": "45.46",
+      "feeder_usd": "55.26",
+      "setup_and_stencil_usd": "9.71",
+      "manual_joints_per_board": 0,
+      "placement_and_manual_usd": "0.51",
+      "subtotal_usd": "110.93",
+      "if_U4_xray_required_usd": "114.21"
+    },
+    {
+      "variant": "truck-lm5169-smt",
+      "boards_assembled": 5,
+      "parts_usd": "94.25",
+      "feeder_usd": "55.26",
+      "setup_and_stencil_usd": "9.71",
+      "manual_joints_per_board": 0,
+      "placement_and_manual_usd": "1.26",
+      "subtotal_usd": "160.49",
+      "if_U4_xray_required_usd": "168.69"
+    },
+    {
+      "variant": "truck-lm5169-smt",
+      "boards_assembled": 10,
+      "parts_usd": "172.92",
+      "feeder_usd": "55.26",
+      "setup_and_stencil_usd": "9.71",
+      "manual_joints_per_board": 0,
+      "placement_and_manual_usd": "2.53",
+      "subtotal_usd": "240.42",
+      "if_U4_xray_required_usd": "256.82"
+    },
+    {
+      "variant": "truck-lm5169-mixed",
+      "boards_assembled": 2,
+      "parts_usd": "48.96",
+      "feeder_usd": "61.40",
+      "setup_and_stencil_usd": "9.71",
+      "manual_joints_per_board": 10,
+      "placement_and_manual_usd": "4.41",
+      "subtotal_usd": "124.48",
+      "if_U4_xray_required_usd": "127.76"
+    },
+    {
+      "variant": "truck-lm5169-mixed",
+      "boards_assembled": 5,
+      "parts_usd": "103.00",
+      "feeder_usd": "61.40",
+      "setup_and_stencil_usd": "9.71",
+      "manual_joints_per_board": 10,
+      "placement_and_manual_usd": "5.66",
+      "subtotal_usd": "179.78",
+      "if_U4_xray_required_usd": "187.98"
+    },
+    {
+      "variant": "truck-lm5169-mixed",
+      "boards_assembled": 10,
+      "parts_usd": "187.37",
+      "feeder_usd": "61.40",
+      "setup_and_stencil_usd": "9.71",
+      "manual_joints_per_board": 10,
+      "placement_and_manual_usd": "7.75",
+      "subtotal_usd": "266.22",
+      "if_U4_xray_required_usd": "282.62"
+    },
+    {
+      "variant": "truck-lm5169-fuses",
+      "boards_assembled": 2,
+      "parts_usd": "61.96",
+      "feeder_usd": "64.47",
+      "setup_and_stencil_usd": "9.71",
+      "manual_joints_per_board": 18,
+      "placement_and_manual_usd": "4.68",
+      "subtotal_usd": "140.82",
+      "if_U4_xray_required_usd": "144.10"
     }
   ],
   "feeder_savings_vs_original_all_parts_available_usd": "30.70",

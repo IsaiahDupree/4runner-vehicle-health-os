@@ -1,5 +1,9 @@
 # JLCPCB prototype package for the 4Runner RGBW controller
 
+The [lower-cost LM5169 assembly and lightweight print package](COST-PASS.md)
+adds a pin-compatible automotive buck option, two more factory-installable
+parts and a smaller nylon volume. The original Rev B choices follow below.
+
 Use the **truck-smt** BOM for the first automotive-intent prototype. Quote five
 four-layer shields with two assembled if the cart offers that split. The owner
 finishes the through-hole work and installs the exact Coilcraft inductor. The
@@ -20,9 +24,9 @@ The Gerbers come from Rev B, commit `94b40aca84e0b9ec02733ed880a0ae316addabdc`.
 
 | Shields assembled | Truck SMT | Truck mixed | Bench SMT |
 | ---: | ---: | ---: | ---: |
-| 2 | $128.63 | $142.18 | $105.33 |
-| 5 | $200.03 | $219.32 | $141.76 |
-| 10 | $312.48 | $338.29 | $202.71 |
+| 2 | $128.60 | $142.15 | $105.29 |
+| 5 | $200.00 | $219.29 | $141.73 |
+| 10 | $312.43 | $338.24 | $202.66 |
 
 These are USD **assembly subtotals for the batch** using JLC catalog prices and
 stock observed Nov 12, 2026, US Eastern time. They include components, modeled
@@ -39,7 +43,7 @@ apply X-ray inspection to U4, estimated at $1.64 per shield if required.
   avoids another $3.07 versus an Extended replacement. The selected BOM uses
   11 Basic part numbers, including a 100 nF 100 V 0805 replacement for C13/C14.
   [Catalog snapshot](catalog-snapshot.csv) · [JLC Basic and Extended rules](https://jlcpcb.com/help/article/pcb-assembly-faqs).
-- The automotive LM5164QDDARQ1 was **$14.21** at JLC, with 1,027 listed. The
+- The automotive LM5164QDDARQ1 was **$14.21** at JLC, with 1,022 listed. The
   pin-compatible commercial LM5164DDAR was **$2.56**, with 854 listed. The
   bench BOM gives a separate option for firmware and dry fit. At two
   assemblies the modeled reduction is $23.31 for the batch. Add $5.12 if

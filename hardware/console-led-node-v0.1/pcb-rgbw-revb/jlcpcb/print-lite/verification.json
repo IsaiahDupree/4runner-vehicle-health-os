@@ -1,0 +1,25 @@
+{
+  "orion_job_id": "mdl_7dd264b6c7114666",
+  "source_set_sha256": "259e19a2136fa84e3d231464c7c50695096a1333845bc88f2db80025c678b344",
+  "native_manifest_sha256": "6cc402b5a33ebc5a4d36cdb31314e6bc0068e81950843af580f882fe06075f61",
+  "source_commit_of_routed_shield": "94b40aca84e0b9ec02733ed880a0ae316addabdc",
+  "routed_shield_step_sha256": "3ec61f463fe32eb3731628f4442ddb74d17c380db6bf20c91a8dc4dba24a3bc5",
+  "mechanical_checks_passed": 44,
+  "coupon_checks_passed": 7,
+  "artifacts_sha256": {
+    "case_base.stl": "50981dbf572f05319e00ba765f2bac2b3222f68c431d3bbcfaeea2d4658c4e82",
+    "case_lid.stl": "40c741c5d6a63ac1afb79ae0bacab45a1306bc65a034aea02c5ea72746ae8724",
+    "ports_and_inserts_coupon.stl": "524292a14f54cb7373945544cce9f5803315129c43258f070a9b3dd73a2913f1",
+    "mechanical-observation.json": "05e8b8ba1ff5b8a6fb95af3ea8144e22344c447e19f491d005da99359fab7224",
+    "ports-and-inserts-coupon-checks.json": "89230ddb569f1a3665a35d2304e62ab4550b382390879d1847a83fe353dd4389",
+    "case_base.step": "0d82d94d92a71339127ff2f523097079c602d6708750392b57f08af1d1e49a12",
+    "case_lid.step": "fbff6fdd4531b389c4f6560b4f7f919d79727bc8d8cae3a56a01a01c90fb99f9",
+    "ports_and_inserts_coupon.step": "f43ae47dd5cfcd01432c5baad2fbc90de5d0a94cb7758fd8c42f8d786302849f"
+  },
+  "physical_fit_verified": false,
+  "process_qualified": false,
+  "orion_sha256_before_report_line_ending_normalization": {
+    "mechanical-observation.json": "2ff6abac6c8908367deabb45c4394a24d721732f668c2a3ac7cded7a2c73f0ce",
+    "ports-and-inserts-coupon-checks.json": "8a942132a6ebafbbb525179091285e2de5691e88ab2c1f798fba2a34e7105554"
+  }
+}
