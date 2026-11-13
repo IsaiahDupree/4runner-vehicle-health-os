@@ -1,23 +1,29 @@
 # Toyota-powered RGBW controller for the 2005 V8 4Runner
 
-The white six-contact Toyota console harness socket shown in the owner's
-photos is the cabin box's sole vehicle power source. It is the rectangular
-plug beside the round outlet marked 12 V / 120 W. The Rev B shield powers
-the ShengYang D1 UNO ESP32-S3 and feeds the RGBW harness through its captive
-lighting lead. The existing CAN ESP32 supplies vehicle data wirelessly.
+The white six-contact Toyota console harness in the owner's photos is the
+only wired input to the box in service. Its switched 12 V and ground power
+both the ShengYang D1 UNO ESP32-S3 and the RGBW lights through the Rev B
+shield. The five-wire RGBW cable is an output from the shield to the lights.
+The existing CAN ESP32 supplies vehicle data wirelessly.
 [Project resources and fabrication files](../RESOURCES.md).
+
+## Power and lighting leads
 
 ```mermaid
 flowchart LR
-  T[White six-contact Toyota harness socket] -->|Two-wire power input| P[Fused and protected Rev B shield]
-  P -->|Regulated 5 V| S[Lighting ESP32-S3]
-  S -->|Four PWM channels| P
-  P -->|Protected 12 V and four switched returns| L[RGBW pod harness]
+  T[White six-pin Toyota plug] -->|Only wired input| I[Shield power pads]
+  I -->|Switched 12 V| F[F1 main fuse]
+  I ---|Ground return| R[Shield ground]
+  F --> P[Shield input protection]
+  P -->|Protected 12 V| O[RGBW output pads]
+  P --> B[F2 logic fuse and 5 V regulator]
+  B --> S[Lighting ESP32-S3]
+  S --> D[Four PWM drivers]
+  D -->|Four switched returns| O
+  O -->|Five-wire output| L[RGBW lights]
   G[Existing CAN ESP32] -->|Existing VHOS BLE connection| A[Android head unit or iPhone]
   A -. proposed lighting relay .-> S
 ```
-
-## Power and lighting leads
 
 The white vehicle connector resembles the six-way **Yazaki 7283-1060**
 socket. The catalog pin mate is **Yazaki 7282-1060**, available as **Corsa
@@ -33,8 +39,7 @@ With the controller unplugged, use the molded cavity numbers and a
 high-impedance meter to identify switched positive and a true power return.
 Check OFF, ACC and ON, with console illumination both off and on. Verify the
 upstream fuse and the current available for the shield and the planned RGBW
-load. The 12 V / 120 W marking is on the adjacent round outlet. Qualify the
-white plug's circuit separately.
+load.
 The 2006 IR1 drawing is reference evidence for another model year. Toyota's
 April 2005 owner's manual lists the CIG fuse position as unused. If the
 photographed socket lacks a verified switched feed and return, pause vehicle
@@ -44,8 +49,8 @@ to the takeoff if the original fuse is too large for the new branch wire.
 
 | Captive lead | Rev B plated termination pads |
 | --- | --- |
-| Toyota power | Shield pad 1 at the J1 location takes the measured power return. Shield pad 2 takes the measured switched 12 V feed. Identify the Toyota cavity numbers on the truck. |
-| RGBW lighting | Pads 1 to 5 at the J2 location are R−, G−, B−, protected common +12 V, and W−, in that order. Pads 6 to 8 stay empty. |
+| Toyota power input | Shield pad 1 at the J1 location takes the measured power return. Shield pad 2 takes the measured switched 12 V feed. Identify the Toyota cavity numbers on the truck. |
+| RGBW lighting output | Pads 1 to 5 at the J2 location are R−, G−, B−, shield-supplied common +12 V, and W−, in that order. Pads 6 to 8 stay empty. |
 
 Leave the two removable board headers unpopulated and solder each lead to its
 numbered plated pads. The power holes are 1.8 mm nominal. The lighting holes
@@ -61,12 +66,15 @@ the candidate pod, with one sample for the first bench check.
 [DD7440 rock light](https://www.diodedynamics.com/stage-series-rgbw-led-rock-light-one.html) ·
 [DD4083 and DD4084 five-pin M8 extension](https://www.diodedynamics.com/rgbw-m8-5-pin-extension-wire.html).
 
-F1 is the existing 3 A MINI main/LED fuse and F2 is the 1 A logic fuse.
-Both are in the box. Their values remain prototype selections. Confirm the
-Toyota source headroom, upstream protection, fuse coordination and measured
-load before installing the lights. For bench bring-up use a current-limited
-supply and check the 5 V rail with the RUN shunt open first. Remove vehicle
-power and the RUN shunt before USB programming.
+The entire load passes through F1, the 3 A MINI main fuse. The protected
+rail feeds the RGBW output directly and feeds the 5 V regulator through F2,
+the 1 A logic fuse. Both fuse values are prototype selections. Confirm that
+the Toyota circuit and its upstream protection can support the combined
+controller and light load before connecting the system to the truck.
+
+For bench bring-up, substitute a current-limited supply at the same power
+input and check the 5 V rail with the RUN shunt open first. Disconnect input
+power and remove the RUN shunt before USB programming.
 
 ## Existing CAN ESP32 integration
 

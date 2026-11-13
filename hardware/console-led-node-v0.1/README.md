@@ -1,10 +1,10 @@
 # 2005 V8 4Runner console LED node — research and fit-check case
 
 **Current build** [Toyota-powered Rev B with captive leads and the existing CAN ESP32](pcb-rgbw-revb/TOYOTA-POWER-BUILD.md).
-The photographed white six-contact Toyota harness socket is the sole vehicle
-power source. Its switched feed and return still need measurement on the
-truck. The existing classic ESP32/MrDIY gateway supplies vehicle data
-wirelessly.
+The photographed white six-contact Toyota harness is the box's only wired
+input. The shield uses that switched 12 V and ground to power both the
+ESP32-S3 and the RGBW lights. The existing ESP32/MrDIY gateway supplies
+vehicle data wirelessly.
 [Project resources and fabrication files](RESOURCES.md).
 Owner task: 2026-11-07. No parts ordered, functional PCB fabricated, vehicle wiring changed, or printer started.
 
@@ -23,8 +23,8 @@ connector fit, pod pinout, controller stack and RF fit still need physical verif
 
 ![Orion-generated fit-check case, lid, carrier drill template and insert coupon](cad/case_overview.png)
 
-The electrical diagrams and original inline harness in the sections below
-record the earlier evaluation revisions.
+The connector research and original inline harness record earlier evaluation
+revisions. Use the current build guide for wiring the box.
 
 ## What the photographs establish
 
@@ -92,25 +92,10 @@ not a final output circuit.
 
 ## Electrical and mechanical arrangement
 
-```mermaid
-flowchart LR
-  H[Verified switched accessory feed] --> F[Branch fuse and automotive protection]
-  F --> P[5 V logic supply]
-  P --> E[UNO-format ESP32 on screw-mounted carrier]
-  G[Existing passive CAN gateway] --> A[VHOS iPhone or Android client]
-  A -. proposed bonded BLE control .-> E
-  G -. optional future direct link .-> E
-  E --> D[RGBW low-side drivers]
-  L[Separately fused and protected LED supply] --> N[RGBW pods]
-  N --> D
-  D --> R[Dedicated common ground]
-  E --> R
-```
-
-Use the **inline T-harness** to carry the six factory paths. The branch fuse
-feeds J1-6 and the shield ground lands at J2-5 through a dedicated lead. Keep
-the Toyota housings and branch fuse holder outside the printed case. Support
-the cable near the case and mount the PCB on its screw supports.
+See the [Rev B power flow and shield pad assignments](pcb-rgbw-revb/TOYOTA-POWER-BUILD.md#power-and-lighting-leads).
+Check the Toyota power and ground cavities and the available current on the
+truck. The case supports both captive cables at their exits and mounts the
+shield above the ESP32-S3.
 
 The user has identified the target controller with a product screenshot:
 **ShengYang listing, purple D1 UNO ESP32-S3 N16R8 / CH340 board**. The earlier

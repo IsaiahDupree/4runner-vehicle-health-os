@@ -31,7 +31,7 @@ Yazaki explicitly lists these two housings as mates. Its male housing is 38.0 mm
 
 Corsa listed the pin kit at $3.14 and socket kit at $3.03 during retrieval; SparkFun listed its header kit at $2.75. These are dated page observations before delivery/tax, not quotes or guaranteed stock. Confirm the contact size included in a kit. **Do not use the small branch contacts/wire to replace the original lighter's full-current pass-through conductors.**
 
-## Connection to the PCB on top of the controller
+## Rev A connection to the PCB
 
 The inline loom carries all six original circuits. It takes verified
 switched positive through a branch fuse to J1-6. The shield's dedicated return

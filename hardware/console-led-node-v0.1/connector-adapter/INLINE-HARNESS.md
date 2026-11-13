@@ -1,11 +1,8 @@
-# 2005 4Runner V8 inline harness for the RGBW shield
+# 2005 4Runner V8 Rev A inline harness reference
 
 Use the [Toyota-powered Rev B build sheet](../pcb-rgbw-revb/TOYOTA-POWER-BUILD.md)
-for the current two-wire power takeoff and captive cable terminations.
-
-For the box with both fuses inside, use the [Rev B vehicle and LED cable map](../pcb-rgbw-revb/README.md#two-cable-connections).
-This sheet's six Toyota pass-through paths also apply to Rev B. The shield-side
-connections below apply to Rev A.
+for the current build. Its single Toyota input powers both the ESP32-S3 and
+the RGBW lights. The wiring below records the earlier Rev A prototype.
 
 Build sheet for the ShengYang D1 UNO ESP32-S3 and the [RGBW Rev A shield](../pcb-rgbw-reva/README.md).
 The two Toyota housings carry six straight-through circuits. A fused branch

@@ -53,10 +53,9 @@ pass-through pair. For Rev B, keep all six original Toyota paths continuous
 and terminate the power takeoff and dedicated return in the new two-position
 J1 cable housing. The truck feed must be switched, have measured headroom for
 the entire box and light load, and have source protection sized to the cable
-and terminals before the box. If the white plug supplies no usable feed,
-use a verified switched outlet circuit with the correct adapter. The April
-2005 4Runner owner's manual lists the CIG fuse position as unused. A custom
-feed taken directly from the battery would require protection at its source.
+and terminals before the box. Verify the white plug's power and ground before
+installing the controller. The April 2005 4Runner owner's manual lists the
+CIG fuse position as unused.
 [Toyota 2005 owner's manual, p. 408](https://assets.sia.toyota.com/publications/en/om-s/OM35860U/pdf/OM35860U.pdf#page=418).
 
 ## What goes inside

@@ -1,11 +1,10 @@
 # 4Runner console LED controller resources
 
 The current prototype is the **Toyota-powered Rev B for the 2005 V8 4Runner**.
-The photographed white six-contact console harness plug is its sole vehicle
-power source. Its power lead uses the switched 12 V feed and return once
-verified on the truck. The other captive lead feeds the RGBW harness from the
-shield. Vehicle data comes wirelessly from the existing classic CAN ESP32
-running the MrDIY VHOS target.
+The photographed white six-contact Toyota plug is the box's only wired
+input. The shield uses its switched 12 V and ground to power the ESP32-S3
+and drive the RGBW lights through the output cable. Vehicle data comes
+wirelessly from the existing classic CAN ESP32 running the MrDIY VHOS target.
 [Build guide](pcb-rgbw-revb/TOYOTA-POWER-BUILD.md) ·
 [Build definition](pcb-rgbw-revb/toyota-power.json) ·
 [Pinned gateway firmware](https://github.com/IsaiahDupree/4runner-vhos-firmware/tree/a523483abc984a406c73659653571198e46b04a0/targets/mrdiy-esp32-v13).
