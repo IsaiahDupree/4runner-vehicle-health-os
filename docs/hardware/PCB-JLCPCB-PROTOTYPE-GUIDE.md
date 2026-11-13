@@ -3,6 +3,7 @@
 Use the 4Runner Rev B files as the worked example. The workflow applies to a
 new design when you recheck the electrical requirements, footprints, stock,
 and assembly terms for that board.
+[Current 4Runner build and resources](../../hardware/console-led-node-v0.1/RESOURCES.md).
 
 ## Design the board around the parts and assembly
 

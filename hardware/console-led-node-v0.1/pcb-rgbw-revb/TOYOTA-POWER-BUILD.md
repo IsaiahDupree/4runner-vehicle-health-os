@@ -1,9 +1,10 @@
 # Toyota-powered RGBW controller for the 2005 V8 4Runner
 
 The cabin box uses the existing Rev B shield on the purple ShengYang D1 UNO
-ESP32-S3. Its captive power lead mates with the white Toyota console socket.
-Its captive lighting lead ends at the RGBW harness. The existing CAN ESP32
-supplies vehicle data wirelessly.
+ESP32-S3. Its captive power lead is designed to mate with the white Toyota
+console socket. Its captive lighting lead ends at the RGBW harness. The
+existing CAN ESP32 supplies vehicle data wirelessly.
+[Project resources and fabrication files](../RESOURCES.md).
 
 ```mermaid
 flowchart LR

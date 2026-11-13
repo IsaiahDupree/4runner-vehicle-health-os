@@ -1,8 +1,10 @@
 # 2005 V8 4Runner console LED node — research and fit-check case
 
 **Current build** [Toyota-powered Rev B with captive leads and the existing CAN ESP32](pcb-rgbw-revb/TOYOTA-POWER-BUILD.md).
-The white Toyota socket supplies verified switched power and return. The existing
-classic ESP32/MrDIY gateway is the wireless vehicle-data source.
+The white Toyota socket is the intended power source. Its switched supply
+and return still need measurement on the truck. The existing classic
+ESP32/MrDIY gateway is the wireless vehicle-data source.
+[Project resources and fabrication files](RESOURCES.md).
 Owner task: 2026-11-07. No parts ordered, functional PCB fabricated, vehicle wiring changed, or printer started.
 
 The [earlier two-connector Rev B package](pcb-rgbw-revb/README.md) places both replaceable
