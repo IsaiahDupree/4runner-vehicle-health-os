@@ -204,7 +204,7 @@ def add_feature(doc, parent, name, label, shape, source, color):
 
 
 def assembly(out, g, base, lid, shield, lower, lower_components, ports, lid_axes, upper_axes,
-             lower_axes, fuses):
+             lower_axes, fuses, *, accurate_depth=False):
     height = g["body_height_mm"]
     pcb_top = g["esp_pcb_bottom_mm"] + g["stack_pitch_mm"] + g["pcb_thickness_mm"]
     seats, paths = tool_checks(g, base, lid, shield, lower, lid_axes, upper_axes, lower_axes, fuses)
@@ -309,10 +309,39 @@ def assembly(out, g, base, lid, shield, lower, lower_components, ports, lid_axes
     tool_doc.recompute()
     tool_doc.saveAs(str(out / "4Runner_Insert_Tool_Paths.FCStd"))
     App.closeDocument(tool_doc.Name)
-    views(out, rendered, base, paths)
+    views(out, rendered, base, paths, accurate_depth=accurate_depth)
 
 
-def views(out, rendered, base, paths):
+def depth_render(triangles, scale, cx, cy, QtGui):
+    """Rasterize orthographic triangles so the opaque lid hides the circuit board."""
+    import numpy as np
+
+    width, height = 1600, 1040
+    rgb = np.full((height, width, 3), (241, 244, 245), dtype=np.uint8)
+    zbuffer = np.full((height, width), -np.inf, dtype=np.float32)
+    for depths, points, color in triangles:
+        x, y = zip(*((800 + (px - cx) * scale, 545 + (py - cy) * scale) for px, py in points))
+        x0, x1 = max(0, int(min(x))), min(width, int(max(x)) + 1)
+        y0, y1 = max(0, int(min(y))), min(height, int(max(y)) + 1)
+        if x0 >= x1 or y0 >= y1:
+            continue
+        determinant = (y[1] - y[2]) * (x[0] - x[2]) + (x[2] - x[1]) * (y[0] - y[2])
+        if abs(determinant) < 1e-7:
+            continue
+        gx = np.arange(x0, x1, dtype=np.float32)[None, :] + .5 - x[2]
+        gy = np.arange(y0, y1, dtype=np.float32)[:, None] + .5 - y[2]
+        a = ((y[1] - y[2]) * gx + (x[2] - x[1]) * gy) / determinant
+        b = ((y[2] - y[0]) * gx + (x[0] - x[2]) * gy) / determinant
+        c = 1 - a - b
+        distance = depths[0] * a + depths[1] * b + depths[2] * c
+        depth = zbuffer[y0:y1, x0:x1]
+        visible = (a >= -1e-5) & (b >= -1e-5) & (c >= -1e-5) & (distance > depth)
+        depth[visible] = distance[visible]
+        rgb[y0:y1, x0:x1][visible] = color
+    return QtGui.QImage(rgb.data, width, height, width * 3, QtGui.QImage.Format_RGB888).copy()
+
+
+def views(out, rendered, base, paths, *, accurate_depth=False):
     from PySide2 import QtCore, QtGui, QtWidgets
 
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
@@ -347,21 +376,26 @@ def views(out, rendered, base, paths):
                 normal.normalize()
                 exposure = .56 + .40 * max(0, normal.dot(light))
                 points = [(v.dot(right), -v.dot(up)) for v in (a, b, c)]
-                triangles.append(((a + b + c).dot(camera), points, [round(ch * exposure) for ch in color]))
+                triangles.append((tuple(v.dot(camera) for v in (a, b, c)), points,
+                                  [round(ch * exposure) for ch in color]))
         xs = [x for _, points, _ in triangles for x, _ in points]
         ys = [y for _, points, _ in triangles for _, y in points]
         scale = min(1350 / (max(xs) - min(xs)), 735 / (max(ys) - min(ys)))
         cx, cy = (min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2
-        image = QtGui.QImage(1600, 1040, QtGui.QImage.Format_ARGB32)
-        image.fill(QtGui.QColor("#f1f4f5"))
+        if accurate_depth:
+            image = depth_render(triangles, scale, cx, cy, QtGui)
+        else:
+            image = QtGui.QImage(1600, 1040, QtGui.QImage.Format_ARGB32)
+            image.fill(QtGui.QColor("#f1f4f5"))
         painter = QtGui.QPainter(image)
-        painter.setPen(QtCore.Qt.NoPen)
-        for _, points, color in sorted(triangles, key=lambda tri: tri[0]):
-            ink = QtGui.QColor(*color)
-            painter.setPen(ink)
-            painter.setBrush(ink)
-            painter.drawPolygon(QtGui.QPolygonF([QtCore.QPointF(800 + (x - cx) * scale, 545 + (y - cy) * scale)
-                                                 for x, y in points]))
+        if not accurate_depth:
+            painter.setPen(QtCore.Qt.NoPen)
+            for _, points, color in sorted(triangles, key=lambda tri: sum(tri[0])):
+                ink = QtGui.QColor(*color)
+                painter.setPen(ink)
+                painter.setBrush(ink)
+                painter.drawPolygon(QtGui.QPolygonF([QtCore.QPointF(800 + (x - cx) * scale, 545 + (y - cy) * scale)
+                                                     for x, y in points]))
         painter.setRenderHint(QtGui.QPainter.Antialiasing)
         painter.setPen(QtGui.QColor("#172a38"))
         painter.setFont(QtGui.QFont("Segoe UI", 31, QtGui.QFont.Bold))

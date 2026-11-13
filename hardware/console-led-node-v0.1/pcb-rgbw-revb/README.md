@@ -9,6 +9,7 @@ The assembled cabin box uses two latched cable plugs during operation.
 
 | Prototype files | Contents |
 | --- | --- |
+| [Reinforced, support-free enclosure](DURABLE-CASE.md) | Stronger port and fastener geometry, matching base and lid, and process-specific fit coupons. |
 | [Service-access enclosure](SERVICE-CASE.md) | Labeled cable openings, lighter nylon case, and CAD-checked insert and screw paths. |
 | [JLCPCB quote package](jlcpcb/README.md) | Stocked parts, upload-ready BOM and placement files, assembly estimates, hand-assembly sources and revised SLS print files. |
 | [KiCad project](generated/vhos_rgbw_revb.kicad_pro) · [schematic](generated/schematic.pdf) · [shield render](generated/shield.png) | PCB placement and routing, with local connector and fuse libraries. |

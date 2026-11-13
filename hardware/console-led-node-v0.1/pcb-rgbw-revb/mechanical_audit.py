@@ -25,7 +25,7 @@ def launch(mode, out):
         raise RuntimeError("FreeCAD unavailable")
     code = (f"import sys\nsys.path.insert(0, {str(ROOT)!r})\n"
             f"from mechanical_audit import execute\nexecute({mode!r}, {str(out)!r})\n")
-    run_freecad(native, code, out, 260 if mode == "service-case" else 140)
+    run_freecad(native, code, out, {"service-case": 260, "durable-case": 340}.get(mode, 140))
 
 
 def execute(mode, output):
@@ -38,15 +38,20 @@ def execute(mode, output):
     out = Path(output)
     if mode == "models":
         component_models(out)
-    elif mode in {"jlc-case", "jlc-lite-case", "service-case"}:
+    elif mode in {"jlc-case", "jlc-lite-case", "service-case", "durable-case"}:
         dimensions = {**CASE, "insert_depth_mm": 7.0, "lower_boss_diameter_mm": 8.0}
         if mode in {"jlc-lite-case", "service-case"}:
             dimensions["panel_mm"] = 2.0
         service = None
-        if mode == "service-case":
+        durable = None
+        if mode in {"service-case", "durable-case"}:
             import service_case as service
-        base = enclosure(out, dimensions, render=False, service=service)
-        manufacturing_coupon(out, base, dimensions, end_relief=service is not None)
+        if mode == "durable-case":
+            import durable_case as durable
+            dimensions = durable.dimensions(dimensions)
+        base = enclosure(out, dimensions, render=False, service=service, durable=durable)
+        if not durable:
+            manufacturing_coupon(out, base, dimensions, end_relief=service is not None)
     else:
         enclosure(out)
 
@@ -208,7 +213,7 @@ def lighten_panels(base, lid, g, board_axes):
     return base, lid
 
 
-def enclosure(out, g=CASE, *, render=True, service=None):
+def enclosure(out, g=CASE, *, render=True, service=None, durable=None):
     width, depth, height = (g[k] for k in ("width_mm", "depth_mm", "body_height_mm"))
     wall, floor, lid_thickness = (g[k] for k in ("wall_mm", "floor_mm", "lid_mm"))
     origin_x, origin_y = g["pcb_origin_xy_mm"]
@@ -223,26 +228,28 @@ def enclosure(out, g=CASE, *, render=True, service=None):
     lower_axes = [(origin_x + p["x_mm"], origin_y + p["y_mm"]) for p in ref["headers"]["mounting_holes"]]
     support_only = tuple(p + offset for p, offset in zip(g["lower_support_only_xy_mm"], (origin_x, origin_y)))
     lower_fasteners = [axis for axis in lower_axes if axis != support_only]
-    shell = rounded(0, 0, 0, width, depth, height, 4).cut(
-        rounded(wall, wall, floor, width - 2 * wall, depth - 2 * wall, height, 4 - wall))
-    # Gussets connect corner lid bosses to both walls. Independent floor
-    # bosses take PCB insertion and cable withdrawal loads through screws.
-    for x, y in lid_axes:
-        px = wall - .2 if x < width / 2 else width - wall - 8.0
-        py = wall - .2 if y < depth / 2 else depth - wall - 8.0
-        shell = shell.fuse(box(px, py, floor, 8.2, 8.2, height - floor))
-    for group, z, diameter in ((upper_axes, shield_z, g["shield_boss_diameter_mm"]),
-                               (lower_axes, lower_z, g["lower_boss_diameter_mm"])):
-        for x, y in group:
-            shell = shell.fuse(cylinder(x, y, floor, diameter, z - floor))
-    for group, z in ((lid_axes, height), (upper_axes, shield_z), (lower_fasteners, lower_z)):
-        for x, y in group:
-            shell = shell.cut(cylinder(x, y, z - insert_depth, pilot, insert_depth + .1))
     ears = g["ear_extension_mm"]
-    for x in (-ears, width - .5):
-        shell = shell.fuse(box(x, depth / 2 - 8, 0, ears + .5, 16, floor))
-    for x in (-ears / 2, width + ears / 2):
-        shell = shell.cut(cylinder(x, depth / 2, -.1, g["ear_hole_mm"], floor + .2))
+    if durable:
+        shell = durable.base_shell(g, lid_axes, upper_axes, lower_axes, lower_fasteners)
+    else:
+        shell = rounded(0, 0, 0, width, depth, height, 4).cut(
+            rounded(wall, wall, floor, width - 2 * wall, depth - 2 * wall, height, 4 - wall))
+        # Corner gussets and independent board support bosses.
+        for x, y in lid_axes:
+            px = wall - .2 if x < width / 2 else width - wall - 8.0
+            py = wall - .2 if y < depth / 2 else depth - wall - 8.0
+            shell = shell.fuse(box(px, py, floor, 8.2, 8.2, height - floor))
+        for group, z, diameter in ((upper_axes, shield_z, g["shield_boss_diameter_mm"]),
+                                   (lower_axes, lower_z, g["lower_boss_diameter_mm"])):
+            for x, y in group:
+                shell = shell.fuse(cylinder(x, y, floor, diameter, z - floor))
+        for group, z in ((lid_axes, height), (upper_axes, shield_z), (lower_fasteners, lower_z)):
+            for x, y in group:
+                shell = shell.cut(cylinder(x, y, z - insert_depth, pilot, insert_depth + .1))
+        for x in (-ears, width - .5):
+            shell = shell.fuse(box(x, depth / 2 - 8, 0, ears + .5, 16, floor))
+        for x in (-ears / 2, width + ears / 2):
+            shell = shell.cut(cylinder(x, depth / 2, -.1, g["ear_hole_mm"], floor + .2))
 
     openings = []
     cable_bodies = {}
@@ -252,9 +259,11 @@ def enclosure(out, g=CASE, *, render=True, service=None):
         dims, cable = port["header_extent_mm"], port["cable_allowance_mm"]
         face_x = origin_x + ax + dims["face_from_pad"]
         center_y = origin_y + ay + sum(dims["y_from_pad"]) / 2
-        half = cable["half_width"] + .45
-        bottom = board_top - cable["below_pcb"] - .5
-        shell = shell.cut(box(-.1, center_y - half, bottom, wall + .2, 2 * half, height - bottom + .2))
+        half = cable["half_width"] + g.get("port_side_clearance_mm", .45)
+        bottom = board_top - cable["below_pcb"] - g.get("port_bottom_clearance_mm", .5)
+        cutter = (durable.port_cut(g, center_y, half, bottom) if durable else
+                  box(-.1, center_y - half, bottom, wall + .2, 2 * half, height - bottom + .2))
+        shell = shell.cut(cutter)
         connector_bottom = board_top - cable["below_pcb"]
         runout = g["nominal_cable_bend_clearance_mm"]
         cable_bodies[ref_name] = box(face_x - 23, center_y - cable["half_width"], connector_bottom,
@@ -265,16 +274,20 @@ def enclosure(out, g=CASE, *, render=True, service=None):
                          "center_y_mm": round(center_y, 3), "width_mm": 2 * half,
                          "floor_z_mm": round(bottom, 3), "top_open_to_lid": True})
 
-    lid = rounded(0, 0, 0, width, depth, lid_thickness, 4)
-    for y in (wall + .4, depth - wall - 1.6):
-        lid = lid.fuse(box(11.5, y, -1.2, width - 23, 1.2, 1.5))
-    for x, y in lid_axes:
-        lid = lid.cut(cylinder(x, y, -.2, 3.3, lid_thickness + .4))
+    if durable:
+        shell = durable.front_details(shell, g, openings)
+        lid = durable.lid_shell(g, lid_axes, openings)
+    else:
+        lid = rounded(0, 0, 0, width, depth, lid_thickness, 4)
+        for y in (wall + .4, depth - wall - 1.6):
+            lid = lid.fuse(box(11.5, y, -1.2, width - 23, 1.2, 1.5))
+        for x, y in lid_axes:
+            lid = lid.cut(cylinder(x, y, -.2, 3.3, lid_thickness + .4))
     print_reference = None
     if "panel_mm" in g:
         print_reference = shell, lid
         shell, lid = lighten_panels(shell, lid, g, upper_axes + lower_axes)
-    if service:
+    if service and not durable:
         shell, lid = service.add_print_features(shell, lid, g, openings)
     shell = shell.removeSplitter()
     lid = lid.removeSplitter()
@@ -409,8 +422,13 @@ def enclosure(out, g=CASE, *, render=True, service=None):
                           "volume_reduction_percent": round(100 * (1 - current / previous), 2)}
     # The lid and base are generated as a pair. The coupon uses the actual
     # port walls so a failed sample can be corrected without a full print.
-    coupon = base.common(box(0, 14, 0, wall + 2.7, 49, height)).removeSplitter()
-    _, coupon_report = export_printable(coupon, "connector_fit_coupon", out)
+    if durable:
+        coupon_reports = durable.check_and_export(out, g, base, actual_lid, installed_lid,
+                                                  shield, lower, fuses, openings, lid_axes, results)
+    else:
+        coupon = base.common(box(0, 14, 0, wall + 2.7, 49, height)).removeSplitter()
+        _, coupon_report = export_printable(coupon, "connector_fit_coupon", out)
+        coupon_reports = [coupon_report]
 
     doc = App.newDocument("RevB")
     roles = [("Cabin_base", base), ("Removable_lid", installed_lid), ("Routed_shield", shield),
@@ -430,7 +448,7 @@ def enclosure(out, g=CASE, *, render=True, service=None):
         "controller_support_only_xy_mm": support_only,
         "fuse_to_lid_vertical_clearance_mm": round(height - board_top - installed_top, 3),
         "checks": results, "passed_nominal_interference": all(row["pass"] for row in results),
-        "printable": [base_report, lid_report, coupon_report],
+        "printable": [base_report, lid_report, *coupon_reports],
         "geometry_authority": {"shield": "reopened KiCad STEP", "ports": "drawing and footprint envelopes",
                                "mating_cables": "conservative straight-extraction envelopes",
                                "fuses": "installed height reserve", "lower_board": "UNO reference and photo estimates",
@@ -444,7 +462,7 @@ def enclosure(out, g=CASE, *, render=True, service=None):
         raise RuntimeError("nominal clearance findings; see mechanical-observation.json")
     if service:
         service.assembly(out, g, base, installed_lid, shield, lower, lower_components,
-                         openings, lid_axes, upper_axes, lower_fasteners, fuses)
+                         openings, lid_axes, upper_axes, lower_fasteners, fuses, accurate_depth=durable is not None)
     if render:
         preview(out / "open_case.png", base, lower, shield, fuses, measures, board_width)
     return base
@@ -512,7 +530,7 @@ def preview(path, shell, controller, shield, fuses, fasteners, board_width):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("mode", choices=["models", "assembly", "jlc-case", "jlc-lite-case", "service-case"])
+    parser.add_argument("mode", choices=["models", "assembly", "jlc-case", "jlc-lite-case", "service-case", "durable-case"])
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     launch(args.mode, args.out.resolve())

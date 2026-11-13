@@ -1,0 +1,45 @@
+{
+  "definition": "vhos_rgbw_revb_durable_case_v1",
+  "electrical_interface": "vhos_rgbw_two_connector_revb_v1",
+  "mechanical_interface": "durable base and lid as a matched pair",
+  "dimensions": {
+    "wall_mm": 3.0,
+    "floor_mm": 3.2,
+    "lid_mm": 3.2,
+    "outer_corner_mm": 5.0,
+    "front_wall_mm": 3.6,
+    "port_side_clearance_mm": 0.9,
+    "port_bottom_clearance_mm": 0.8,
+    "port_lower_corner_mm": 0.5,
+    "lid_screw_clearance_diameter_mm": 3.8
+  },
+  "fit": {
+    "lid_locator_gap_per_side_mm": 0.65,
+    "ear_x_slot_length_mm": 6.4,
+    "ear_slot_width_mm": 4.6,
+    "ear_root_fillet_mm": 4.0,
+    "ear_pad_height_mm": 4.2,
+    "cable_guide_axial_ramp_mm": 6.5,
+    "cable_guide_height_mm": 5.6,
+    "connector_side_gap_mm": 0.9,
+    "connector_axial_gap_mm": 0.9,
+    "fit_shim_thickness_mm": [0.3, 0.6],
+    "header_top_gap_mm": 0.9,
+    "seat_tolerance_screen_mm": 0.45,
+    "connector_contact_band_x_mm": [3.3, 8.0]
+  },
+  "process": {
+    "sls": "JLC3DP 3201 PA-F nylon",
+    "fdm_geometry_screen": "FLSUN V400, CuraEngine 5.9.0, 0.4 mm nozzle, 0.20 mm layers, supports off",
+    "base_orientation": "Flat exterior floor against bed, cavity up",
+    "lid_orientation": "Flat exterior against bed, locators and buttresses up",
+    "minimum_panel_mm": 3.0,
+    "maximum_downward_face_deg_from_vertical": 45.0
+  },
+  "authority": {
+    "headers": "Nominal bounding and contact surfaces from Rev B footprint geometry and Molex sales drawings. Shim to the measured molded housing surfaces after the prototype is seated.",
+    "mates": "Oversized Rev B connector sweep, including latch height allowance. Exact hand fit and cycling require the actual cable mates.",
+    "loads": "Cover backstops limit rearward motion under insertion, and lid pads limit lifting of the header. Base shoes limit side motion. Use flat nonconductive shim stock where the measured housing fit permits. Four gusseted shield mounts carry axial withdrawal into the floor.",
+    "controller": "Nominal UNO R3 hole pattern with seller-photo ESP32 component placement. Exact ShengYang left holes require measurement."
+  }
+}

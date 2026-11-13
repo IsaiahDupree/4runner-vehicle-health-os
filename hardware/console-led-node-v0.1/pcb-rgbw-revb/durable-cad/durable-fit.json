@@ -1,0 +1,166 @@
+{
+  "contract": "vhos_rgbw_revb_durable_case_v1",
+  "process": {
+    "sls": "JLC3DP 3201 PA-F nylon",
+    "fdm_geometry_screen": "FLSUN V400, CuraEngine 5.9.0, 0.4 mm nozzle, 0.20 mm layers, supports off",
+    "base_orientation": "Flat exterior floor against bed, cavity up",
+    "lid_orientation": "Flat exterior against bed, locators and buttresses up",
+    "minimum_panel_mm": 3.0,
+    "maximum_downward_face_deg_from_vertical": 45.0
+  },
+  "ports": [
+    {
+      "port": "J1",
+      "side_gap_per_side_mm": 0.9,
+      "sill_gap_mm": 0.8,
+      "mate_envelope_growth_mm": 0.45,
+      "expanded_sweep_interference_mm3": 0.0,
+      "front_guide_root_material_mm3": 3.6,
+      "contact_regions_filled_fraction": {
+        "insertion_stop": 1.0,
+        "upper_stop": 1.0,
+        "side_shoe": 0.99592
+      },
+      "header_side_gap_nominal_mm": 0.9,
+      "header_rear_gap_nominal_mm": 0.9,
+      "header_top_gap_nominal_mm": 0.9,
+      "pass": true
+    },
+    {
+      "port": "J2",
+      "side_gap_per_side_mm": 0.9,
+      "sill_gap_mm": 0.8,
+      "mate_envelope_growth_mm": 0.45,
+      "expanded_sweep_interference_mm3": 0.0,
+      "front_guide_root_material_mm3": 3.6,
+      "contact_regions_filled_fraction": {
+        "insertion_stop": 1.0,
+        "upper_stop": 1.0,
+        "side_shoe": 0.99592
+      },
+      "header_side_gap_nominal_mm": 0.9,
+      "header_rear_gap_nominal_mm": 0.9,
+      "header_top_gap_nominal_mm": 0.9,
+      "pass": true
+    }
+  ],
+  "checks": [
+    {
+      "check": "flat_floor_3_2_mm",
+      "missing_material_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "flat_lid_3_2_mm",
+      "missing_material_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "sidewall_3_mm",
+      "missing_material_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "front_web_3_6_mm",
+      "missing_material_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_locator_1_1_tighter_wall",
+      "allowance_mm": 0.45,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_locator_1_2_tighter_wall",
+      "allowance_mm": 0.45,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_locator_2_1_tighter_wall",
+      "allowance_mm": 0.45,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_locator_2_2_tighter_wall",
+      "allowance_mm": 0.45,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "front_M4_at_0_mm",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "rear_M4_at_-0.9_mm",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "rear_M4_at_0.9_mm",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_bore_1_free_diameter",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_bore_2_free_diameter",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_bore_3_free_diameter",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_bore_4_free_diameter",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_at_0.4_mm_lift",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_at_1.4_mm_lift",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_at_4_mm_lift",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_at_12_mm_lift",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_at_18_mm_lift",
+      "interference_mm3": 0.0,
+      "pass": true
+    }
+  ],
+  "calibration": {
+    "insert_pilot_diameters_mm": [
+      3.85,
+      4.0,
+      4.15
+    ],
+    "flat_nonconductive_shim_stock_mm": [
+      0.3,
+      0.6
+    ]
+  },
+  "physical_fit_verified": false,
+  "mating_force_or_cycles_measured": false
+}

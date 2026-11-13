@@ -1,0 +1,490 @@
+{
+  "dimensions": {
+    "width_mm": 132,
+    "depth_mm": 76,
+    "body_height_mm": 46,
+    "wall_mm": 3.0,
+    "floor_mm": 3.2,
+    "lid_mm": 3.2,
+    "pcb_origin_xy_mm": [
+      56,
+      11.33
+    ],
+    "esp_pcb_bottom_mm": 8.0,
+    "stack_pitch_mm": 15.0,
+    "pcb_thickness_mm": 1.6,
+    "lid_insert_pitch_offset_mm": 6.5,
+    "insert_pilot_mm": 4.0,
+    "insert_depth_mm": 7.0,
+    "lid_boss_diameter_mm": 8.8,
+    "shield_boss_diameter_mm": 8.8,
+    "lower_boss_diameter_mm": 8.0,
+    "ear_extension_mm": 7.0,
+    "ear_hole_mm": 4.3,
+    "nominal_cable_bend_clearance_mm": 36,
+    "lower_support_only_xy_mm": [
+      15.24,
+      50.8
+    ],
+    "outer_corner_mm": 5.0,
+    "front_wall_mm": 3.6,
+    "port_side_clearance_mm": 0.9,
+    "port_bottom_clearance_mm": 0.8,
+    "port_lower_corner_mm": 0.5,
+    "lid_screw_clearance_diameter_mm": 3.8
+  },
+  "port_windows": [
+    {
+      "ref": "J1",
+      "purpose": "VEHICLE IN",
+      "face_x_mm": 1.1,
+      "center_y_mm": 53.53,
+      "width_mm": 15.8,
+      "floor_z_mm": 22.8,
+      "top_open_to_lid": true
+    },
+    {
+      "ref": "J2",
+      "purpose": "RGBW OUT",
+      "face_x_mm": 1.08,
+      "center_y_mm": 28.83,
+      "width_mm": 21.8,
+      "floor_z_mm": 22.8,
+      "top_open_to_lid": true
+    }
+  ],
+  "lid_mounts_xy_mm": [
+    [
+      6.5,
+      6.5
+    ],
+    [
+      6.5,
+      69.5
+    ],
+    [
+      125.5,
+      6.5
+    ],
+    [
+      125.5,
+      69.5
+    ]
+  ],
+  "shield_mounts_xy_mm": [
+    [
+      10,
+      16.13
+    ],
+    [
+      14,
+      61.83
+    ],
+    [
+      47.5,
+      16.33
+    ],
+    [
+      47.25,
+      61.93
+    ]
+  ],
+  "controller_fasteners_xy_mm": [
+    [
+      122.04,
+      46.89
+    ],
+    [
+      122.04,
+      18.95
+    ],
+    [
+      69.97,
+      13.870000000000001
+    ]
+  ],
+  "controller_support_only_xy_mm": [
+    71.24,
+    62.129999999999995
+  ],
+  "fuse_to_lid_vertical_clearance_mm": 6.4,
+  "checks": [
+    {
+      "check": "shield_against_base",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "shield_against_lid",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "controller_against_base",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "controller_against_lid",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "F1_against_base",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "F1_against_lid",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "F2_against_base",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "F2_against_lid",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1_against_base",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1_against_lid",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J2_against_base",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J2_against_lid",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "shield_against_controller",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_seats_on_base",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1_mating_corridor_against_base",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1_mating_corridor_against_lid",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J2_mating_corridor_against_base",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J2_mating_corridor_against_lid",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "F1_vertical_puller_base_lid_removed",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "F1_vertical_puller_shield_lid_removed",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "F1_vertical_puller_other_fuse",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "F2_vertical_puller_base_lid_removed",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "F2_vertical_puller_shield_lid_removed",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "F2_vertical_puller_other_fuse",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "upper_screw_1_driver_shield",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "upper_screw_1_driver_base",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "upper_screw_2_driver_shield",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "upper_screw_2_driver_base",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "upper_screw_3_driver_shield",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "upper_screw_3_driver_base",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "upper_screw_4_driver_shield",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "upper_screw_4_driver_base",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lower_screw_1_before_shield",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lower_screw_2_before_shield",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lower_screw_3_before_shield",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board_fastener_head_and_washer_shield",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board_fastener_head_and_washer_controller",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board_fastener_head_and_washer_lid",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "flat_floor_3_2_mm",
+      "missing_material_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "flat_lid_3_2_mm",
+      "missing_material_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "sidewall_3_mm",
+      "missing_material_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "front_web_3_6_mm",
+      "missing_material_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_locator_1_1_tighter_wall",
+      "allowance_mm": 0.45,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_locator_1_2_tighter_wall",
+      "allowance_mm": 0.45,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_locator_2_1_tighter_wall",
+      "allowance_mm": 0.45,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_locator_2_2_tighter_wall",
+      "allowance_mm": 0.45,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "front_M4_at_0_mm",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "rear_M4_at_-0.9_mm",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "rear_M4_at_0.9_mm",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_bore_1_free_diameter",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_bore_2_free_diameter",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_bore_3_free_diameter",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_bore_4_free_diameter",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_at_0.4_mm_lift",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_at_1.4_mm_lift",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_at_4_mm_lift",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_at_12_mm_lift",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "lid_at_18_mm_lift",
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1_expanded_mating_sweep_and_guide_root",
+      "pass": true,
+      "interference_mm3": 0.0
+    },
+    {
+      "check": "J2_expanded_mating_sweep_and_guide_root",
+      "pass": true,
+      "interference_mm3": 0.0
+    }
+  ],
+  "passed_nominal_interference": true,
+  "printable": [
+    {
+      "step": "case_base.step",
+      "stl": "case_base.stl",
+      "closed_mesh": true,
+      "facets": 11040,
+      "solid_volume_mm3": 99687.29,
+      "bounds_mm": [
+        146.0,
+        76.0,
+        46.0
+      ]
+    },
+    {
+      "step": "case_lid.step",
+      "stl": "case_lid.stl",
+      "closed_mesh": true,
+      "facets": 7140,
+      "solid_volume_mm3": 33196.34,
+      "bounds_mm": [
+        132.0,
+        76.0,
+        19.2
+      ]
+    },
+    {
+      "step": "front_ports_coupon.step",
+      "stl": "front_ports_coupon.stl",
+      "closed_mesh": true,
+      "facets": 1072,
+      "solid_volume_mm3": 8186.48,
+      "bounds_mm": [
+        16.574,
+        49.609,
+        46.0
+      ]
+    },
+    {
+      "step": "front_lid_coupon.step",
+      "stl": "front_lid_coupon.stl",
+      "closed_mesh": true,
+      "facets": 1852,
+      "solid_volume_mm3": 1910.01,
+      "bounds_mm": [
+        13.0,
+        49.5,
+        13.41
+      ]
+    },
+    {
+      "step": "m3_tolerance_coupon.step",
+      "stl": "m3_tolerance_coupon.stl",
+      "closed_mesh": true,
+      "facets": 3262,
+      "solid_volume_mm3": 2663.64,
+      "bounds_mm": [
+        43.0,
+        14.0,
+        9.0
+      ]
+    }
+  ],
+  "geometry_authority": {
+    "shield": "reopened KiCad STEP",
+    "ports": "drawing and footprint envelopes",
+    "mating_cables": "conservative straight-extraction envelopes",
+    "fuses": "installed height reserve",
+    "lower_board": "UNO reference and photo estimates",
+    "esp_module": "Espressif reference STEP at estimated placement"
+  },
+  "physical_fit_verified": false,
+  "thermal_or_vibration_qualified": false
+}
