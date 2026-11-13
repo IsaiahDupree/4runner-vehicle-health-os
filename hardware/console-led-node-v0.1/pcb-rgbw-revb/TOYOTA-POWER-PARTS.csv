@@ -13,8 +13,8 @@ Hardware,4,M3 x 8 socket-head screws,Lid,Verify engagement
 Hardware,7 each,M3 x 6 socket-head screw and 7 mm OD x 0.5 mm M3 insulating washer,Board mounts,Verify clearance on the exact boards
 Hardware,2,M4 mounting screws and washers,Case ears,Length and anchor depend on measured console mount
 Hardware,4,HellermannTyton T18R-PA66HS-BK 111-01250 or equivalent,Two 2.5 mm ties per captive lead,https://www.hellermanntyton.com/products/cable-ties-inside-serrated/t18r/111-01250
-Power lead,1,Yazaki 7282-1060 / Corsa 090IIU-6P-1,Candidate pin mate for the existing white Toyota socket,https://www.corsa-technic.com/item.php?item_id=1359
-Power lead,2,Sized pin crimp contacts supplied with kit,Verified switched positive and power return only,Check exact wire cross-section and molded cavity IDs on vehicle
+Power lead,1,Yazaki 7282-1060 / Corsa 090IIU-6P-1,Candidate mate for the pictured white six-contact Toyota harness plug,https://www.corsa-technic.com/item.php?item_id=1359
+Power lead,2,Sized pin crimp contacts supplied with kit,Switched feed and power return to controller,Verify both vehicle cavities and match the contacts to the wire size
 Power lead,As measured,Two-conductor automotive wire and abrasion sleeve,Power pigtail and saddle grip,Fit the 1.8 mm nominal PCB holes and the verified crimp terminals
 Power lead,As needed,Source-side fuse and holder sized to branch wire,Protect added branch at takeoff if required,Choose after verifying source fuse and load
 Lighting lead,As measured,Five-conductor automotive wire and abrasion sleeve,RGBW captive output,Fit the 1.02 mm nominal PCB holes and verify total load

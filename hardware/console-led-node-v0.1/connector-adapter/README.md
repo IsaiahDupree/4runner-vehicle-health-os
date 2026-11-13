@@ -1,8 +1,10 @@
 # Toyota console plug → ESP32 shield connection
 
-The [inline harness build sheet](INLINE-HARNESS.md) defines the current Rev A
-wiring, parts and checkout steps. This page retains the connector and CAD
-research from November 7, 2026.
+Use the [Toyota-powered Rev B build guide](../pcb-rgbw-revb/TOYOTA-POWER-BUILD.md)
+for the current two-wire power input from the photographed white socket. The
+[Rev A inline harness build sheet](INLINE-HARNESS.md) records the earlier
+wiring. This page retains the connector and CAD research from November 7,
+2026.
 
 The later mating-face photos and the supplied Corsa comparison show a white
 six-contact socket in the Yazaki 7283-1060 pattern. The catalog mate is
@@ -50,8 +52,7 @@ The accessible factory **2006 EM00T0U** supplies this reference: overall diagram
 | 5 | Lighter power ground, W–B |
 | 6 | CIG accessory feed, P–L (pink/blue), shown on a 10 A fuse |
 
-`PINMAP-DRAFT.csv` preserves the earlier six-wire shield proposal. Use the
-[current inline harness wiring](INLINE-HARNESS.md#wiring) for assembly. The
+`PINMAP-DRAFT.csv` preserves the earlier six-wire shield proposal. The
 [April 2005 owner's manual](https://assets.sia.toyota.com/publications/en/om-s/OM35860U/pdf/OM35860U.pdf#page=418)
 lists the CIG position as unused. Measure the proposed feed on the actual
 truck before adding the tee.

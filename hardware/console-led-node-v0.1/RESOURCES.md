@@ -1,9 +1,11 @@
 # 4Runner console LED controller resources
 
 The current prototype is the **Toyota-powered Rev B for the 2005 V8 4Runner**.
-Its white console socket is the intended source of switched 12 V and return.
-Two captive leads solder to the shield. Vehicle data comes from the existing
-classic CAN ESP32 running the MrDIY VHOS target.
+The photographed white six-contact console harness plug is its sole vehicle
+power source. Its power lead uses the switched 12 V feed and return once
+verified on the truck. The other captive lead feeds the RGBW harness from the
+shield. Vehicle data comes wirelessly from the existing classic CAN ESP32
+running the MrDIY VHOS target.
 [Build guide](pcb-rgbw-revb/TOYOTA-POWER-BUILD.md) ·
 [Build definition](pcb-rgbw-revb/toyota-power.json) ·
 [Pinned gateway firmware](https://github.com/IsaiahDupree/4runner-vhos-firmware/tree/a523483abc984a406c73659653571198e46b04a0/targets/mrdiy-esp32-v13).
@@ -20,9 +22,9 @@ classic CAN ESP32 running the MrDIY VHOS target.
 | Digital checks | [Verification receipt](pcb-rgbw-revb/toyota-power-cad/verification.json) · [Cable clearance and strain-relief geometry](pcb-rgbw-revb/toyota-power-cad/toyota-leads-fit.json) · [Tool access](pcb-rgbw-revb/toyota-power-cad/tool-access.json) · [Supports-off slices](pcb-rgbw-revb/toyota-power-cad/support-free.json) |
 
 The offline resource archive is named **4Runner-Console-LED-Resources.zip**.
-Open its `START-HERE.md` for the corrected picture sheets, direct-lead KiCad
-project, editable FreeCAD assembly, STEP, print files, datasheets and CAD
-references. The assembly records are tied to Git revision
+Open its `START-HERE.md` for the owner's connector photos, picture sheets,
+direct-lead KiCad project, editable FreeCAD assembly, STEP, print files,
+datasheets and CAD references. The assembly records are tied to Git revision
 `8ebaa83635c269ae31eaca5341b3d3f5f0a0d084` and Orion job
 `mdl_9c8b7e658ae84edc`.
 

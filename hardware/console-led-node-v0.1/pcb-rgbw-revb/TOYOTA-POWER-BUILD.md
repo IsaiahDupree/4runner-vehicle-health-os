@@ -1,14 +1,15 @@
 # Toyota-powered RGBW controller for the 2005 V8 4Runner
 
-The cabin box uses the existing Rev B shield on the purple ShengYang D1 UNO
-ESP32-S3. Its captive power lead is designed to mate with the white Toyota
-console socket. Its captive lighting lead ends at the RGBW harness. The
-existing CAN ESP32 supplies vehicle data wirelessly.
+The white six-contact Toyota console harness socket shown in the owner's
+photos is the cabin box's sole vehicle power source. It is the rectangular
+plug beside the round outlet marked 12 V / 120 W. The Rev B shield powers
+the ShengYang D1 UNO ESP32-S3 and feeds the RGBW harness through its captive
+lighting lead. The existing CAN ESP32 supplies vehicle data wirelessly.
 [Project resources and fabrication files](../RESOURCES.md).
 
 ```mermaid
 flowchart LR
-  T[White Toyota console socket] -->|Verified switched 12 V and return| P[Fused and protected Rev B shield]
+  T[White six-contact Toyota harness socket] -->|Two-wire power input| P[Fused and protected Rev B shield]
   P -->|Regulated 5 V| S[Lighting ESP32-S3]
   S -->|Four PWM channels| P
   P -->|Protected 12 V and four switched returns| L[RGBW pod harness]
@@ -20,17 +21,20 @@ flowchart LR
 
 The white vehicle connector resembles the six-way **Yazaki 7283-1060**
 socket. The catalog pin mate is **Yazaki 7282-1060**, available as **Corsa
-090IIU-6P-1** with terminals. This is a fit candidate until checked on the
-truck. The design assumes the photographed socket is an available endpoint.
-If it is normally connected to factory equipment, preserve all six factory
-paths in a pass-through and take only the two verified power conductors.
+090IIU-6P-1** with terminals. Verify the latch fit on the truck. The power
+lead uses only the verified switched 12 V feed and power return. For an
+unused factory socket, populate only those two cavities on the mating plug.
+If the socket serves factory equipment, carry all six factory paths through
+the inline harness and branch those same two conductors to the controller.
 [Yazaki pin mate](https://connector.yazaki-group.com/cgi-bin/english/detail.cgi?part_id=7282-1060) ·
 [Corsa pin kit](https://www.corsa-technic.com/item.php?item_id=1359).
 
 With the controller unplugged, use the molded cavity numbers and a
 high-impedance meter to identify switched positive and a true power return.
 Check OFF, ACC and ON, with console illumination both off and on. Verify the
-upstream fuse and the available circuit current before loading the branch.
+upstream fuse and the current available for the shield and the planned RGBW
+load. The 12 V / 120 W marking is on the adjacent round outlet. Qualify the
+white plug's circuit separately.
 The 2006 IR1 drawing is reference evidence for another model year. Toyota's
 April 2005 owner's manual lists the CIG fuse position as unused. If the
 photographed socket lacks a verified switched feed and return, pause vehicle
@@ -40,7 +44,7 @@ to the takeoff if the original fuse is too large for the new branch wire.
 
 | Captive lead | Rev B plated termination pads |
 | --- | --- |
-| Toyota power | Pad 1 at the J1 location is verified power return. Pad 2 is verified switched 12 V. The original pad references locate the solder points. |
+| Toyota power | Shield pad 1 at the J1 location takes the measured power return. Shield pad 2 takes the measured switched 12 V feed. Identify the Toyota cavity numbers on the truck. |
 | RGBW lighting | Pads 1 to 5 at the J2 location are R−, G−, B−, protected common +12 V, and W−, in that order. Pads 6 to 8 stay empty. |
 
 Leave the two removable board headers unpopulated and solder each lead to its

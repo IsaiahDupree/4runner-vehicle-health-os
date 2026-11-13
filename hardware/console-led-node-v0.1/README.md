@@ -1,9 +1,10 @@
 # 2005 V8 4Runner console LED node — research and fit-check case
 
 **Current build** [Toyota-powered Rev B with captive leads and the existing CAN ESP32](pcb-rgbw-revb/TOYOTA-POWER-BUILD.md).
-The white Toyota socket is the intended power source. Its switched supply
-and return still need measurement on the truck. The existing classic
-ESP32/MrDIY gateway is the wireless vehicle-data source.
+The photographed white six-contact Toyota harness socket is the sole vehicle
+power source. Its switched feed and return still need measurement on the
+truck. The existing classic ESP32/MrDIY gateway supplies vehicle data
+wirelessly.
 [Project resources and fabrication files](RESOURCES.md).
 Owner task: 2026-11-07. No parts ordered, functional PCB fabricated, vehicle wiring changed, or printer started.
 
@@ -56,7 +57,7 @@ released fabrication BOM.
 The [connector-to-shield research](connector-adapter/README.md) supplies the
 Yazaki mating pair, the Molex PCB interface and official UNO R3 header
 coordinates. The [inline harness parts list](connector-adapter/INLINE-HARNESS.md#parts)
-covers the current cable build.
+covers the earlier Rev A cable build.
 
 The subsequent [component CAD collection](cad-references/README.md) records six
 downloaded STEP references, manufacturer versus community provenance, native
