@@ -1,0 +1,6 @@
+# Preserve Orion's exact KiCad and STEP bytes for the verification hashes.
+*.json -text whitespace=cr-at-eol
+*.kicad_* -text whitespace=cr-at-eol
+*lib-table -text whitespace=cr-at-eol
+*.step -text -diff
+*.csv -text whitespace=cr-at-eol

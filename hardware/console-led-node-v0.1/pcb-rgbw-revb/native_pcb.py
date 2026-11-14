@@ -32,11 +32,14 @@ def schematic(parts, out, *, name=NAME, title="4Runner two-connector RGBW shield
     sections = {"power": (45, 54, "FUSED INPUT, PROTECTION AND 5 V SUPPLY"),
                 "headers": (45, 302, "VEHICLE INPUT AND CONTROLLER STACK"),
                 "outputs": (45, 421, "ONE COMMON-POSITIVE RGBW ZONE")}
-    columns, pitch = (6, 89) if rev == "D" else (8, 96)
-    if rev == "D":
+    columns, pitch = (6, 89) if rev in {"D", "E"} else (8, 96)
+    if rev in {"D", "E"}:
         sections["sense"] = (45, 612, "TOYOTA IR1 ILLUMINATION SENSE")
+    if rev == "E":
+        sections["controller"] = (45, 825, "ONBOARD ESP32-S3, 3.3 V REGULATOR AND SERVICE PADS")
     for section, (left, top, section_title) in sections.items():
-        items.append(f'(text {quote(section_title)} (at 26 {top - 24} 0) (effects (font (size 2 2)) '
+        caption_y = top - (42 if section == "controller" else 24)
+        items.append(f'(text {quote(section_title)} (at 26 {caption_y} 0) (effects (font (size 2 2)) '
                      f'(justify left bottom)) (uuid "{uid(section)}"))')
         for i, part in enumerate(p for p in parts if p["section"] == section):
             x = round(round((left + i % columns * pitch) / 1.27) * 1.27, 4)
@@ -78,9 +81,12 @@ def schematic(parts, out, *, name=NAME, title="4Runner two-connector RGBW shield
       (symbol "PWR_FLAG_0_1" (polyline (pts (xy 0 0) (xy 0 1.27) (xy -.8 2) (xy 0 2.7) (xy .8 2) (xy 0 1.27)) (stroke (width .15) (type default)) (fill (type none))))
       (symbol "PWR_FLAG_1_1" (pin power_out line (at 0 0 90) (length 0) (name "pwr" (effects (font (size 1 1)))) (number "1" (effects (font (size 1 1)))))))'''
     symbols.append(flag)
-    for i, net in enumerate(("GND", "VEH_ACC", "ACC_FUSED", "LED_POS", "VIN_PROT", "V5_LOGIC"), 1):
+    supply_nets = ["GND", "VEH_ACC", "ACC_FUSED", "LED_POS", "VIN_PROT", "V5_LOGIC"]
+    if rev == "E":
+        supply_nets.append("ESP_3V3")
+    for i, net in enumerate(supply_nets, 1):
         ref = f"#FLG0{i}"
-        x, y = (round((22 + i * 56) * 1.27, 4), 261.62) if rev == "D" else (round((29 + i * 57) * 1.27, 4), 251.46)
+        x, y = (round((22 + i * 56) * 1.27, 4), 261.62) if rev in {"D", "E"} else (round((29 + i * 57) * 1.27, 4), 251.46)
         items.append(f'''(symbol (lib_id "VHOS:PWR_FLAG") (at {x} {y} 0) (unit 1) (in_bom no) (on_board no) (dnp no)
           (uuid "{uid(ref)}") (property "Reference" "{ref}" (at {x} {y + 2.54} 0) (effects (font (size 1 1)) hide))
           (property "Value" "PWR_FLAG" (at {x} {y - 3.81} 0) (effects (font (size 1 1))))
@@ -89,8 +95,9 @@ def schematic(parts, out, *, name=NAME, title="4Runner two-connector RGBW shield
           (label "{net}" (at {x} {y} 0) (effects (font (size 1 1)) (justify left bottom)) (uuid "{uid(ref + 'net')}"))''')
     items.append(f'(text "EVALUATION HARDWARE / VERIFY VEHICLE FEED, LED PINOUT AND USB ISOLATION" '
                  f'(at 26 578 0) (effects (font (size 1.5 1.5)) (justify left bottom)) (uuid "{uid("notice")}"))')
+    paper = {'D': '"A1" portrait', 'E': '"A0" portrait'}.get(rev, '"A1"')
     sch = f'''(kicad_sch (version 20250114) (generator "eeschema") (generator_version "10.0")
-      (uuid "{sheet_id}") (paper "A1"{' portrait' if rev == "D" else ''})
+      (uuid "{sheet_id}") (paper {paper})
       (title_block (title {quote(title)}) (rev "{rev}"))
       (lib_symbols {''.join(symbols)}) {''.join(items)} (sheet_instances (path "/" (page "1"))) (embedded_fonts no))'''
     (out / (name + ".kicad_sch")).write_text(sch, encoding="utf-8")
@@ -505,7 +512,7 @@ def main():
         raise RuntimeError("KiCad 10.0.6 required")
     parser = argparse.ArgumentParser()
     parser.add_argument("action", choices=["build", "import", "reconcile", "direct-lead-pads",
-                                           "illumination-pads", "illumination-route"])
+                                           "illumination-pads", "illumination-route", "single-pads", "single-route"])
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     if args.action.startswith("illumination-"):
@@ -513,6 +520,11 @@ def main():
 
         {"illumination-pads": illumination_pcb.build,
          "illumination-route": illumination_pcb.import_route}[args.action](sys.modules[__name__], args.out)
+    elif args.action.startswith("single-"):
+        import single_board_pcb
+
+        {"single-pads": single_board_pcb.build,
+         "single-route": single_board_pcb.import_route}[args.action](sys.modules[__name__], args.out)
     else:
         {"build": build, "import": import_route, "reconcile": base.reconcile,
          "direct-lead-pads": direct_lead_pads}[args.action](args.out)

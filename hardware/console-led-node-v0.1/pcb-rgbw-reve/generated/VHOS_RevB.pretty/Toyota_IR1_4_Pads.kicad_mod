@@ -1,0 +1,86 @@
+(footprint "Toyota_IR1_4_Pads"
+	(version 20260206)
+	(generator "pcbnew")
+	(generator_version "10.0")
+	(layer "F.Cu")
+	(descr "Direct-solder wire terminations with off-board strain relief")
+	(tags "wire solder pad")
+	(property "Reference" "J1"
+		(at 4 -2.5 0)
+		(layer "F.Fab")
+		(uuid "b60055fc-5c73-4a8c-a3b0-2bc21cfac320")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(property "Value" "TOYOTA IR1 IN"
+		(at 4 2.5 0)
+		(layer "F.Fab")
+		(uuid "508ebfd1-3cc9-4927-b8f9-421b5d4a70cb")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "27d9fdc5-ddfe-424a-bd58-322f2495246c")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "cac0738a-c230-4e32-b94e-63efa4754ce3")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(attr through_hole exclude_from_pos_files exclude_from_bom)
+	(duplicate_pad_numbers_are_jumpers no)
+	(pad "1" thru_hole roundrect
+		(at 0 0 90)
+		(size 3.7 3.7)
+		(drill 1.8)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(roundrect_rratio 0.067568)
+		(uuid "b80a6147-ac51-4837-adac-d0f022a2cc44")
+	)
+	(pad "2" thru_hole circle
+		(at 5.5 0 90)
+		(size 3.7 3.7)
+		(drill 1.8)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "c40dd37b-1391-4f8a-969c-60897fbfd665")
+	)
+	(pad "3" thru_hole circle
+		(at 1.5 3.86)
+		(size 2.25 2.25)
+		(drill 1.2)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "d5ee8f8a-aa1c-47f6-9e19-03bdfde9ef29")
+	)
+	(pad "4" thru_hole circle
+		(at 7.5 3.86)
+		(size 2.25 2.25)
+		(drill 1.2)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "6b5310b5-c124-481d-a1d7-fb3f44b0ea94")
+	)
+	(embedded_fonts no)
+)

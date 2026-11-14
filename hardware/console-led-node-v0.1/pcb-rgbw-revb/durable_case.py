@@ -75,7 +75,10 @@ def base_shell(g, lid_axes, upper_axes, lower_axes, lower_fasteners):
     ):
         for x, y in axes:
             additions.append(cylinder(x, y, floor - .15, diameter, top - floor + .15))
-            additions.extend(floor_gusset(x, y, angle, floor, length, rib_height)
+            # Keep the root of each gusset below its board's bearing plane.
+            # On a shallower case an unchanged gusset could intersect the
+            # copper side of the board and the heat-set iron's approach.
+            additions.extend(floor_gusset(x, y, angle, floor, length, min(rib_height, top - floor - .4))
                              for angle in (0, 90, 180, 270)
                              if 0 < x + length * (1 if angle == 0 else -1 if angle == 180 else 0) < width
                              and 0 < y + length * (1 if angle == 90 else -1 if angle == 270 else 0) < depth)

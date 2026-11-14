@@ -1,11 +1,12 @@
 # 2005 V8 4Runner console LED node — research and fit-check case
 
-**Current build** [Rev D with Toyota IR1 power and illumination inputs](pcb-rgbw-revd/README.md).
+**Current build** [Rev E single-board controller and harness](pcb-rgbw-reve/README.md).
 The photographed white six-contact Toyota harness is the box's only wired
 input. The shield uses that switched 12 V and ground to power both the
 ESP32-S3 and the RGBW lights. Two protected inputs read the TAIL and dimmer
-circuits through the same harness. The existing ESP32/MrDIY gateway supplies
-vehicle data wirelessly.
+circuits through the same harness. IR1-3 and IR1-4 have labeled, capped tails
+at the external tee. The existing ESP32/MrDIY gateway supplies vehicle data
+wirelessly. [Wire register](pcb-rgbw-reve/WIRE-REGISTER.csv).
 [Project resources and fabrication files](RESOURCES.md).
 Owner task: 2026-11-07. No parts ordered, functional PCB fabricated, vehicle wiring changed, or printer started.
 
@@ -92,13 +93,14 @@ not a final output circuit.
 
 ## Electrical and mechanical arrangement
 
-See the [Rev D shield pad assignments](pcb-rgbw-revd/README.md) and the
-[shared Toyota power flow](pcb-rgbw-revb/TOYOTA-POWER-BUILD.md#power-and-lighting-leads).
+The [Rev E power and programming guide](pcb-rgbw-reve/README.md#power-and-programming)
+covers the onboard ESP32-S3 and the 3.3 V regulator. The [Rev D two-board build](pcb-rgbw-revd/README.md)
+and [shared Toyota power flow](pcb-rgbw-revb/TOYOTA-POWER-BUILD.md#power-and-lighting-leads)
+record the earlier stacked version.
 Check the Toyota power and ground cavities and the available current on the
-truck. The case supports both captive cables at their exits and mounts the
-shield above the ESP32-S3.
+truck. The case supports both captive cables at their exits.
 
-The user has identified the target controller with a product screenshot:
+The user identified the stacked version's controller with a product screenshot:
 **ShengYang listing, purple D1 UNO ESP32-S3 N16R8 / CH340 board**. The earlier
 DIYables brand assumption is superseded. Its visible UNO-style header layout
 and GPIO labels agree with the seller-family reference. The new

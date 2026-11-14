@@ -41,33 +41,35 @@ def tie_slot(x, y, width):
     return durable_case.profile(section, V(0, width, 0))
 
 
-def enclosure_parts(base, g, lid_axes, leads):
-    half = CASE["saddle_half_width_mm"]
-    seat = CASE["lead_seat_z_mm"]
-    end = CASE["saddle_end_x_mm"]
-    face = g["wall_mm"] - g["front_wall_mm"] - CASE["front_doubler_mm"]
+def enclosure_parts(base, g, lid_axes, leads, *, case=CASE):
+    half = case["saddle_half_width_mm"]
+    seat = case["lead_seat_z_mm"]
+    end = case["saddle_end_x_mm"]
+    face = g["wall_mm"] - g["front_wall_mm"] - case["front_doubler_mm"]
     h = g["body_height_mm"]
+    lift = seat - CASE["lead_seat_z_mm"]
 
     # Build the front reinforcement from the wall on a 42-degree ramp,
     # above the front mounting ear and its washer.
     base = base.fuse(durable_case.profile(
-        [V(-.30, 15, 10.5), V(face, 15, 13.5), V(face, 15, h), V(-.30, 15, h)],
+        [V(-.30, 15, max(4.0, 10.5 + lift)), V(face, 15, max(7.0, 13.5 + lift)),
+         V(face, 15, h), V(-.30, 15, h)],
         V(0, 51, 0))).removeSplitter()
     for port in leads:
         y = port["center_y_mm"]
         low = y - half
         root = g["wall_mm"] - .25
         support = durable_case.profile(
-            [V(root, low, 24.85), V(end, low, 33.25),
+            [V(root, low, 24.85 + lift), V(end, low, 33.25 + lift),
              V(end, low, seat), V(root, low, seat)], V(0, 2 * half, 0))
         # Taper the outer corner of the power saddle away from the nearest iron axis.
         if port["ref"] == "J1":
-            side_cut = [V(end - 3.2, y + half + .1, 24), V(end + .1, y + half + .1, 24),
-                        V(end + .1, y + half - 1.8, 24)]
+            side_cut = [V(end - 3.2, y + half + .1, 24 + lift), V(end + .1, y + half + .1, 24 + lift),
+                        V(end + .1, y + half - 1.8, 24 + lift)]
             support = support.cut(durable_case.profile(side_cut, V(0, 0, 14)))
         base = base.fuse(support).removeSplitter()
-        for x in CASE["tie_slot_centers_x_mm"]:
-            base = base.cut(tie_slot(x, low - .1, 2 * half + .2))
+        for x in case["tie_slot_centers_x_mm"]:
+            base = base.cut(translated(tie_slot(x, low - .1, 2 * half + .2), 0, 0, lift))
         base = base.cut(durable_case.port_cut(g, y, port["width_mm"] / 2, port["floor_z_mm"]))
         # The lid closes the top of each opening after the loom is dropped in.
     lid = durable_case.lid_shell(g, lid_axes, [])
@@ -125,22 +127,23 @@ def audit(out, g, base, raw_lid, lid, shield, lower, fuses, leads, axes, results
     return durable_case.fit_coupons(out, g, base, raw_lid, front_x_max=12.6, front_span=(14.8, 51.4))
 
 
-def loom(leads):
+def loom(leads, *, case=CASE):
     """Straight jacket reserves and the manufacturer housing, for assembly previews."""
     parts = []
     for port in leads:
         ref, y = port["ref"], port["center_y_mm"]
-        diameter = CASE["lead_nominal_od_mm"][ref]
-        start = -CASE["cable_display_length_mm"]
+        diameter = case["lead_nominal_od_mm"][ref]
+        start = -case["cable_display_length_mm"]
         color = (63, 73, 87) if ref == "J1" else (49, 119, 114)
-        cable = jacket(y, diameter, start, CASE["saddle_end_x_mm"] + 1.0)
+        lift = case["lead_seat_z_mm"] - CASE["lead_seat_z_mm"]
+        cable = translated(jacket(y, diameter, start, case["saddle_end_x_mm"] + 1.0), 0, 0, lift)
         parts.append(("Lead" + ref[-1], port["purpose"], cable,
                       "Nominal jacket envelope. Check actual wire and sleeve.", color))
-        for i, x in enumerate(CASE["tie_slot_centers_x_mm"], 1):
-            strap = CASE["tie_strap_width_mm"]
-            root_z = CASE["tie_slot_floor_z_mm"] + .04
-            crown = CASE["lead_seat_z_mm"] + diameter
-            side = CASE["saddle_half_width_mm"] + .25
+        for i, x in enumerate(case["tie_slot_centers_x_mm"], 1):
+            strap = case["tie_strap_width_mm"]
+            root_z = case["tie_slot_floor_z_mm"] + .04
+            crown = case["lead_seat_z_mm"] + diameter
+            side = case["saddle_half_width_mm"] + .25
             thickness = .65
             outer = [V(x - strap / 2, yy, z) for yy, z in (
                 (y - side, root_z), (y + side, root_z), (y + side, crown - .7),
@@ -160,7 +163,7 @@ def loom(leads):
             connector.rotate(V(), V(0, 1, 0), 90)
             b = connector.BoundBox
             connector.translate(V(start - b.XMax + .1, y - (b.YMin + b.YMax) / 2,
-                                  CASE["lead_seat_z_mm"] + diameter / 2 - (b.ZMin + b.ZMax) / 2))
+                                  case["lead_seat_z_mm"] + diameter / 2 - (b.ZMin + b.ZMax) / 2))
             parts.append(("ToyotaMate", "Yazaki 7282-1060 candidate pin housing", connector,
                           "Yazaki manufacturer STEP. Cable orientation and vehicle fit require a dry-fit.",
                           (229, 222, 193)))

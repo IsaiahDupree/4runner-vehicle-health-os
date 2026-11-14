@@ -1,0 +1,12 @@
+Connector,Pin,Factory wire or cable marking,Factory or electrical function,Installed destination,Future access
+Toyota IR1,1,Green,TAIL feed for the ashtray lamp,Factory IR1-1 straight through and branch to J1-3 TAIL,Protected lights-on reading at ESP32 GPIO5
+Toyota IR1,2,White/green,Ashtray lamp dimmer return,Factory IR1-2 straight through and branch to J1-4 DIM,Protected dimmer reading at ESP32 GPIO4
+Toyota IR1,3,Green,TAIL feed for the factory lighter ring,Factory IR1-3 straight through and short branch to capped tee reserve A,Cap and label IR1-3 TAIL. Same upstream TAIL signal as IR1-1.
+Toyota IR1,4,White/green,Dimmer return for the factory lighter ring,Factory IR1-4 straight through and short branch to capped tee reserve B,Cap and label IR1-4 DIM. Same upstream dimmer circuit as IR1-2.
+Toyota IR1,5,White/black,Chassis return,Factory IR1-5 straight through and branch to J1-1 GND,Power return. Verify continuity and voltage drop on the truck.
+Toyota IR1,6,Pink/blue,Switched accessory feed,Factory IR1-6 straight through and branch to J1-2 ACC,Sole electrical supply. Verify live feed and installed fuse.
+PCB J2,1,Label R-,Red switched return,Red channel contact at RGBW pod,Verify the mating contact with continuity and a current-limited bench check.
+PCB J2,2,Label G-,Green switched return,Green channel contact at RGBW pod,Verify the mating contact with continuity and a current-limited bench check.
+PCB J2,3,Label B-,Blue switched return,Blue channel contact at RGBW pod,Verify the mating contact with continuity and a current-limited bench check.
+PCB J2,4,Label +12V,Protected common positive supply,Common positive contact at RGBW pod,Verify polarity at the actual pod. Total pod load shares the IR1 feed.
+PCB J2,5,Label W-,White switched return,White channel contact at RGBW pod,Verify the mating contact with continuity and a current-limited bench check.

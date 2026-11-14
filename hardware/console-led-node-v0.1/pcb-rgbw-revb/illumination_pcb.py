@@ -6,13 +6,13 @@ import json
 import illumination as rev_d
 
 
-def load(native, out):
+def load(native, out, *, name=rev_d.NAME):
     pcbnew = native.pcbnew
-    path = out / (rev_d.NAME + ".kicad_pcb")
+    path = out / (name + ".kicad_pcb")
     board = pcbnew.LoadBoard(str(path))
     manager = pcbnew.GetSettingsManager()
-    if not manager.LoadProject(str(out / (rev_d.NAME + ".kicad_pro"))):
-        raise RuntimeError("Could not load the Rev D KiCad project")
+    if not manager.LoadProject(str(out / (name + ".kicad_pro"))):
+        raise RuntimeError(f"Could not load the {name} KiCad project")
     board.SetProject(manager.Prj())
     return board, path
 
@@ -146,11 +146,11 @@ def via_identity(board):
                   for t in board.GetTracks() if t.GetClass() == "PCB_VIA")
 
 
-def import_route(native, out):
+def import_route(native, out, *, name=rev_d.NAME, baseline_file="revd-route-baseline.json"):
     pcbnew = native.pcbnew
-    board, path = load(native, out)
+    board, path = load(native, out, name=name)
     geometry = native.base.observation(board)
-    baseline = json.loads((out / "revd-route-baseline.json").read_text())
+    baseline = json.loads((out / baseline_file).read_text())
     if not pcbnew.ImportSpecctraSES(board, str(out / "shield.ses")) or geometry != native.base.observation(board):
         raise RuntimeError("Rev D route import changed footprint identities")
 
@@ -174,3 +174,4 @@ def import_route(native, out):
         "existing_track_segments_preserved": len(baseline["track_segments"]),
         "existing_vias_preserved": len(baseline["vias"]),
     })
+    return board

@@ -1,0 +1,107 @@
+{
+  "board_outline_top_view_mm": [
+    [
+      47,
+      153.34
+    ],
+    [
+      169.0,
+      153.34
+    ],
+    [
+      169.0,
+      100
+    ],
+    [
+      47,
+      100
+    ]
+  ],
+  "mounting_holes_top_view_mm": {
+    "MH1": [
+      54,
+      148.54
+    ],
+    "MH2": [
+      58,
+      102.84
+    ],
+    "MH3": [
+      145.2,
+      148.55
+    ],
+    "MH4": [
+      150.75,
+      104.1
+    ]
+  },
+  "module": "ESP32-S3-WROOM-1-N16R8",
+  "module_origin_top_view_mm": [
+    162.25,
+    126.7
+  ],
+  "module_pin_nets": {
+    "1": "GND",
+    "2": "ESP_3V3",
+    "3": "CHIP_EN",
+    "4": "DIM_ADC",
+    "5": "TAIL_ADC",
+    "10": "PWM_G",
+    "11": "PWM_R",
+    "16": "DOWNLOAD_STRAP",
+    "22": "PWM_B",
+    "23": "ENABLE_REQ",
+    "27": "BOOT_N",
+    "36": "UART_RX",
+    "37": "UART_TX",
+    "38": "PWM_W",
+    "40": "GND",
+    "41": "GND"
+  },
+  "service_pads": {
+    "TP9": [
+      "GND",
+      [
+        155,
+        151.55
+      ]
+    ],
+    "TP10": [
+      "UART_TX",
+      [
+        157.95,
+        151.55
+      ]
+    ],
+    "TP11": [
+      "UART_RX",
+      [
+        160.9,
+        151.55
+      ]
+    ],
+    "TP12": [
+      "BOOT_N",
+      [
+        163.85,
+        151.55
+      ]
+    ],
+    "TP13": [
+      "CHIP_EN",
+      [
+        166.8,
+        151.55
+      ]
+    ],
+    "TP14": [
+      "ESP_3V3",
+      [
+        163.8,
+        103.4
+      ]
+    ]
+  },
+  "3v3_nominal_v": 3.318,
+  "production_electrical_or_rf_verified": false
+}

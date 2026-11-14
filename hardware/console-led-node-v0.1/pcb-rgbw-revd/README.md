@@ -1,5 +1,8 @@
 # Rev D Toyota IR1 RGBW controller
 
+See [Rev E](../pcb-rgbw-reve/README.md) for the single-board version and full
+wire register.
+
 This 2005 4.7 L V8 4Runner prototype uses the white six-pin IR1 connector for
 switched power, ground and two illumination readings. One Toyota harness
 branch enters the enclosure. One five-wire RGBW cable leaves it. The existing

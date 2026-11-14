@@ -20,14 +20,14 @@ SLEEVE_WALL = .32
 SLEEVE_END = 6.4
 
 
-def sleeve_restraint(center, radius):
+def sleeve_restraint(center, radius, *, case=CASE):
     """Closed strap envelope through the first slot and over the sleeve."""
-    width = CASE["tie_strap_width_mm"]
-    floor = CASE["tie_slot_floor_z_mm"] + .04
+    width = case["tie_strap_width_mm"]
+    floor = case["tie_slot_floor_z_mm"] + .04
     strap = .65
-    half = CASE["saddle_half_width_mm"]
-    shoulder = CASE["lead_seat_z_mm"] + .7
-    face_x = CASE["tie_slot_centers_x_mm"][0] - width / 2
+    half = case["saddle_half_width_mm"]
+    shoulder = case["lead_seat_z_mm"] + .7
+    face_x = case["tie_slot_centers_x_mm"][0] - width / 2
 
     def loop(x, side, bottom, arc_radius):
         rise = shoulder - center.z
@@ -48,15 +48,16 @@ def sleeve_restraint(center, radius):
     return band
 
 
-def build(out):
-    doc = App.openDocument(str(out / "4Runner_Service_Assembly.FCStd"))
+def build(out, *, doc=None, revision="D", case=CASE, contract=rev_d.CONTRACT):
+    if doc is None:
+        doc = App.openDocument(str(out / "4Runner_Service_Assembly.FCStd"))
     source = json.loads((out / "mechanical-observation.json").read_text())
     pads = json.loads((out / "harness-pads.json").read_text())["J1"]["pads"]
     dimensions = source["dimensions"]
     ox, oy = dimensions["pcb_origin_xy_mm"]
     board_z = dimensions["esp_pcb_bottom_mm"] + dimensions["stack_pitch_mm"] + dimensions["pcb_thickness_mm"]
     port_y = next(row["center_y_mm"] for row in source["port_windows"] if row["ref"] == "J1")
-    center = V(0, port_y, CASE["lead_seat_z_mm"] + rev_d.CASE_SLEEVE_OD / 2)
+    center = V(0, port_y, case["lead_seat_z_mm"] + rev_d.CASE_SLEEVE_OD / 2)
     housing = doc.ToyotaMate.Shape
     entries = {pin: center + V(0, *row["offset_yz_mm"]) for pin, row in pads.items()}
     exits = {pin: rear_exit(housing, entry, pads[pin]["od_mm"]) for pin, entry in entries.items()}
@@ -69,16 +70,18 @@ def build(out):
     doc.Lead1.Shape = sleeve
     doc.Lead1.Label = "Toyota branch · 7.2 mm sleeve envelope"
     doc.Lead1.GeometrySource = "Nominal sleeve. Ends between case tie slots to allow wire fan-out."
-    doc.Shield.Label = "Rev D · IR1 four-pad RGBW shield"
-    doc.Label = "4Runner Rev D case and Toyota branch wires"
+    title = f"Rev {revision} · " + ("IR1 four-pad RGBW shield" if revision == "D" else "single-board RGBW controller")
+    doc.Shield.Label = title
+    doc.Label = f"4Runner Rev {revision} case and Toyota branch wires"
     doc.removeObject("J1Relief2")
     doc.removeObject("J1Relief1")
-    tie = sleeve_restraint(center, radius)
+    tie = sleeve_restraint(center, radius, case=case)
     add_feature(doc, doc.Loom, "ToyotaSleeveTie", "Toyota sleeve restraint at first saddle slot", tie,
                 "Nominal strap, 2.5 mm wide by 0.65 mm thick. Verify the actual tie and head in the case.",
                 (75, 81, 87))
 
-    lower = Part.makeCompound([obj.Shape for obj in doc.PCB.Group if obj.Name != "Shield"])
+    lower = [obj.Shape for obj in doc.PCB.Group if obj.Name != "Shield"]
+    board = f"Rev {revision} PCB"
     hardware = Part.makeCompound([obj.Shape for obj in doc.Hardware.Group])
     width, depth, travel = (FUSE_GEOMETRY[k] for k in
                             ("puller_width_mm", "puller_depth_mm", "puller_travel_mm"))
@@ -87,9 +90,11 @@ def build(out):
         bounds = fuse.Shape.BoundBox
         pullers.append(Part.makeBox(width, depth, bounds.ZLength + travel,
                                    V(bounds.Center.x - width / 2, bounds.Center.y - depth / 2, bounds.ZMin + .4)))
-    obstacles = {"base": doc.Base.Shape, "closed lid": doc.Lid.Shape, "Rev D shield": doc.Shield.Shape,
-                 "lower board": lower, "installed hardware": hardware, "sleeve": sleeve,
+    obstacles = {"base": doc.Base.Shape, "closed lid": doc.Lid.Shape, board: doc.Shield.Shape,
+                 "installed hardware": hardware, "sleeve": sleeve,
                  "fuse puller envelope": Part.makeCompound(pullers), "sleeve restraint": tie}
+    if lower:
+        obstacles["lower board"] = Part.makeCompound(lower)
     checks = []
 
     def clear(label, moving, obstacle, minimum=0):
@@ -98,14 +103,14 @@ def build(out):
         checks.append({"check": label, "clearance_mm": round(distance, 4), "interference_mm3": round(volume, 6),
                        "pass": volume <= .01 and distance + .0001 >= minimum})
 
-    for name in ("base", "closed lid", "Rev D shield", "installed hardware"):
+    for name in ("base", "closed lid", board, "installed hardware"):
         clear("Sleeve against " + name, sleeve, obstacles[name])
     for name, shape in obstacles.items():
         if name != "sleeve restraint":
             clear("Sleeve restraint against " + name, tie, shape)
     for offset in (-.65, .65):
         shifted_sleeve = translated(sleeve, 0, offset, 0)
-        for name in ("base", "closed lid", "Rev D shield"):
+        for name in ("base", "closed lid", board):
             clear(f"Sleeve at {offset:+g} mm lateral offset against {name}", shifted_sleeve, obstacles[name])
 
     group = doc.addObject("App::DocumentObjectGroup", "ToyotaConductors")
@@ -135,10 +140,12 @@ def build(out):
         add_feature(doc, group, f"J1End{pin}", f"J1-{pin} stripped end", stripped[pin],
                     "Strand envelope through the actual plated bore.", (216, 157, 84))
         for name, shape in obstacles.items():
-            clear(f"J1-{pin} against {name}", insulated[pin], shape, .10 if name == "Rev D shield" else 0)
+            clear(f"J1-{pin} against {name}", insulated[pin], shape, .10 if name == board else 0)
         clear(f"J1-{pin} against the Toyota housing", insulated[pin], housing, .10)
         clear(f"J1-{pin} stripped-end gauge inside exported bore", gauge, doc.Shield.Shape, .05)
-        clear(f"J1-{pin} stripped-end gauge against the lower board", gauge, lower)
+        clear(f"J1-{pin} stripped-end gauge against the base", gauge, doc.Base.Shape)
+        if lower:
+            clear(f"J1-{pin} stripped-end gauge against the lower board", gauge, obstacles["lower board"])
         for lift in (.4, 4, 12):
             clear(f"J1-{pin} against lid at {lift:g} mm lift", insulated[pin], translated(doc.Lid.Shape, 0, 0, lift))
         rows[pin] = {"IR1_cavity": row["cavity"], "net": row["net"], "body_od_mm": row["od_mm"],
@@ -151,22 +158,22 @@ def build(out):
                                     (insulated[a], stripped[b], "jacket and end"), (stripped[a], insulated[b], "end and jacket")):
             clear(f"J1-{a} and J1-{b} {kind}", first, second, .08)
 
-    report = {"contract": rev_d.CONTRACT, "sleeve_od_mm": rev_d.CASE_SLEEVE_OD, "sleeve_wall_mm": SLEEVE_WALL,
+    report = {"contract": contract, "sleeve_od_mm": rev_d.CASE_SLEEVE_OD, "sleeve_wall_mm": SLEEVE_WALL,
               "routes": rows, "checks": checks, "nominal_pass": all(c["pass"] for c in checks),
               "factory_pass_through": "External inline tee. IR1 1–6 run straight through to original mate.",
               "physical_vehicle_fit_verified": False, "terminal_positions_inside_housing_verified": False}
     (out / "ir1-wire-fit.json").write_text(json.dumps(report, indent=2) + "\n")
     if not report["nominal_pass"]:
-        raise ValueError("Rev D installed wire clearances failed. See ir1-wire-fit.json.")
+        raise ValueError(f"Rev {revision} installed wire clearances failed. See ir1-wire-fit.json.")
 
     doc.recompute()
-    native_path = out / "4Runner_RevD_Assembly.FCStd"
+    native_path = out / f"4Runner_Rev{revision}_Assembly.FCStd"
     doc.saveAs(str(native_path))
-    wires_path = out / "4Runner_RevD_Toyota_Wires.step"
+    wires_path = out / f"4Runner_Rev{revision}_Toyota_Wires.step"
     Part.makeCompound([obj.Shape for obj in group.Group] + [sleeve]).exportStep(str(wires_path))
     if len(reopen(wires_path).Solids) != 9:
         raise ValueError("STEP must retain four wires, four stripped ends and the sleeve")
-    assembly = out / "4Runner_RevD_Assembly.step"
+    assembly = out / f"4Runner_Rev{revision}_Assembly.step"
     solids = [obj.Shape for group_obj in (doc.Print, doc.PCB, doc.Hardware, doc.Loom, group)
               for obj in group_obj.Group]
     Part.makeCompound(solids).exportStep(str(assembly))
@@ -174,12 +181,12 @@ def build(out):
     App.closeDocument(doc.Name)
     doc = App.openDocument(str(native_path))
     if len(doc.ToyotaConductors.Group) != 8 or any(not obj.Shape.isValid() for obj in doc.ToyotaConductors.Group):
-        raise ValueError("Native Rev D assembly did not retain the four-wire branch")
-    preview(out, doc)
+        raise ValueError(f"Native Rev {revision} assembly did not retain the four-wire branch")
+    preview(out, doc, revision)
     App.closeDocument(doc.Name)
 
 
-def preview(out, doc):
+def preview(out, doc, revision):
     from PySide2 import QtCore, QtGui, QtWidgets
 
     gui = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
@@ -189,8 +196,14 @@ def preview(out, doc):
     right.normalize()
     up = camera.cross(right)
     light = V(-.38, -.54, .76)
-    base = doc.Base.Shape.cut(Part.makeBox(19, 17, 24, V(-4, 45, 30)))
-    stack = [(s, (43, 104, 86) if s.BoundBox.XLength > 110 else (61, 73, 80)) for s in doc.Shield.Shape.Solids]
+    base = doc.Base.Shape.cut(Part.makeBox(19, 17, 24, V(-4, 45, doc.Lead1.Shape.BoundBox.ZMin - 7.45)))
+    stack = []
+    for solid in doc.Shield.Shape.Solids:
+        bounds = solid.BoundBox
+        board = bounds.XLength > 110 and abs(bounds.ZLength - 1.6) < .1
+        radio = revision == "E" and bounds.XMax > 124 and bounds.XLength > 17
+        color = (43, 104, 86) if board else (182, 188, 191) if radio else (61, 73, 80)
+        stack.append((solid, color))
     wires = [(obj.Shape, tuple(round(ch * 255) for ch in obj.ReferenceColor[:3])) for obj in doc.ToyotaConductors.Group]
     parts = [(base, (96, 115, 128)), (doc.ToyotaMate.Shape, (235, 217, 182)), *stack, *wires,
              (doc.F1.Shape, (121, 75, 162)), (doc.F2.Shape, (89, 95, 105)), (doc.Lead2.Shape, (51, 118, 118))]
@@ -213,9 +226,10 @@ def preview(out, doc):
     paint.setRenderHint(QtGui.QPainter.Antialiasing)
     paint.setPen(QtGui.QColor("#18313c"))
     paint.setFont(QtGui.QFont("Segoe UI", 29, QtGui.QFont.Bold))
-    paint.drawText(65, 76, "Rev D · Toyota IR1 wiring")
+    paint.drawText(65, 76, "Rev D · Toyota IR1 wiring" if revision == "D" else "Rev E · Single-board controller")
     paint.setFont(QtGui.QFont("Segoe UI", 15))
-    paint.drawText(66, 115, "Four wires through the existing Toyota entry to the shield")
+    paint.drawText(66, 115, "Four Toyota wires enter the case. The ESP32-S3 mounts on the PCB."
+                   if revision == "E" else "Four wires through the existing Toyota entry to the shield")
     for i, (pin, row) in enumerate(rev_d.BRANCH.items()):
         x, y = 65 + (i % 2) * 345, 931 + (i // 2) * 40
         paint.setBrush(QtGui.QColor(*row["rgb"]))
@@ -225,5 +239,5 @@ def preview(out, doc):
     paint.setPen(QtGui.QColor("#455d69"))
     paint.drawText(975, 971, "Nominal fit · sleeve shown cut away")
     paint.end()
-    if not canvas.save(str(out / "RevD-Toyota-wiring.png")):
-        raise RuntimeError("Could not save the Rev D wiring preview")
+    if not canvas.save(str(out / f"Rev{revision}-Toyota-wiring.png")):
+        raise RuntimeError(f"Could not save the Rev {revision} wiring preview")
