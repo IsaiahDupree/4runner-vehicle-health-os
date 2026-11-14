@@ -1,6 +1,6 @@
 # Two-connector 4Runner RGBW shield and case
 
-Use the [Toyota-powered Rev C build guide](../pcb-rgbw-revc/README.md) for the
+Use the [Rev D build guide](../pcb-rgbw-revd/README.md) for the
 current captive-lead variant. This page documents the earlier two-plug assembly.
 
 Rev B integrates the protected power path and both replaceable fuses onto

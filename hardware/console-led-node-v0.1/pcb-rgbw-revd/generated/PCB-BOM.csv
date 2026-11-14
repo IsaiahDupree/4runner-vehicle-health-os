@@ -1,0 +1,84 @@
+ref,value,mpn,footprint,note
+C1,10u 63V EEEFK1J100P,EEEFK1J100P,Capacitor_SMD:CP_Elec_6.3x5.8,"Polar bulk damping candidate; manufacturer 6.3mm diameter, 5.8mm body height. Cable-response/ripple validation pending."
+C2,2.2u 100V X7R,CGA6N3X7R2A225K230AB,Capacitor_SMD:C_1210_3225Metric,
+C3,2.2u 100V X7R,CGA6N3X7R2A225K230AB,Capacitor_SMD:C_1210_3225Metric,
+U1,LM5164QDDARQ1,LM5164QDDARQ1,Package_SO:HSOP-8-1EP_3.9x4.9mm_P1.27mm_EP2.41x3.1mm,"5V logic only; target 0.5A evaluation load, thermal and transient tests pending"
+L1,68u MSS1246T-683MLC,MSS1246T-683MLC,Inductor_SMD:L_Coilcraft_MSS1246T-XXX,
+R1,41.2k,RC0603FR-0741K2L,Resistor_SMD:R_0603_1608Metric,"Yageo RC0603, 1%, 0.1 W."
+R2,1M,RC0603FR-071ML,Resistor_SMD:R_0603_1608Metric,"Yageo RC0603, 1%, 0.1 W."
+R3,221k,RC0603FR-07221KL,Resistor_SMD:R_0603_1608Metric,"Yageo RC0603, 1%, 0.1 W."
+R4,158k,RC0603FR-07158KL,Resistor_SMD:R_0603_1608Metric,"Yageo RC0603, 1%, 0.1 W."
+R5,49.9k,RC0603FR-0749K9L,Resistor_SMD:R_0603_1608Metric,"Yageo RC0603, 1%, 0.1 W."
+R6,150k,RC0603FR-07150KL,Resistor_SMD:R_0603_1608Metric,"Yageo RC0603, 1%, 0.1 W."
+C4,2.2n 50V X7R,GRM188R71H222KA01D,Capacitor_SMD:C_0603_1608Metric,
+C5,3.3n 50V X7R,GRM188R71H332KA01D,Capacitor_SMD:C_0603_1608Metric,
+C6,180p C0G,GRM1885C1H181JA01D,Capacitor_SMD:C_0603_1608Metric,
+C7,22u 25V X7R,MCAST32MSB7226KPNA1J,Capacitor_SMD:C_1210_3225Metric,
+C8,22u 25V X7R,MCAST32MSB7226KPNA1J,Capacitor_SMD:C_1210_3225Metric,
+R7,100k,RC0603FR-07100KL,Resistor_SMD:R_0603_1608Metric,"Yageo RC0603, 1%, 0.1 W."
+H1,IOL_NOMINAL,PRT-11417,Connector_PinSocket_2.54mm:PinSocket_1x08_P2.54mm_Vertical,One SparkFun kit supplies all four long-tail headers. Verify seating with the owned board.
+H2,IOH_NOMINAL,PRT-11417,Connector_PinSocket_2.54mm:PinSocket_1x10_P2.54mm_Vertical,One SparkFun kit supplies all four long-tail headers. Verify seating with the owned board.
+H3,POWER_NOMINAL,PRT-11417,Connector_PinSocket_2.54mm:PinSocket_1x08_P2.54mm_Vertical,One SparkFun kit supplies all four long-tail headers. Verify seating with the owned board.
+H4,AD_NOMINAL,PRT-11417,Connector_PinSocket_2.54mm:PinSocket_1x06_P2.54mm_Vertical,One SparkFun kit supplies all four long-tail headers. Verify seating with the owned board.
+U2,UCC27524AQDRQ1,UCC27524AQDRQ1,Package_SO:SOIC-8_3.9x4.9mm_P1.27mm,5V gate drive; enables have internal pullups overridden by external 2.2k pulldown
+U3,UCC27524AQDRQ1,UCC27524AQDRQ1,Package_SO:SOIC-8_3.9x4.9mm_P1.27mm,5V gate drive; enables have internal pullups overridden by external 2.2k pulldown
+C9,100n 25V X7R,GRM188R71H104KA93D,Capacitor_SMD:C_0603_1608Metric,
+C11,100n 25V X7R,GRM188R71H104KA93D,Capacitor_SMD:C_0603_1608Metric,
+C10,1u 25V X7R,GRM188R71E105KA12D,Capacitor_SMD:C_0603_1608Metric,
+C12,1u 25V X7R,GRM188R71E105KA12D,Capacitor_SMD:C_0603_1608Metric,
+R8,2.2k,RC0603FR-072K2L,Resistor_SMD:R_0603_1608Metric,"Yageo RC0603, 1%, 0.1 W."
+Q1,BUK9Y15-60E,"BUK9Y15-60E,115",Package_TO_SOT_SMD:LFPAK56,"60V; 15mOhm max at 5V gate, 25C. Layout/current ratings remain evaluation targets."
+R9,100,RC0603FR-07100RL,Resistor_SMD:R_0603_1608Metric,"Yageo RC0603, 1%, 0.1 W."
+R13,10k,RC0603FR-0710KL,Resistor_SMD:R_0603_1608Metric,"Yageo RC0603, 1%, 0.1 W."
+R17,100k,RC0603FR-07100KL,Resistor_SMD:R_0603_1608Metric,"Yageo RC0603, 1%, 0.1 W."
+D3,SMBJ24CA,SMBJ24CA,Diode_SMD:D_SMB,Bidirectional output clamp candidate; cable-energy test pending
+Q2,BUK9Y15-60E,"BUK9Y15-60E,115",Package_TO_SOT_SMD:LFPAK56,"60V; 15mOhm max at 5V gate, 25C. Layout/current ratings remain evaluation targets."
+R10,100,RC0603FR-07100RL,Resistor_SMD:R_0603_1608Metric,"Yageo RC0603, 1%, 0.1 W."
+R14,10k,RC0603FR-0710KL,Resistor_SMD:R_0603_1608Metric,"Yageo RC0603, 1%, 0.1 W."
+R18,100k,RC0603FR-07100KL,Resistor_SMD:R_0603_1608Metric,"Yageo RC0603, 1%, 0.1 W."
+D4,SMBJ24CA,SMBJ24CA,Diode_SMD:D_SMB,Bidirectional output clamp candidate; cable-energy test pending
+Q3,BUK9Y15-60E,"BUK9Y15-60E,115",Package_TO_SOT_SMD:LFPAK56,"60V; 15mOhm max at 5V gate, 25C. Layout/current ratings remain evaluation targets."
+R11,100,RC0603FR-07100RL,Resistor_SMD:R_0603_1608Metric,"Yageo RC0603, 1%, 0.1 W."
+R15,10k,RC0603FR-0710KL,Resistor_SMD:R_0603_1608Metric,"Yageo RC0603, 1%, 0.1 W."
+R19,100k,RC0603FR-07100KL,Resistor_SMD:R_0603_1608Metric,"Yageo RC0603, 1%, 0.1 W."
+D5,SMBJ24CA,SMBJ24CA,Diode_SMD:D_SMB,Bidirectional output clamp candidate; cable-energy test pending
+Q4,BUK9Y15-60E,"BUK9Y15-60E,115",Package_TO_SOT_SMD:LFPAK56,"60V; 15mOhm max at 5V gate, 25C. Layout/current ratings remain evaluation targets."
+R12,100,RC0603FR-07100RL,Resistor_SMD:R_0603_1608Metric,"Yageo RC0603, 1%, 0.1 W."
+R16,10k,RC0603FR-0710KL,Resistor_SMD:R_0603_1608Metric,"Yageo RC0603, 1%, 0.1 W."
+R20,100k,RC0603FR-07100KL,Resistor_SMD:R_0603_1608Metric,"Yageo RC0603, 1%, 0.1 W."
+D6,SMBJ24CA,SMBJ24CA,Diode_SMD:D_SMB,Bidirectional output clamp candidate; cable-energy test pending
+F1,3A MINI MAIN / LED,3568,VHOS_RevB:Keystone_3568_MINI_Vertical,Socket and removable element 0997003.WXN
+F2,1A MINI LOGIC,3568,VHOS_RevB:Keystone_3568_MINI_Vertical,Socket and removable element ATM-1
+U4,LM74800-Q1,LM74800QDRRRQ1,Package_SON:WSON-12-1EP_3x3mm_P0.5mm_EP1.5x2.5mm,Common-drain reverse battery protection and OV cutoff. RTN exposed pad floating.
+D1,TPSMB33CA,TPSMB33CA,Diode_SMD:D_SMB,Bidirectional input TVS after the 58 V fuse.
+Q5,BUK9Y15-100E,"BUK9Y15-100E,115",Package_TO_SOT_SMD:LFPAK56,"100 V reverse-blocking NMOS, source on fused input."
+Q6,BUK9Y15-100E,"BUK9Y15-100E,115",Package_TO_SOT_SMD:LFPAK56,"100 V cutoff NMOS, source on protected output."
+R21,46.4k 0.1%,RT0603BRD0746K4L,Resistor_SMD:R_0603_1608Metric,
+R22,4.02k 0.1%,RT0603BRD074K02L,Resistor_SMD:R_0603_1608Metric,
+R23,100R,RC0603FR-07100RL,Resistor_SMD:R_0603_1608Metric,
+C13,100n 100V X7R,GRM21BR72A104KA01L,Capacitor_SMD:C_0805_2012Metric,
+C14,100n 100V X7R,GRM21BR72A104KA01L,Capacitor_SMD:C_0805_2012Metric,
+C15,100n 50V X7R,GRM188R71H104KA93D,Capacitor_SMD:C_0603_1608Metric,
+C16,10n 100V X7R,GRM21BR72A103KA01L,Capacitor_SMD:C_0805_2012Metric,
+C17,47u 50V,EEEFK1H470P,Capacitor_SMD:CP_Elec_8x6.2,
+JP1,5V RUN SHUNT,TSW-102-07-G-S,Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,Fit SNT-100-BK-G shunt after standalone power and USB checks.
+U5,SN3257-Q1,SN3257QPWRQ1,Package_SO:TSSOP-16_4.4x5mm_P0.65mm,A inputs at ground during 3.3 V startup. B inputs selected when the rail supervisor releases.
+U8,TLV809E 2.93V,TLV809ED29DBZR,Package_TO_SOT_SMD:SOT-23,Keeps both ADC inputs at ground during supply transitions until 3.3 V is valid.
+R24,49.9k 0.1%,RT1206BRD0749K9L,Resistor_SMD:R_1206_3216Metric,
+R25,49.9k 0.1%,RT1206BRD0749K9L,Resistor_SMD:R_1206_3216Metric,
+R28,22k 0.1%,RT0603BRD0722KL,Resistor_SMD:R_0603_1608Metric,
+R30,1k 0.1%,RT0603BRD071KL,Resistor_SMD:R_0603_1608Metric,
+R32,22k 0.1%,RT0603BRD0722KL,Resistor_SMD:R_0603_1608Metric,
+U6,LM4040 2.5V,LM4040C25QDBZR,Package_TO_SOT_SMD:SOT-23,Positive clamp to chassis reference.
+D7,BAT54H-Q,BAT54H-QX,Diode_SMD:D_SOD-123F,Negative clamp. Check cold-pulse forward drop on the bench.
+C19,100n 50V,GRM188R71H104KA93D,Capacitor_SMD:C_0603_1608Metric,
+R26,49.9k 0.1%,RT1206BRD0749K9L,Resistor_SMD:R_1206_3216Metric,
+R27,49.9k 0.1%,RT1206BRD0749K9L,Resistor_SMD:R_1206_3216Metric,
+R29,22k 0.1%,RT0603BRD0722KL,Resistor_SMD:R_0603_1608Metric,
+R31,1k 0.1%,RT0603BRD071KL,Resistor_SMD:R_0603_1608Metric,
+R33,22k 0.1%,RT0603BRD0722KL,Resistor_SMD:R_0603_1608Metric,
+U7,LM4040 2.5V,LM4040C25QDBZR,Package_TO_SOT_SMD:SOT-23,Positive clamp to chassis reference.
+D8,BAT54H-Q,BAT54H-QX,Diode_SMD:D_SOD-123F,Negative clamp. Check cold-pulse forward drop on the bench.
+C20,100n 50V,GRM188R71H104KA93D,Capacitor_SMD:C_0603_1608Metric,
+C18,100n 50V,GRM188R71H104KA93D,Capacitor_SMD:C_0603_1608Metric,
+C21,100n 50V,GRM188R71H104KA93D,Capacitor_SMD:C_0603_1608Metric,

@@ -15,12 +15,12 @@ Colors refer to the truck-side instrument-panel loom.
 
 | IR1 cavity | Truck-side color | Factory function | Use in our harness |
 | --- | --- | --- | --- |
-| 1 | Green (G) | Ashtray lamp positive, on the TAIL relay feed | Branch to a future high-impedance lights-on sense input. This switches the display or accent lighting to night mode. |
-| 2 | White/green (W–G) | Ashtray lamp dimmer return, white/black on the lamp side | Keep with pin 1 for an optional differential dimmer measurement. This can make controller brightness follow the dash dial. |
+| 1 | Green (G) | Ashtray lamp positive, on the TAIL relay feed | Branch to **Rev D J1-3 TAIL** for lights-on sensing and night mode. |
+| 2 | White/green (W–G) | Ashtray lamp dimmer return, white/black on the lamp side | Branch to **Rev D J1-4 DIM**. Read with TAIL to measure lamp voltage and support brightness control. |
 | 3 | Green (G) | Cigarette-lighter ring lamp positive, on the same TAIL relay feed | Carry through to the factory ring. If the ring is absent, reserve 3 and 4 for an equivalent low-current console locator light after checking the original lamp rating and dimmer compatibility. |
 | 4 | White/green (W–G) | Lighter ring lamp dimmer return, white/black on the lamp side | Carry the lamp return with pin 3. This lets the ring or equivalent console light follow the dash dimmer. |
-| 5 | White/black (W–B) | Lighter socket chassis ground, ground point II | Branch to the square **Rev C J1-1 GND** pad after verification. |
-| 6 | Pink/blue (P–L) | Lighter socket ACC +12 V, through the 10 A CIG fuse in the service diagram | Branch to the round **Rev C J1-2 VEH_ACC** pad after verification. This is the sole supply for the controller and its RGBW drivers. |
+| 5 | White/black (W–B) | Lighter socket chassis ground, ground point II | Branch to **Rev D J1-1 GND** after verification. |
+| 6 | Pink/blue (P–L) | Lighter socket ACC +12 V, through the 10 A CIG fuse in the service diagram | Branch to **Rev D J1-2 ACC** after verification. This is the sole supply for the controller and its RGBW drivers. |
 
 The two green wires meet upstream at the same TAIL feed. The two white/green
 returns meet upstream at the same dimmer circuit and run to the R13 rheostat.
@@ -28,7 +28,7 @@ The lamp pairs are duplicate access to those two electrical nodes. The TAIL
 feed indicates parking lamps or headlights on. It gives the same night-mode
 signal in either switch position. A voltage measurement across 1 and 2
 captures what the ashtray lamp sees. Verify whether that voltage changes as
-a steady level or as PWM before designing a brightness input.
+a steady level or as PWM before configuring brightness control.
 [TAIL feed][tail] · [IR1 lamp pairs][illum] · [Rheostat and ground][dimmer] ·
 [IR1 power and ground][lighter] · [ACC/ON service hints][lighter-hints].
 
@@ -55,27 +55,22 @@ Truck socket           Mating pin housing
    the two white/green wires. If IR1 is an unused prewire, a removable mating
    plug can expose all six leads for measurement. Insulate any parked lead
    individually and keep the factory loom intact.
-2. Route verified 5 and 6 down the existing two-wire sleeve to J1. Retain
+2. Route verified 5 and 6 through the Rev D Toyota sleeve to J1. Retain
    the shield's 3 A main and 1 A logic prototype fuses and confirm the
    takeoff and any branch protection against the wire and terminal ratings.
    Keep the lamps on their original circuits. Use the shield's protected
    RGBW output for the added pods and budget the total load against the
    actual upstream circuit and any shared factory load.
-3. For a later shield revision, use a protected, high-impedance 12 V
-   sense input from cavity 1 referenced to cavity 5. Use its 3.3 V logic
-   output for `lights on`. To follow the dial, add a protected differential
-   measurement across 1 and 2 if the meter or scope confirms a usable
-   brightness signal. Carry both taps in the same Toyota harness branch.
-   Check the sleeve and case saddle with the additional conductors. The
-   existing CAD routes two power wires. Design the sense input to tolerate
-   automotive transients and prevent backfeeding the controller when TAIL
-   is live with ACC off. Preserve the factory path to R13 for both dimmer
-   returns. Use IR1-5 for shield ground and the RGBW load return. Rev C has
-   two vehicle pads, so park the sense leads insulated at the tee for a
-   Rev C build. Preserve the dedicated RGBW output lead.
+3. Route 1 and 2 in the same sleeve to the Rev D protected sense pads. The
+   shield reads both relative to IR1-5. The voltage difference gives the
+   ashtray lamp voltage. Leave both dimmer returns on the factory path to
+   R13. Verify lights-on, dimmer travel and ACC-off isolation before using
+   these signals to control the lights. For Rev C, insulate the sense leads
+   at the tee and use its two power pads.
 
-[Rev C wiring and case route](../pcb-rgbw-revc/README.md#toyota-power-wire-routing) ·
-[Rev C J1/J2 pad assignments](../pcb-rgbw-revc/generated/harness-pads.json).
+[Rev D build and wiring route](../pcb-rgbw-revd/README.md) ·
+[Rev D J1 pad assignments](../pcb-rgbw-revd/generated/harness-pads.json) ·
+[Rev C two-wire routing](../pcb-rgbw-revc/README.md#toyota-power-wire-routing).
 
 ## Verify on the truck before soldering
 

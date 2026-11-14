@@ -1,9 +1,10 @@
 # 2005 V8 4Runner console LED node — research and fit-check case
 
-**Current build** [Toyota-powered Rev C with dedicated solder pads](pcb-rgbw-revc/README.md).
+**Current build** [Rev D with Toyota IR1 power and illumination inputs](pcb-rgbw-revd/README.md).
 The photographed white six-contact Toyota harness is the box's only wired
 input. The shield uses that switched 12 V and ground to power both the
-ESP32-S3 and the RGBW lights. The existing ESP32/MrDIY gateway supplies
+ESP32-S3 and the RGBW lights. Two protected inputs read the TAIL and dimmer
+circuits through the same harness. The existing ESP32/MrDIY gateway supplies
 vehicle data wirelessly.
 [Project resources and fabrication files](RESOURCES.md).
 Owner task: 2026-11-07. No parts ordered, functional PCB fabricated, vehicle wiring changed, or printer started.
@@ -91,7 +92,7 @@ not a final output circuit.
 
 ## Electrical and mechanical arrangement
 
-See the [Rev C shield pad assignments](pcb-rgbw-revc/README.md) and the
+See the [Rev D shield pad assignments](pcb-rgbw-revd/README.md) and the
 [shared Toyota power flow](pcb-rgbw-revb/TOYOTA-POWER-BUILD.md#power-and-lighting-leads).
 Check the Toyota power and ground cavities and the available current on the
 truck. The case supports both captive cables at their exits and mounts the

@@ -1,0 +1,17 @@
+Role,Qty,Part or dimensions,Use
+Toyota pin half,1,Yazaki 7282-1060 / Corsa 090IIU-6P-1,Candidate mate for the truck's white IR1 harness socket. Verify keying and latch fit.
+Toyota socket half,1 if factory mate in use,Yazaki 7283-1060 / Corsa 090IIU-6S-1,Completes the external factory tee.
+Toyota terminal sets,6 positions per tee half,Specified open-barrel terminals for each Yazaki housing,Match the factory wire and terminal range. Create four branches with wire-size-rated splices.
+Factory pass-through conductors,6 if factory mate in use,Match factory conductor cross-section,Wire 1-to-1 across both housings and verify continuity before plugging in.
+Power and ground branch,2,20 AWG TXL nominal 1.95 mm OD,IR1-6 to J1-2 and IR1-5 to J1-1. Confirm terminal and current ratings for the actual load.
+Illumination sense branch,2,22 AWG TXL nominal 1.70 mm OD,IR1-1 to J1-3 and IR1-2 to J1-4. Keep both factory lamp paths through the tee.
+Toyota branch outer sleeve,1,Nominal 7.2 mm OD and 0.32 mm modeled wall,Confirm the real sleeve ID and thickness. End sleeve past the first saddle tie slot.
+Source-side branch fuse and holder,As required by feed and wire,Size to the verified circuit and smallest added power wire,Locate protection at the takeoff if required by the installed branch.
+RGBW lead,1,Five-conductor automotive cable and candidate Diode Dynamics DD4083 or DD4084 M8 donor,Verify the pod pinout and current. Solder to J2 and secure sleeve to its saddle.
+RGBW pod,1 for first prototype,Diode Dynamics DD7440 candidate,Confirm common positive and load on the bench.
+Front saddle ties,3,HellermannTyton T18R-PA66HS-BK 111-01250 or suitable 2.5 mm wide tie,One Toyota tie and two RGBW ties. Model uses nominal 0.65 mm strap thickness. Dry-fit the real heads and verify retention.
+Printed parts,1 matched pair,Base and lid STLs,Check the actual sleeve and strap path using the coupons.
+Inserts,11,ruthex RX-M3x5.7,4 lid plus 4 shield plus 3 lower board.
+Lid screws,4,M3 x 8 socket head,Check engagement on the printed coupon.
+PCB fasteners,7 each,M3 x 6 socket head and 7 mm OD x 0.5 mm insulating washer,Check clearance with the installed PCB stack.
+Vehicle fasteners,2,M4 screws and washers,Length and anchor depend on the measured console mount.

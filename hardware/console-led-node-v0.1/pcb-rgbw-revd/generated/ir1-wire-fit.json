@@ -1,0 +1,651 @@
+{
+  "contract": "vhos_rgbw_revd_ir1_illumination_v1",
+  "sleeve_od_mm": 7.2,
+  "sleeve_wall_mm": 0.32,
+  "routes": {
+    "1": {
+      "IR1_cavity": 5,
+      "net": "GND",
+      "body_od_mm": 1.95,
+      "bore_mm": 1.8,
+      "pad_xyz_mm": [
+        17.0,
+        53.530000000000015,
+        24.6
+      ],
+      "minimum_bend_radius_mm": 8.0,
+      "strip_length_mm": 3.2,
+      "centerline_length_mm": 96.87
+    },
+    "2": {
+      "IR1_cavity": 6,
+      "net": "VEH_ACC",
+      "body_od_mm": 1.95,
+      "bore_mm": 1.8,
+      "pad_xyz_mm": [
+        22.5,
+        53.530000000000015,
+        24.6
+      ],
+      "minimum_bend_radius_mm": 8.0,
+      "strip_length_mm": 3.2,
+      "centerline_length_mm": 89.42
+    },
+    "3": {
+      "IR1_cavity": 1,
+      "net": "TAIL_12V",
+      "body_od_mm": 1.7,
+      "bore_mm": 1.2,
+      "pad_xyz_mm": [
+        18.5,
+        49.670000000000016,
+        24.6
+      ],
+      "minimum_bend_radius_mm": 7.0,
+      "strip_length_mm": 3.2,
+      "centerline_length_mm": 98.83
+    },
+    "4": {
+      "IR1_cavity": 2,
+      "net": "DIM_RETURN",
+      "body_od_mm": 1.7,
+      "bore_mm": 1.2,
+      "pad_xyz_mm": [
+        24.5,
+        49.670000000000016,
+        24.6
+      ],
+      "minimum_bend_radius_mm": 7.0,
+      "strip_length_mm": 3.2,
+      "centerline_length_mm": 93.52
+    }
+  },
+  "checks": [
+    {
+      "check": "Sleeve against base",
+      "clearance_mm": 0.0,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "Sleeve against closed lid",
+      "clearance_mm": 1.35,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "Sleeve against Rev D shield",
+      "clearance_mm": 12.85,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "Sleeve against installed hardware",
+      "clearance_mm": 10.249,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "Sleeve restraint against base",
+      "clearance_mm": 0.04,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "Sleeve restraint against closed lid",
+      "clearance_mm": 0.66,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "Sleeve restraint against Rev D shield",
+      "clearance_mm": 8.89,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "Sleeve restraint against lower board",
+      "clearance_mm": 52.5125,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "Sleeve restraint against installed hardware",
+      "clearance_mm": 7.5187,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "Sleeve restraint against sleeve",
+      "clearance_mm": 0.04,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "Sleeve restraint against fuse puller envelope",
+      "clearance_mm": 18.85,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "Sleeve at -0.65 mm lateral offset against base",
+      "clearance_mm": 0.0,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "Sleeve at -0.65 mm lateral offset against closed lid",
+      "clearance_mm": 1.35,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "Sleeve at -0.65 mm lateral offset against Rev D shield",
+      "clearance_mm": 12.85,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "Sleeve at +0.65 mm lateral offset against base",
+      "clearance_mm": 0.0,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "Sleeve at +0.65 mm lateral offset against closed lid",
+      "clearance_mm": 1.35,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "Sleeve at +0.65 mm lateral offset against Rev D shield",
+      "clearance_mm": 12.85,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 against base",
+      "clearance_mm": 1.1919,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 against closed lid",
+      "clearance_mm": 5.095,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 against Rev D shield",
+      "clearance_mm": 1.0,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 against lower board",
+      "clearance_mm": 38.9147,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 against installed hardware",
+      "clearance_mm": 4.3792,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 against sleeve",
+      "clearance_mm": 0.9947,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 against fuse puller envelope",
+      "clearance_mm": 7.0252,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 against sleeve restraint",
+      "clearance_mm": 2.6907,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 against the Toyota housing",
+      "clearance_mm": 0.15,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 stripped-end gauge inside exported bore",
+      "clearance_mm": 0.3,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 stripped-end gauge against the lower board",
+      "clearance_mm": 38.3628,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 against lid at 0.4 mm lift",
+      "clearance_mm": 5.495,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 against lid at 4 mm lift",
+      "clearance_mm": 9.095,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 against lid at 12 mm lift",
+      "clearance_mm": 17.095,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 against base",
+      "clearance_mm": 3.125,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 against closed lid",
+      "clearance_mm": 3.145,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 against Rev D shield",
+      "clearance_mm": 1.0,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 against lower board",
+      "clearance_mm": 33.8043,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 against installed hardware",
+      "clearance_mm": 6.545,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 against sleeve",
+      "clearance_mm": 0.2316,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 against fuse puller envelope",
+      "clearance_mm": 1.525,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 against sleeve restraint",
+      "clearance_mm": 0.616,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 against the Toyota housing",
+      "clearance_mm": 0.15,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 stripped-end gauge inside exported bore",
+      "clearance_mm": 0.3,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 stripped-end gauge against the lower board",
+      "clearance_mm": 33.1059,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 against lid at 0.4 mm lift",
+      "clearance_mm": 3.545,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 against lid at 4 mm lift",
+      "clearance_mm": 7.145,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 against lid at 12 mm lift",
+      "clearance_mm": 15.145,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-3 against base",
+      "clearance_mm": 1.43,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-3 against closed lid",
+      "clearance_mm": 5.42,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-3 against Rev D shield",
+      "clearance_mm": 1.0,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-3 against lower board",
+      "clearance_mm": 37.3493,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-3 against installed hardware",
+      "clearance_mm": 8.6304,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-3 against sleeve",
+      "clearance_mm": 0.4469,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-3 against fuse puller envelope",
+      "clearance_mm": 6.136,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-3 against sleeve restraint",
+      "clearance_mm": 2.2473,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-3 against the Toyota housing",
+      "clearance_mm": 0.15,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-3 stripped-end gauge inside exported bore",
+      "clearance_mm": 0.175,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-3 stripped-end gauge against the lower board",
+      "clearance_mm": 36.8054,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-3 against lid at 0.4 mm lift",
+      "clearance_mm": 5.82,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-3 against lid at 4 mm lift",
+      "clearance_mm": 9.42,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-3 against lid at 12 mm lift",
+      "clearance_mm": 17.42,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-4 against base",
+      "clearance_mm": 4.27,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-4 against closed lid",
+      "clearance_mm": 2.58,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-4 against Rev D shield",
+      "clearance_mm": 1.0,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-4 against lower board",
+      "clearance_mm": 31.7674,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-4 against installed hardware",
+      "clearance_mm": 7.3078,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-4 against sleeve",
+      "clearance_mm": 0.836,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-4 against fuse puller envelope",
+      "clearance_mm": 1.7583,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-4 against sleeve restraint",
+      "clearance_mm": 1.196,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-4 against the Toyota housing",
+      "clearance_mm": 0.1421,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-4 stripped-end gauge inside exported bore",
+      "clearance_mm": 0.175,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-4 stripped-end gauge against the lower board",
+      "clearance_mm": 31.0441,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-4 against lid at 0.4 mm lift",
+      "clearance_mm": 2.98,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-4 against lid at 4 mm lift",
+      "clearance_mm": 6.58,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-4 against lid at 12 mm lift",
+      "clearance_mm": 14.58,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 and J1-2 jackets",
+      "clearance_mm": 0.3063,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 and J1-2 stripped ends",
+      "clearance_mm": 4.7021,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 and J1-2 jacket and end",
+      "clearance_mm": 4.1261,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 and J1-2 end and jacket",
+      "clearance_mm": 4.1261,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 and J1-3 jackets",
+      "clearance_mm": 0.3442,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 and J1-3 stripped ends",
+      "clearance_mm": 3.4085,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 and J1-3 jacket and end",
+      "clearance_mm": 2.8324,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 and J1-3 end and jacket",
+      "clearance_mm": 2.8923,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 and J1-4 jackets",
+      "clearance_mm": 1.0586,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 and J1-4 stripped ends",
+      "clearance_mm": 7.7023,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 and J1-4 jacket and end",
+      "clearance_mm": 7.1262,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 and J1-4 end and jacket",
+      "clearance_mm": 7.1861,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 and J1-3 jackets",
+      "clearance_mm": 2.1809,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 and J1-3 stripped ends",
+      "clearance_mm": 4.826,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 and J1-3 jacket and end",
+      "clearance_mm": 4.25,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 and J1-3 end and jacket",
+      "clearance_mm": 4.3098,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 and J1-4 jackets",
+      "clearance_mm": 0.653,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 and J1-4 stripped ends",
+      "clearance_mm": 3.6146,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 and J1-4 jacket and end",
+      "clearance_mm": 3.0386,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 and J1-4 end and jacket",
+      "clearance_mm": 3.0984,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-3 and J1-4 jackets",
+      "clearance_mm": 1.3109,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-3 and J1-4 stripped ends",
+      "clearance_mm": 5.3324,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-3 and J1-4 jacket and end",
+      "clearance_mm": 4.8162,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-3 and J1-4 end and jacket",
+      "clearance_mm": 4.8162,
+      "interference_mm3": 0.0,
+      "pass": true
+    }
+  ],
+  "nominal_pass": true,
+  "factory_pass_through": "External inline tee. IR1 1\u20136 run straight through to original mate.",
+  "physical_vehicle_fit_verified": false,
+  "terminal_positions_inside_housing_verified": false
+}

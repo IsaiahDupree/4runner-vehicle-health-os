@@ -126,14 +126,14 @@ def render_route(out, doc, group, routes):
             raise ValueError(f"Unable to save {filename}")
 
 
-def wire_path(sleeve_start, sleeve_center, pad, offsets):
+def wire_path(sleeve_start, sleeve_center, pad, offsets, *, spec=SPEC):
     """Straight run, tangent fanout, circular drop, and vertical pad entry."""
-    radius = SPEC["wire_bend_radius_mm"]
+    radius = spec["wire_bend_radius_mm"]
     start = V(sleeve_start, sleeve_center.y + offsets["y_offset"],
               sleeve_center.z + offsets["z_offset"])
-    branch = V(SPEC["branch_start_x_mm"], start.y, start.z)
-    run = SPEC["fanout_end_x_mm"] - branch.x
-    distance = pad.x - SPEC["fanout_end_x_mm"]
+    branch = V(spec["branch_start_x_mm"], start.y, start.z)
+    run = spec["fanout_end_x_mm"] - branch.x
+    distance = pad.x - spec["fanout_end_x_mm"]
     delta = pad.y - branch.y
     # Solve delta = distance*tan(turn) + run*tan(turn/2), so the
     # fanout and the vertical bend join with the same tangent.
@@ -172,7 +172,7 @@ def wire_path(sleeve_start, sleeve_center, pad, offsets):
 
         drop.append(Part.Arc(back(angle), back((angle + pi / 2) / 2), back(pi / 2)).toShape())
     tangent = drop[-1].valueAt(drop[-1].LastParameter)
-    tail = pad + Z * SPEC["pad_approach_mm"]
+    tail = pad + Z * spec["pad_approach_mm"]
     if abs(tangent.x - tail.x) > .001 or abs(tangent.y - tail.y) > .001 or tangent.z <= pad.z:
         raise ValueError(f"Wire bend does not land at {tuple(tail)} from {tuple(tangent)}")
     path = [Part.makeLine(start, branch), fan]

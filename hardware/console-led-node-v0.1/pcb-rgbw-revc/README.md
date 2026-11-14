@@ -1,5 +1,8 @@
 # Rev C Toyota-powered RGBW shield
 
+See [Rev D](../pcb-rgbw-revd/README.md) for the four-wire Toyota branch and the
+TAIL and DIM sense inputs.
+
 The box takes power for the ESP32-S3 and RGBW lights from the switched 12 V
 and ground in the white six-pin Toyota console plug, subject to verifying
 the live feed on this truck. It is the box's only wired input in service.

@@ -1,8 +1,8 @@
 # Toyota-powered RGBW controller for the 2005 V8 4Runner
 
-Use the [Rev C PCB and fabrication files](../pcb-rgbw-revc/README.md) for
+Use the [Rev D PCB and fabrication files](../pcb-rgbw-revd/README.md) for
 new prototype boards. This build sheet records the earlier captive-lead
-Rev B shield and the power path it shares with Rev C.
+Rev B shield and the power path it shares with Rev D.
 
 The white six-contact Toyota console harness in the owner's photos is the
 only wired input to the box in service. Its switched 12 V and ground power

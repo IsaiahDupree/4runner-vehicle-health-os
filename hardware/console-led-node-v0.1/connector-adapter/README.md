@@ -1,9 +1,9 @@
 # Toyota console plug → ESP32 shield connection
 
-Use the [Toyota-powered Rev C build guide](../pcb-rgbw-revc/README.md)
-for the current two-wire power input from the photographed white socket.
+Use the [Rev D build guide](../pcb-rgbw-revd/README.md) for power and
+illumination sensing from the photographed white socket.
 Use the [2005 V8 IR1 pinout and harness plan](IR1-WIRE-PLAN.md) to identify
-all six factory wires, verify the feed and plan illumination sensing.
+all six factory wires and verify the feed.
 The [Rev A inline harness build sheet](INLINE-HARNESS.md) records the earlier
 wiring. This page retains the connector and CAD research from November 7, 2026.
 

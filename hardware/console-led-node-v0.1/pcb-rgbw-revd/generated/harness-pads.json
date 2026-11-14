@@ -1,0 +1,100 @@
+{
+  "J1": {
+    "pads": {
+      "1": {
+        "cavity": 5,
+        "net": "GND",
+        "label": "GND",
+        "xy_mm": [
+          61.0,
+          111.14
+        ],
+        "awg": 20,
+        "od_mm": 1.95,
+        "bend_mm": 8.0,
+        "gauge_mm": 1.2,
+        "offset_yz_mm": [
+          0.68,
+          -1.12
+        ],
+        "rgb": [
+          200,
+          206,
+          210
+        ],
+        "drill_mm": 1.8
+      },
+      "2": {
+        "cavity": 6,
+        "net": "VEH_ACC",
+        "label": "ACC",
+        "xy_mm": [
+          66.5,
+          111.14
+        ],
+        "awg": 20,
+        "od_mm": 1.95,
+        "bend_mm": 8.0,
+        "gauge_mm": 1.2,
+        "offset_yz_mm": [
+          1.9,
+          0.83
+        ],
+        "rgb": [
+          209,
+          71,
+          131
+        ],
+        "drill_mm": 1.8
+      },
+      "3": {
+        "cavity": 1,
+        "net": "TAIL_12V",
+        "label": "TAIL",
+        "xy_mm": [
+          62.5,
+          115.0
+        ],
+        "awg": 22,
+        "od_mm": 1.7,
+        "bend_mm": 7.0,
+        "gauge_mm": 0.85,
+        "offset_yz_mm": [
+          -1.48,
+          -1.32
+        ],
+        "rgb": [
+          63,
+          175,
+          123
+        ],
+        "drill_mm": 1.2
+      },
+      "4": {
+        "cavity": 2,
+        "net": "DIM_RETURN",
+        "label": "DIM",
+        "xy_mm": [
+          68.5,
+          115.0
+        ],
+        "awg": 22,
+        "od_mm": 1.7,
+        "bend_mm": 7.0,
+        "gauge_mm": 0.85,
+        "offset_yz_mm": [
+          -0.48,
+          1.52
+        ],
+        "rgb": [
+          236,
+          213,
+          120
+        ],
+        "drill_mm": 1.2
+      }
+    }
+  },
+  "factory_loop": "1:1 through all six cavities",
+  "vehicle_cavities_physically_verified": false
+}

@@ -1,30 +1,31 @@
 # 4Runner console LED controller resources
 
-The current prototype is the **Toyota-powered Rev C for the 2005 V8 4Runner**.
+The current prototype is **Rev D for the 2005 V8 4Runner**.
 The photographed white six-contact Toyota plug is the box's only wired
 input. The shield uses its switched 12 V and ground to power the ESP32-S3
-and drive the RGBW lights through the output cable. Vehicle data comes
-wirelessly from the existing classic CAN ESP32 running the MrDIY VHOS target.
-[Rev C build guide](pcb-rgbw-revc/README.md) ·
-[Shared harness and case definition](pcb-rgbw-revb/toyota-power.json) ·
+and drive the RGBW lights through the output cable. It reads TAIL and DIM
+from the same harness. Vehicle data comes wirelessly from the existing
+classic CAN ESP32 running the MrDIY VHOS target.
+[Rev D build guide](pcb-rgbw-revd/README.md) ·
 [Pinned gateway firmware](https://github.com/IsaiahDupree/4runner-vhos-firmware/tree/a523483abc984a406c73659653571198e46b04a0/targets/mrdiy-esp32-v13).
 
 ## Build files
 
 | Resource | What to use |
 | --- | --- |
-| Wiring and shopping | [Rev C shield pad assignments](pcb-rgbw-revc/README.md) · [Shared harness and case parts](pcb-rgbw-revb/TOYOTA-POWER-PARTS.csv) |
+| Wiring and shopping | [Rev D pad assignments and parts](pcb-rgbw-revd/README.md) · [Rev D harness and case parts](pcb-rgbw-revd/HARNESS-AND-CASE.csv) |
 | Toyota IR1 pinout | [All six wires, pass-through plan and meter checks](connector-adapter/IR1-WIRE-PLAN.md) |
-| Toyota input wire routing | [Connector-to-pad layout and lengths](pcb-rgbw-revc/README.md#toyota-power-wire-routing) · [CAD cutaway](pcb-rgbw-revc/generated/wiring/Toyota-wire-route.png) |
-| PCB model | [KiCad project](pcb-rgbw-revc/generated/vhos_rgbw_revc.kicad_pro) · [Shield STEP](pcb-rgbw-revc/generated/4Runner_RGBW_RevC_Shield.step) · [Board preview](pcb-rgbw-revc/generated/shield.png) |
-| PCB fabrication | [Rev C four-layer Gerbers and drills](pcb-rgbw-revc/generated/4Runner_RGBW_RevC_Gerbers.zip) |
-| JLCPCB assembly | [LM5169 SMT-only BOM](pcb-rgbw-revb/jlcpcb/truck-lm5169-smt/BOM.csv) · [Matching placement file](pcb-rgbw-revb/jlcpcb/truck-lm5169-smt/CPL.csv) |
+| Toyota input wire routing | [Connector-to-pad layout and lengths](pcb-rgbw-revd/README.md#case-and-wiring) · [CAD cutaway](pcb-rgbw-revd/generated/RevD-Toyota-wiring.png) |
+| PCB model | [KiCad project](pcb-rgbw-revd/generated/vhos_rgbw_revd.kicad_pro) · [Shield STEP](pcb-rgbw-revd/generated/4Runner_RGBW_RevD_Shield.step) · [Board preview](pcb-rgbw-revd/generated/shield.png) |
+| PCB fabrication | [Rev D four-layer Gerbers and drills](pcb-rgbw-revd/generated/4Runner_RGBW_RevD_Gerbers.zip) |
+| JLCPCB assembly | [Rev D LM5169 SMT-only BOM](pcb-rgbw-revd/jlcpcb/truck-lm5169-smt/BOM.csv) · [Matching placement file](pcb-rgbw-revd/jlcpcb/truck-lm5169-smt/CPL.csv) |
 | Matched case | [Base STL](pcb-rgbw-revb/toyota-power-cad/case_base.stl) · [Lid STL](pcb-rgbw-revb/toyota-power-cad/case_lid.stl) |
 | Fit samples | [Cable-saddle coupon](pcb-rgbw-revb/toyota-power-cad/front_ports_coupon.stl) · [Lid slice](pcb-rgbw-revb/toyota-power-cad/front_lid_coupon.stl) · [M3 insert and screw coupon](pcb-rgbw-revb/toyota-power-cad/m3_tolerance_coupon.stl) |
-| Digital checks | [Rev C verification receipt](pcb-rgbw-revc/generated/verification.json) · [Cable clearance and strain-relief geometry](pcb-rgbw-revb/toyota-power-cad/toyota-leads-fit.json) · [Tool access](pcb-rgbw-revb/toyota-power-cad/tool-access.json) · [Supports-off slices](pcb-rgbw-revb/toyota-power-cad/support-free.json) |
+| Digital checks | [Rev D verification receipt](pcb-rgbw-revd/generated/verification.json) · [Four-wire clearance and strain relief](pcb-rgbw-revd/generated/ir1-wire-fit.json) |
 
-The Rev C package is **4Runner-RGBW-RevC-Prototype.zip**. Open its
-`START-HERE.md` for the native board, STEP, fabrication and assembly files.
+The Rev D build guide links the native PCB, case assembly, fabrication and
+assembly files. The [Rev C two-wire build](pcb-rgbw-revc/README.md) remains
+available for the earlier wiring.
 The offline **4Runner-Console-LED-Resources.zip** preserves the owner's
 connector photos, datasheets, CAD references and Rev B project history.
 

@@ -12,7 +12,8 @@ import time
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from engineering_job import (CASE_STAGES, INSERT_MODEL, INSERT_MODEL_SHA, JOB_TYPE, MODULE,
+from engineering_job import (CASE_STAGES, ILLUMINATION_INPUTS, ILLUMINATION_PCB_INPUTS,
+                             ILLUMINATION_STAGE, ILLUMINATION_STAGES, INSERT_MODEL, INSERT_MODEL_SHA, JOB_TYPE, MODULE,
                              MODULE_SHA, ROOT, ROUTED_SHIELD, ROUTED_SHIELD_SHA, SERVICE_STAGES, STAGES,
                              TOYOTA_INPUTS, TOYOTA_STAGES, TOYOTA_WIRE_INPUTS, TOYOTA_WIRE_STAGE,
                              sha, source_files, source_pin)
@@ -51,18 +52,26 @@ def start(identity, folder, stage):
     control = f"C:/orion/control/{ACTOR}-{identity}"
     socket = f"/tmp/{ACTOR}-{identity}.sock"
     inputs = {MODULE: (MODULE_SHA, ROOT.parents[3] / "artifacts/4runner-console-cad-2026-11-07" / MODULE)}
-    if stage in TOYOTA_STAGES:
+    if stage in TOYOTA_STAGES or stage == ILLUMINATION_STAGE:
         inputs.update({name: (digest, ROOT / "generated" / name) for name, digest in TOYOTA_INPUTS.items()})
         toyota = "Yazaki_7282-1060.stp"
         inputs[toyota] = (TOYOTA_INPUTS[toyota],
                           ROOT.parents[3] / "artifacts/4runner-console-connector-map-2026-11-07/references" / toyota)
     elif stage in CASE_STAGES:
         inputs[ROUTED_SHIELD] = (ROUTED_SHIELD_SHA, ARTIFACTS / "finish-04" / "output" / ROUTED_SHIELD)
-    if stage in SERVICE_STAGES:
+    if stage in SERVICE_STAGES or stage == ILLUMINATION_STAGE:
         inputs[INSERT_MODEL] = (INSERT_MODEL_SHA, ROOT.parents[3] / "artifacts/4runner-console-cad-2026-11-07" / INSERT_MODEL)
     if stage == TOYOTA_WIRE_STAGE:
         inputs = {name: (digest, ARTIFACTS / "toyota-revc-06" / "output" / name)
                   for name, digest in TOYOTA_WIRE_INPUTS.items()}
+    if stage in ILLUMINATION_STAGES:
+        reference = ROOT.parent / "pcb-rgbw-revc" / "generated"
+        core_inputs = {name: (digest, reference / name) for name, digest in ILLUMINATION_PCB_INPUTS.items()}
+        if stage == ILLUMINATION_STAGE:
+            inputs = {name: item for name, item in inputs.items() if name in ILLUMINATION_INPUTS}
+        else:
+            inputs = {}
+        inputs.update(core_inputs)
     references = {}
     for name, (expected, fallback) in inputs.items():
         candidates = (ROOT / "inputs" / name, fallback)
@@ -122,7 +131,8 @@ def start(identity, folder, stage):
     if capability["source_sha256"] != source_pin() or set(capability["job_types"]) != {JOB_TYPE}:
         raise RuntimeError("task controller source pin mismatch")
     params = {"stage": stage, "expected_source_set_sha256": source_pin(), "evaluation_only": True,
-              "timeout_sec": 900 if stage in TOYOTA_STAGES else {"finish": 880, "durable-case": 660}.get(stage, 360)}
+              "timeout_sec": 900 if stage in (*TOYOTA_STAGES, *ILLUMINATION_STAGES)
+              else {"finish": 880, "durable-case": 660}.get(stage, 360)}
     result = call("modeling.submit", {"job_type": JOB_TYPE, "params": params}, f"{ACTOR}-{identity}")
     record(folder / "submission.json", result)
     return result

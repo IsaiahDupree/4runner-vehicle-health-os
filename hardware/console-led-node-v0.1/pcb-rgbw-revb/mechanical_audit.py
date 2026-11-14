@@ -25,7 +25,8 @@ def launch(mode, out):
         raise RuntimeError("FreeCAD unavailable")
     code = (f"import sys\nsys.path.insert(0, {str(ROOT)!r})\n"
             f"from mechanical_audit import execute\nexecute({mode!r}, {str(out)!r})\n")
-    limits = {"service-case": 260, "durable-case": 340, "toyota-power-case": 340, "toyota-wire-route": 270}
+    limits = {"service-case": 260, "durable-case": 340, "toyota-power-case": 340,
+              "toyota-wire-route": 270, "toyota-rev-d": 205}
     run_freecad(native, code, out, limits.get(mode, 140))
 
 
@@ -41,6 +42,10 @@ def execute(mode, output):
         component_models(out)
     elif mode == "toyota-wire-route":
         from wire_routing import build
+
+        build(out)
+    elif mode == "toyota-rev-d":
+        from illumination_cad import build
 
         build(out)
     elif mode in {"jlc-case", "jlc-lite-case", "service-case", "durable-case", "toyota-power-case"}:
@@ -553,7 +558,8 @@ def preview(path, shell, controller, shield, fuses, fasteners, board_width):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("mode", choices=["models", "assembly", "jlc-case", "jlc-lite-case", "service-case",
-                                         "durable-case", "toyota-power-case", "toyota-wire-route"])
+                                         "durable-case", "toyota-power-case", "toyota-wire-route",
+                                         "toyota-rev-d"])
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     launch(args.mode, args.out.resolve())

@@ -1,0 +1,11 @@
+{
+  "nominal_gain": 0.09685811486892135,
+  "adc_at_14_4_v": 1.3947568541124675,
+  "adc_at_18_v": 1.7434460676405843,
+  "off_input_ua_at_14_4_v": 118.22660098522168,
+  "adc_time_constant_ms": 1.020268160896538,
+  "off_leakage_adc_bound_v": 0.176,
+  "max_series_resistor_w_at_100_v_ideal": 0.0501002004008016,
+  "nominal_positive_clamp_v": 2.5,
+  "physical_transients_and_vehicle_signal_verified": false
+}

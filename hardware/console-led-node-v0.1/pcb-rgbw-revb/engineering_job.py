@@ -15,6 +15,7 @@ import time
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 from design import CONTRACT, NAME, REFERENCE, REV_C_NAME
+import illumination as rev_d
 
 
 JOB_TYPE = "pcb.vhos_rgbw_two_connector"
@@ -32,10 +33,13 @@ INSERT_MODEL_SHA = "3686e4730b18fa3f0a83585da28dc7eca70e5da21cedd3f75f3205c5ad11
 TOYOTA_POWER_STAGE = "toyota-power-case"
 TOYOTA_REV_C_STAGE = "toyota-rev-c"
 TOYOTA_WIRE_STAGE = "toyota-wire-route"
+ILLUMINATION_STAGE = "toyota-rev-d"
+ILLUMINATION_PCB_STAGE = "toyota-rev-d-pcb"
+ILLUMINATION_STAGES = (ILLUMINATION_STAGE, ILLUMINATION_PCB_STAGE)
 TOYOTA_STAGES = (TOYOTA_POWER_STAGE, TOYOTA_REV_C_STAGE)
 SERVICE_STAGES = ("service-case", "durable-case", *TOYOTA_STAGES)
 CASE_STAGES = ("jlc-case", "jlc-lite-case", *SERVICE_STAGES)
-STAGES = ("fit", "finish", *CASE_STAGES, TOYOTA_WIRE_STAGE)
+STAGES = ("fit", "finish", *CASE_STAGES, TOYOTA_WIRE_STAGE, *ILLUMINATION_STAGES)
 TOYOTA_WIRE_INPUTS = {
     "4Runner_Service_Assembly.FCStd": "84002c5af565bca797f26163f6fd9ad3397c3ce5a11e3b6dd848b5ad0df542bd",
     "mechanical-observation.json": "aa3b2e89732137c8a1d4c2c704ca51abe5f78918afa115f2fd0c60797c0e4e33",
@@ -54,6 +58,24 @@ TOYOTA_INPUTS = {
     "VHOS_RevB.pretty/Molex_Micro-Fit_3.0_43045-0800_2x04_P3.00mm_Horizontal.kicad_mod": "081204a5e6b56b9e233c1e3e6af8040072907a80856bb5ab65a831cf0ebde8f9",
     "Yazaki_7282-1060.stp": "3a395c88b0391df2321a68c37f330d390038b7a9a3875ca3417d1235ee711eb5",
 }
+ILLUMINATION_PCB_INPUTS = {
+    f"{REV_C_NAME}.kicad_pcb": "9e01cb47235a15026c800d11aab8909cbcd61462a88d20f5b9ebbf30e6172835",
+    f"{REV_C_NAME}.kicad_pro": "77f51773a3f8315bbf246fc3e66ccf7a0b9f1afa55ace4a3f21aec9179e29652",
+    "models/MINI-3568.step": TOYOTA_INPUTS["models/MINI-3568.step"],
+    "fp-lib-table": TOYOTA_INPUTS["fp-lib-table"],
+    "VHOS_RevB.pretty/Keystone_3568_MINI_Vertical.kicad_mod":
+        TOYOTA_INPUTS["VHOS_RevB.pretty/Keystone_3568_MINI_Vertical.kicad_mod"],
+    "VHOS_RevB.pretty/RGBW_Output_5_Pads.kicad_mod":
+        "832d5c703394719075d69fd7fed317f9b8af18222cff463a8d45a733a95a0505",
+    "VHOS_RevB.pretty/Toyota_Power_2_Pads.kicad_mod":
+        "d1ba564d9de134fdd7c9fc474880ecce98e11b85b996d3378fbac6ec8e7b775d",
+}
+ILLUMINATION_INPUTS = {
+    **ILLUMINATION_PCB_INPUTS,
+    MODULE: MODULE_SHA,
+    INSERT_MODEL: INSERT_MODEL_SHA,
+    "Yazaki_7282-1060.stp": TOYOTA_INPUTS["Yazaki_7282-1060.stp"],
+}
 
 
 def source_files():
@@ -61,7 +83,8 @@ def source_files():
                                              "engineering-inputs.json", "service_case.py", "service-case.json",
                                              "durable_case.py", "durable-case.json", "print_screen.py",
                                              "toyota_power.py", "toyota_power_case.py", "toyota-power.json",
-                                             "wire_routing.py", "toyota-wire-route.json")},
+                                             "wire_routing.py", "toyota-wire-route.json",
+                                             "illumination.py", "illumination_pcb.py", "illumination_cad.py")},
             "run_isolated_engineering.py": (ROOT / "run_isolated_engineering.py") if (ROOT / "run_isolated_engineering.py").exists()
             else REFERENCE / "run_isolated_engineering.py",
             **{f"reference/{name}": REFERENCE / name for name in ("circuit.py", "native_pcb.py", "engineering-inputs.json")}}
@@ -92,6 +115,8 @@ def validate(params):
         inputs[INSERT_MODEL] = INSERT_MODEL_SHA
     if params["stage"] == TOYOTA_WIRE_STAGE:
         inputs = TOYOTA_WIRE_INPUTS
+    if params["stage"] in ILLUMINATION_STAGES:
+        inputs = ILLUMINATION_INPUTS if params["stage"] == ILLUMINATION_STAGE else ILLUMINATION_PCB_INPUTS
     for name, expected in inputs.items():
         asset = ROOT / "inputs" / name
         if asset.is_symlink() or not asset.is_file() or sha(asset) != expected:
@@ -134,7 +159,8 @@ def execute(params, out):
             raise RuntimeError(f"{label} exited {process.returncode}")
 
     rev_c = params["stage"] == TOYOTA_REV_C_STAGE
-    output_name = REV_C_NAME if rev_c else NAME
+    rev_d_stage = params["stage"] in ILLUMINATION_STAGES
+    output_name = rev_d.NAME if rev_d_stage else REV_C_NAME if rev_c else NAME
     pcb, sch = out / (output_name + ".kicad_pcb"), out / (output_name + ".kicad_sch")
     pcb_tool = [PYTHON, "-I", "-B", ROOT / "native_pcb.py"]
     cad_tool = [sys.executable, "-I", "-B", ROOT / "mechanical_audit.py"]
@@ -150,6 +176,38 @@ def execute(params, out):
             "--side", "front", "--smd-only", "-o", fab / "SMT-placement.csv", pcb)
 
     try:
+        if rev_d_stage:
+            from toyota_power import check_reports
+
+            rev_d.stage_board(ROOT / "inputs", out)
+            run("illumination-pads", *pcb_tool, "illumination-pads", "--out", out)
+            run("erc", CLI, "sch", "erc", "--format", "json", "--severity-all", "-o", out / "erc.json", sch)
+            run("before-routing-drc", CLI, "pcb", "drc", "--format", "json", "--severity-all",
+                "--schematic-parity", "-o", out / "before-routing-drc.json", pcb)
+            run("illumination-router", JAVA, "-Xmx2g", "-XX:ActiveProcessorCount=2", "-Djava.awt.headless=true",
+                "-jar", ROUTER, "-de", out / "shield.dsn", "-do", out / "shield.ses",
+                "--router.autorouter.max_passes=30", "--router.copper_to_edge_clearance_um=350",
+                "--router.automatic_neckdown=false", "--router.fanout.enabled=false", "--router.strict_drc=true",
+                "--router.optimizer.enabled=false", "-mt", "1", "-da", "-dl", "--gui.enabled=false",
+                "--api_server.enabled=false", "--router.result_json=" + str(out / "router-result.json"),
+                "--user_data_path=" + str(out / "router-state"), limit=160)
+            run("illumination-route", *pcb_tool, "illumination-route", "--out", out)
+            run("drc", CLI, "pcb", "drc", "--format", "json", "--severity-all",
+                "--schematic-parity", "-o", out / "drc.json", pcb)
+            findings = check_reports(out)
+            fabrication(out / "prototype-fabrication")
+            run("schematic-pdf", CLI, "sch", "export", "pdf", "-o", out / "schematic.pdf", sch)
+            run("shield-render", CLI, "pcb", "render", "--width", "1800", "--height", "1100",
+                "--quality", "basic", "--background", "opaque", "--side", "top", "-o", out / "shield.png", pcb)
+            run("shield-step", CLI, "pcb", "export", "step", "--subst-models", "--no-dnp",
+                "--user-origin", "100x153.34mm", "-f", "-o", out / ROUTED_SHIELD, pcb, limit=160)
+            if params["stage"] == ILLUMINATION_STAGE:
+                run("toyota-power-case", *cad_tool, TOYOTA_POWER_STAGE, "--out", out, limit=350)
+                run("illumination-wire-fit", *cad_tool, ILLUMINATION_STAGE, "--out", out, limit=220)
+                run("support-free-print-screen", sys.executable, "-I", "-B",
+                    ROOT / "print_screen.py", "--out", out, limit=120)
+            return {"stage": params["stage"], "pcb_findings": findings,
+                    "physical_fit_verified": False, "manufacturing_released": False}
         if params["stage"] == TOYOTA_WIRE_STAGE:
             run("wire-routing", *cad_tool, TOYOTA_WIRE_STAGE, "--out", out, limit=300)
             return {"stage": TOYOTA_WIRE_STAGE, "physical_fit_verified": False,
@@ -235,6 +293,9 @@ def execute(params, out):
             report["published_routed_shield_sha256"] = ROUTED_SHIELD_SHA
         if params["stage"] in SERVICE_STAGES:
             report["ruthex_reference_sha256"] = INSERT_MODEL_SHA
+        if rev_d_stage:
+            report["contract"] = rev_d.CONTRACT
+            report["inputs"] = ILLUMINATION_INPUTS if params["stage"] == ILLUMINATION_STAGE else ILLUMINATION_PCB_INPUTS
         (out / "engineering-manifest.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
 
 
