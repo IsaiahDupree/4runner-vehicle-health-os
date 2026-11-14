@@ -16,6 +16,7 @@ from engineering_job import (CASE_STAGES, ILLUMINATION_INPUTS, ILLUMINATION_PCB_
                              ILLUMINATION_STAGE, ILLUMINATION_STAGES, INSERT_MODEL, INSERT_MODEL_SHA, JOB_TYPE, MODULE,
                              MODULE_SHA, ROOT, ROUTED_SHIELD, ROUTED_SHIELD_SHA, SERVICE_STAGES,
                              SINGLE_BOARD_INPUTS, SINGLE_BOARD_PCB_INPUTS, SINGLE_BOARD_STAGE, SINGLE_BOARD_STAGES, STAGES,
+                             STOCK_BOARD_INPUTS, STOCK_BOARD_STAGE,
                              TOYOTA_INPUTS, TOYOTA_STAGES, TOYOTA_WIRE_INPUTS, TOYOTA_WIRE_STAGE,
                              sha, source_files, source_pin)
 
@@ -83,6 +84,13 @@ def start(identity, folder, stage):
             toyota = "Yazaki_7282-1060.stp"
             inputs[toyota] = (SINGLE_BOARD_INPUTS[toyota],
                               ROOT.parents[3] / "artifacts/4runner-console-connector-map-2026-11-07/references" / toyota)
+    if stage == STOCK_BOARD_STAGE:
+        reference = ROOT.parent / "pcb-rgbw-reve" / "generated"
+        inputs = {name: (digest, reference / name) for name, digest in STOCK_BOARD_INPUTS.items()}
+        inputs[INSERT_MODEL] = (INSERT_MODEL_SHA, ROOT.parents[3] / "artifacts/4runner-console-cad-2026-11-07" / INSERT_MODEL)
+        toyota = "Yazaki_7282-1060.stp"
+        inputs[toyota] = (STOCK_BOARD_INPUTS[toyota],
+                          ROOT.parents[3] / "artifacts/4runner-console-connector-map-2026-11-07/references" / toyota)
     references = {}
     for name, (expected, fallback) in inputs.items():
         candidates = (ROOT / "inputs" / name, fallback)
@@ -142,7 +150,7 @@ def start(identity, folder, stage):
     if capability["source_sha256"] != source_pin() or set(capability["job_types"]) != {JOB_TYPE}:
         raise RuntimeError("task controller source pin mismatch")
     params = {"stage": stage, "expected_source_set_sha256": source_pin(), "evaluation_only": True,
-              "timeout_sec": 900 if stage in (*TOYOTA_STAGES, *ILLUMINATION_STAGES, *SINGLE_BOARD_STAGES)
+              "timeout_sec": 900 if stage in (*TOYOTA_STAGES, *ILLUMINATION_STAGES, *SINGLE_BOARD_STAGES, STOCK_BOARD_STAGE)
               else {"finish": 880, "durable-case": 660}.get(stage, 360)}
     result = call("modeling.submit", {"job_type": JOB_TYPE, "params": params}, f"{ACTOR}-{identity}")
     record(folder / "submission.json", result)

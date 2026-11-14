@@ -22,9 +22,9 @@ Colors refer to the truck-side instrument-panel loom.
 | 5 | White/black (W–B) | Lighter socket chassis ground, ground point II | Branch to **Rev D J1-1 GND** after verification. |
 | 6 | Pink/blue (P–L) | Lighter socket ACC +12 V, through the 10 A CIG fuse in the service diagram | Branch to **Rev D J1-2 ACC** after verification. This is the sole supply for the controller and its RGBW drivers. |
 
-Rev E uses the same four J1 pad assignments. It gives IR1-3 and IR1-4
+Rev F uses the same four J1 pad assignments. It gives IR1-3 and IR1-4
 individually insulated, labeled reserve tails on the external tee while
-keeping both factory paths. [Rev E wire register](../pcb-rgbw-reve/WIRE-REGISTER.csv).
+keeping both factory paths. [Rev F wire register](../pcb-rgbw-revf/WIRE-REGISTER.csv).
 
 The two green wires meet upstream at the same TAIL feed. The two white/green
 returns meet upstream at the same dimmer circuit and run to the R13 rheostat.

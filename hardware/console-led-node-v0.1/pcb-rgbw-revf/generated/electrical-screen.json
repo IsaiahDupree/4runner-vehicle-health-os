@@ -1,0 +1,143 @@
+{
+  "contract": "vhos_rgbw_revf_stocked_single_board_v1",
+  "method": "Steady-state equations and component corner limits",
+  "corner_count": 624,
+  "protected_input_evaluated_v": [
+    7.5,
+    16.1
+  ],
+  "thermal_resistor_allowance_c": [
+    -40,
+    65
+  ],
+  "restarting_input_v": [
+    7.826939587711845,
+    8.831855155520635
+  ],
+  "cutoff_input_v": [
+    14.918775834702563,
+    15.991907815817044
+  ],
+  "five_volt_static_v": [
+    4.860047207085956,
+    5.40661421516112
+  ],
+  "switch_nominal_hz": 322422.25859247136,
+  "switch_corner_hz": [
+    246066.63963950882,
+    418172.9786046052
+  ],
+  "feedback_nominal_ripple_mv": 43.827016972797026,
+  "feedback_corner_ripple_mv": [
+    13.366314602899495,
+    82.58744362917875
+  ],
+  "coupling_settling_target_supported_us": 75.680325,
+  "min_ripple_capacitance_f": 1.154649060371684e-09,
+  "estimated_buck_amps_peak_at_500ma_load": 0.6404875523658846,
+  "estimated_inductor_amps_rms": 0.506536195603617,
+  "inductor_copper_loss_w_at_100c": 0.12424487696296595,
+  "three_volt_nominal_v": 3.384,
+  "three_volt_static_v": [
+    3.264987860304968,
+    3.5069000101677683
+  ],
+  "max_reset_release_v": 3.1887239999999997,
+  "adc_channels": {
+    "TAIL": {
+      "adc_v_at_14_4_v": [
+        0.9725351069301088,
+        0.9999078412089916
+      ],
+      "adc_gain": [
+        0.06753716020347977,
+        0.06943804452840219
+      ],
+      "adc_min_v_if_switch_is_minus_0_5_v": -0.2775809430477555,
+      "positive_clamp_min_current_at_100v_ma": 0.7924278405659051,
+      "positive_clamp_max_current_at_100v_ma": 0.80294923957086,
+      "rc_time_ms_at_nominal_capacitance": [
+        1.3569082730821482,
+        1.374857777295264
+      ],
+      "computed_resistor_corners": 32
+    },
+    "DIM": {
+      "adc_v_at_14_4_v": [
+        0.9725351069301088,
+        0.9999078412089916
+      ],
+      "adc_gain": [
+        0.06753716020347977,
+        0.06943804452840219
+      ],
+      "adc_min_v_if_switch_is_minus_0_5_v": -0.2775809430477555,
+      "positive_clamp_min_current_at_100v_ma": 0.7924278405659051,
+      "positive_clamp_max_current_at_100v_ma": 0.80294923957086,
+      "rc_time_ms_at_nominal_capacitance": [
+        1.3569082730821482,
+        1.374857777295264
+      ],
+      "computed_resistor_corners": 32
+    }
+  },
+  "positive_clamp_high_v": 2.5389999999999997,
+  "checks": {
+    "logic_rail_within_gate_driver_and_buck_input_range": true,
+    "regulator_timing_and_ripple": true,
+    "input_ov_cutoff_within_screened_rail_range": true,
+    "type_3_ripple_capacitor": true,
+    "inductor_and_regulator_peak": true,
+    "esp_supply_static_margin": true,
+    "adc_limit_with_switch_at_minus_0_5v": true,
+    "adc_sense_gain_at_14_4v": true,
+    "positive_clamp_current_and_voltage_at_100v": true
+  },
+  "physical_tests_pending": [
+    "Buck startup, dropout, load steps and transient rail limits",
+    "Inductor/driver thermals and LED current",
+    "Cold negative pulses and hot ADC leakage",
+    "RF link and vehicle fit"
+  ],
+  "native_pin_checks": {
+    "J1": {
+      "1": "GND",
+      "2": "VEH_ACC",
+      "3": "TAIL_12V",
+      "4": "DIM_RETURN"
+    },
+    "F1": {
+      "1": "VEH_ACC",
+      "2": "ACC_FUSED"
+    },
+    "F2": {
+      "1": "LED_POS",
+      "2": "VIN_PROT"
+    },
+    "Q5": {
+      "1": "ACC_FUSED",
+      "5": "POWER_MID"
+    },
+    "Q6": {
+      "1": "LED_POS",
+      "5": "POWER_MID"
+    },
+    "U1": {
+      "2": "VIN_PROT"
+    },
+    "U9": {
+      "4": "V5_LOGIC"
+    },
+    "U11": {
+      "2": "ESP_3V3"
+    },
+    "D7": {
+      "1": "TAIL_CLAMP",
+      "2": "GND"
+    },
+    "D8": {
+      "1": "DIM_CLAMP",
+      "2": "GND"
+    }
+  }
+}

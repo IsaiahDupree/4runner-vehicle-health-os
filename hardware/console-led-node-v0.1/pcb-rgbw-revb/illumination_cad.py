@@ -201,7 +201,7 @@ def preview(out, doc, revision):
     for solid in doc.Shield.Shape.Solids:
         bounds = solid.BoundBox
         board = bounds.XLength > 110 and abs(bounds.ZLength - 1.6) < .1
-        radio = revision == "E" and bounds.XMax > 124 and bounds.XLength > 17
+        radio = revision in {"E", "F"} and bounds.XMax > 124 and bounds.XLength > 17
         color = (43, 104, 86) if board else (182, 188, 191) if radio else (61, 73, 80)
         stack.append((solid, color))
     wires = [(obj.Shape, tuple(round(ch * 255) for ch in obj.ReferenceColor[:3])) for obj in doc.ToyotaConductors.Group]
@@ -226,10 +226,10 @@ def preview(out, doc, revision):
     paint.setRenderHint(QtGui.QPainter.Antialiasing)
     paint.setPen(QtGui.QColor("#18313c"))
     paint.setFont(QtGui.QFont("Segoe UI", 29, QtGui.QFont.Bold))
-    paint.drawText(65, 76, "Rev D · Toyota IR1 wiring" if revision == "D" else "Rev E · Single-board controller")
+    paint.drawText(65, 76, "Rev D · Toyota IR1 wiring" if revision == "D" else f"Rev {revision} · Single-board controller")
     paint.setFont(QtGui.QFont("Segoe UI", 15))
     paint.drawText(66, 115, "Four Toyota wires enter the case. The ESP32-S3 mounts on the PCB."
-                   if revision == "E" else "Four wires through the existing Toyota entry to the shield")
+                   if revision in {"E", "F"} else "Four wires through the existing Toyota entry to the shield")
     for i, (pin, row) in enumerate(rev_d.BRANCH.items()):
         x, y = 65 + (i % 2) * 345, 931 + (i // 2) * 40
         paint.setBrush(QtGui.QColor(*row["rgb"]))

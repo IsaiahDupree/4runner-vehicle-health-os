@@ -1,0 +1,18 @@
+Role,Qty,Part or dimensions,Use
+Toyota pin half,1,Yazaki 7282-1060 / Corsa 090IIU-6P-1,Candidate mate for the truck's white IR1 connector. Verify keying and latch.
+Toyota socket half,1 where factory mate is fitted,Yazaki 7283-1060 / Corsa 090IIU-6S-1,Completes the external 1-to-1 factory tee.
+Toyota terminal sets,6 positions per tee half,Terminals specified for each Yazaki housing,Match the factory wire gauge and terminal range.
+Tee conductors,6 where factory mate is fitted,Match factory wire gauge,Verify each straight-through connection by cavity number.
+Toyota branch power and ground,2,20 AWG TXL nominal 1.95 mm OD,IR1-6 to J1-2 and IR1-5 to J1-1. Confirm the wire and terminal current ratings.
+Toyota branch illumination sense,2,22 AWG TXL nominal 1.70 mm OD,IR1-1 to J1-3 and IR1-2 to J1-4.
+Tee reserve tails,2,22 AWG TXL with individually insulated closed ends and wire labels,IR1-3 TAIL and IR1-4 DIM. Secure outside case with service slack and verify cavity assignment.
+Toyota branch sleeve,1,Nominal 7.2 mm OD and 0.32 mm wall,Confirm real sleeve dimensions and end it just past the first tie slot.
+Branch fuse and holder,As required by feed and wire,Size to verified circuit and smallest added power wire,Locate at the takeoff if required by the installed branch.
+RGBW lead,1,Five-conductor automotive wire and candidate DD4083 or DD4084 M8 donor,Confirm pod contacts and polarity. Solder to J2 and secure sleeve.
+RGBW pod,1 for first prototype,Diode Dynamics DD7440 candidate,Verify common positive and full-load current.
+Saddle ties,3,Nominal 2.5 mm strap width,One Toyota tie and two RGBW ties. Dry-fit the real heads and verify retention.
+Printed parts,1 pair,Rev F base and lid,Use Rev F saddle and insert coupons in the intended process.
+Heat-set inserts,8,ruthex RX-M3x5.7,4 lid and 4 PCB. Verify blind bore and torque on coupon.
+Lid screws,4,M3 x 8 socket head,Verify engagement and tool clearance.
+PCB fasteners,4 each,M3 x 6 socket head and 7 mm OD x 0.5 mm insulating washer,Check screw length and washer clearance.
+Vehicle mounting fasteners,2,M4 screws and washers,Choose anchor and length for the measured console location.

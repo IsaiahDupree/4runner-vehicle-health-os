@@ -86,6 +86,17 @@ and assembly terms for that board.
   joints per shield out of local assembly. The fuse elements still fit by
   hand. Confirm any wave/hand-solder eligibility and inspection in the cart.
 
+- **Compare factory populations and finished prototypes.** The Rev F change
+  replaced three Extended resistor codes with two Basic values and a
+  precision value already on the board. That freed three feeder slots
+  for the revised inductor and clamps. Its 90-placement estimate was
+  $188.28 for two boards. The 87-placement assembly for the previous
+  revision cost $191.17 with three hand-fitted SMT parts still outstanding.
+  Record the factory population and price the remaining parts when comparing
+  totals. Use the manufacturer's land pattern when a substitute has a
+  different lead geometry, then repeat ERC, DRC, assembly and case checks.
+  [Rev F build and cost example](../../hardware/console-led-node-v0.1/pcb-rgbw-revf/jlcpcb/README.md).
+
 [JLC assembly fees](https://jlcpcb.com/help/article/pcb-assembly-price) ·
 [JLC Basic and Extended rules](https://jlcpcb.com/help/article/pcb-assembly-faqs) ·
 [JLC global sourcing](https://jlcpcb.com/help/article/how-to-use-jlcpcb-global-sourcing-parts-service) ·

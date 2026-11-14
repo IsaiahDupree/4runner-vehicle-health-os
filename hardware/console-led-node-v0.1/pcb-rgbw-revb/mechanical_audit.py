@@ -26,7 +26,7 @@ def launch(mode, out):
     code = (f"import sys\nsys.path.insert(0, {str(ROOT)!r})\n"
             f"from mechanical_audit import execute\nexecute({mode!r}, {str(out)!r})\n")
     limits = {"service-case": 260, "durable-case": 340, "toyota-power-case": 340,
-              "toyota-wire-route": 270, "toyota-rev-d": 205, "toyota-rev-e": 460}
+              "toyota-wire-route": 270, "toyota-rev-d": 205, "toyota-rev-e": 460, "toyota-rev-f": 460}
     run_freecad(native, code, out, limits.get(mode, 140))
 
 
@@ -48,10 +48,18 @@ def execute(mode, output):
         from illumination_cad import build
 
         build(out)
-    elif mode == "toyota-rev-e":
+    elif mode in {"toyota-rev-e", "toyota-rev-f"}:
         from single_board_case import build
 
-        build(out)
+        build(out, revision=mode[-1].upper())
+    elif mode == "rev-f-package-models":
+        from stock_board import PACKAGE_ENVELOPES
+
+        for name, (width, depth, height) in PACKAGE_ENVELOPES.items():
+            solid = rounded(-width / 2, -depth / 2, 0, width, depth, height, .15)
+            model = out / "models" / (name + ".step")
+            solid.exportStep(str(model))
+            reopen(model)
     elif mode in {"jlc-case", "jlc-lite-case", "service-case", "durable-case", "toyota-power-case"}:
         dimensions = {**CASE, "insert_depth_mm": 7.0, "lower_boss_diameter_mm": 8.0}
         if mode in {"jlc-lite-case", "service-case"}:
@@ -563,7 +571,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("mode", choices=["models", "assembly", "jlc-case", "jlc-lite-case", "service-case",
                                          "durable-case", "toyota-power-case", "toyota-wire-route",
-                                         "toyota-rev-d", "toyota-rev-e"])
+                                         "toyota-rev-d", "toyota-rev-e", "toyota-rev-f", "rev-f-package-models"])
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     launch(args.mode, args.out.resolve())

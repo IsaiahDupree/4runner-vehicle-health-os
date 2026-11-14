@@ -1,0 +1,635 @@
+{
+  "contract": "vhos_rgbw_revf_stocked_single_board_v1",
+  "device": "orion",
+  "params": {
+    "stage": "toyota-rev-f",
+    "expected_source_set_sha256": "8cb1adfc83dcd1bafbe284516734d369bdc970d837bf5bca1200e96c0b24f18e",
+    "evaluation_only": true,
+    "timeout_sec": 900
+  },
+  "sources": {
+    "design.py": "748322082eef188c02e66f60ebf70151d0b3ffb621b35c3567d666e23ecfacc1",
+    "native_pcb.py": "00a78a819859ff1cccc30edca7353b701272e289705b4d4754b68cc30c96b7ba",
+    "mechanical_audit.py": "f45647ac6ef6b892b6b471cedccc15bc02d81caa627f20b649ad15b58ec4ad66",
+    "engineering_job.py": "b0ad3dbc2414847fdc1a1f5a4992ca26f42d42708546fba33818690d73d4605f",
+    "engineering-inputs.json": "23908103f01ee4d46a67e28fb384dd1490da0757ee4fe1c2fa870a61baab4d2e",
+    "service_case.py": "3596a20940f5ddc1d1d1f4cf890918f92fd38e4953921bd9fa31e97d11d0635d",
+    "service-case.json": "e7e0f15e87dc71e6a15d5bcc0f71ac56f25cd14779a9afcadb39ecec4be2963c",
+    "durable_case.py": "a3ca3a902bf30ef048b3ebbccc87e80b6dc32c2e7a0b12c63556aa10167fbcd9",
+    "durable-case.json": "e7f3810686320dce5d85ceccf4d5b3558c0f815a554c76661fa32c6b7e12f79c",
+    "print_screen.py": "15f3853a09c24b33b84378f1684bf1245c2b17f8b14483fb577cea243d1169dc",
+    "toyota_power.py": "c68e2800db9154223bc3bf13e951268ce3ff5de4e57f062de699a4e111693680",
+    "toyota_power_case.py": "eb31b0ecb407090b26981f0d5da332d1513fa74809ab090ba90f9a7c4815e207",
+    "toyota-power.json": "5912932df235b799406ce20d4903516db92427d15f94e01a4904b2e2633de1f4",
+    "wire_routing.py": "ab4c72edfb99a612321522bc46b9f171f06f948c2eafc5e2f6a712ef91d3f8b9",
+    "toyota-wire-route.json": "354993d5f0e88dc0e1b0c145ce6b52f3e3865b4f4203458dae0babedcb2ea69d",
+    "illumination.py": "03e01a18b8bf8950dc80dcf497b6f7e473b124d69494d8ec93a3b9f1024b75c6",
+    "illumination_pcb.py": "14eadea97d5a4423a34eb67a6152a526becc530f97091115e1450ffbd21c5e99",
+    "illumination_cad.py": "0b6fbcfe8b6dafff26d2ca92d9e051cec5f40c2f70fe8df835d6a7cb02add30f",
+    "single_board.py": "904c3e63c6e73176e72797f3269219c6db0936b8be665233b927c51ba5564b32",
+    "single_board_pcb.py": "f202709c1ee0e0f468d579f44beaf52024a4382e990a5cbb4f5f490421b3ccd5",
+    "single_board_case.py": "f46ca5c609ccb3c482f50f0d509c4158b02ef59d5c6ebdb2287ca8a815d8aa59",
+    "stock_board.py": "0c375b1a91484730826506cc049d32095f1eb5716c8e556e907099966e128de0",
+    "stock_board_pcb.py": "c446a1ad854db734357836cee307c52c7d2d5266ba4a9e08790892e57f652aa8",
+    "stock_board_parts.csv": "72f91277b42f5b3d5377eeca2d5d508705245762d1c3f51c108f6f23414d29d9",
+    "TDK_SPM6545VT-D.kicad_mod": "9f63b3b413bb8b9099cafb1e85b9c4f4377d82d2dc0bd3f81f4bd0636d2562d6",
+    "onsemi_SOD-323_477.kicad_mod": "caec34cfdb48e54640ecadbf50f44f5d72d3f9b557c51950e99f274b170ce176",
+    "run_isolated_engineering.py": "5e4701851492068195782433d552b754dbc88e3f89d2fbe9d588299fce93c808",
+    "reference/circuit.py": "db04c82bb06e688d3cd75548cc81b055ee92e3c0813742e2c6041a8a8f137bb9",
+    "reference/native_pcb.py": "2f2ee35134f321bf27e4a23d94a1324681b5bcd0b240cc8793e46623c79e895e",
+    "reference/engineering-inputs.json": "7bacb751b2c9528023fa21e3b3c077748739da77172a26e317fb0700cf3a9bd5"
+  },
+  "artifacts": [
+    {
+      "name": "4Runner_RevF_Assembly.FCStd",
+      "bytes": 4118021,
+      "sha256": "f2822963f2217e6abc1705f50890d152660d49eb3a9e1706356c3e9e8cd8a528"
+    },
+    {
+      "name": "4Runner_RevF_Assembly.step",
+      "bytes": 18493763,
+      "sha256": "1a790b7a73924c8f912120b9c0edc8be44c31d9588e544bdf717aae122272fb9"
+    },
+    {
+      "name": "4Runner_RevF_Toyota_Wires.step",
+      "bytes": 39766,
+      "sha256": "24c9caa81d15ee76b2098125d8ecc0ae9fa3f321de351bed7b98039f22bcec55"
+    },
+    {
+      "name": "_native_entry.py",
+      "bytes": 462,
+      "sha256": "11b0022e875becf679c04a0bffd6e196112f8e6724a35d8f43eac4bc5442b220"
+    },
+    {
+      "name": "_native_impl.py",
+      "bytes": 239,
+      "sha256": "01710b1d4f9c5d49018fc2f16efdbca996ecfe1e2c53e550f2bfbdf0a02c5d81"
+    },
+    {
+      "name": "case_base-cura.log",
+      "bytes": 61843,
+      "sha256": "7d81bda235c98ead5bfd6a0db7773014c414eae00098d778c7c7dd11fd22d9df"
+    },
+    {
+      "name": "case_base.step",
+      "bytes": 266248,
+      "sha256": "594617679940569f4f69c86a06bbe92388475ec2c000d5bddbc06e865b6f0aef"
+    },
+    {
+      "name": "case_base.stl",
+      "bytes": 394384,
+      "sha256": "beb8318f535618c748b5ecf07b93a2aefb40308180a429200ccce5d4682eb98c"
+    },
+    {
+      "name": "case_lid-cura.log",
+      "bytes": 62050,
+      "sha256": "35629ce759d8ea94ffaa619fb6620a49c3131d85f27906a5e889f819e13b674a"
+    },
+    {
+      "name": "case_lid.step",
+      "bytes": 429006,
+      "sha256": "6e8a554f9fc5675c53a27c57af563bf7b0959b3bd7713d153aa79ce058d62ea3"
+    },
+    {
+      "name": "case_lid.stl",
+      "bytes": 335084,
+      "sha256": "544f0e48b6b6f1211a96453932cbce8946c663ab63498e4d771d80cb8c022c51"
+    },
+    {
+      "name": "commands.json",
+      "bytes": 1700,
+      "sha256": "9743d0c23d30d8d0569d548006129dffb3f1a703ee761f82d08c6b7a1d6df1ff"
+    },
+    {
+      "name": "controller-interface.json",
+      "bytes": 1549,
+      "sha256": "855067d9f82484caf25b8c99f4508b10fa1ae19f3c4287476cc898f1c91da9bb"
+    },
+    {
+      "name": "copper-audit.json",
+      "bytes": 1523,
+      "sha256": "3eb064713e731eedd3f957cfae24b60a8dfc85aa40ab806a11ebafd8b30ed7a9"
+    },
+    {
+      "name": "drc.json",
+      "bytes": 1129,
+      "sha256": "34029f3d2d1cce78da35ed68c65caf2d6339a964c0d6ff13354fa362e266c373"
+    },
+    {
+      "name": "drc.log",
+      "bytes": 193,
+      "sha256": "687b4598deae17d81b5f3f1464703bc611ac9a9ead8599b297a7c853641cb8e3"
+    },
+    {
+      "name": "drill.log",
+      "bytes": 635,
+      "sha256": "e575b9b0202b6953c31f58dbf9103ea8a9916f20019cfb57b533c10190cee3b9"
+    },
+    {
+      "name": "electrical-screen.json",
+      "bytes": 3774,
+      "sha256": "0a62a97d7e26f9ef41ef527dfb3e84407c49b21d0b9311008f72b44c97c4fdd9"
+    },
+    {
+      "name": "erc.json",
+      "bytes": 1045,
+      "sha256": "2c4c9ac1ba18a8dfb970d6cacaed84b731e8c031b53d6ca21ccc2fbda90caaf0"
+    },
+    {
+      "name": "erc.log",
+      "bytes": 133,
+      "sha256": "a2ba5d17305d608963a75c35c21fc635d543bfde7f3b53f9a2c81315901baf54"
+    },
+    {
+      "name": "fp-lib-table",
+      "bytes": 1232,
+      "sha256": "24f26a043e09d213016ecf9c83a2f5ca6549d1ad3b453f963935a40abcfeacb0"
+    },
+    {
+      "name": "freecad.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "front_lid_coupon-cura.log",
+      "bytes": 62056,
+      "sha256": "9b9c1d284730dc633166756a9401aabff42ed309e37ead1fb202e4ac8e5788f9"
+    },
+    {
+      "name": "front_lid_coupon.step",
+      "bytes": 292239,
+      "sha256": "082a2f01de902710314a411f660f1809ebaf92765daa77f6b45272756dde5e4a"
+    },
+    {
+      "name": "front_lid_coupon.stl",
+      "bytes": 39084,
+      "sha256": "43dfd6788a63daec005b96357c88b304192fc45db643cf1e6b2697b8cd3e4cb4"
+    },
+    {
+      "name": "front_ports_coupon-cura.log",
+      "bytes": 61850,
+      "sha256": "d5b9d5b1c2ddd3d19d1d6073e4855ce11a97b191850227a634fc19e6a5cea167"
+    },
+    {
+      "name": "front_ports_coupon.step",
+      "bytes": 142474,
+      "sha256": "b46f1bb150f0fc4129585bfbfe994738e0a7751df891cc510935c68f18de6d8b"
+    },
+    {
+      "name": "front_ports_coupon.stl",
+      "bytes": 88184,
+      "sha256": "750cfa5b9edb70244e9d9d01f47b7ae73a1fc02801b080ef777f55b7663f8eb1"
+    },
+    {
+      "name": "gerber.log",
+      "bytes": 1550,
+      "sha256": "51f3575a623fb9f0e3a1f6db4637a8acc4e5277f497d2cb3646b1b0bb877eec3"
+    },
+    {
+      "name": "harness-pads.json",
+      "bytes": 1880,
+      "sha256": "6786dab7b9bec57e916f5892527de73fe18a7affe09f4b227584e949bb5eaffd"
+    },
+    {
+      "name": "ir1-wire-fit.json",
+      "bytes": 15163,
+      "sha256": "ad6f8951eeb8b300d623bf941e2ecfdcf013f4c2b3f5ec88789b961447fd32f2"
+    },
+    {
+      "name": "m3_tolerance_coupon-cura.log",
+      "bytes": 61845,
+      "sha256": "4dd0d2ebade20cae13ee75d104fd77338ff19b10f3123f8d5d48bf3448729471"
+    },
+    {
+      "name": "m3_tolerance_coupon.step",
+      "bytes": 26917,
+      "sha256": "b5310b2d03b576969c4a4f7fd039969e44233ea4bf63ec076190df8ebda18f63"
+    },
+    {
+      "name": "m3_tolerance_coupon.stl",
+      "bytes": 163184,
+      "sha256": "a89ac2d4d18eae95677b1699e2e9716e10f92f72cc83daa6b3851e408548a3b3"
+    },
+    {
+      "name": "mechanical-observation.json",
+      "bytes": 10152,
+      "sha256": "c9e0e4e14de111d8f77fe5f5788883906a75adc10f633774217c0c9682f1b27c"
+    },
+    {
+      "name": "models/ESP32-S3-WROOM-1.step",
+      "bytes": 1906878,
+      "sha256": "3e35bb7ba7d030d88855fcf968398c8670934c7dca08b4e30b2c578bc1e13954"
+    },
+    {
+      "name": "models/MINI-3568.step",
+      "bytes": 17339,
+      "sha256": "66526bf041e5a75d96b72a060ffd766633e7abbaa5696d8b27927e055e6808fa"
+    },
+    {
+      "name": "models/onsemi_SOD-323_477.step",
+      "bytes": 12391,
+      "sha256": "14d609fadb4bb2496fed6cd326b862ae7b254b219c580acc838ebc1ad5172e1f"
+    },
+    {
+      "name": "models/TDK_SPM6545VT-D.step",
+      "bytes": 12332,
+      "sha256": "fb092338154c18df84e3d51fb150377492bf9bdabb0f4eaf79c015595ea30823"
+    },
+    {
+      "name": "models/TI_DRR0012E.step",
+      "bytes": 12334,
+      "sha256": "8651b7766674d6e9a65358d9b7643ad566ea86d11d6f26d4df27ac99273c5e5e"
+    },
+    {
+      "name": "PCB-BOM.csv",
+      "bytes": 9317,
+      "sha256": "35d4505e5c9bc60e38daf6db51ba4171d45da0abd221676e5f1d975eeb76e033"
+    },
+    {
+      "name": "placement.log",
+      "bytes": 150,
+      "sha256": "cd2e666ad0d9a28776bb00dbc25c0cf13e0b047657237fe34ec2cbbad4dfe5ce"
+    },
+    {
+      "name": "power-route-widths.json",
+      "bytes": 202,
+      "sha256": "296cd15bbb87d74237617ef681e3289aea4a87b749ca89b7ed9770f998698c69"
+    },
+    {
+      "name": "prototype-fabrication/gerbers/vhos_rgbw_revf-B_Cu.gbl",
+      "bytes": 138330,
+      "sha256": "c2ff70311a7767fd5198cd24e5d9c3784de17d0eb5251ee022bfa5d4566d4ed9"
+    },
+    {
+      "name": "prototype-fabrication/gerbers/vhos_rgbw_revf-B_Mask.gbs",
+      "bytes": 2123,
+      "sha256": "03a2e435f611d536847ce81af9d193d47fbe03a3b52e5554dc8c9fefc9db5529"
+    },
+    {
+      "name": "prototype-fabrication/gerbers/vhos_rgbw_revf-B_Silkscreen.gbo",
+      "bytes": 472,
+      "sha256": "c1f2fe3d58e18917438e82440a600ee5b30054a3598e056399675895e2287a8c"
+    },
+    {
+      "name": "prototype-fabrication/gerbers/vhos_rgbw_revf-Edge_Cuts.gm1",
+      "bytes": 716,
+      "sha256": "2c8f9601233bd08dd79aecfff2bc6122fa493cc110630817b4066a6a4b498a63"
+    },
+    {
+      "name": "prototype-fabrication/gerbers/vhos_rgbw_revf-F_Cu.gtl",
+      "bytes": 373600,
+      "sha256": "fe9a123738fa5e84d830507ea62bdd4b56289618df887eb1f0ecbe729db91c34"
+    },
+    {
+      "name": "prototype-fabrication/gerbers/vhos_rgbw_revf-F_Mask.gts",
+      "bytes": 15615,
+      "sha256": "cc4e81908a9a770d4e8a32111b350054c93aac8850f28b4109eafcbf7ef70265"
+    },
+    {
+      "name": "prototype-fabrication/gerbers/vhos_rgbw_revf-F_Paste.gtp",
+      "bytes": 16619,
+      "sha256": "03f8b85376629411841ff16106a135526b582db249bd01faf6adcb89a04cb94c"
+    },
+    {
+      "name": "prototype-fabrication/gerbers/vhos_rgbw_revf-F_Silkscreen.gto",
+      "bytes": 58821,
+      "sha256": "f3daeb63cc88ba15a209d262bd068e9abfda79f20305fb90585f8a099d9b5286"
+    },
+    {
+      "name": "prototype-fabrication/gerbers/vhos_rgbw_revf-In1_Cu.g1",
+      "bytes": 139697,
+      "sha256": "29a08b441c6166965889bbc5c1975250381f899b31f69a4868feaae4ab16a772"
+    },
+    {
+      "name": "prototype-fabrication/gerbers/vhos_rgbw_revf-In2_Cu.g2",
+      "bytes": 11048,
+      "sha256": "10cb63146549467e960374d12c838458b4fbf34c74d46306b266fc10e385a7bf"
+    },
+    {
+      "name": "prototype-fabrication/gerbers/vhos_rgbw_revf-job.gbrjob",
+      "bytes": 3786,
+      "sha256": "977a02fd58601e963959d4379e59ad14790e1589100faf0e789ce3728667aa9b"
+    },
+    {
+      "name": "prototype-fabrication/gerbers/vhos_rgbw_revf-NPTH-drl_map.pdf",
+      "bytes": 12254,
+      "sha256": "a7f877008187bd0c8cd9a4deb575143fade1b0581375357970674534c9e5d3a5"
+    },
+    {
+      "name": "prototype-fabrication/gerbers/vhos_rgbw_revf-NPTH.drl",
+      "bytes": 405,
+      "sha256": "a068dd253d4a0f244d1c5f0677cb2996f4c3fe9827fbfc0d9768f3904691f1d6"
+    },
+    {
+      "name": "prototype-fabrication/gerbers/vhos_rgbw_revf-PTH-drl_map.pdf",
+      "bytes": 19200,
+      "sha256": "24dbb7bc5bdcf1bebe20492fb63e6ee8c715861e73d594706ba7312cfa3749e2"
+    },
+    {
+      "name": "prototype-fabrication/gerbers/vhos_rgbw_revf-PTH.drl",
+      "bytes": 3540,
+      "sha256": "896e25b9b5b13d10da66ef03f31f35a8e8e8f731941cd7e95f8de44b9763dcce"
+    },
+    {
+      "name": "prototype-fabrication/SMT-placement.csv",
+      "bytes": 6609,
+      "sha256": "029f0dc84c289a377507d427d061fe0df47af2b5a8c5d911951a30846e72a61d"
+    },
+    {
+      "name": "rev-f-package-models.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "RevF-Toyota-wiring.png",
+      "bytes": 87575,
+      "sha256": "03e163a50704a5f42b403de55f6c708972e44673616602835049ddd0ba331ae5"
+    },
+    {
+      "name": "routed_shield.step",
+      "bytes": 4448611,
+      "sha256": "58910cc6a1034427c82182e58d755c48566d9427b6694ac531fdcdc09f2b8668"
+    },
+    {
+      "name": "schematic-pdf.log",
+      "bytes": 119,
+      "sha256": "7b17b92f0dbc02b125c661572ace5b5f4b26e5ab0216a7d167886e0bc47af465"
+    },
+    {
+      "name": "schematic.pdf",
+      "bytes": 314897,
+      "sha256": "f44f3b1ba2668c0e32672eb1b7a0b48016d1d79441940a88869ae1077989c624"
+    },
+    {
+      "name": "shield-render.log",
+      "bytes": 1601,
+      "sha256": "dd87d70a96bea72eef1a1a49967ec0ec7c37d8266dc96109d66fae2c075037fb"
+    },
+    {
+      "name": "shield-step.log",
+      "bytes": 147,
+      "sha256": "3d18b53505441495512c2c370b9821dc8bbfe1ae7c39612c99ff90fb9b627ace"
+    },
+    {
+      "name": "shield.png",
+      "bytes": 101876,
+      "sha256": "bbc43cdab07c0d55de0ba433e4d336e3c0991ea0016641ad188ac7b03d04b3eb"
+    },
+    {
+      "name": "source/design.py",
+      "bytes": 6590,
+      "sha256": "748322082eef188c02e66f60ebf70151d0b3ffb621b35c3567d666e23ecfacc1"
+    },
+    {
+      "name": "source/durable-case.json",
+      "bytes": 2113,
+      "sha256": "e7f3810686320dce5d85ceccf4d5b3558c0f815a554c76661fa32c6b7e12f79c"
+    },
+    {
+      "name": "source/durable_case.py",
+      "bytes": 20338,
+      "sha256": "a3ca3a902bf30ef048b3ebbccc87e80b6dc32c2e7a0b12c63556aa10167fbcd9"
+    },
+    {
+      "name": "source/engineering-inputs.json",
+      "bytes": 3360,
+      "sha256": "23908103f01ee4d46a67e28fb384dd1490da0757ee4fe1c2fa870a61baab4d2e"
+    },
+    {
+      "name": "source/engineering_job.py",
+      "bytes": 24794,
+      "sha256": "b0ad3dbc2414847fdc1a1f5a4992ca26f42d42708546fba33818690d73d4605f"
+    },
+    {
+      "name": "source/illumination.py",
+      "bytes": 7317,
+      "sha256": "03e01a18b8bf8950dc80dcf497b6f7e473b124d69494d8ec93a3b9f1024b75c6"
+    },
+    {
+      "name": "source/illumination_cad.py",
+      "bytes": 14059,
+      "sha256": "0b6fbcfe8b6dafff26d2ca92d9e051cec5f40c2f70fe8df835d6a7cb02add30f"
+    },
+    {
+      "name": "source/illumination_pcb.py",
+      "bytes": 8193,
+      "sha256": "14eadea97d5a4423a34eb67a6152a526becc530f97091115e1450ffbd21c5e99"
+    },
+    {
+      "name": "source/mechanical_audit.py",
+      "bytes": 30884,
+      "sha256": "f45647ac6ef6b892b6b471cedccc15bc02d81caa627f20b649ad15b58ec4ad66"
+    },
+    {
+      "name": "source/native_pcb.py",
+      "bytes": 28006,
+      "sha256": "00a78a819859ff1cccc30edca7353b701272e289705b4d4754b68cc30c96b7ba"
+    },
+    {
+      "name": "source/onsemi_SOD-323_477.kicad_mod",
+      "bytes": 1179,
+      "sha256": "caec34cfdb48e54640ecadbf50f44f5d72d3f9b557c51950e99f274b170ce176"
+    },
+    {
+      "name": "source/print_screen.py",
+      "bytes": 9668,
+      "sha256": "15f3853a09c24b33b84378f1684bf1245c2b17f8b14483fb577cea243d1169dc"
+    },
+    {
+      "name": "source/reference/circuit.py",
+      "bytes": 8612,
+      "sha256": "db04c82bb06e688d3cd75548cc81b055ee92e3c0813742e2c6041a8a8f137bb9"
+    },
+    {
+      "name": "source/reference/engineering-inputs.json",
+      "bytes": 7863,
+      "sha256": "7bacb751b2c9528023fa21e3b3c077748739da77172a26e317fb0700cf3a9bd5"
+    },
+    {
+      "name": "source/reference/native_pcb.py",
+      "bytes": 24919,
+      "sha256": "2f2ee35134f321bf27e4a23d94a1324681b5bcd0b240cc8793e46623c79e895e"
+    },
+    {
+      "name": "source/run_isolated_engineering.py",
+      "bytes": 3960,
+      "sha256": "5e4701851492068195782433d552b754dbc88e3f89d2fbe9d588299fce93c808"
+    },
+    {
+      "name": "source/service-case.json",
+      "bytes": 2483,
+      "sha256": "e7e0f15e87dc71e6a15d5bcc0f71ac56f25cd14779a9afcadb39ecec4be2963c"
+    },
+    {
+      "name": "source/service_case.py",
+      "bytes": 22914,
+      "sha256": "3596a20940f5ddc1d1d1f4cf890918f92fd38e4953921bd9fa31e97d11d0635d"
+    },
+    {
+      "name": "source/single_board.py",
+      "bytes": 5393,
+      "sha256": "904c3e63c6e73176e72797f3269219c6db0936b8be665233b927c51ba5564b32"
+    },
+    {
+      "name": "source/single_board_case.py",
+      "bytes": 10667,
+      "sha256": "f46ca5c609ccb3c482f50f0d509c4158b02ef59d5c6ebdb2287ca8a815d8aa59"
+    },
+    {
+      "name": "source/single_board_pcb.py",
+      "bytes": 12762,
+      "sha256": "f202709c1ee0e0f468d579f44beaf52024a4382e990a5cbb4f5f490421b3ccd5"
+    },
+    {
+      "name": "source/stock_board.py",
+      "bytes": 10312,
+      "sha256": "0c375b1a91484730826506cc049d32095f1eb5716c8e556e907099966e128de0"
+    },
+    {
+      "name": "source/stock_board_parts.csv",
+      "bytes": 2682,
+      "sha256": "72f91277b42f5b3d5377eeca2d5d508705245762d1c3f51c108f6f23414d29d9"
+    },
+    {
+      "name": "source/stock_board_pcb.py",
+      "bytes": 7918,
+      "sha256": "c446a1ad854db734357836cee307c52c7d2d5266ba4a9e08790892e57f652aa8"
+    },
+    {
+      "name": "source/TDK_SPM6545VT-D.kicad_mod",
+      "bytes": 1161,
+      "sha256": "9f63b3b413bb8b9099cafb1e85b9c4f4377d82d2dc0bd3f81f4bd0636d2562d6"
+    },
+    {
+      "name": "source/toyota-power.json",
+      "bytes": 1594,
+      "sha256": "5912932df235b799406ce20d4903516db92427d15f94e01a4904b2e2633de1f4"
+    },
+    {
+      "name": "source/toyota-wire-route.json",
+      "bytes": 525,
+      "sha256": "354993d5f0e88dc0e1b0c145ce6b52f3e3865b4f4203458dae0babedcb2ea69d"
+    },
+    {
+      "name": "source/toyota_power.py",
+      "bytes": 7282,
+      "sha256": "c68e2800db9154223bc3bf13e951268ce3ff5de4e57f062de699a4e111693680"
+    },
+    {
+      "name": "source/toyota_power_case.py",
+      "bytes": 9197,
+      "sha256": "eb31b0ecb407090b26981f0d5da332d1513fa74809ab090ba90f9a7c4815e207"
+    },
+    {
+      "name": "source/wire_routing.py",
+      "bytes": 19730,
+      "sha256": "ab4c72edfb99a612321522bc46b9f171f06f948c2eafc5e2f6a712ef91d3f8b9"
+    },
+    {
+      "name": "stock-board-case.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "stock-board.log",
+      "bytes": 641,
+      "sha256": "9da246e12af49bbdccfa59608d51bb93cf2ca3cf9983577119816974e2b17541"
+    },
+    {
+      "name": "support-free-print-screen.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "support-free.json",
+      "bytes": 4799,
+      "sha256": "03a5e67de089c28e7276c2ad4f9465ac4f66c899071f10b6f3f4bd84136452e6"
+    },
+    {
+      "name": "sym-lib-table",
+      "bytes": 114,
+      "sha256": "5a80d57842424b2909cd984fb09651532180d1d8f31a7005f05e4b4dbb2760bf"
+    },
+    {
+      "name": "tool-access.json",
+      "bytes": 5219,
+      "sha256": "aef30045ed062c7440a40dca52145f6484a1a869184b5650a38e2c8959575bee"
+    },
+    {
+      "name": "VHOS.kicad_sym",
+      "bytes": 96759,
+      "sha256": "e7029848236017e316160a82b4cf5c919c95edae0b9b9bff2929003b9dda89b5"
+    },
+    {
+      "name": "VHOS_RevB.pretty/ESP32-S3-WROOM-1.kicad_mod",
+      "bytes": 14028,
+      "sha256": "cdb3500a9663dff8bbf6dfd4c7a8ed0e38b5387e664121230ecad7acc494acda"
+    },
+    {
+      "name": "VHOS_RevB.pretty/Keystone_3568_MINI_Vertical.kicad_mod",
+      "bytes": 2134,
+      "sha256": "07b7893b9ab9268c1d536c3374d2d3ff0bde9437766565bb83e67cd462057c98"
+    },
+    {
+      "name": "VHOS_RevB.pretty/onsemi_SOD-323_477.kicad_mod",
+      "bytes": 1179,
+      "sha256": "caec34cfdb48e54640ecadbf50f44f5d72d3f9b557c51950e99f274b170ce176"
+    },
+    {
+      "name": "VHOS_RevB.pretty/RGBW_Output_5_Pads.kicad_mod",
+      "bytes": 2036,
+      "sha256": "832d5c703394719075d69fd7fed317f9b8af18222cff463a8d45a733a95a0505"
+    },
+    {
+      "name": "VHOS_RevB.pretty/TDK_SPM6545VT-D.kicad_mod",
+      "bytes": 1161,
+      "sha256": "9f63b3b413bb8b9099cafb1e85b9c4f4377d82d2dc0bd3f81f4bd0636d2562d6"
+    },
+    {
+      "name": "VHOS_RevB.pretty/Toyota_IR1_4_Pads.kicad_mod",
+      "bytes": 1856,
+      "sha256": "a89e25110696637109c5c615417f5271095144ad5eb4b18aa5069db2139b001a"
+    },
+    {
+      "name": "vhos_rgbw_revf.kicad_pcb",
+      "bytes": 1220777,
+      "sha256": "58ab01a3c5371f52331785054287d0410e88c01fdb804e6d09d116447a2203e1"
+    },
+    {
+      "name": "vhos_rgbw_revf.kicad_prl",
+      "bytes": 2301,
+      "sha256": "bf60a842985561c51d293b21935608dcd320a13335460fb2f124c260549580d6"
+    },
+    {
+      "name": "vhos_rgbw_revf.kicad_pro",
+      "bytes": 3409,
+      "sha256": "21c206cbdc64dd740114b68df7987f9ce56df5a2489adca1bd4a2b8d0e7c71f7"
+    },
+    {
+      "name": "vhos_rgbw_revf.kicad_sch",
+      "bytes": 263704,
+      "sha256": "cec01093688351d3c3ab97e6acf369e1f75686a77748579898efc8736a7c9fb6"
+    },
+    {
+      "name": "wiring-interfaces.json",
+      "bytes": 2515,
+      "sha256": "e06aebbfd63bfe3f0a2754cce43630382b6c88c05f77e7d27bce5a8ed95118a2"
+    }
+  ],
+  "manufacturing_released": false,
+  "vehicle_fit_or_electrical_qualified": false,
+  "esp_module_reference_sha256": "3e35bb7ba7d030d88855fcf968398c8670934c7dca08b4e30b2c578bc1e13954",
+  "inputs": {
+    "VHOS_RevB.pretty/ESP32-S3-WROOM-1.kicad_mod": "cdb3500a9663dff8bbf6dfd4c7a8ed0e38b5387e664121230ecad7acc494acda",
+    "VHOS_RevB.pretty/Keystone_3568_MINI_Vertical.kicad_mod": "07b7893b9ab9268c1d536c3374d2d3ff0bde9437766565bb83e67cd462057c98",
+    "VHOS_RevB.pretty/RGBW_Output_5_Pads.kicad_mod": "832d5c703394719075d69fd7fed317f9b8af18222cff463a8d45a733a95a0505",
+    "VHOS_RevB.pretty/Toyota_IR1_4_Pads.kicad_mod": "a89e25110696637109c5c615417f5271095144ad5eb4b18aa5069db2139b001a",
+    "fp-lib-table": "24f26a043e09d213016ecf9c83a2f5ca6549d1ad3b453f963935a40abcfeacb0",
+    "models/ESP32-S3-WROOM-1.step": "3e35bb7ba7d030d88855fcf968398c8670934c7dca08b4e30b2c578bc1e13954",
+    "models/MINI-3568.step": "66526bf041e5a75d96b72a060ffd766633e7abbaa5696d8b27927e055e6808fa",
+    "vhos_rgbw_reve.kicad_pcb": "868ece8b2535dd81a1510a0e5d3750a1ff4985c3ce3cb8550cb80a136b546f25",
+    "vhos_rgbw_reve.kicad_pro": "c3732c7a1006be9754d8dacc392978bd08cc4a889ec10f84127163a03395ea05",
+    "ruthex_RX-M3x5_7.stp": "3686e4730b18fa3f0a83585da28dc7eca70e5da21cedd3f75f3205c5ad11b917",
+    "Yazaki_7282-1060.stp": "3a395c88b0391df2321a68c37f330d390038b7a9a3875ca3417d1235ee711eb5"
+  }
+}

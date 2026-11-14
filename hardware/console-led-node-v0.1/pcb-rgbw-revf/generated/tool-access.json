@@ -1,0 +1,167 @@
+{
+  "contract": "vhos_rgbw_revf_stocked_single_board_v1",
+  "axes": [
+    {
+      "id": "lid_1",
+      "position_mm": [
+        6.5,
+        6.5,
+        36
+      ],
+      "insert_approach_interference_mm3": 0.0,
+      "pilot_interference_mm3": 0.0,
+      "driver_interference_mm3": 0,
+      "head_or_washer_approach_interference_mm3": 0.0,
+      "nominal_thread_overlap_mm": 4.8,
+      "screw_tip_to_blind_end_mm": 2.2,
+      "insert_to_blind_end_mm": 1.3,
+      "iron_handle_starts_above_rim_mm": 64.0,
+      "driver_handle_starts_above_rim_mm": 61.2,
+      "heat_set_radial_allowance_test_mm": 0.25,
+      "heat_set_radial_allowance_passed": true,
+      "pass": true
+    },
+    {
+      "id": "lid_2",
+      "position_mm": [
+        6.5,
+        69.5,
+        36
+      ],
+      "insert_approach_interference_mm3": 0.0,
+      "pilot_interference_mm3": 0.0,
+      "driver_interference_mm3": 0,
+      "head_or_washer_approach_interference_mm3": 0.0,
+      "nominal_thread_overlap_mm": 4.8,
+      "screw_tip_to_blind_end_mm": 2.2,
+      "insert_to_blind_end_mm": 1.3,
+      "iron_handle_starts_above_rim_mm": 64.0,
+      "driver_handle_starts_above_rim_mm": 61.2,
+      "heat_set_radial_allowance_test_mm": 0.25,
+      "heat_set_radial_allowance_passed": true,
+      "pass": true
+    },
+    {
+      "id": "lid_3",
+      "position_mm": [
+        143.5,
+        6.5,
+        36
+      ],
+      "insert_approach_interference_mm3": 0.0,
+      "pilot_interference_mm3": 0.0,
+      "driver_interference_mm3": 0,
+      "head_or_washer_approach_interference_mm3": 0.0,
+      "nominal_thread_overlap_mm": 4.8,
+      "screw_tip_to_blind_end_mm": 2.2,
+      "insert_to_blind_end_mm": 1.3,
+      "iron_handle_starts_above_rim_mm": 64.0,
+      "driver_handle_starts_above_rim_mm": 61.2,
+      "heat_set_radial_allowance_test_mm": 0.25,
+      "heat_set_radial_allowance_passed": true,
+      "pass": true
+    },
+    {
+      "id": "lid_4",
+      "position_mm": [
+        143.5,
+        69.5,
+        36
+      ],
+      "insert_approach_interference_mm3": 0.0,
+      "pilot_interference_mm3": 0.0,
+      "driver_interference_mm3": 0,
+      "head_or_washer_approach_interference_mm3": 0.0,
+      "nominal_thread_overlap_mm": 4.8,
+      "screw_tip_to_blind_end_mm": 2.2,
+      "insert_to_blind_end_mm": 1.3,
+      "iron_handle_starts_above_rim_mm": 64.0,
+      "driver_handle_starts_above_rim_mm": 61.2,
+      "heat_set_radial_allowance_test_mm": 0.25,
+      "heat_set_radial_allowance_passed": true,
+      "pass": true
+    },
+    {
+      "id": "shield_1",
+      "position_mm": [
+        10,
+        16.13,
+        13.0
+      ],
+      "insert_approach_interference_mm3": 0.0,
+      "pilot_interference_mm3": 0.0,
+      "driver_interference_mm3": 0.0,
+      "head_or_washer_approach_interference_mm3": 0.0,
+      "nominal_thread_overlap_mm": 3.9,
+      "screw_tip_to_blind_end_mm": 3.1,
+      "insert_to_blind_end_mm": 1.3,
+      "iron_handle_starts_above_rim_mm": 41.0,
+      "driver_handle_starts_above_rim_mm": 37.1,
+      "heat_set_radial_allowance_test_mm": 0.25,
+      "heat_set_radial_allowance_passed": true,
+      "pass": true
+    },
+    {
+      "id": "shield_2",
+      "position_mm": [
+        14,
+        61.83,
+        13.0
+      ],
+      "insert_approach_interference_mm3": 0.0,
+      "pilot_interference_mm3": 0.0,
+      "driver_interference_mm3": 0.0,
+      "head_or_washer_approach_interference_mm3": 0.0,
+      "nominal_thread_overlap_mm": 3.9,
+      "screw_tip_to_blind_end_mm": 3.1,
+      "insert_to_blind_end_mm": 1.3,
+      "iron_handle_starts_above_rim_mm": 41.0,
+      "driver_handle_starts_above_rim_mm": 37.1,
+      "heat_set_radial_allowance_test_mm": 0.25,
+      "heat_set_radial_allowance_passed": true,
+      "pass": true
+    },
+    {
+      "id": "shield_3",
+      "position_mm": [
+        101.2,
+        16.12,
+        13.0
+      ],
+      "insert_approach_interference_mm3": 0.0,
+      "pilot_interference_mm3": 0.0,
+      "driver_interference_mm3": 0.0,
+      "head_or_washer_approach_interference_mm3": 0.0,
+      "nominal_thread_overlap_mm": 3.9,
+      "screw_tip_to_blind_end_mm": 3.1,
+      "insert_to_blind_end_mm": 1.3,
+      "iron_handle_starts_above_rim_mm": 41.0,
+      "driver_handle_starts_above_rim_mm": 37.1,
+      "heat_set_radial_allowance_test_mm": 0.25,
+      "heat_set_radial_allowance_passed": true,
+      "pass": true
+    },
+    {
+      "id": "shield_4",
+      "position_mm": [
+        106.75,
+        60.57,
+        13.0
+      ],
+      "insert_approach_interference_mm3": 0.0,
+      "pilot_interference_mm3": 0.0,
+      "driver_interference_mm3": 0.0,
+      "head_or_washer_approach_interference_mm3": 0.0,
+      "nominal_thread_overlap_mm": 3.9,
+      "screw_tip_to_blind_end_mm": 3.1,
+      "insert_to_blind_end_mm": 1.3,
+      "iron_handle_starts_above_rim_mm": 41.0,
+      "driver_handle_starts_above_rim_mm": 37.1,
+      "heat_set_radial_allowance_test_mm": 0.25,
+      "heat_set_radial_allowance_passed": true,
+      "pass": true
+    }
+  ],
+  "cavity_checks_passed": true,
+  "physical_tools_and_fit_verified": false
+}

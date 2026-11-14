@@ -1,0 +1,93 @@
+ref,value,mpn,footprint,note,jlcpcb_part
+C1,10u 63V EEEFK1J100P,EEEFK1J100P,Capacitor_SMD:CP_Elec_6.3x5.8,"Polar bulk damping candidate; manufacturer 6.3mm diameter, 5.8mm body height. Cable-response/ripple validation pending.",C128459
+C2,2.2u 100V X7R,CL32B225KCJVPJE,Capacitor_SMD:C_1210_3225Metric,,C5596903
+C3,2.2u 100V X7R,CL32B225KCJVPJE,Capacitor_SMD:C_1210_3225Metric,,C5596903
+U1,LM5164QDDARQ1,LM5164QDDARQ1,Package_SO:HSOP-8-1EP_3.9x4.9mm_P1.27mm_EP2.41x3.1mm,"5V logic only; target 0.5A evaluation load, thermal and transient tests pending",C2072225
+L1,68u 20% TDK,SPM6545VT-680M-D,VHOS_RevB:TDK_SPM6545VT-D,TDK automotive inductor. Land pattern and maximum envelope from the TDK drawing.,C2047878
+R1,39k 1%,0603WAF3902T5E,Resistor_SMD:R_0603_1608Metric,"Uniroyal 0603 thick film, 1%, 0.1 W.",C23153
+R2,1M,0603WAF1004T5E,Resistor_SMD:R_0603_1608Metric,"Uniroyal 0603 thick film, 1%, 0.1 W.",C22935
+R3,220k 1%,0603WAF2203T5E,Resistor_SMD:R_0603_1608Metric,"Uniroyal 0603 thick film, 1%, 0.1 W.",C22961
+R4,150k 1%,0603WAF1503T5E,Resistor_SMD:R_0603_1608Metric,"Uniroyal 0603 thick film, 1%, 0.1 W.",C22807
+R5,47k 1%,0603WAF4702T5E,Resistor_SMD:R_0603_1608Metric,"Uniroyal 0603 thick film, 1%, 0.1 W.",C25819
+R6,68k 1%,0603WAF6802T5E,Resistor_SMD:R_0603_1608Metric,"Uniroyal 0603 thick film, 1%, 0.1 W.",C23231
+C4,2.2n 50V X7R,0603B222K500NT,Capacitor_SMD:C_0603_1608Metric,,C1604
+C5,3.3n 50V X7R,CL10B332KB8NNNC,Capacitor_SMD:C_0603_1608Metric,,C1613
+C6,180p C0G,CL10C181JB8NNNC,Capacitor_SMD:C_0603_1608Metric,,C17096
+C7,22u 25V X7R,MCAST32MSB7226KPNA01,Capacitor_SMD:C_1210_3225Metric,,C5372271
+C8,22u 25V X7R,MCAST32MSB7226KPNA01,Capacitor_SMD:C_1210_3225Metric,,C5372271
+R7,100k,0603WAF1003T5E,Resistor_SMD:R_0603_1608Metric,"Uniroyal 0603 thick film, 1%, 0.1 W.",C25803
+U2,UCC27524AQDRQ1,UCC27524AQDRQ1,Package_SO:SOIC-8_3.9x4.9mm_P1.27mm,5V gate drive; enables have internal pullups overridden by external 2.2k pulldown,C544585
+U3,UCC27524AQDRQ1,UCC27524AQDRQ1,Package_SO:SOIC-8_3.9x4.9mm_P1.27mm,5V gate drive; enables have internal pullups overridden by external 2.2k pulldown,C544585
+C9,100n 25V X7R,CC0603KRX7R9BB104,Capacitor_SMD:C_0603_1608Metric,,C14663
+C11,100n 25V X7R,CC0603KRX7R9BB104,Capacitor_SMD:C_0603_1608Metric,,C14663
+C10,1u 25V X7R,CL10B105KA8NNNC,Capacitor_SMD:C_0603_1608Metric,,C29936
+C12,1u 25V X7R,CL10B105KA8NNNC,Capacitor_SMD:C_0603_1608Metric,,C29936
+R8,2.2k,0603WAF2201T5E,Resistor_SMD:R_0603_1608Metric,"Uniroyal 0603 thick film, 1%, 0.1 W.",C4190
+Q1,BUK9Y15-60E,"BUK9Y15-60E,115",Package_TO_SOT_SMD:LFPAK56,"60V; 15mOhm max at 5V gate, 25C. Layout/current ratings remain evaluation targets.",C458196
+R9,100,0603WAF1000T5E,Resistor_SMD:R_0603_1608Metric,"Uniroyal 0603 thick film, 1%, 0.1 W.",C22775
+R13,10k,0603WAF1002T5E,Resistor_SMD:R_0603_1608Metric,"Uniroyal 0603 thick film, 1%, 0.1 W.",C25804
+R17,100k,0603WAF1003T5E,Resistor_SMD:R_0603_1608Metric,"Uniroyal 0603 thick film, 1%, 0.1 W.",C25803
+D3,SMBJ24CA,SMBJ24CAQ-13-F,Diode_SMD:D_SMB,Bidirectional output clamp candidate; cable-energy test pending,C1974053
+Q2,BUK9Y15-60E,"BUK9Y15-60E,115",Package_TO_SOT_SMD:LFPAK56,"60V; 15mOhm max at 5V gate, 25C. Layout/current ratings remain evaluation targets.",C458196
+R10,100,0603WAF1000T5E,Resistor_SMD:R_0603_1608Metric,"Uniroyal 0603 thick film, 1%, 0.1 W.",C22775
+R14,10k,0603WAF1002T5E,Resistor_SMD:R_0603_1608Metric,"Uniroyal 0603 thick film, 1%, 0.1 W.",C25804
+R18,100k,0603WAF1003T5E,Resistor_SMD:R_0603_1608Metric,"Uniroyal 0603 thick film, 1%, 0.1 W.",C25803
+D4,SMBJ24CA,SMBJ24CAQ-13-F,Diode_SMD:D_SMB,Bidirectional output clamp candidate; cable-energy test pending,C1974053
+Q3,BUK9Y15-60E,"BUK9Y15-60E,115",Package_TO_SOT_SMD:LFPAK56,"60V; 15mOhm max at 5V gate, 25C. Layout/current ratings remain evaluation targets.",C458196
+R11,100,0603WAF1000T5E,Resistor_SMD:R_0603_1608Metric,"Uniroyal 0603 thick film, 1%, 0.1 W.",C22775
+R15,10k,0603WAF1002T5E,Resistor_SMD:R_0603_1608Metric,"Uniroyal 0603 thick film, 1%, 0.1 W.",C25804
+R19,100k,0603WAF1003T5E,Resistor_SMD:R_0603_1608Metric,"Uniroyal 0603 thick film, 1%, 0.1 W.",C25803
+D5,SMBJ24CA,SMBJ24CAQ-13-F,Diode_SMD:D_SMB,Bidirectional output clamp candidate; cable-energy test pending,C1974053
+Q4,BUK9Y15-60E,"BUK9Y15-60E,115",Package_TO_SOT_SMD:LFPAK56,"60V; 15mOhm max at 5V gate, 25C. Layout/current ratings remain evaluation targets.",C458196
+R12,100,0603WAF1000T5E,Resistor_SMD:R_0603_1608Metric,"Uniroyal 0603 thick film, 1%, 0.1 W.",C22775
+R16,10k,0603WAF1002T5E,Resistor_SMD:R_0603_1608Metric,"Uniroyal 0603 thick film, 1%, 0.1 W.",C25804
+R20,100k,0603WAF1003T5E,Resistor_SMD:R_0603_1608Metric,"Uniroyal 0603 thick film, 1%, 0.1 W.",C25803
+D6,SMBJ24CA,SMBJ24CAQ-13-F,Diode_SMD:D_SMB,Bidirectional output clamp candidate; cable-energy test pending,C1974053
+F1,3A MINI MAIN / LED,3568,VHOS_RevB:Keystone_3568_MINI_Vertical,Socket and removable element 0997003.WXN,
+F2,1A MINI LOGIC,3568,VHOS_RevB:Keystone_3568_MINI_Vertical,Socket and removable element ATM-1,
+U4,LM74800-Q1,LM74800QDRRRQ1,Package_SON:WSON-12-1EP_3x3mm_P0.5mm_EP1.5x2.5mm,Common-drain reverse battery protection and OV cutoff. RTN exposed pad floating.,C3215600
+D1,SMBJ28CAQ,SMBJ28CAQ-13-F,Diode_SMD:D_SMB,28 V standoff bidirectional input TVS after the 58 V fuse.,C1975352
+Q5,BUK9Y19-100E,"BUK9Y19-100E,115",Package_TO_SOT_SMD:LFPAK56,"100 V reverse-blocking NMOS, source on fused input.",C458229
+Q6,BUK9Y19-100E,"BUK9Y19-100E,115",Package_TO_SOT_SMD:LFPAK56,"100 V cutoff NMOS, source on protected output.",C458229
+R21,46.4k 0.1%,RT0603BRD0746K4L,Resistor_SMD:R_0603_1608Metric,,C861420
+R22,4.02k 0.1%,RT0603BRD074K02L,Resistor_SMD:R_0603_1608Metric,,C705781
+R23,100R,0603WAF1000T5E,Resistor_SMD:R_0603_1608Metric,,C22775
+C13,100n 100V X7R,CL21B104KCFNNNE,Capacitor_SMD:C_0805_2012Metric,,C28233
+C14,100n 100V X7R,CL21B104KCFNNNE,Capacitor_SMD:C_0805_2012Metric,,C28233
+C15,100n 50V X7R,CC0603KRX7R9BB104,Capacitor_SMD:C_0603_1608Metric,,C14663
+C16,10n 100V X7R,GRM21BR72A103KA01L,Capacitor_SMD:C_0805_2012Metric,,C97925
+C17,47u 50V,EEEFK1H470P,Capacitor_SMD:CP_Elec_8x6.2,,C278400
+U5,SN3257-Q1,SN3257QPWRQ1,Package_SO:TSSOP-16_4.4x5mm_P0.65mm,A inputs at ground during 3.3 V startup. B inputs selected when the rail supervisor releases.,C1858301
+U8,TLV809E 2.93V,TLV809ED29DBZR,Package_TO_SOT_SMD:SOT-23,Keeps both ADC inputs at ground during supply transitions until 3.3 V is valid.,C2864833
+R24,49.9k 0.1%,RT1206BRD0749K9L,Resistor_SMD:R_1206_3216Metric,,C706414
+R25,49.9k 0.1%,RT1206BRD0749K9L,Resistor_SMD:R_1206_3216Metric,,C706414
+R28,22k 0.1%,AT0603BRD0722KL,Resistor_SMD:R_0603_1608Metric,,C5455453
+R30,18k 1%,0603WAF1802T5E,Resistor_SMD:R_0603_1608Metric,ADC isolation sets attenuation and keeps GPIO above -0.3 V for a -0.5 V switch output.,C25810
+R32,22k 0.1%,AT0603BRD0722KL,Resistor_SMD:R_0603_1608Metric,,C5455453
+U6,LM4040 2.5V,LM4040C25QFTA,Package_TO_SOT_SMD:SOT-23,Positive clamp to chassis reference.,C531175
+D7,NSVBAT54HT1G,NSVBAT54HT1G,VHOS_RevB:onsemi_SOD-323_477,Negative clamp. Check cold-pulse forward drop on the bench.,C179609
+C19,100n 50V,CC0603KRX7R9BB104,Capacitor_SMD:C_0603_1608Metric,,C14663
+R26,49.9k 0.1%,RT1206BRD0749K9L,Resistor_SMD:R_1206_3216Metric,,C706414
+R27,49.9k 0.1%,RT1206BRD0749K9L,Resistor_SMD:R_1206_3216Metric,,C706414
+R29,22k 0.1%,AT0603BRD0722KL,Resistor_SMD:R_0603_1608Metric,,C5455453
+R31,18k 1%,0603WAF1802T5E,Resistor_SMD:R_0603_1608Metric,ADC isolation sets attenuation and keeps GPIO above -0.3 V for a -0.5 V switch output.,C25810
+R33,22k 0.1%,AT0603BRD0722KL,Resistor_SMD:R_0603_1608Metric,,C5455453
+U7,LM4040 2.5V,LM4040C25QFTA,Package_TO_SOT_SMD:SOT-23,Positive clamp to chassis reference.,C531175
+D8,NSVBAT54HT1G,NSVBAT54HT1G,VHOS_RevB:onsemi_SOD-323_477,Negative clamp. Check cold-pulse forward drop on the bench.,C179609
+C20,100n 50V,CC0603KRX7R9BB104,Capacitor_SMD:C_0603_1608Metric,,C14663
+C18,100n 50V,CC0603KRX7R9BB104,Capacitor_SMD:C_0603_1608Metric,,C14663
+C21,100n 50V,CC0603KRX7R9BB104,Capacitor_SMD:C_0603_1608Metric,,C14663
+U11,ESP32-S3-WROOM-1-N16R8,ESP32-S3-WROOM-1-N16R8,VHOS_RevB:ESP32-S3-WROOM-1,Internal antenna overhangs the board edge. Module has 16 MB flash and 8 MB PSRAM.,C2913202
+U9,TLV62569DBVR,TLV62569DBVR,Package_TO_SOT_SMD:SOT-23-5,Second-stage 5 V to 3.3 V synchronous buck. Target 500 mA transient load at module.,C141836
+L2,2.2uH,SRN4018-2R2M,Inductor_SMD:L_Bourns-SRN4018,,C913207
+U10,TLV803EC30DBZR,TLV803EC30DBZR,Package_TO_SOT_SMD:SOT-23,"Open-drain 3.08 V reset supervisor, nominal 10 ms release. Allows the service adapter to pull EN low.",C2877924
+R34,46.4k 0.1%,RT0603BRD0746K4L,Resistor_SMD:R_0603_1608Metric,,C861420
+R35,10k 1%,0603WAF1002T5E,Resistor_SMD:R_0603_1608Metric,,C25804
+R36,10k,0603WAF1002T5E,Resistor_SMD:R_0603_1608Metric,,C25804
+R37,10k,0603WAF1002T5E,Resistor_SMD:R_0603_1608Metric,,C25804
+R38,10k,0603WAF1002T5E,Resistor_SMD:R_0603_1608Metric,,C25804
+C22,22u 16V X7R,EMK316BB7226ML-T,Capacitor_SMD:C_1206_3216Metric,,C385906
+C23,22u 16V X7R,EMK316BB7226ML-T,Capacitor_SMD:C_1206_3216Metric,,C385906
+C24,22u 16V X7R,EMK316BB7226ML-T,Capacitor_SMD:C_1206_3216Metric,,C385906
+C25,100n 50V X7R,CC0603KRX7R9BB104,Capacitor_SMD:C_0603_1608Metric,,C14663
+C26,1u 25V X7R,CL10B105KA8NNNC,Capacitor_SMD:C_0603_1608Metric,,C29936

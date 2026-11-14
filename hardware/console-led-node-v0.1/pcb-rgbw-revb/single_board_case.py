@@ -1,4 +1,4 @@
-"""One-board case and service checks against the exported Rev E hardware."""
+"""One-board case and service checks against exported PCB hardware."""
 
 import json
 
@@ -8,6 +8,7 @@ import Part
 import durable_case
 import illumination_cad
 import single_board as rev_e
+import stock_board as rev_f
 import toyota_power_case
 from design import FUSE_GEOMETRY, FUSES, PORTS
 from mechanical_audit import ROOT, box, cylinder, export_printable, reopen, rounded, translated
@@ -17,8 +18,14 @@ from service_case import HARDWARE, add_feature, socket_screw, tool_checks
 V = App.Vector
 
 
-def build(out):
+def build(out, *, revision="E"):
+    is_f = revision == "F"
+    contract = rev_f.CONTRACT if is_f else rev_e.CONTRACT
     g = durable_case.dimensions(rev_e.CASE_DIMS)
+    lid_skin = g["lid_mm"]
+    if is_f:
+        g["floor_mm"] = rev_f.CASE_FLOOR_MM
+        lid_skin -= rev_f.LID_RECESS_DEPTH_MM
     width, depth, height = (g[key] for key in ("width_mm", "depth_mm", "body_height_mm"))
     board_z = g["esp_pcb_bottom_mm"]
     board_top = board_z + g["pcb_thickness_mm"]
@@ -31,6 +38,10 @@ def build(out):
     shell = durable_case.base_shell(g, lid_axes, axes, [], [])
     ports = toyota_power_case.openings(g, PORTS)
     shell, lid = toyota_power_case.enclosure_parts(shell, g, lid_axes, ports, case=case)
+    if is_f:
+        recesses = [rounded(x, y, -.05, w, d, rev_f.LID_RECESS_DEPTH_MM + .05, 3.5)
+                    for x, y, w, d in rev_f.LID_RECESSES]
+        lid = lid.cut(recesses).removeSplitter()
     base, base_report = export_printable(shell, "case_base", out)
     raw_lid, lid_report = export_printable(lid, "case_lid", out, flip=True)
     lid = translated(raw_lid, 0, 0, height)
@@ -40,8 +51,14 @@ def build(out):
     datums = [solid.BoundBox for solid in native.Solids if abs(solid.BoundBox.XLength - board_width) < .12
               and abs(solid.BoundBox.YLength - 53.34) < .12 and abs(solid.BoundBox.ZLength - 1.6) < .12]
     if len(datums) != 1 or abs(datums[0].XMin + 53) > .1 or abs(datums[0].YMin) > .1:
-        raise RuntimeError("Could not find the Rev E board datum in the reopened STEP")
+        raise RuntimeError(f"Could not find the Rev {revision} board datum in the reopened STEP")
     board = translated(native, ox, oy, board_top - datums[0].ZMax)
+    if is_f:
+        for part, bounds in rev_f.PACKAGE_ENVELOPES.items():
+            if not any(all(abs(a - b) <= .025 for a, b in zip(
+                    (solid.BoundBox.XLength, solid.BoundBox.YLength, solid.BoundBox.ZLength), bounds))
+                    for solid in board.Solids):
+                raise RuntimeError(f"Missing Rev F package envelope {part} in PCB STEP")
     modules = [solid for solid in board.Solids if solid.BoundBox.XMax > ox + rev_e.BOARD_EDGE_X - 99]
     if not modules or max(solid.BoundBox.XMax for solid in modules) > width - g["wall_mm"] - 14:
         raise RuntimeError("ESP32-S3 model missing, misplaced or too close to the rear")
@@ -56,6 +73,19 @@ def build(out):
         pullers[ref] = box(x - w / 2, y - d / 2, holder_top + .4, w, d, installed_height + travel)
 
     checks = []
+    skin_checks = {}
+    if is_f:
+        for i, (x, y, w, d) in enumerate(rev_f.LID_RECESSES, 1):
+            # Verify the 2.3 mm panel and the open recess in the reopened solid.
+            gauge = box(x + 4, y + 4, rev_f.LID_RECESS_DEPTH_MM, w - 8, d - 8, lid_skin)
+            cut = box(x + 4, y + 4, 0, w - 8, d - 8, rev_f.LID_RECESS_DEPTH_MM)
+            skin_checks[f"lid_recess_{i}"] = abs(raw_lid.common(gauge).Volume - gauge.Volume) < .01 and (
+                raw_lid.common(cut).Volume < .01)
+        for i, (x, y) in enumerate(axes, 1):
+            gauge = cylinder(x, y, 0, 7.0, g["floor_mm"])
+            skin_checks[f"pcb_mount_floor_{i}"] = abs(base.common(gauge).Volume - gauge.Volume) < .01
+        if not all(skin_checks.values()):
+            raise ValueError(f"Rev F case material checks failed: {skin_checks}")
 
     def record(name, a, b, *, clearance=0):
         overlap = a.common(b).Volume if a.BoundBox.intersect(b.BoundBox) else 0.0
@@ -90,28 +120,32 @@ def build(out):
         for label, shape in (("base", base), ("lid", lid), ("PCB", board)):
             record(f"J2 sleeve offset {offset_y:+g} against {label}", gauge, shape)
     hardware_rows, _ = tool_checks(g, base, lid, board, Part.Shape(), lid_axes, axes, [], fuses)
-    tool_report = {"contract": rev_e.CONTRACT, "axes": hardware_rows,
+    tool_report = {"contract": contract, "axes": hardware_rows,
                    "cavity_checks_passed": len(hardware_rows) == 8 and all(row["pass"] for row in hardware_rows),
                    "physical_tools_and_fit_verified": False}
     (out / "tool-access.json").write_text(json.dumps(tool_report, indent=2) + "\n")
 
     coupons = durable_case.fit_coupons(out, g, base, raw_lid, front_x_max=12.6, front_span=(14.8, 51.4))
-    report = {"contract": rev_e.CONTRACT, "dimensions": g, "port_windows": ports, "pcb_mounts_xy_mm": axes,
+    report = {"contract": contract, "dimensions": g, "port_windows": ports, "pcb_mounts_xy_mm": axes,
               "lid_mounts_xy_mm": lid_axes, "checks": checks, "printable": [base_report, lid_report, *coupons],
               "passed_nominal_interference": all(row["pass"] for row in checks), "populated_board_count": 1,
               "module_geometry": "KiCad module STEP matched to the native footprint origin and Espressif package drawing",
               "physical_fit_and_rf_verified": False}
+    if is_f:
+        report["case_material"] = {"floor_mm": g["floor_mm"], "lid_recess_skin_mm": lid_skin,
+                                   "lid_rim_mm": g["lid_mm"], "reopened_solid_checks": skin_checks,
+                                   "dimensioned_package_envelopes_mm": rev_f.PACKAGE_ENVELOPES}
     (out / "mechanical-observation.json").write_text(json.dumps(report, indent=2) + "\n")
     if not report["passed_nominal_interference"] or not tool_report["cavity_checks_passed"]:
-        raise RuntimeError("Rev E case or tool access findings; inspect mechanical-observation.json and tool-access.json")
+        raise RuntimeError(f"Rev {revision} case or tool access findings in mechanical-observation.json and tool-access.json")
 
-    doc = App.newDocument("FourRunnerRGBW_RevE")
+    doc = App.newDocument(f"FourRunnerRGBW_Rev{revision}")
     for name, label in (("Print", "Printable case"), ("PCB", "One populated PCB"),
                         ("Hardware", "Inserts, screws and fuses"), ("Loom", "Captive vehicle and RGBW cables")):
         doc.addObject("App::DocumentObjectGroup", name).Label = label
     add_feature(doc, doc.Print, "Base", "Printed base", base, "Reopened printable STEP", (85, 105, 118))
     add_feature(doc, doc.Print, "Lid", "Screw lid", lid, "Reopened printable STEP", (105, 121, 136))
-    add_feature(doc, doc.PCB, "Shield", "Rev E single-board controller", board, "Reopened KiCad STEP", (43, 104, 86))
+    add_feature(doc, doc.PCB, "Shield", f"Rev {revision} single-board controller", board, "Reopened KiCad STEP", (43, 104, 86))
     for ref, solid in fuses.items():
         add_feature(doc, doc.Hardware, ref, f"{ref} · {FUSES[ref]['amps']} A MINI fuse", solid,
                     "Installed fuse height envelope", (132, 80, 152) if ref == "F1" else (85, 88, 99))
@@ -130,4 +164,4 @@ def build(out):
             add_feature(doc, doc.Hardware, f"Washer{i}", "Insulating washer", washer, "7 mm OD × 0.5 mm", (219, 226, 226))
     for name, label, shape, source, color in toyota_power_case.loom(ports, case=case):
         add_feature(doc, doc.Loom, name, label, shape, source, color)
-    illumination_cad.build(out, doc=doc, revision="E", case=case, contract=rev_e.CONTRACT)
+    illumination_cad.build(out, doc=doc, revision=revision, case=case, contract=contract)

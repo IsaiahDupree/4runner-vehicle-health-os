@@ -1,30 +1,31 @@
 # 4Runner console LED controller resources
 
-The current prototype is **Rev E for the 2005 V8 4Runner**. One PCB
+The current prototype is **Rev F for the 2005 V8 4Runner**. One PCB
 carries the ESP32-S3 module, fuses, power protection and RGBW drivers.
 The photographed white six-contact Toyota plug is the box's only wired
 input. The shield uses its switched 12 V and ground to power the ESP32-S3
 and drive the RGBW lights through the output cable. It reads TAIL and DIM
 from the same harness. Vehicle data comes wirelessly from the existing
 classic CAN ESP32 running the MrDIY VHOS target.
-[Rev E build guide](pcb-rgbw-reve/README.md) ·
+[Rev F build guide](pcb-rgbw-revf/README.md) ·
 [Pinned gateway firmware](https://github.com/IsaiahDupree/4runner-vhos-firmware/tree/a523483abc984a406c73659653571198e46b04a0/targets/mrdiy-esp32-v13).
 
 ## Build files
 
 | Resource | What to use |
 | --- | --- |
-| Wiring and shopping | [IR1 and RGBW wire register](pcb-rgbw-reve/WIRE-REGISTER.csv) · [Harness and case parts](pcb-rgbw-reve/HARNESS-AND-CASE.csv) |
+| Wiring and shopping | [IR1 and RGBW wire register](pcb-rgbw-revf/WIRE-REGISTER.csv) · [Harness and case parts](pcb-rgbw-revf/HARNESS-AND-CASE.csv) |
 | Toyota IR1 pinout | [All six wires, pass-through plan and meter checks](connector-adapter/IR1-WIRE-PLAN.md) |
-| Toyota input wire routing | [Connector-to-pad clearances and lengths](pcb-rgbw-reve/generated/ir1-wire-fit.json) · [CAD cutaway](pcb-rgbw-reve/generated/RevE-Toyota-wiring.png) |
-| PCB model | [KiCad project](pcb-rgbw-reve/generated/vhos_rgbw_reve.kicad_pro) · [PCB STEP](pcb-rgbw-reve/generated/4Runner_RGBW_RevE_PCB.step) · [Board preview](pcb-rgbw-reve/generated/shield.png) |
-| PCB fabrication | [Rev E four-layer Gerbers and drills](pcb-rgbw-reve/generated/4Runner_RGBW_RevE_Gerbers.zip) |
-| JLCPCB assembly | [Rev E stock, costs and hand-fitted parts](pcb-rgbw-reve/jlcpcb/README.md) · [Stock-optimized BOM](pcb-rgbw-reve/jlcpcb/stock-lm5164-smt/BOM.csv) · [Matching placement file](pcb-rgbw-reve/jlcpcb/stock-lm5164-smt/CPL.csv) |
-| Matched case | [Base STL](pcb-rgbw-reve/generated/case_base.stl) · [Lid STL](pcb-rgbw-reve/generated/case_lid.stl) · [FreeCAD assembly](pcb-rgbw-reve/generated/4Runner_RevE_Assembly.FCStd) |
-| Fit samples | [Cable-saddle coupon](pcb-rgbw-reve/generated/front_ports_coupon.stl) · [Lid slice](pcb-rgbw-reve/generated/front_lid_coupon.stl) · [M3 insert and screw coupon](pcb-rgbw-reve/generated/m3_tolerance_coupon.stl) |
-| Digital checks | [Rev E verification](pcb-rgbw-reve/generated/verification.json) · [Wire and strain-relief clearance](pcb-rgbw-reve/generated/ir1-wire-fit.json) |
+| Toyota input wire routing | [Connector-to-pad clearances and lengths](pcb-rgbw-revf/generated/ir1-wire-fit.json) · [CAD cutaway](pcb-rgbw-revf/generated/RevF-Toyota-wiring.png) |
+| PCB model | [KiCad project](pcb-rgbw-revf/generated/vhos_rgbw_revf.kicad_pro) · [PCB STEP](pcb-rgbw-revf/generated/4Runner_RGBW_RevF_PCB.step) · [Board preview](pcb-rgbw-revf/generated/shield.png) |
+| PCB fabrication | [Rev F four-layer Gerbers and drills](pcb-rgbw-revf/generated/4Runner_RGBW_RevF_Gerbers.zip) |
+| JLCPCB assembly | [Rev F stock, costs and hand-fitted parts](pcb-rgbw-revf/jlcpcb/README.md) · [Stock-optimized BOM](pcb-rgbw-revf/jlcpcb/BOM.csv) · [Matching placement file](pcb-rgbw-revf/jlcpcb/CPL.csv) |
+| Matched case | [Base STL](pcb-rgbw-revf/generated/case_base.stl) · [Lid STL](pcb-rgbw-revf/generated/case_lid.stl) · [FreeCAD assembly](pcb-rgbw-revf/generated/4Runner_RevF_Assembly.FCStd) |
+| Fit samples | [Cable-saddle coupon](pcb-rgbw-revf/generated/front_ports_coupon.stl) · [Lid slice](pcb-rgbw-revf/generated/front_lid_coupon.stl) · [M3 insert and screw coupon](pcb-rgbw-revf/generated/m3_tolerance_coupon.stl) |
+| Digital checks | [Rev F verification](pcb-rgbw-revf/generated/verification.json) · [Wire and strain-relief clearance](pcb-rgbw-revf/generated/ir1-wire-fit.json) |
 
-The [Rev D two-board build](pcb-rgbw-revd/README.md) and
+The [Rev E single-board build](pcb-rgbw-reve/README.md),
+[Rev D two-board build](pcb-rgbw-revd/README.md) and
 [Rev C two-wire build](pcb-rgbw-revc/README.md) record earlier revisions.
 The offline **4Runner-Console-LED-Resources.zip** preserves the owner's
 connector photos, datasheets, CAD references and Rev B project history.
@@ -43,9 +44,9 @@ connector photos, datasheets, CAD references and Rev B project history.
   conductor functions and actual pod load on the bench. [Pod](https://www.diodedynamics.com/stage-series-rgbw-led-rock-light-one.html) ·
   [M8 extension](https://www.diodedynamics.com/rgbw-m8-5-pin-extension-wire.html) ·
   [Underbody light research](led-selection/README.md).
-- The CAD uses a nominal UNO-format lower board around the Espressif module
-  STEP. Check the physical ShengYang board and cable sleeves with the fit
-  samples. [Controller reference](controller-board/README.md) ·
+- The current assembly uses one PCB and a KiCad model of the ESP32-S3.
+  Check the physical sleeves, inserts and mount with the fit samples.
+  [Rev F case and PCB files](pcb-rgbw-revf/README.md#files) ·
   [CAD sources and model coverage](cad-references/README.md) ·
   [JLC3DP 3201 PA-F nylon](https://jlc3dp.com/help/article/3201pa-f-nylon).
 
@@ -59,9 +60,8 @@ connector photos, datasheets, CAD references and Rev B project history.
   [Dated catalog snapshot](pcb-rgbw-revb/jlcpcb/catalog-snapshot.csv) ·
   [JLCPCB fee schedule](https://jlcpcb.com/help/article/pcb-assembly-price).
 - A footprint-compatible regulator swap still needs the matched circuit
-  changes and a bench check. For this build use the LM5169 BOM and CPL as a
-  pair, including the four resistor changes. The native schematic records
-  the LM5164 baseline. [Regulator comparison](pcb-rgbw-revb/jlcpcb/COST-PASS.md#lm5169-board-build) ·
+  changes and a bench check. Rev F retains the LM5164-Q1. The Rev B LM5169
+  cost study records the four resistor changes for that board. [Regulator comparison](pcb-rgbw-revb/jlcpcb/COST-PASS.md#lm5169-board-build) ·
   [Reusable PCB and JLCPCB guide](../../docs/hardware/PCB-JLCPCB-PROTOTYPE-GUIDE.md).
 - Check a cable's load path and the whole insert tool envelope. The captive
   lead sleeves tie to printed saddles and leave slack at the solder joints.
@@ -70,7 +70,7 @@ connector photos, datasheets, CAD references and Rev B project history.
   and screw paths, and five supports-off slices. [Print and assembly guide](pcb-rgbw-revb/TOYOTA-POWER-BUILD.md#prototype-fabrication-and-enclosure) ·
   [Verification receipt](pcb-rgbw-revb/toyota-power-cad/verification.json).
 
-Vehicle power and fit, the LM5169 bench load and the pod pinout still need
+Vehicle power and fit, Rev F bench loads and the pod pinout still need
 physical verification. The proposed relay uses the head unit or iPhone as
 the gateway's one BLE client. That device forwards data or lighting commands
 to the lighting ESP32-S3.

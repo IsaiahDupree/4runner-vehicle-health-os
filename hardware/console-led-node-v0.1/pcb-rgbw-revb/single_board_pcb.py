@@ -177,31 +177,7 @@ def build(native, out):
 
     native.save_json(out / BASELINE, {"track_segments": native.locked_copper(board),
                                       "vias": inherited.via_identity(board)})
-    receipt = {}
-    for number, row in rev_d.BRANCH.items():
-        p = pad("J1", number)
-        centers = [round(pcbnew.ToMM(axis), 5) for axis in p.GetPosition()]
-        if centers != row["xy_mm"] or str(p.GetNetname()) != "/" + row["net"]:
-            raise ValueError(f"J1-{number} changed from the Rev D harness")
-        receipt[number] = {**row, "drill_mm": pcbnew.ToMM(p.GetDrillSize().x)}
-    native.save_json(out / "harness-pads.json", {"J1": {"pads": receipt},
-                     "factory_loop": "1:1 through all six cavities", "vehicle_cavities_physically_verified": False})
-    led_exit = {"1": "LED_R_NEG", "2": "LED_G_NEG", "3": "LED_B_NEG", "4": "LED_POS", "5": "LED_W_NEG"}
-    output_pads = {number: {"net": str(pad("J2", number).GetNetname()).removeprefix("/"), "xy_mm": [
-        round(pcbnew.ToMM(axis), 5) for axis in pad("J2", number).GetPosition()]} for number in led_exit}
-    if {number: entry["net"] for number, entry in output_pads.items()} != led_exit:
-        raise ValueError("J2 no longer matches the five-wire lighting interface")
-    native.save_json(out / "wiring-interfaces.json", {
-        "factory_tee": {str(number): {"through_to": number} for number in range(1, 7)},
-        "reserve_tails": {"3": "IR1-3 TAIL", "4": "IR1-4 DIM"}, "J1": receipt, "J2": output_pads,
-        "pod_contacts_physically_verified": False,
-    })
-    native.save_json(out / "controller-interface.json", {
-        "board_outline_top_view_mm": rev_e.OUTLINE, "mounting_holes_top_view_mm": rev_e.MOUNTS,
-        "module": rev_e.MODULE, "module_origin_top_view_mm": rev_e.MODULE_XY, "module_pin_nets": rev_e.MODULE_NETS,
-        "service_pads": rev_e.PROGRAM_PADS, "3v3_nominal_v": .6 * (1 + 453 / 100),
-        "production_electrical_or_rf_verified": False,
-    })
+    write_interfaces(native, out, pcbnew, pad)
     table = ''.join(f'(lib (name "{lib}") (type "KiCad") (uri "{path}") (options "") (descr "Rev E"))'
                     for lib, path in sorted(libraries.items()))
     (out / "fp-lib-table").write_text(f"(fp_lib_table {table})", encoding="utf-8")
@@ -229,6 +205,33 @@ def build(native, out):
     route.write_text(route.read_text().replace("(clearance 270)", "(clearance 190)")
                      .replace("(width 250) (clearance 190)", "(width 200) (clearance 190)"))
 
+
+def write_interfaces(native, out, pcbnew, pad, *, nominal_3v3=.6 * (1 + 453 / 100)):
+    receipt = {}
+    for number, row in rev_d.BRANCH.items():
+        p = pad("J1", number)
+        centers = [round(pcbnew.ToMM(axis), 5) for axis in p.GetPosition()]
+        if centers != row["xy_mm"] or str(p.GetNetname()) != "/" + row["net"]:
+            raise ValueError(f"J1-{number} changed from the Rev D harness")
+        receipt[number] = {**row, "drill_mm": pcbnew.ToMM(p.GetDrillSize().x)}
+    native.save_json(out / "harness-pads.json", {"J1": {"pads": receipt},
+                     "factory_loop": "1:1 through all six cavities", "vehicle_cavities_physically_verified": False})
+    led_exit = {"1": "LED_R_NEG", "2": "LED_G_NEG", "3": "LED_B_NEG", "4": "LED_POS", "5": "LED_W_NEG"}
+    output_pads = {number: {"net": str(pad("J2", number).GetNetname()).removeprefix("/"), "xy_mm": [
+        round(pcbnew.ToMM(axis), 5) for axis in pad("J2", number).GetPosition()]} for number in led_exit}
+    if {number: entry["net"] for number, entry in output_pads.items()} != led_exit:
+        raise ValueError("J2 no longer matches the five-wire lighting interface")
+    native.save_json(out / "wiring-interfaces.json", {
+        "factory_tee": {str(number): {"through_to": number} for number in range(1, 7)},
+        "reserve_tails": {"3": "IR1-3 TAIL", "4": "IR1-4 DIM"}, "J1": receipt, "J2": output_pads,
+        "pod_contacts_physically_verified": False,
+    })
+    native.save_json(out / "controller-interface.json", {
+        "board_outline_top_view_mm": rev_e.OUTLINE, "mounting_holes_top_view_mm": rev_e.MOUNTS,
+        "module": rev_e.MODULE, "module_origin_top_view_mm": rev_e.MODULE_XY, "module_pin_nets": rev_e.MODULE_NETS,
+        "service_pads": rev_e.PROGRAM_PADS, "3v3_nominal_v": nominal_3v3,
+        "production_electrical_or_rf_verified": False,
+    })
 
 def import_route(native, out):
     board = inherited.import_route(native, out, name=rev_e.NAME, baseline_file=BASELINE)

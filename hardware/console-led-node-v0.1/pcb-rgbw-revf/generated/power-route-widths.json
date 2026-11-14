@@ -1,0 +1,12 @@
+{
+  "VEH_ACC": 1.5,
+  "VIN_PROT": 0.8,
+  "SW": 0.8,
+  "V5_LOGIC": 0.35,
+  "ESP_3V3": 0.35,
+  "SW_3V3": 0.35,
+  "LED_R_NEG": 1.0,
+  "LED_G_NEG": 1.0,
+  "LED_B_NEG": 1.0,
+  "LED_W_NEG": 1.0
+}

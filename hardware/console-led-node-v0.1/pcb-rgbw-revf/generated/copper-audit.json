@@ -1,0 +1,79 @@
+{
+  "existing_track_segments_preserved": 819,
+  "existing_vias_preserved": 144,
+  "new_top_layer_pad_extensions": 6,
+  "replaced_footprints": {
+    "L1": {
+      "footprint": "VHOS_RevB:TDK_SPM6545VT-D",
+      "part_number": "SPM6545VT-680M-D",
+      "land_pattern": {
+        "centers_x_mm": [
+          -2.95,
+          2.95
+        ],
+        "size_xy_mm": [
+          2.3,
+          3.3
+        ]
+      },
+      "pad_centers_xy_mm": {
+        "1": [
+          138.25,
+          121.34
+        ],
+        "2": [
+          144.15,
+          121.34
+        ]
+      }
+    },
+    "D7": {
+      "footprint": "VHOS_RevB:onsemi_SOD-323_477",
+      "part_number": "NSVBAT54HT1G",
+      "land_pattern": {
+        "centers_x_mm": [
+          -1.115,
+          1.115
+        ],
+        "size_xy_mm": [
+          0.63,
+          0.83
+        ]
+      },
+      "pad_centers_xy_mm": {
+        "1": [
+          52.585,
+          128.7
+        ],
+        "2": [
+          54.815,
+          128.7
+        ]
+      }
+    },
+    "D8": {
+      "footprint": "VHOS_RevB:onsemi_SOD-323_477",
+      "part_number": "NSVBAT54HT1G",
+      "land_pattern": {
+        "centers_x_mm": [
+          -1.115,
+          1.115
+        ],
+        "size_xy_mm": [
+          0.63,
+          0.83
+        ]
+      },
+      "pad_centers_xy_mm": {
+        "1": [
+          63.385,
+          128.6
+        ],
+        "2": [
+          65.615,
+          128.6
+        ]
+      }
+    }
+  }
+}
