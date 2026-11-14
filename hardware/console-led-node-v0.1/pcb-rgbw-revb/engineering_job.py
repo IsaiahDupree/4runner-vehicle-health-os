@@ -31,10 +31,16 @@ INSERT_MODEL = "ruthex_RX-M3x5_7.stp"
 INSERT_MODEL_SHA = "3686e4730b18fa3f0a83585da28dc7eca70e5da21cedd3f75f3205c5ad11b917"
 TOYOTA_POWER_STAGE = "toyota-power-case"
 TOYOTA_REV_C_STAGE = "toyota-rev-c"
+TOYOTA_WIRE_STAGE = "toyota-wire-route"
 TOYOTA_STAGES = (TOYOTA_POWER_STAGE, TOYOTA_REV_C_STAGE)
 SERVICE_STAGES = ("service-case", "durable-case", *TOYOTA_STAGES)
 CASE_STAGES = ("jlc-case", "jlc-lite-case", *SERVICE_STAGES)
-STAGES = ("fit", "finish", *CASE_STAGES)
+STAGES = ("fit", "finish", *CASE_STAGES, TOYOTA_WIRE_STAGE)
+TOYOTA_WIRE_INPUTS = {
+    "4Runner_Service_Assembly.FCStd": "84002c5af565bca797f26163f6fd9ad3397c3ce5a11e3b6dd848b5ad0df542bd",
+    "mechanical-observation.json": "aa3b2e89732137c8a1d4c2c704ca51abe5f78918afa115f2fd0c60797c0e4e33",
+    "harness-pads.json": "1d5c0659ea3913635e00d4842bff13b3f041e8bc4d713b9637d2c5a39bae3c81",
+}
 TOYOTA_INPUTS = {
     f"{NAME}.kicad_pcb": "87f9f5e0db2bc6084c099ba96d07285ab6fa8b7da0584c1f6a04517f3bc1f79b",
     f"{NAME}.kicad_sch": "054ab60e01cb183434d4a7097e09080d37df221d8a45aaa84a5ed9ad65bcae3f",
@@ -54,7 +60,8 @@ def source_files():
     return {**{name: ROOT / name for name in ("design.py", "native_pcb.py", "mechanical_audit.py", "engineering_job.py",
                                              "engineering-inputs.json", "service_case.py", "service-case.json",
                                              "durable_case.py", "durable-case.json", "print_screen.py",
-                                             "toyota_power.py", "toyota_power_case.py", "toyota-power.json")},
+                                             "toyota_power.py", "toyota_power_case.py", "toyota-power.json",
+                                             "wire_routing.py", "toyota-wire-route.json")},
             "run_isolated_engineering.py": (ROOT / "run_isolated_engineering.py") if (ROOT / "run_isolated_engineering.py").exists()
             else REFERENCE / "run_isolated_engineering.py",
             **{f"reference/{name}": REFERENCE / name for name in ("circuit.py", "native_pcb.py", "engineering-inputs.json")}}
@@ -83,10 +90,12 @@ def validate(params):
         inputs[ROUTED_SHIELD] = ROUTED_SHIELD_SHA
     if params["stage"] in SERVICE_STAGES:
         inputs[INSERT_MODEL] = INSERT_MODEL_SHA
+    if params["stage"] == TOYOTA_WIRE_STAGE:
+        inputs = TOYOTA_WIRE_INPUTS
     for name, expected in inputs.items():
         asset = ROOT / "inputs" / name
         if asset.is_symlink() or not asset.is_file() or sha(asset) != expected:
-            raise ValueError(f"{name} reference STEP hash mismatch")
+            raise ValueError(f"{name} reference input hash mismatch")
     return dict(params)
 
 
@@ -141,6 +150,10 @@ def execute(params, out):
             "--side", "front", "--smd-only", "-o", fab / "SMT-placement.csv", pcb)
 
     try:
+        if params["stage"] == TOYOTA_WIRE_STAGE:
+            run("wire-routing", *cad_tool, TOYOTA_WIRE_STAGE, "--out", out, limit=300)
+            return {"stage": TOYOTA_WIRE_STAGE, "physical_fit_verified": False,
+                    "manufacturing_released": False}
         if params["stage"] in TOYOTA_STAGES:
             from toyota_power import check_reports, prepare_native
 
@@ -207,8 +220,13 @@ def execute(params, out):
                      for f in sorted(out.rglob("*")) if f.is_file() and f.name != "engineering-manifest.json"]
         report = {"contract": CONTRACT, "device": "orion", "params": params,
                   "sources": {key: sha(path) for key, path in source_files().items()},
-                  "esp_module_reference_sha256": MODULE_SHA, "artifacts": artifacts,
+                  "artifacts": artifacts,
                   "manufacturing_released": False, "vehicle_fit_or_electrical_qualified": False}
+        if params["stage"] == TOYOTA_WIRE_STAGE:
+            report["contract"] = "vhos_rgbw_revc_toyota_wire_routing_v1"
+            report["assembly_inputs"] = TOYOTA_WIRE_INPUTS
+        else:
+            report["esp_module_reference_sha256"] = MODULE_SHA
         if params["stage"] in TOYOTA_STAGES:
             report["contract"] = {TOYOTA_POWER_STAGE: "vhos_rgbw_revb_toyota_power_v1",
                                   TOYOTA_REV_C_STAGE: "vhos_rgbw_revc_toyota_power_v1"}[params["stage"]]

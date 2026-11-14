@@ -14,7 +14,8 @@ from urllib.request import Request, urlopen
 
 from engineering_job import (CASE_STAGES, INSERT_MODEL, INSERT_MODEL_SHA, JOB_TYPE, MODULE,
                              MODULE_SHA, ROOT, ROUTED_SHIELD, ROUTED_SHIELD_SHA, SERVICE_STAGES, STAGES,
-                             TOYOTA_INPUTS, TOYOTA_STAGES, sha, source_files, source_pin)
+                             TOYOTA_INPUTS, TOYOTA_STAGES, TOYOTA_WIRE_INPUTS, TOYOTA_WIRE_STAGE,
+                             sha, source_files, source_pin)
 
 
 ARTIFACTS = ROOT.parents[3] / "artifacts/4runner-rgbw-shield-revb-2026-11-12"
@@ -59,6 +60,9 @@ def start(identity, folder, stage):
         inputs[ROUTED_SHIELD] = (ROUTED_SHIELD_SHA, ARTIFACTS / "finish-04" / "output" / ROUTED_SHIELD)
     if stage in SERVICE_STAGES:
         inputs[INSERT_MODEL] = (INSERT_MODEL_SHA, ROOT.parents[3] / "artifacts/4runner-console-cad-2026-11-07" / INSERT_MODEL)
+    if stage == TOYOTA_WIRE_STAGE:
+        inputs = {name: (digest, ARTIFACTS / "toyota-revc-06" / "output" / name)
+                  for name, digest in TOYOTA_WIRE_INPUTS.items()}
     references = {}
     for name, (expected, fallback) in inputs.items():
         candidates = (ROOT / "inputs" / name, fallback)

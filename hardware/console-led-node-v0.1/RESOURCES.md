@@ -14,6 +14,7 @@ wirelessly from the existing classic CAN ESP32 running the MrDIY VHOS target.
 | Resource | What to use |
 | --- | --- |
 | Wiring and shopping | [Rev C shield pad assignments](pcb-rgbw-revc/README.md) · [Shared harness and case parts](pcb-rgbw-revb/TOYOTA-POWER-PARTS.csv) |
+| Toyota input wire routing | [Connector-to-pad layout and lengths](pcb-rgbw-revc/README.md#toyota-power-wire-routing) · [CAD cutaway](pcb-rgbw-revc/generated/wiring/Toyota-wire-route.png) |
 | PCB model | [KiCad project](pcb-rgbw-revc/generated/vhos_rgbw_revc.kicad_pro) · [Shield STEP](pcb-rgbw-revc/generated/4Runner_RGBW_RevC_Shield.step) · [Board preview](pcb-rgbw-revc/generated/shield.png) |
 | PCB fabrication | [Rev C four-layer Gerbers and drills](pcb-rgbw-revc/generated/4Runner_RGBW_RevC_Gerbers.zip) |
 | JLCPCB assembly | [LM5169 SMT-only BOM](pcb-rgbw-revb/jlcpcb/truck-lm5169-smt/BOM.csv) · [Matching placement file](pcb-rgbw-revb/jlcpcb/truck-lm5169-smt/CPL.csv) |

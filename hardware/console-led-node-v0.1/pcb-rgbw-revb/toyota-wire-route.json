@@ -1,0 +1,18 @@
+{
+  "definition": "vhos_rgbw_revc_toyota_wire_routing_v1",
+  "interface": "vhos_rgbw_revb_toyota_power_v1",
+  "sleeve_wall_mm": 0.2,
+  "branch_start_x_mm": 8.3,
+  "fanout_end_x_mm": 10.5,
+  "insulation_od_mm": 1.95,
+  "bore_clearance_gauge_mm": 1.2,
+  "pad_protrusion_mm": 0.6,
+  "pad_approach_mm": 1.0,
+  "wire_bend_radius_mm": 8.0,
+  "rear_exit_to_sleeve_mm": 12.0,
+  "rear_face_gap_mm": 0.15,
+  "jacket_centerline_mm": {
+    "1": {"y_offset": -1.30, "z_offset": -0.05},
+    "2": {"y_offset": 1.03, "z_offset": 1.10}
+  }
+}

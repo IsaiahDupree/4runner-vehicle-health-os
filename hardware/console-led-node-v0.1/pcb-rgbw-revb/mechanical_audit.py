@@ -25,7 +25,8 @@ def launch(mode, out):
         raise RuntimeError("FreeCAD unavailable")
     code = (f"import sys\nsys.path.insert(0, {str(ROOT)!r})\n"
             f"from mechanical_audit import execute\nexecute({mode!r}, {str(out)!r})\n")
-    run_freecad(native, code, out, {"service-case": 260, "durable-case": 340, "toyota-power-case": 340}.get(mode, 140))
+    limits = {"service-case": 260, "durable-case": 340, "toyota-power-case": 340, "toyota-wire-route": 270}
+    run_freecad(native, code, out, limits.get(mode, 140))
 
 
 def execute(mode, output):
@@ -38,6 +39,10 @@ def execute(mode, output):
     out = Path(output)
     if mode == "models":
         component_models(out)
+    elif mode == "toyota-wire-route":
+        from wire_routing import build
+
+        build(out)
     elif mode in {"jlc-case", "jlc-lite-case", "service-case", "durable-case", "toyota-power-case"}:
         dimensions = {**CASE, "insert_depth_mm": 7.0, "lower_boss_diameter_mm": 8.0}
         if mode in {"jlc-lite-case", "service-case"}:
@@ -548,7 +553,7 @@ def preview(path, shell, controller, shield, fuses, fasteners, board_width):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("mode", choices=["models", "assembly", "jlc-case", "jlc-lite-case", "service-case",
-                                         "durable-case", "toyota-power-case"])
+                                         "durable-case", "toyota-power-case", "toyota-wire-route"])
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     launch(args.mode, args.out.resolve())

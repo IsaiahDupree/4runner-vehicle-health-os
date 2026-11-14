@@ -1,0 +1,185 @@
+{
+  "contract": "vhos_rgbw_revc_toyota_wire_routing_v1",
+  "device": "orion",
+  "params": {
+    "stage": "toyota-wire-route",
+    "expected_source_set_sha256": "f1523b937a70ff0a7b08d51e3cc4280dc9c87d3b5c66fb795c5f93c5ce208064",
+    "evaluation_only": true,
+    "timeout_sec": 360
+  },
+  "sources": {
+    "design.py": "748322082eef188c02e66f60ebf70151d0b3ffb621b35c3567d666e23ecfacc1",
+    "native_pcb.py": "b7fd985322f354b4e7f98888aa83f3ac3e57c4b2a0b2033b3f6f0729171bfd13",
+    "mechanical_audit.py": "5f1785692eaaa568c00dc2fb60b6f122ee4c0b8628e72fe7c700020350249911",
+    "engineering_job.py": "ffbd94ec532664c9b62de0adf73327e0282340aca7ba84cb37ca92cff51a5aaf",
+    "engineering-inputs.json": "23908103f01ee4d46a67e28fb384dd1490da0757ee4fe1c2fa870a61baab4d2e",
+    "service_case.py": "3596a20940f5ddc1d1d1f4cf890918f92fd38e4953921bd9fa31e97d11d0635d",
+    "service-case.json": "e7e0f15e87dc71e6a15d5bcc0f71ac56f25cd14779a9afcadb39ecec4be2963c",
+    "durable_case.py": "1f3fae09e50ca51a4664e26a381da70c44c3061b148d4d2b6020d6680cf6b196",
+    "durable-case.json": "e7f3810686320dce5d85ceccf4d5b3558c0f815a554c76661fa32c6b7e12f79c",
+    "print_screen.py": "8cb60e1d876f0853e8946d415168d7e134b89e91fb7960b4b43d573e3fc0ee3a",
+    "toyota_power.py": "c68e2800db9154223bc3bf13e951268ce3ff5de4e57f062de699a4e111693680",
+    "toyota_power_case.py": "eef2244e199b5bfb71e1b32774cc87176c912060e09490c68a92a937cd66e19a",
+    "toyota-power.json": "5912932df235b799406ce20d4903516db92427d15f94e01a4904b2e2633de1f4",
+    "wire_routing.py": "db4f45a26adcfe9bbd96553e3cfbf3338b2d0b6ba6a901f396a36ba46858dcdf",
+    "toyota-wire-route.json": "354993d5f0e88dc0e1b0c145ce6b52f3e3865b4f4203458dae0babedcb2ea69d",
+    "run_isolated_engineering.py": "5e4701851492068195782433d552b754dbc88e3f89d2fbe9d588299fce93c808",
+    "reference/circuit.py": "db04c82bb06e688d3cd75548cc81b055ee92e3c0813742e2c6041a8a8f137bb9",
+    "reference/native_pcb.py": "2f2ee35134f321bf27e4a23d94a1324681b5bcd0b240cc8793e46623c79e895e",
+    "reference/engineering-inputs.json": "7bacb751b2c9528023fa21e3b3c077748739da77172a26e317fb0700cf3a9bd5"
+  },
+  "artifacts": [
+    {
+      "name": "4Runner_RevC_Toyota_Wiring.FCStd",
+      "bytes": 5405452,
+      "sha256": "bf3edc9fa052e210231aa1516e9777191ff58090fed3468690e65724d8b32086"
+    },
+    {
+      "name": "4Runner_RevC_Toyota_Wiring.step",
+      "bytes": 24439,
+      "sha256": "bbdea4f28f73128a9b83a129b0b8140b3135ec998ef06de8e4db37456e5aca96"
+    },
+    {
+      "name": "_native_entry.py",
+      "bytes": 471,
+      "sha256": "baf936f40e154dabcfc25fcf7b93f17bbe4e466edf6a76ff0ad5a74090ae48df"
+    },
+    {
+      "name": "_native_impl.py",
+      "bytes": 262,
+      "sha256": "4405d63215114e5c750cbdbbf49b530eee0d505b9bdeff6cfd5531f848ce1b10"
+    },
+    {
+      "name": "commands.json",
+      "bytes": 147,
+      "sha256": "881f2468d985b696fd48a1318e7a567b253fc5df6926f4eb0d203b8e731f9408"
+    },
+    {
+      "name": "freecad.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "source/design.py",
+      "bytes": 6590,
+      "sha256": "748322082eef188c02e66f60ebf70151d0b3ffb621b35c3567d666e23ecfacc1"
+    },
+    {
+      "name": "source/durable-case.json",
+      "bytes": 2113,
+      "sha256": "e7f3810686320dce5d85ceccf4d5b3558c0f815a554c76661fa32c6b7e12f79c"
+    },
+    {
+      "name": "source/durable_case.py",
+      "bytes": 20092,
+      "sha256": "1f3fae09e50ca51a4664e26a381da70c44c3061b148d4d2b6020d6680cf6b196"
+    },
+    {
+      "name": "source/engineering-inputs.json",
+      "bytes": 3360,
+      "sha256": "23908103f01ee4d46a67e28fb384dd1490da0757ee4fe1c2fa870a61baab4d2e"
+    },
+    {
+      "name": "source/engineering_job.py",
+      "bytes": 14702,
+      "sha256": "ffbd94ec532664c9b62de0adf73327e0282340aca7ba84cb37ca92cff51a5aaf"
+    },
+    {
+      "name": "source/mechanical_audit.py",
+      "bytes": 30090,
+      "sha256": "5f1785692eaaa568c00dc2fb60b6f122ee4c0b8628e72fe7c700020350249911"
+    },
+    {
+      "name": "source/native_pcb.py",
+      "bytes": 26269,
+      "sha256": "b7fd985322f354b4e7f98888aa83f3ac3e57c4b2a0b2033b3f6f0729171bfd13"
+    },
+    {
+      "name": "source/print_screen.py",
+      "bytes": 9467,
+      "sha256": "8cb60e1d876f0853e8946d415168d7e134b89e91fb7960b4b43d573e3fc0ee3a"
+    },
+    {
+      "name": "source/reference/circuit.py",
+      "bytes": 8612,
+      "sha256": "db04c82bb06e688d3cd75548cc81b055ee92e3c0813742e2c6041a8a8f137bb9"
+    },
+    {
+      "name": "source/reference/engineering-inputs.json",
+      "bytes": 7863,
+      "sha256": "7bacb751b2c9528023fa21e3b3c077748739da77172a26e317fb0700cf3a9bd5"
+    },
+    {
+      "name": "source/reference/native_pcb.py",
+      "bytes": 24919,
+      "sha256": "2f2ee35134f321bf27e4a23d94a1324681b5bcd0b240cc8793e46623c79e895e"
+    },
+    {
+      "name": "source/run_isolated_engineering.py",
+      "bytes": 3960,
+      "sha256": "5e4701851492068195782433d552b754dbc88e3f89d2fbe9d588299fce93c808"
+    },
+    {
+      "name": "source/service-case.json",
+      "bytes": 2483,
+      "sha256": "e7e0f15e87dc71e6a15d5bcc0f71ac56f25cd14779a9afcadb39ecec4be2963c"
+    },
+    {
+      "name": "source/service_case.py",
+      "bytes": 22914,
+      "sha256": "3596a20940f5ddc1d1d1f4cf890918f92fd38e4953921bd9fa31e97d11d0635d"
+    },
+    {
+      "name": "source/toyota-power.json",
+      "bytes": 1594,
+      "sha256": "5912932df235b799406ce20d4903516db92427d15f94e01a4904b2e2633de1f4"
+    },
+    {
+      "name": "source/toyota-wire-route.json",
+      "bytes": 525,
+      "sha256": "354993d5f0e88dc0e1b0c145ce6b52f3e3865b4f4203458dae0babedcb2ea69d"
+    },
+    {
+      "name": "source/toyota_power.py",
+      "bytes": 7282,
+      "sha256": "c68e2800db9154223bc3bf13e951268ce3ff5de4e57f062de699a4e111693680"
+    },
+    {
+      "name": "source/toyota_power_case.py",
+      "bytes": 8939,
+      "sha256": "eef2244e199b5bfb71e1b32774cc87176c912060e09490c68a92a937cd66e19a"
+    },
+    {
+      "name": "source/wire_routing.py",
+      "bytes": 19716,
+      "sha256": "db4f45a26adcfe9bbd96553e3cfbf3338b2d0b6ba6a901f396a36ba46858dcdf"
+    },
+    {
+      "name": "Toyota-wire-pad-detail.png",
+      "bytes": 61202,
+      "sha256": "cb4bf6dc99d2b7ddf52db96d36a5b035363fe44d93a69e9b61f1512a84cec858"
+    },
+    {
+      "name": "toyota-wire-route.json",
+      "bytes": 9343,
+      "sha256": "fecae7bb665a5839f575d9b6ea45986193721c9f51c8e42d5b75d2c98405b073"
+    },
+    {
+      "name": "Toyota-wire-route.png",
+      "bytes": 107043,
+      "sha256": "58d11aeaf44cc647d5114edd7e52577bf24ab7be68f30547e82cd7fee75a89f6"
+    },
+    {
+      "name": "wire-routing.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "manufacturing_released": false,
+  "vehicle_fit_or_electrical_qualified": false,
+  "assembly_inputs": {
+    "4Runner_Service_Assembly.FCStd": "84002c5af565bca797f26163f6fd9ad3397c3ce5a11e3b6dd848b5ad0df542bd",
+    "mechanical-observation.json": "aa3b2e89732137c8a1d4c2c704ca51abe5f78918afa115f2fd0c60797c0e4e33",
+    "harness-pads.json": "1d5c0659ea3913635e00d4842bff13b3f041e8bc4d713b9637d2c5a39bae3c81"
+  }
+}

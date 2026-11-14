@@ -1,0 +1,364 @@
+{
+  "contract": "vhos_rgbw_revc_toyota_wire_routing_v1",
+  "interface": "vhos_rgbw_revb_toyota_power_v1",
+  "inputs": {
+    "shield": "Reopened KiCad STEP with dedicated wire pads",
+    "ports": "Captive wire exits and case-mounted tie saddles",
+    "mating_cables": "Sleeve tolerance screening plus nominal jacket illustrations",
+    "fuses": "installed height reserve",
+    "lower_board": "UNO reference and photo estimates",
+    "esp_module": "Espressif reference STEP at estimated placement"
+  },
+  "config": {
+    "definition": "vhos_rgbw_revc_toyota_wire_routing_v1",
+    "interface": "vhos_rgbw_revb_toyota_power_v1",
+    "sleeve_wall_mm": 0.2,
+    "branch_start_x_mm": 8.3,
+    "fanout_end_x_mm": 10.5,
+    "insulation_od_mm": 1.95,
+    "bore_clearance_gauge_mm": 1.2,
+    "pad_protrusion_mm": 0.6,
+    "pad_approach_mm": 1.0,
+    "wire_bend_radius_mm": 8.0,
+    "rear_exit_to_sleeve_mm": 12.0,
+    "rear_face_gap_mm": 0.15,
+    "jacket_centerline_mm": {
+      "1": {
+        "y_offset": -1.3,
+        "z_offset": -0.05
+      },
+      "2": {
+        "y_offset": 1.03,
+        "z_offset": 1.1
+      }
+    }
+  },
+  "conductor_routes": {
+    "1": {
+      "signal": "Ground",
+      "pcb_net": "GND",
+      "toyota_cavity": null,
+      "pcb_xy_mm": [
+        61.0,
+        111.14
+      ],
+      "housing_exit_xyz_mm": [
+        -65.75000000000001,
+        52.230000000000004,
+        40.150000000000006
+      ],
+      "sleeve_entry_xyz_mm": [
+        -48.9,
+        52.230000000000004,
+        40.150000000000006
+      ],
+      "case_pad_xyz_mm": [
+        17.0,
+        53.530000000000015,
+        24.6
+      ],
+      "minimum_bend_radius_mm": 8.0,
+      "centerline_length_mm": 98.78,
+      "inside_case_centerline_mm": 33.03,
+      "strip_length_mm": 3.2
+    },
+    "2": {
+      "signal": "Switched +12 V",
+      "pcb_net": "VEH_ACC",
+      "toyota_cavity": null,
+      "pcb_xy_mm": [
+        66.5,
+        111.14
+      ],
+      "housing_exit_xyz_mm": [
+        -65.75000000000001,
+        54.56,
+        41.300000000000004
+      ],
+      "sleeve_entry_xyz_mm": [
+        -48.9,
+        54.56,
+        41.300000000000004
+      ],
+      "case_pad_xyz_mm": [
+        22.5,
+        53.530000000000015,
+        24.6
+      ],
+      "minimum_bend_radius_mm": 8.0,
+      "centerline_length_mm": 103.76,
+      "inside_case_centerline_mm": 38.01,
+      "strip_length_mm": 3.2
+    }
+  },
+  "sleeve_length_mm": 59.8,
+  "checks": [
+    {
+      "check": "Toyota sleeve against case",
+      "clearance_mm": 0.0,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "Toyota sleeve against lid",
+      "clearance_mm": 3.05,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "Toyota sleeve against shield",
+      "clearance_mm": 12.85,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "Toyota sleeve against connector",
+      "clearance_mm": 2.0,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 stripped-end gauge in actual PCB bore",
+      "clearance_mm": 0.3,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 stripped-end gauge below board",
+      "clearance_mm": 38.3628,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 insulated wire against case",
+      "clearance_mm": 1.7093,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 insulated wire against lid",
+      "clearance_mm": 4.875,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 insulated wire against shield",
+      "clearance_mm": 0.9991,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 insulated wire against ESP32 board",
+      "clearance_mm": 38.9144,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 insulated wire against fuses",
+      "clearance_mm": 10.4288,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 insulated wire against screws and washers",
+      "clearance_mm": 4.3792,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 insulated wire against fuse puller envelope",
+      "clearance_mm": 5.6398,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 insulated wire against sleeve wall",
+      "clearance_mm": 0.274,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 insulated wire against connector housing",
+      "clearance_mm": 3.0648,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 insulated wire against saddle ties",
+      "clearance_mm": 1.4443,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 outer stub against connector",
+      "clearance_mm": 0.15,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 outer stub against case",
+      "clearance_mm": 46.0509,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 outer stub against lid",
+      "clearance_mm": 49.1424,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 under lid lifted 0.4 mm",
+      "clearance_mm": 5.275,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 under lid lifted 4 mm",
+      "clearance_mm": 8.875,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 under lid lifted 12 mm",
+      "clearance_mm": 16.875,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 stripped-end gauge in actual PCB bore",
+      "clearance_mm": 0.3,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 stripped-end gauge below board",
+      "clearance_mm": 33.1059,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 insulated wire against case",
+      "clearance_mm": 2.875,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 insulated wire against lid",
+      "clearance_mm": 3.725,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 insulated wire against shield",
+      "clearance_mm": 1.0,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 insulated wire against ESP32 board",
+      "clearance_mm": 33.8043,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 insulated wire against fuses",
+      "clearance_mm": 6.545,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 insulated wire against screws and washers",
+      "clearance_mm": 7.4221,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 insulated wire against fuse puller envelope",
+      "clearance_mm": 1.525,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 insulated wire against sleeve wall",
+      "clearance_mm": 0.068,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 insulated wire against connector housing",
+      "clearance_mm": 2.0048,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 insulated wire against saddle ties",
+      "clearance_mm": 0.325,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 outer stub against connector",
+      "clearance_mm": 0.125,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 outer stub against case",
+      "clearance_mm": 46.0735,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 outer stub against lid",
+      "clearance_mm": 49.0417,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 under lid lifted 0.4 mm",
+      "clearance_mm": 4.125,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 under lid lifted 4 mm",
+      "clearance_mm": 7.725,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 under lid lifted 12 mm",
+      "clearance_mm": 15.725,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "ground and switched 12 V insulation separation",
+      "clearance_mm": 0.1479,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-1 stripped end against the other wire",
+      "clearance_mm": 4.1261,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "J1-2 stripped end against the other wire",
+      "clearance_mm": 4.126,
+      "interference_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "ground and switched 12 V stripped-end separation",
+      "clearance_mm": 4.7021,
+      "interference_mm3": 0.0,
+      "pass": true
+    }
+  ],
+  "passed": true,
+  "physical_harness_fit_verified": false,
+  "toyota_cavities_verified": false
+}
