@@ -14,7 +14,7 @@ RGBW pod. The existing CAN ESP32 supplies vehicle telemetry wirelessly.
 | Use | Files |
 | --- | --- |
 | Edit the PCB | [KiCad project](generated/vhos_rgbw_revg.kicad_pro) · [Board](generated/vhos_rgbw_revg.kicad_pcb) · [Schematic](generated/vhos_rgbw_revg.kicad_sch) · [Schematic PDF](generated/schematic.pdf) |
-| Price fabrication | [Four-layer Gerbers and drills](generated/4Runner_RGBW_RevG_Gerbers.zip) · [JLCPCB BOM](jlcpcb/BOM.csv) · [Matching CPL](jlcpcb/CPL.csv) · [Stock and pricing](jlcpcb/README.md) |
+| Price fabrication and finished assembly | [Four-layer Gerbers and drills](generated/4Runner_RGBW_RevG_Gerbers.zip) · [Factory SMT and fuse-holder BOM](jlcpcb/factory-holders/BOM.csv) · [Matching CPL](jlcpcb/factory-holders/CPL.csv) · [Stock and pricing](jlcpcb/README.md) · [Finished-unit quote scope](BOX-BUILD.md) |
 | Inspect the assembly | [PCB STEP](generated/4Runner_RGBW_RevG_PCB.step) · [FreeCAD assembly](generated/4Runner_RevG_Assembly.FCStd) · [Toyota lead STEP](generated/4Runner_RevG_Toyota_Wires.step) |
 | Print the enclosure | [Base STL](generated/case_base.stl) · [Lid STL](generated/case_lid.stl) · [Cable-entry coupon](generated/front_ports_coupon.stl) · [Lid coupon](generated/front_lid_coupon.stl) · [M3 insert coupon](generated/m3_tolerance_coupon.stl) |
 | Wire and test | [Six-cavity and RGBW register](WIRE-REGISTER.csv) · [Harness and case hardware](HARNESS-AND-CASE.csv) · [Digital test results](generated/verification.json) · [Bench procedure](BENCH.md) |

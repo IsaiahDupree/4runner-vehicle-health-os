@@ -1,0 +1,16 @@
+{
+  "population": "Top-side Economic SMT plus factory THT fuse holders",
+  "catalog_timestamp": "2026-11-14T20:55:13+00:00",
+  "boards_assembled": 2,
+  "smt_placements_per_board": 59,
+  "manual_joints_per_board": 8,
+  "holder_stock": 4,
+  "holders_required": 4,
+  "holder_parts_usd": "13.00",
+  "holder_feeder_allowance_usd": "3.07",
+  "hand_solder_setup_and_joints_usd": "3.84",
+  "factory_holder_increment_usd": "19.92",
+  "smt_assembly_subtotal_usd": "98.61",
+  "assembly_with_holders_usd": "118.53",
+  "checkout_verified": false
+}

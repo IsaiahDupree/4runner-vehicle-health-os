@@ -1,0 +1,2 @@
+observed_utc,jlcpcb_part,manufacturer,mpn,library,stock,assembly_process,package,minimum_purchase,minimum_assembly,extra_parts,x_ray_flag,price_tiers_usd,jlc_listing
+2026-11-14T20:55:13+00:00,C3205378,Keystone,3568-10,Extended,4,THT,DIP-4,3,0,0,false,1:3.251 10:2.7651 30:2.4591 100:2.1483 500:2.1483 1000:2.1483,https://jlcpcb.com/partdetail/3568-10/C3205378

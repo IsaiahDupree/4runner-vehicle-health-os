@@ -1,11 +1,17 @@
 # Rev G JLCPCB assembly and stock
 
-Use the matched [Gerbers and drills](../generated/4Runner_RGBW_RevG_Gerbers.zip),
-[BOM](BOM.csv) and [CPL](CPL.csv). The PCB is 122 × 53.34 mm, four
-layers, 1.6 mm, with 59 top-side SMT placements. The two fuse holders
-and captive leads are fitted locally. Check the assembly preview,
-exposed-pad inspection requirements and depaneling clearance near the
-ESP32 antenna overhang. [JLCPCB assembly capabilities](https://jlcpcb.com/capabilities/pcb-assembly-capabilities).
+The PCB is 122 × 53.34 mm, four layers, 1.6 mm, with 59 top-side SMT
+placements. For outsourcing all PCB soldering, use the [mixed-assembly
+BOM](factory-holders/BOM.csv) and [matching CPL](factory-holders/CPL.csv)
+with the [Gerbers and drills](../generated/4Runner_RGBW_RevG_Gerbers.zip).
+It adds factory placement of both MINI fuse holders. The box-build
+vendor installs the fuse elements and solders both captive cable leads.
+Check the assembly preview, exposed-pad inspection, removal of tooling
+rails and the ESP32 antenna overhang. [JLCPCB assembly capabilities](https://jlcpcb.com/capabilities/pcb-assembly-capabilities) ·
+[Finished-unit vendor scope](../BOX-BUILD.md).
+
+The original [SMT-only BOM](BOM.csv) and [CPL](CPL.csv) are the basis of
+the cost comparison below.
 
 | Economic SMT | Rev F assembly | Rev G assembly | Rev G per board |
 | --- | ---: | ---: | ---: |
@@ -15,13 +21,17 @@ ESP32 antenna overhang. [JLCPCB assembly capabilities](https://jlcpcb.com/capabi
 
 The two-board estimate includes $39.11 in parts, $49.12 in Extended
 feeders, $9.71 for setup and stencil, and $0.67 for SMT placement.
-Rev G uses 16 Extended codes, down from 28. The dated catalog flags
-zero Rev G placements for X-ray. JLCPCB may still specify inspections
-for the exposed pads. Two-board assembly leaves $1.39 before the $100
-batch target. Price bare boards, local hardware, case, LED pod, delivery,
-tax and tariffs for the actual order.
+For two boards, the revision saves $49.30 in parts, $36.84 in Extended
+feeder charges, $0.25 in placement and $3.28 in catalog-flagged X-ray.
+It brings the surface-mount BOM from 90 to 59 placements and from 28 to
+16 Extended part numbers. One 3.3 V regulator replaces the two-stage
+supply, one eFuse integrates the input protection, and one RGBW driver
+replaces the discrete switching stages. The dated catalog flags zero
+Rev G placements for X-ray. JLCPCB may still require exposed-pad
+inspection. See the finished-unit quote for costs beyond SMT.
 [Published fees](https://jlcpcb.com/help/article/pcb-assembly-price) ·
-[Calculation](assembly-estimate.json) ·
+[Rev F calculation](../../pcb-rgbw-revf/jlcpcb/assembly-estimate.json) ·
+[Rev G calculation](assembly-estimate.json) ·
 [November 14, 2026 catalog snapshot](catalog-snapshot.csv).
 
 | Job | Exact part | JLCPCB | Catalog stock |
@@ -40,9 +50,22 @@ reset supervisor. Factory inventory and assembly eligibility can change.
 [Shunt reference](https://jlcpcb.com/partdetail/DiodesIncorporated-LM4040C25QFTA/C531175) ·
 [Reset supervisor](https://jlcpcb.com/partdetail/TexasInstruments-TLV803EC30DBZR/C2877924).
 
-Fit two Keystone 3568 fuse holders, their 3 A and 1 A MINI fuses,
-and the two leads from the hardware register. Buy the mating housings
-and terminals as a set after verifying the truck's latch and cavity
-markings. [Keystone 3568](https://www.digikey.com/en/products/detail/keystone-electronics/3568/2137306) ·
-[Harness and case hardware](../HARNESS-AND-CASE.csv) ·
-[Bring-up sequence](../BENCH.md).
+## Board with the fuse holders soldered
+
+The red Keystone **3568-10**, code **C3205378**, matches both existing
+four-pin footprints. The dated catalog showed four available, exactly
+enough for the two-board build. Check inventory when placing the order.
+The modeled **$19.92** batch charge includes the four holders, a $3.07
+feeder allowance, the manual setup and 16 solder joints. That brings mixed
+assembly to **$118.53** before board fabrication and delivery. The
+dimension-only calculator showed **$34.30** for five bare boards with
+lead-free HASL or **$29.10** with OSP on November 14, 2026. Allow
+**$152.83** for the lead-free HASL batch with two boards assembled
+and three bare spares. Confirm the combined price with real files in
+the vendor's assembly checkout.
+[Door-to-door build scope](../BOX-BUILD.md) ·
+[JLCPCB holder listing](https://jlcpcb.com/partdetail/3568-10/C3205378) ·
+[Mixed-assembly calculation](factory-holders/assembly-estimate.json) ·
+[Holder catalog snapshot](factory-holders/holder-catalog.csv) ·
+[Bare-board calculator inputs](factory-holders/bare-board-calculator.json) ·
+[JLCPCB calculator](https://cart.jlcpcb.com/quote).

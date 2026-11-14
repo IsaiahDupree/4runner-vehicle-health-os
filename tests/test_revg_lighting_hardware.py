@@ -7,6 +7,8 @@ from hashlib import sha256
 import json
 from pathlib import Path
 import re
+import subprocess
+import sys
 from zipfile import ZipFile
 
 
@@ -106,3 +108,33 @@ def test_economic_assembly_matches_native_gerbers_and_loaded_catalog_quantities(
     assert Decimal(two["estimated_assembly_subtotal_usd"]) < Decimal(100)
     assert two["rev_f_assembly_savings_usd"] == "89.67"
     assert quote["assembly_only"] and quote["checkout_verified"] is False
+
+
+def test_factory_assembly_adds_both_fuse_holders_at_native_top_side_positions(tmp_path):
+    mixed = ASSEMBLY / "factory-holders"
+    generator = REV.parent / "pcb-rgbw-revb" / "jlcpcb" / "prepare_revg_mixed_quote.py"
+    subprocess.run([sys.executable, "-B", str(generator), "--out", str(tmp_path)], check=True)
+    for name in ("BOM.csv", "CPL.csv", "holder-catalog.csv", "assembly-estimate.json"):
+        assert (tmp_path / name).read_bytes() == (mixed / name).read_bytes(), name
+
+    factory_bom = read_csv(mixed / "BOM.csv")
+    assert factory_bom[:-1] == read_csv(ASSEMBLY / "BOM.csv")
+    assert factory_bom[-1] == {
+        "Comment": "3568-10", "Designator": "F1,F2",
+        "Footprint": "Keystone_3568_MINI_Vertical", "JLCPCB Part #": "C3205378",
+    }
+    factory_cpl = read_csv(mixed / "CPL.csv")
+    assert factory_cpl[:-2] == read_csv(ASSEMBLY / "CPL.csv")
+    assert factory_cpl[-2:] == [
+        {"Designator": "F1", "Mid X": "79mm", "Mid Y": "-106.94mm", "Rotation": "0", "Layer": "T"},
+        {"Designator": "F2", "Mid X": "103.5mm", "Mid Y": "-107.34mm", "Rotation": "0", "Layer": "T"},
+    ]
+    quote = read_json(mixed / "assembly-estimate.json")
+    holder, = read_csv(mixed / "holder-catalog.csv")
+    needed = 2 * len(factory_cpl[-2:]) + int(holder["extra_parts"])
+    assert int(holder["minimum_purchase"]) <= quote["holders_required"] == needed <= int(holder["stock"])
+    assert quote["manual_joints_per_board"] == 8
+    assert quote["assembly_with_holders_usd"] == "118.53"
+    bare = read_json(mixed / "bare-board-calculator.json")["rev_g"]["lead_free_hasl"]
+    assert sum(Decimal(bare[k]) for k in ("engineering_usd", "finish_usd", "board_usd")) == Decimal("34.30")
+    assert Decimal(bare["calculated_price_usd"]) + Decimal(quote["assembly_with_holders_usd"]) == Decimal("152.83")

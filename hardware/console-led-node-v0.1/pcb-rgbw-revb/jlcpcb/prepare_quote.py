@@ -47,15 +47,15 @@ def unique(rows, key):
     return indexed
 
 
-def through_hole_centroids(board_text):
+def through_hole_centroids(board_text, specifications=THT):
     """Use native footprint origins and the manufacturers' nominal body centers."""
     centers = {}
     for footprint in board_text.split('\n\t(footprint ')[1:]:
         match = re.search(r'\(property "Reference" "([^"]+)"', footprint)
-        if not match or match[1] not in THT:
+        if not match or match[1] not in specifications:
             continue
         ref = match[1]
-        rotation, dx, dy, joints = THT[ref]
+        rotation, dx, dy, joints = specifications[ref]
         position = re.search(r'^\t\t\(at ([\d.]+) ([\d.]+)(?: ([\d.]+))?\)$',
                              footprint, re.MULTILINE)
         if position is None or '(layer "F.Cu")' not in footprint:
@@ -69,7 +69,7 @@ def through_hole_centroids(board_text):
         offset_x, offset_y = (dy, -dx) if rotation == 90 else (dx, dy)
         centers[ref] = {"Ref": ref, "PosX": str(x + offset_x), "PosY": str(-y - offset_y),
                         "Rot": str(rotation), "Side": "top"}
-    if centers.keys() != THT.keys():
+    if centers.keys() != specifications.keys():
         raise ValueError("missing native through-hole placements")
     return centers
 

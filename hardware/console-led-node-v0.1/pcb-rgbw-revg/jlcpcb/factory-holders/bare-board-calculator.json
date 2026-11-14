@@ -1,0 +1,30 @@
+{
+  "observed_date": "2026-11-14",
+  "source": "https://cart.jlcpcb.com/quote",
+  "quote_basis": "Public calculator with dimensions entered manually",
+  "width_mm": 53.34,
+  "board_quantity": 5,
+  "layers": 4,
+  "thickness_mm": 1.6,
+  "material": "FR4 TG135",
+  "solder_mask": "Green",
+  "outer_copper_oz": 1,
+  "inner_copper_oz": 0.5,
+  "electrical_test": "Flying probe, fully tested",
+  "rev_g": {
+    "length_mm": 122,
+    "lead_free_hasl": {
+      "engineering_usd": "25.00",
+      "finish_usd": "5.20",
+      "board_usd": "4.10",
+      "calculated_price_usd": "34.30"
+    },
+    "osp_calculated_price_usd": "29.10"
+  },
+  "hypothetical_shorter_layout": {
+    "length_mm": 99,
+    "lead_free_hasl_calculated_price_usd": "13.10",
+    "osp_calculated_price_usd": "8.00"
+  },
+  "includes_shipping": false
+}
