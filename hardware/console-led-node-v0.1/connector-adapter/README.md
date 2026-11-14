@@ -1,21 +1,21 @@
 # Toyota console plug → ESP32 shield connection
 
 Use the [Toyota-powered Rev C build guide](../pcb-rgbw-revc/README.md)
-for the current two-wire power input from the photographed white socket. The
-[Rev A inline harness build sheet](INLINE-HARNESS.md) records the earlier
-wiring. This page retains the connector and CAD research from November 7,
-2026.
+for the current two-wire power input from the photographed white socket.
+Use the [2005 V8 IR1 pinout and harness plan](IR1-WIRE-PLAN.md) to identify
+all six factory wires, verify the feed and plan illumination sensing.
+The [Rev A inline harness build sheet](INLINE-HARNESS.md) records the earlier
+wiring. This page retains the connector and CAD research from November 7, 2026.
 
 The later mating-face photos and the supplied Corsa comparison show a white
 six-contact socket in the Yazaki 7283-1060 pattern. The catalog mate is
 **Yazaki 7282-1060**. IR1, the join between the instrument-panel loom and the
-cigarette-lighter sub-loom, remains a candidate for its factory function.
-Check the actual latch engagement and the circuit's electrical behavior on
-the 2005 V8.
+cigarette-lighter sub-loom, matches the plug location and circuit colors in the
+2005 V8 service diagrams. Verify the latch and electrical behavior on the truck.
 
 ## Concrete plug candidate
 
-Toyota's **2003 EWD514U, printed pp. 52–53**, shows IR1 at this console location and draws both halves with two upper cavities and four lower cavities. This is the layout to compare with the vehicle. **Yazaki 7282-1060 / 7283-1060**, 2.3II/090II unsealed six-way, is a strong geometry candidate. This association is our inference from drawings, **not a factory 2005 IR1-to-part-number cross-reference**.
+Toyota's **2003 EWD514U, printed pp. 52–53**, shows IR1 at this console location and draws both halves with two upper cavities and four lower cavities. This is the layout to compare with the vehicle. **Yazaki 7282-1060 / 7283-1060**, 2.3II/090II unsealed six-way, is a geometry match inferred from the drawings. The factory housing part number for the photographed plug still needs physical confirmation.
 
 Yazaki explicitly lists these two housings as mates. Its male housing is 38.0 mm long × 21.1 mm wide × 21.4 mm high; the female is 22.0 × 18.7 × 17.0 mm. These are **wire-harness housings using crimp terminals**. No documented, orderable PCB-tail mate for this exact interface was established in this research. Do not treat a housing's “PCB model” download as a solderable PCB connector.
 
@@ -39,25 +39,15 @@ lands at J2-5. The Toyota housings and fuse holder sit outside the case, and
 the shield mounts on the controller's headers and screw supports. See the
 [wiring diagram and continuity table](INLINE-HARNESS.md#wiring).
 
-## 2006 IR1 circuit reference
+## 2005 V8 IR1 circuits
 
-The accessible factory **2006 EM00T0U** supplies this reference: overall diagram **printed p. 447** (PDF page 33), and cigarette-lighter system **printed pp. 296–297** (PDF pages 340–341). The exact 2005 manual is **EWD615U**, whose corresponding pages were not obtained. Do not relabel 2003/2006 data as verified 2005 V8 wiring.
+The 2005 V8 service diagrams show the ACC feed and chassis ground on cavities
+6 and 5, plus two lamps that share TAIL and dash dimmer circuits on cavities
+1–4. Confirm that the CIG feed is populated on the truck before powering the
+controller. Telemetry reaches the node wirelessly from the existing gateway.
+[2005 V8 circuit sources, harness and meter checks](IR1-WIRE-PLAN.md).
 
-| IR1 cavity | Factory 2006 circuit / wire |
-| --- | --- |
-| 1 | Ashtray illumination feed, G (green) |
-| 2 | Ashtray illumination return, W–G on main loom and W–B on lamp sub-loom |
-| 3 | Lighter illumination feed, G |
-| 4 | Lighter illumination return, W–G on main loom and W–B on lamp sub-loom |
-| 5 | Lighter power ground, W–B |
-| 6 | CIG accessory feed, P–L (pink/blue), shown on a 10 A fuse |
-
-`PINMAP-DRAFT.csv` preserves the earlier six-wire shield proposal. The
-[April 2005 owner's manual](https://assets.sia.toyota.com/publications/en/om-s/OM35860U/pdf/OM35860U.pdf#page=418)
-lists the CIG position as unused. Measure the proposed feed on the actual
-truck before adding the tee.
-
-The documented IR1 circuits contain **no CAN-H/CAN-L pair**. Telemetry reaches this node from the existing gateway. BLE/Wi-Fi topology and GPIO allocation are separate firmware work.
+`PINMAP-DRAFT.csv` preserves the earlier six-wire shield proposal.
 
 ## PCB footprint and UNO reference geometry
 
@@ -92,7 +82,7 @@ ESP32 revision.
 
 ## Sources
 
-- [Toyota EWD514U routing, 2003; printed pp. 52–53](https://carmanualsclub.com/files/62abc497b1f970ed9bc95202d30583bf3a73aea30feba8fadbbcb2acc2d99169.pdf)
+- [Toyota EWD514U routing, 2003, printed pp. 52–53](https://cdn3.guidessimo.com/view/1356/1356253-4runner_2003.pdf#page=62)
 - [Toyota EM00T0U diagrams, 2006; printed p. 447 and pp. 296–297](https://www.datacar-manualrepair.com/wp-content/uploads/2018/09/Diagrama-el%C3%A9ctrico-Toyota-4Runner-2006.pdf)
 - [Yazaki 7282-1060 manufacturer page](https://connector.yazaki-group.com/cgi-bin/english/detail.cgi?part_id=7282-1060), [matching 7283-1060](https://connector.yazaki-group.com/cgi-bin/english/detail.cgi?part_id=7283-1060)
 - [Yazaki 7114-4020 contact](https://connector.yazaki-group.com/cgi-bin/english/detail.cgi?part_id=7114-4020), [7116-5041-02 contact](https://connector.yazaki-group.com/cgi-bin/english/detail.cgi?part_id=7116-5041-02)

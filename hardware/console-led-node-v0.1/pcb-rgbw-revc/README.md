@@ -1,9 +1,10 @@
 # Rev C Toyota-powered RGBW shield
 
-The white six-pin Toyota console plug supplies the switched 12 V and ground
-for both the ESP32-S3 and the RGBW lights. It is the box's only wired input
-in service. The five-wire RGBW cable takes protected power and four switched
-returns from the shield to the lights. Vehicle data comes wirelessly from the
+The box takes power for the ESP32-S3 and RGBW lights from the switched 12 V
+and ground in the white six-pin Toyota console plug, subject to verifying
+the live feed on this truck. It is the box's only wired input in service.
+The five-wire RGBW cable takes protected power and four switched returns
+from the shield to the lights. Vehicle data comes wirelessly from the
 existing CAN ESP32.
 
 Rev C uses two dedicated Toyota power solder pads and five RGBW solder pads.
@@ -18,12 +19,14 @@ cable jackets and carry pull loads.
 | J1 power in | 1 ground, 2 switched +12 V. Nominal 1.80 mm plated drills. |
 | J2 RGBW out | 1 R−, 2 G−, 3 B−, 4 protected common +12 V, 5 W−. Nominal 1.02 mm plated drills. |
 
-The pad numbers identify the shield. Verify the two Toyota cavities on the
-truck before wiring the mating housing. If the Toyota connector serves factory
-equipment, preserve its factory circuits in the inline harness and branch only
-the verified power and return. Verify the upstream fuse, available current and
-combined controller and pod load before connecting to the truck.
-[Toyota connector research](../connector-adapter/README.md).
+Toyota IR1-5 is the documented chassis return for shield pad J1-1. IR1-6
+is the documented ACC feed for J1-2. Verify both and confirm the upstream
+fuse and combined controller and pod load before wiring the mating housing.
+Carry all six cavities straight through if the connector serves factory
+equipment. Pins 1–4 provide the ashtray and lighter-ring illumination.
+They can supply lights-on and brightness signals through a future protected
+sense input. The current pads accept the verified power and return.
+[All six Toyota wires and meter checks](../connector-adapter/IR1-WIRE-PLAN.md).
 
 ## Toyota power wire routing
 
@@ -41,8 +44,8 @@ functions. Identify the actual truck wires and cavity numbers with a meter.
 The lengths follow the CAD centerlines and include a 3.2 mm modeled strip at
 the PCB end. Set final cut length with the box and connector in their installed
 positions. Allow for terminal insertion, any inline fuse and service slack.
-The connector-end view shows the estimated rear exit. The two terminal
-cavities are pending verification on the truck.
+The connector-end view shows the estimated rear exit. Confirm Toyota
+cavities 5 and 6 on the truck before terminating the wires.
 
 The fit model uses 1.95 mm OD conductors, 8 mm bend radii, and a 5.5 mm OD
 sleeve with a modeled 0.2 mm wall. The smallest clearances were 0.07 mm to the

@@ -14,6 +14,7 @@ wirelessly from the existing classic CAN ESP32 running the MrDIY VHOS target.
 | Resource | What to use |
 | --- | --- |
 | Wiring and shopping | [Rev C shield pad assignments](pcb-rgbw-revc/README.md) · [Shared harness and case parts](pcb-rgbw-revb/TOYOTA-POWER-PARTS.csv) |
+| Toyota IR1 pinout | [All six wires, pass-through plan and meter checks](connector-adapter/IR1-WIRE-PLAN.md) |
 | Toyota input wire routing | [Connector-to-pad layout and lengths](pcb-rgbw-revc/README.md#toyota-power-wire-routing) · [CAD cutaway](pcb-rgbw-revc/generated/wiring/Toyota-wire-route.png) |
 | PCB model | [KiCad project](pcb-rgbw-revc/generated/vhos_rgbw_revc.kicad_pro) · [Shield STEP](pcb-rgbw-revc/generated/4Runner_RGBW_RevC_Shield.step) · [Board preview](pcb-rgbw-revc/generated/shield.png) |
 | PCB fabrication | [Rev C four-layer Gerbers and drills](pcb-rgbw-revc/generated/4Runner_RGBW_RevC_Gerbers.zip) |
@@ -30,10 +31,10 @@ connector photos, datasheets, CAD references and Rev B project history.
 ## Connector, lighting and CAD references
 
 - The pictured socket resembles **Yazaki 7283-1060**. Its catalog mate is
-  **7282-1060**, available in Corsa kit **090IIU-6P-1**. The adjacent-year
-  Toyota diagrams are identification references. Confirm latch fit, molded
-  cavity numbers, switched power, return and upstream protection on this
-  truck. [Yazaki catalog and CAD](https://connector.yazaki-group.com/cgi-bin/english/detail.cgi?part_id=7282-1060) ·
+  **7282-1060**, available in Corsa kit **090IIU-6P-1**. The 2005 V8 service
+  diagrams identify IR1's six circuits. Confirm latch fit, molded cavity
+  numbers, switched power, return and upstream protection on this truck.
+  [Yazaki catalog and CAD](https://connector.yazaki-group.com/cgi-bin/english/detail.cgi?part_id=7282-1060) ·
   [Corsa mating kit](https://www.corsa-technic.com/item.php?item_id=1359) ·
   [Connector research](connector-adapter/README.md).
 - **Diode Dynamics DD7440** is the RGBW test-pod candidate. The **DD4083** and

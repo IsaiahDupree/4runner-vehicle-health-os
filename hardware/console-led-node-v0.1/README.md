@@ -32,17 +32,16 @@ revisions. Use the current build guide for wiring the box.
 | --- | --- | --- |
 | Black cylindrical component at upper left | Rear of a cigarette-lighter / 12 V socket assembly | Strong visual identification; distinguish the actual socket variant by its label and front view |
 | Beige connector beside that socket | Part of the local socket/illumination wiring | Function inferred from its physical routing; cavity count, mating face and part number unreadable |
-| Loose white plug at lower left | Later mating-face photos show a six-contact socket matching the Yazaki **7283-1060** pattern. The catalog mate is **7282-1060** | Confirm latch fit and the factory mating half. **IR1** remains a candidate for its circuit function |
+| Loose white plug at lower left | Six-contact socket in the Yazaki **7283-1060** pattern. The catalog mate is **7282-1060**. Location and colors match the documented **IR1** loom | Confirm latch fit, cavity markings and electrical behavior on the truck |
 | Blue connector in black switch housing at right | A console switch connection | Exact switch unidentified without its front legend; no assertion that it is DAC, differential lock or another trim-specific function |
 
-Toyota's reproduced EWD identifies IR1 as the join between instrument-panel
-wiring and the cigarette-lighter wiring assembly. It separately lists C6
-lighter housing **90980-10760** and C7 illumination housing **90980-11148**.
-These are catalog references, **not confirmed matches to the photographed
-white plug**. The accessible EWD references cover a range of model years;
-exact 2005 V8/build-month applicability and connector views still need checking
-against the vehicle. [Toyota EWD connector-location page][ewd-ground],
-[connector list][ewd-connectors], [Toyota TIS][tis].
+Toyota's 2005 V8 service diagrams identify IR1 as the join between the
+instrument-panel wiring and the cigarette-lighter wiring assembly. The
+connector list separately identifies C6 lighter housing **90980-10760**
+and C7 lamp housing **90980-11148** at the components. The photographs and
+diagram support the IR1 identification. The housing fit and live ACC feed
+still need checking on the truck. [IR1 pinout and harness plan](connector-adapter/IR1-WIRE-PLAN.md) ·
+[Toyota connector list][ewd-connectors] · [Toyota TIS][tis].
 
 Compare the actual mating face, latch and cavities when ordering the
 pass-through parts. Match circuits by physical terminal alignment and
@@ -190,7 +189,6 @@ profile. No cloud compute or GitHub Actions was used.
    Then complete the populated PCB/connector model, schematic, protection and
    thermal calculations, ERC/DRC and bench bring-up before vehicle power.
 
-[ewd-ground]: https://diagnostdata.com/toyota/4runner/iv-facelift-2005-2009/remont/body-electrical/oem-ground-points/wiring/
 [ewd-connectors]: https://diagnostdata.com/toyota/4runner/iv-facelift-2005-2009/remont/body-electrical/oem-part-number-of-connectors/oem-part-number-of-connectors/
 [tis]: https://techinfo.toyota.com/techInfoPortal/appmanager/t3/ti?_nfpb=true&_pageLabel=ti_toy_lib_content
 [toyota-harness]: https://parts.olathetoyota.com/oem-parts/toyota-bulb-wire-8239035010

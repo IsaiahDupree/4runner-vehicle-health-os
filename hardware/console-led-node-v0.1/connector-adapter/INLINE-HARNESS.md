@@ -2,7 +2,9 @@
 
 Use the [Toyota-powered Rev C build guide](../pcb-rgbw-revc/README.md)
 for the current build. Its single Toyota input powers both the ESP32-S3 and
-the RGBW lights. The wiring below records the earlier Rev A prototype.
+the RGBW lights. The [2005 V8 IR1 harness plan](IR1-WIRE-PLAN.md) identifies
+the factory circuits and their uses. The wiring below records the earlier
+Rev A prototype.
 
 Build sheet for the ShengYang D1 UNO ESP32-S3 and the [RGBW Rev A shield](../pcb-rgbw-reva/README.md).
 The two Toyota housings carry six straight-through circuits. A fused branch
