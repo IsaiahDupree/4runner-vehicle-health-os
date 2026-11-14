@@ -7,6 +7,7 @@ import Part
 
 import durable_case
 import illumination_cad
+import lean_board as rev_g
 import single_board as rev_e
 import stock_board as rev_f
 import toyota_power_case
@@ -19,11 +20,13 @@ V = App.Vector
 
 
 def build(out, *, revision="E"):
-    is_f = revision == "F"
-    contract = rev_f.CONTRACT if is_f else rev_e.CONTRACT
+    materials_revised = revision in {"F", "G"}
+    contract = {"E": rev_e.CONTRACT, "F": rev_f.CONTRACT, "G": rev_g.CONTRACT}[revision]
+    packages = {name: envelope for name, envelope in rev_f.PACKAGE_ENVELOPES.items()
+                if revision == "F" or name != "TI_DRR0012E"}
     g = durable_case.dimensions(rev_e.CASE_DIMS)
     lid_skin = g["lid_mm"]
-    if is_f:
+    if materials_revised:
         g["floor_mm"] = rev_f.CASE_FLOOR_MM
         lid_skin -= rev_f.LID_RECESS_DEPTH_MM
     width, depth, height = (g[key] for key in ("width_mm", "depth_mm", "body_height_mm"))
@@ -38,7 +41,7 @@ def build(out, *, revision="E"):
     shell = durable_case.base_shell(g, lid_axes, axes, [], [])
     ports = toyota_power_case.openings(g, PORTS)
     shell, lid = toyota_power_case.enclosure_parts(shell, g, lid_axes, ports, case=case)
-    if is_f:
+    if materials_revised:
         recesses = [rounded(x, y, -.05, w, d, rev_f.LID_RECESS_DEPTH_MM + .05, 3.5)
                     for x, y, w, d in rev_f.LID_RECESSES]
         lid = lid.cut(recesses).removeSplitter()
@@ -53,12 +56,12 @@ def build(out, *, revision="E"):
     if len(datums) != 1 or abs(datums[0].XMin + 53) > .1 or abs(datums[0].YMin) > .1:
         raise RuntimeError(f"Could not find the Rev {revision} board datum in the reopened STEP")
     board = translated(native, ox, oy, board_top - datums[0].ZMax)
-    if is_f:
-        for part, bounds in rev_f.PACKAGE_ENVELOPES.items():
+    if materials_revised:
+        for part, bounds in packages.items():
             if not any(all(abs(a - b) <= .025 for a, b in zip(
                     (solid.BoundBox.XLength, solid.BoundBox.YLength, solid.BoundBox.ZLength), bounds))
                     for solid in board.Solids):
-                raise RuntimeError(f"Missing Rev F package envelope {part} in PCB STEP")
+                raise RuntimeError(f"Missing Rev {revision} package envelope {part} in PCB STEP")
     modules = [solid for solid in board.Solids if solid.BoundBox.XMax > ox + rev_e.BOARD_EDGE_X - 99]
     if not modules or max(solid.BoundBox.XMax for solid in modules) > width - g["wall_mm"] - 14:
         raise RuntimeError("ESP32-S3 model missing, misplaced or too close to the rear")
@@ -74,7 +77,7 @@ def build(out, *, revision="E"):
 
     checks = []
     skin_checks = {}
-    if is_f:
+    if materials_revised:
         for i, (x, y, w, d) in enumerate(rev_f.LID_RECESSES, 1):
             # Verify the 2.3 mm panel and the open recess in the reopened solid.
             gauge = box(x + 4, y + 4, rev_f.LID_RECESS_DEPTH_MM, w - 8, d - 8, lid_skin)
@@ -85,7 +88,7 @@ def build(out, *, revision="E"):
             gauge = cylinder(x, y, 0, 7.0, g["floor_mm"])
             skin_checks[f"pcb_mount_floor_{i}"] = abs(base.common(gauge).Volume - gauge.Volume) < .01
         if not all(skin_checks.values()):
-            raise ValueError(f"Rev F case material checks failed: {skin_checks}")
+            raise ValueError(f"Rev {revision} case material checks failed: {skin_checks}")
 
     def record(name, a, b, *, clearance=0):
         overlap = a.common(b).Volume if a.BoundBox.intersect(b.BoundBox) else 0.0
@@ -131,10 +134,10 @@ def build(out, *, revision="E"):
               "passed_nominal_interference": all(row["pass"] for row in checks), "populated_board_count": 1,
               "module_geometry": "KiCad module STEP matched to the native footprint origin and Espressif package drawing",
               "physical_fit_and_rf_verified": False}
-    if is_f:
+    if materials_revised:
         report["case_material"] = {"floor_mm": g["floor_mm"], "lid_recess_skin_mm": lid_skin,
                                    "lid_rim_mm": g["lid_mm"], "reopened_solid_checks": skin_checks,
-                                   "dimensioned_package_envelopes_mm": rev_f.PACKAGE_ENVELOPES}
+                                   "dimensioned_package_envelopes_mm": packages}
     (out / "mechanical-observation.json").write_text(json.dumps(report, indent=2) + "\n")
     if not report["passed_nominal_interference"] or not tool_report["cavity_checks_passed"]:
         raise RuntimeError(f"Rev {revision} case or tool access findings in mechanical-observation.json and tool-access.json")

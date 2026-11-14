@@ -42,7 +42,7 @@ def table(in_dir, catalog):
     positions = unique(read_csv(in_dir / "prototype-fabrication/SMT-placement.csv"), "Ref")
     parts = {ref: part for ref, part in bom_by_ref.items() if part["jlcpcb_part"]}
     if set(parts) != positions.keys() or set(bom_by_ref) - parts.keys() != {"F1", "F2"}:
-        raise ValueError("Rev F native footprints and stock selection do not agree")
+        raise ValueError("Native footprints and stock selection do not agree")
     bom, cpl = {}, []
     for ref, p in positions.items():
         part = parts[ref]

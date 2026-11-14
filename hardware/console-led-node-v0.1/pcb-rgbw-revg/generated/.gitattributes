@@ -1,0 +1,3 @@
+# Preserve the exact bytes and line endings covered by the Orion receipts.
+* -text whitespace=cr-at-eol
+*.step -diff -whitespace

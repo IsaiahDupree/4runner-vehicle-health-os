@@ -1,0 +1,108 @@
+"""Check the routed one-board build, assembly data and qualification boundaries."""
+
+from collections import Counter
+import csv
+from decimal import Decimal
+from hashlib import sha256
+import json
+from pathlib import Path
+import re
+from zipfile import ZipFile
+
+
+REV = Path(__file__).resolve().parents[1] / "hardware/console-led-node-v0.1/pcb-rgbw-revg"
+GENERATED = REV / "generated"
+ASSEMBLY = REV / "jlcpcb"
+
+
+def read_json(path):
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def read_csv(path):
+    with path.open(newline="", encoding="utf-8") as stream:
+        return list(csv.DictReader(stream))
+
+
+def test_native_board_reports_and_prints_match_the_published_package():
+    result = read_json(GENERATED / "verification.json")
+    for name, digest in result["published_sha256"].items():
+        assert sha256((REV / name).read_bytes()).hexdigest() == digest, name
+    assert result["populated_board_count"] == 1
+    assert not any(result["kicad_findings"].values())
+    assert result["case_checks_passed"] == 34
+    assert result["wire_checks_passed"] == 92
+    assert result["tool_axes_passed"] == 8
+    assert result["slices_with_zero_support_segments"] == 5
+    assert result["physical_print_fit_and_electrical_qualification"] is False
+    print_evidence = read_json(GENERATED / "support-free.json")
+    assert all(row["pass"] and not row["support_segments"]
+               for row in print_evidence["offline_slices"].values())
+    assert len(print_evidence["offline_slices"]) == 5
+
+
+def test_integrated_power_driver_and_sense_routes_preserve_the_wiring_contract():
+    report = read_json(GENERATED / "electrical-screen.json")
+    assert all(report["checks"].values())
+    pins = report["native_pin_checks"]
+    assert pins["J1"] == {"1": "GND", "2": "VEH_ACC", "3": "TAIL_12V", "4": "DIM_RETURN"}
+    assert pins["F1"] == {"1": "VEH_ACC", "2": "ACC_FUSED"}
+    assert pins["F2"] == {"1": "LED_POS", "2": "VIN_PROT"}
+    assert pins["U4"]["8"] == pins["U4"]["17"] == "EFUSE_RTN"
+    assert pins["U4"]["9"] == "GND"
+    assert pins["U1"]["5"] == "VIN_PROT"
+    assert pins["U11"]["2"] == "ESP_3V3"
+    assert [pins["U2"][str(n)] for n in (3, 4, 6, 7)] == [
+        "LED_R_NEG", "LED_G_NEG", "LED_B_NEG", "LED_W_NEG",
+    ]
+    assert pins["D9"] == {"1": "LED_POS", "2": "GND"}
+    assert report["driver_disable_logic_high_min_v"] > 2.0
+    low, high = report["three_volt_static_v"]
+    assert report["max_reset_release_v"] < low < high < 3.6
+    assert report["pod_screen"]["wire_and_copper_drop_allowance_v"] >= .3
+    assert report["pod_screen"]["at_pod_v"] >= 9.0
+    wire = read_json(GENERATED / "wiring-interfaces.json")
+    assert wire["factory_tee"] == {str(n): {"through_to": n} for n in range(1, 7)}
+    assert wire["reserve_tails"] == {"3": "IR1-3 TAIL", "4": "IR1-4 DIM"}
+    assert {pin: row["net"] for pin, row in wire["J2"].items()} == pins["J2"]
+
+
+def test_economic_assembly_matches_native_gerbers_and_loaded_catalog_quantities():
+    native = {row["ref"]: row for row in read_csv(GENERATED / "PCB-BOM.csv")}
+    catalog = {row["jlcpcb_part"]: row for row in read_csv(ASSEMBLY / "catalog-snapshot.csv")}
+    quote = read_json(ASSEMBLY / "assembly-estimate.json")
+    cpl = read_csv(ASSEMBLY / "CPL.csv")
+    placed = Counter()
+    for grouped in read_csv(ASSEMBLY / "BOM.csv"):
+        code = grouped["JLCPCB Part #"]
+        spec = catalog[code]
+        refs = grouped["Designator"].split(",")
+        assert spec["assembly_process"] == "SMT"
+        for count in (2, 5, 10):
+            loaded = max(count * len(refs) + int(spec["extra_parts"]),
+                         int(spec["minimum_assembly"]), int(spec["minimum_purchase"]))
+            assert loaded == quote["loaded_stock_requirements"][str(count)][code] <= int(spec["stock"])
+        for ref in refs:
+            assert native[ref]["jlcpcb_part"] == code
+            assert native[ref]["mpn"] == spec["mpn"] == grouped["Comment"]
+            assert native[ref]["footprint"].split(":")[-1] == grouped["Footprint"]
+        placed.update(refs)
+
+    assert len(cpl) == len(placed) == quote["smt_placements_per_board"] == 59
+    assert set(placed.values()) == {1}
+    assert Counter(row["Designator"] for row in cpl) == placed
+    assert {row["Layer"] for row in cpl} == {"T"}
+    assert set(native) - placed.keys() == {"F1", "F2"}
+    with ZipFile(GENERATED / "4Runner_RGBW_RevG_Gerbers.zip") as gerbers:
+        assert gerbers.testzip() is None
+        assert len([name for name in gerbers.namelist() if name.endswith((".gtl", ".g1", ".g2", ".gbl"))]) == 4
+        assert len([name for name in gerbers.namelist() if name.endswith(".drl")]) == 2
+        copper = gerbers.read("vhos_rgbw_revg-F_Cu.gtl").decode("ascii")
+    pads = Counter(ref for ref, _ in set(re.findall(r"%TO.P,([^,]+),([^,*]+)\*%", copper)))
+    assert all(pads[ref] for ref in placed)
+    assert sum(pads[ref] for ref in placed) == quote["priced_joints_per_board"]
+    two = quote["estimates"][0]
+    assert two["boards_assembled"] == 2
+    assert Decimal(two["estimated_assembly_subtotal_usd"]) < Decimal(100)
+    assert two["rev_f_assembly_savings_usd"] == "89.67"
+    assert quote["assembly_only"] and quote["checkout_verified"] is False

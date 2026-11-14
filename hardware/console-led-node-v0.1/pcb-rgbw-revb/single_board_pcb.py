@@ -206,7 +206,7 @@ def build(native, out):
                      .replace("(width 250) (clearance 190)", "(width 200) (clearance 190)"))
 
 
-def write_interfaces(native, out, pcbnew, pad, *, nominal_3v3=.6 * (1 + 453 / 100)):
+def write_interfaces(native, out, pcbnew, pad, *, nominal_3v3=.6 * (1 + 453 / 100), module=rev_e.MODULE):
     receipt = {}
     for number, row in rev_d.BRANCH.items():
         p = pad("J1", number)
@@ -228,7 +228,7 @@ def write_interfaces(native, out, pcbnew, pad, *, nominal_3v3=.6 * (1 + 453 / 10
     })
     native.save_json(out / "controller-interface.json", {
         "board_outline_top_view_mm": rev_e.OUTLINE, "mounting_holes_top_view_mm": rev_e.MOUNTS,
-        "module": rev_e.MODULE, "module_origin_top_view_mm": rev_e.MODULE_XY, "module_pin_nets": rev_e.MODULE_NETS,
+        "module": module, "module_origin_top_view_mm": rev_e.MODULE_XY, "module_pin_nets": rev_e.MODULE_NETS,
         "service_pads": rev_e.PROGRAM_PADS, "3v3_nominal_v": nominal_3v3,
         "production_electrical_or_rf_verified": False,
     })

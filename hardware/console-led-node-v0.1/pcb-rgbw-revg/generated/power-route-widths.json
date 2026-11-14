@@ -1,0 +1,42 @@
+{
+  "ACC_FUSED": {
+    "min_track_mm": 0.46,
+    "total_track_mm": 34.588
+  },
+  "ESP_3V3": {
+    "min_track_mm": 0.45,
+    "total_track_mm": 195.353
+  },
+  "LED_B_NEG": {
+    "min_track_mm": 0.42,
+    "total_track_mm": 17.155
+  },
+  "LED_G_NEG": {
+    "min_track_mm": 0.42,
+    "total_track_mm": 12.868
+  },
+  "LED_POS": {
+    "min_track_mm": 0.46,
+    "total_track_mm": 188.347
+  },
+  "LED_R_NEG": {
+    "min_track_mm": 0.42,
+    "total_track_mm": 7.847
+  },
+  "LED_W_NEG": {
+    "min_track_mm": 0.42,
+    "total_track_mm": 6.049
+  },
+  "SW": {
+    "min_track_mm": 0.45,
+    "total_track_mm": 7.818
+  },
+  "VEH_ACC": {
+    "min_track_mm": 1.5,
+    "total_track_mm": 11.348
+  },
+  "VIN_PROT": {
+    "min_track_mm": 0.45,
+    "total_track_mm": 67.802
+  }
+}

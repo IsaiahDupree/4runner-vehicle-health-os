@@ -97,6 +97,14 @@ and assembly terms for that board.
   different lead geometry, then repeat ERC, DRC, assembly and case checks.
   [Rev F build and cost example](../../hardware/console-led-node-v0.1/pcb-rgbw-revf/jlcpcb/README.md).
 
+- **Compare circuit integration before changing footprints or board layers.**
+  Rev G powers the radio with one 65 V buck and uses integrated four-channel
+  switching and input protection. This drops SMT placement count from 90 to
+  59 and Extended feeders from 28 to 16. The two-board SMT subtotal falls
+  from $188.28 to $98.61. Check the new driver's current and thermal limits,
+  keep the protection circuit matched to the supply, and re-export the
+  enclosure using the populated board. [Rev G example](../../hardware/console-led-node-v0.1/pcb-rgbw-revg/jlcpcb/README.md).
+
 [JLC assembly fees](https://jlcpcb.com/help/article/pcb-assembly-price) ·
 [JLC Basic and Extended rules](https://jlcpcb.com/help/article/pcb-assembly-faqs) ·
 [JLC global sourcing](https://jlcpcb.com/help/article/how-to-use-jlcpcb-global-sourcing-parts-service) ·

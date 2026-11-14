@@ -32,11 +32,14 @@ def schematic(parts, out, *, name=NAME, title="4Runner two-connector RGBW shield
     sections = {"power": (45, 54, "FUSED INPUT, PROTECTION AND 5 V SUPPLY"),
                 "headers": (45, 302, "VEHICLE INPUT AND CONTROLLER STACK"),
                 "outputs": (45, 421, "ONE COMMON-POSITIVE RGBW ZONE")}
-    columns, pitch = (6, 89) if rev in {"D", "E", "F"} else (8, 96)
-    if rev in {"D", "E", "F"}:
+    columns, pitch = (6, 89) if rev in {"D", "E", "F", "G"} else (8, 96)
+    if rev in {"D", "E", "F", "G"}:
         sections["sense"] = (45, 612, "TOYOTA IR1 ILLUMINATION SENSE")
-    if rev in {"E", "F"}:
+    if rev in {"E", "F", "G"}:
         sections["controller"] = (45, 825, "ONBOARD ESP32-S3, 3.3 V REGULATOR AND SERVICE PADS")
+    if rev == "G":
+        sections["power"] = (45, 54, "FUSED INPUT, REVERSE / SURGE PROTECTION AND 3.3 V SUPPLY")
+        sections["headers"] = (45, 302, "TOYOTA IR1 INPUT, RGBW OUTPUT AND TEST PADS")
     for section, (left, top, section_title) in sections.items():
         caption_y = top - (42 if section == "controller" else 24)
         items.append(f'(text {quote(section_title)} (at 26 {caption_y} 0) (effects (font (size 2 2)) '
@@ -82,11 +85,13 @@ def schematic(parts, out, *, name=NAME, title="4Runner two-connector RGBW shield
       (symbol "PWR_FLAG_1_1" (pin power_out line (at 0 0 90) (length 0) (name "pwr" (effects (font (size 1 1)))) (number "1" (effects (font (size 1 1)))))))'''
     symbols.append(flag)
     supply_nets = ["GND", "VEH_ACC", "ACC_FUSED", "LED_POS", "VIN_PROT", "V5_LOGIC"]
-    if rev in {"E", "F"}:
+    if rev in {"E", "F", "G"}:
         supply_nets.append("ESP_3V3")
+    if rev == "G":
+        supply_nets.remove("V5_LOGIC")
     for i, net in enumerate(supply_nets, 1):
         ref = f"#FLG0{i}"
-        x, y = (round((22 + i * 56) * 1.27, 4), 261.62) if rev in {"D", "E", "F"} else (round((29 + i * 57) * 1.27, 4), 251.46)
+        x, y = (round((22 + i * 56) * 1.27, 4), 261.62) if rev in {"D", "E", "F", "G"} else (round((29 + i * 57) * 1.27, 4), 251.46)
         items.append(f'''(symbol (lib_id "VHOS:PWR_FLAG") (at {x} {y} 0) (unit 1) (in_bom no) (on_board no) (dnp no)
           (uuid "{uid(ref)}") (property "Reference" "{ref}" (at {x} {y + 2.54} 0) (effects (font (size 1 1)) hide))
           (property "Value" "PWR_FLAG" (at {x} {y - 3.81} 0) (effects (font (size 1 1))))
@@ -95,7 +100,7 @@ def schematic(parts, out, *, name=NAME, title="4Runner two-connector RGBW shield
           (label "{net}" (at {x} {y} 0) (effects (font (size 1 1)) (justify left bottom)) (uuid "{uid(ref + 'net')}"))''')
     items.append(f'(text "EVALUATION HARDWARE / VERIFY VEHICLE FEED, LED PINOUT AND USB ISOLATION" '
                  f'(at 26 578 0) (effects (font (size 1.5 1.5)) (justify left bottom)) (uuid "{uid("notice")}"))')
-    paper = {'D': '"A1" portrait', 'E': '"A0" portrait', 'F': '"A0" portrait'}.get(rev, '"A1"')
+    paper = '"A0" portrait' if rev in {"E", "F", "G"} else ('"A1" portrait' if rev == "D" else '"A1"')
     sch = f'''(kicad_sch (version 20250114) (generator "eeschema") (generator_version "10.0")
       (uuid "{sheet_id}") (paper {paper})
       (title_block (title {quote(title)}) (rev "{rev}"))
@@ -512,7 +517,8 @@ def main():
         raise RuntimeError("KiCad 10.0.6 required")
     parser = argparse.ArgumentParser()
     parser.add_argument("action", choices=["build", "import", "reconcile", "direct-lead-pads",
-                                           "illumination-pads", "illumination-route", "single-pads", "single-route", "stock-board"])
+                                           "illumination-pads", "illumination-route", "single-pads", "single-route", "stock-board",
+                                           "lean-pads", "lean-route"])
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     if args.action.startswith("illumination-"):
@@ -529,6 +535,11 @@ def main():
         from stock_board_pcb import build as stock_build
 
         stock_build(sys.modules[__name__], args.out)
+    elif args.action.startswith("lean-"):
+        import lean_board_pcb
+
+        {"lean-pads": lean_board_pcb.build, "lean-route": lean_board_pcb.import_route}[args.action](
+            sys.modules[__name__], args.out)
     else:
         {"build": build, "import": import_route, "reconcile": base.reconcile,
          "direct-lead-pads": direct_lead_pads}[args.action](args.out)

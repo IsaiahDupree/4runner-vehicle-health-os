@@ -18,6 +18,7 @@ from design import CONTRACT, NAME, REFERENCE, REV_C_NAME
 import illumination as rev_d
 import single_board as rev_e
 import stock_board as rev_f
+import lean_board as rev_g
 
 
 JOB_TYPE = "pcb.vhos_rgbw_two_connector"
@@ -44,10 +45,12 @@ SINGLE_BOARD_STAGE = "toyota-rev-e"
 SINGLE_BOARD_PCB_STAGE = "toyota-rev-e-pcb"
 SINGLE_BOARD_STAGES = (SINGLE_BOARD_STAGE, SINGLE_BOARD_PCB_STAGE)
 STOCK_BOARD_STAGE = "toyota-rev-f"
+LEAN_BOARD_STAGE = "toyota-rev-g"
 TOYOTA_STAGES = (TOYOTA_POWER_STAGE, TOYOTA_REV_C_STAGE)
 SERVICE_STAGES = ("service-case", "durable-case", *TOYOTA_STAGES)
 CASE_STAGES = ("jlc-case", "jlc-lite-case", *SERVICE_STAGES)
-STAGES = ("fit", "finish", *CASE_STAGES, TOYOTA_WIRE_STAGE, *ILLUMINATION_STAGES, *SINGLE_BOARD_STAGES, STOCK_BOARD_STAGE)
+STAGES = ("fit", "finish", *CASE_STAGES, TOYOTA_WIRE_STAGE, *ILLUMINATION_STAGES, *SINGLE_BOARD_STAGES,
+          STOCK_BOARD_STAGE, LEAN_BOARD_STAGE)
 TOYOTA_WIRE_INPUTS = {
     "4Runner_Service_Assembly.FCStd": "84002c5af565bca797f26163f6fd9ad3397c3ce5a11e3b6dd848b5ad0df542bd",
     "mechanical-observation.json": "aa3b2e89732137c8a1d4c2c704ca51abe5f78918afa115f2fd0c60797c0e4e33",
@@ -111,6 +114,15 @@ STOCK_BOARD_INPUTS = {
     INSERT_MODEL: INSERT_MODEL_SHA,
     "Yazaki_7282-1060.stp": TOYOTA_INPUTS["Yazaki_7282-1060.stp"],
 }
+LEAN_BOARD_INPUTS = {
+    **{key: value for key, value in STOCK_BOARD_INPUTS.items() if not key.startswith(rev_e.NAME)},
+    "vhos_rgbw_revf.kicad_pcb": "58ab01a3c5371f52331785054287d0410e88c01fdb804e6d09d116447a2203e1",
+    "vhos_rgbw_revf.kicad_pro": "21c206cbdc64dd740114b68df7987f9ce56df5a2489adca1bd4a2b8d0e7c71f7",
+    "VHOS_RevB.pretty/TDK_SPM6545VT-D.kicad_mod": "9f63b3b413bb8b9099cafb1e85b9c4f4377d82d2dc0bd3f81f4bd0636d2562d6",
+    "VHOS_RevB.pretty/onsemi_SOD-323_477.kicad_mod": "caec34cfdb48e54640ecadbf50f44f5d72d3f9b557c51950e99f274b170ce176",
+    "models/TDK_SPM6545VT-D.step": "fb092338154c18df84e3d51fb150377492bf9bdabb0f4eaf79c015595ea30823",
+    "models/onsemi_SOD-323_477.step": "14d609fadb4bb2496fed6cd326b862ae7b254b219c580acc838ebc1ad5172e1f",
+}
 
 
 def source_files():
@@ -122,6 +134,7 @@ def source_files():
                                              "illumination.py", "illumination_pcb.py", "illumination_cad.py",
                                              "single_board.py", "single_board_pcb.py", "single_board_case.py",
                                              "stock_board.py", "stock_board_pcb.py", "stock_board_parts.csv",
+                                             "lean_board.py", "lean_board_pcb.py", "lean_board_parts.csv",
                                              *(name + ".kicad_mod" for name in rev_f.LAND_PATTERNS))},
             "run_isolated_engineering.py": (ROOT / "run_isolated_engineering.py") if (ROOT / "run_isolated_engineering.py").exists()
             else REFERENCE / "run_isolated_engineering.py",
@@ -159,6 +172,8 @@ def validate(params):
         inputs = SINGLE_BOARD_INPUTS if params["stage"] == SINGLE_BOARD_STAGE else SINGLE_BOARD_PCB_INPUTS
     if params["stage"] == STOCK_BOARD_STAGE:
         inputs = STOCK_BOARD_INPUTS
+    if params["stage"] == LEAN_BOARD_STAGE:
+        inputs = LEAN_BOARD_INPUTS
     for name, expected in inputs.items():
         asset = ROOT / "inputs" / name
         if asset.is_symlink() or not asset.is_file() or sha(asset) != expected:
@@ -204,7 +219,8 @@ def execute(params, out):
     rev_d_stage = params["stage"] in ILLUMINATION_STAGES
     rev_e_stage = params["stage"] in SINGLE_BOARD_STAGES
     rev_f_stage = params["stage"] == STOCK_BOARD_STAGE
-    output_name = (rev_f.NAME if rev_f_stage else rev_e.NAME if rev_e_stage else
+    rev_g_stage = params["stage"] == LEAN_BOARD_STAGE
+    output_name = (rev_g.NAME if rev_g_stage else rev_f.NAME if rev_f_stage else rev_e.NAME if rev_e_stage else
                    rev_d.NAME if rev_d_stage else REV_C_NAME if rev_c else NAME)
     pcb, sch = out / (output_name + ".kicad_pcb"), out / (output_name + ".kicad_sch")
     pcb_tool = [PYTHON, "-I", "-B", ROOT / "native_pcb.py"]
@@ -221,6 +237,37 @@ def execute(params, out):
             "--side", "front", "--smd-only", "-o", fab / "SMT-placement.csv", pcb)
 
     try:
+        if rev_g_stage:
+            from lean_board_pcb import stage
+            from toyota_power import check_reports
+
+            stage(ROOT / "inputs", out)
+            run("lean-pads", *pcb_tool, "lean-pads", "--out", out)
+            run("erc", CLI, "sch", "erc", "--format", "json", "--severity-all", "-o", out / "erc.json", sch)
+            run("before-routing-drc", CLI, "pcb", "drc", "--format", "json", "--severity-all",
+                "--schematic-parity", "-o", out / "before-routing-drc.json", pcb)
+            run("lean-router", JAVA, "-Xmx2g", "-XX:ActiveProcessorCount=2", "-Djava.awt.headless=true", "-jar", ROUTER,
+                "-de", out / "shield.dsn", "-do", out / "shield.ses", "--router.autorouter.max_passes=30",
+                "--router.copper_to_edge_clearance_um=350", "--router.automatic_neckdown=false",
+                "--router.fanout.enabled=false", "--router.strict_drc=true", "--router.optimizer.enabled=false",
+                "-mt", "1", "-da", "-dl", "--gui.enabled=false", "--api_server.enabled=false",
+                "--router.result_json=" + str(out / "router-result.json"),
+                "--user_data_path=" + str(out / "router-state"), limit=240)
+            run("lean-route", *pcb_tool, "lean-route", "--out", out)
+            run("drc", CLI, "pcb", "drc", "--format", "json", "--severity-all",
+                "--schematic-parity", "-o", out / "drc.json", pcb)
+            findings = check_reports(out)
+            fabrication(out / "prototype-fabrication")
+            run("schematic-pdf", CLI, "sch", "export", "pdf", "-o", out / "schematic.pdf", sch)
+            run("shield-render", CLI, "pcb", "render", "--width", "1800", "--height", "1100", "--quality", "basic",
+                "--background", "opaque", "--side", "top", "-o", out / "shield.png", pcb)
+            run("shield-step", CLI, "pcb", "export", "step", "--subst-models", "--no-dnp",
+                "--user-origin", "100x153.34mm", "-f", "-o", out / ROUTED_SHIELD, pcb, limit=160)
+            run("lean-board-case", *cad_tool, LEAN_BOARD_STAGE, "--out", out, limit=450)
+            run("support-free-print-screen", sys.executable, "-I", "-B",
+                ROOT / "print_screen.py", "--out", out, limit=120)
+            return {"stage": params["stage"], "pcb_findings": findings,
+                    "physical_fit_verified": False, "manufacturing_released": False}
         if rev_f_stage:
             from stock_board_pcb import stage
             from toyota_power import check_reports
@@ -380,6 +427,9 @@ def execute(params, out):
             report["esp_module_reference_sha256"] = KICAD_MODULE_SHA
         if rev_f_stage:
             report.update({"contract": rev_f.CONTRACT, "inputs": STOCK_BOARD_INPUTS,
+                           "esp_module_reference_sha256": KICAD_MODULE_SHA})
+        if rev_g_stage:
+            report.update({"contract": rev_g.CONTRACT, "inputs": LEAN_BOARD_INPUTS,
                            "esp_module_reference_sha256": KICAD_MODULE_SHA})
         (out / "engineering-manifest.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
 
