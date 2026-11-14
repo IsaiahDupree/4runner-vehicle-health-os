@@ -73,7 +73,12 @@ and assembly terms for that board.
   alternates and a dated snapshot. Quote outsourced through-hole placement
   as a separate line item and compare it to a single local parts order and
   the labor to finish it. Keep critical parts with unique footprints pinned
-  until an alternate's recommended pads are checked.
+  until an alternate's recommended pads are checked. Check qualification on
+  the manufacturer's exact order code. In Rev E, the stocked BAT54H,115
+  fit the BAT54H-QX lands and had the same published low-current forward
+  voltage limits at room temperature. The stocked part goes in the bench
+  BOM because the manufacturer moved automotive qualification to its
+  Q-series order code. [Rev E stock and assembly example](../../hardware/console-led-node-v0.1/pcb-rgbw-reve/jlcpcb/README.md).
 - **Price the work you actually want the factory to do.** Use single-sided
   Economic assembly where the layout and components allow it. For Rev B,
   both factory-installed Molex ports added **$13.55** per two-shield batch.

@@ -61,14 +61,15 @@ still need implementation. [Espressif download mode](https://docs.espressif.com/
 ## Assembly and build files
 
 - [KiCad project](generated/vhos_rgbw_reve.kicad_pro) · [Board render](generated/shield.png) · [Schematic PDF](generated/schematic.pdf) · [Board STEP](generated/4Runner_RGBW_RevE_PCB.step).
-- [Four-layer Gerbers and drills](generated/4Runner_RGBW_RevE_Gerbers.zip) · [Reference parts list](generated/PCB-BOM.csv) · [JLCPCB quote BOM](jlcpcb/truck-lm5164-smt/BOM.csv) · [Matched quote placement file](jlcpcb/truck-lm5164-smt/CPL.csv).
+- [Four-layer Gerbers and drills](generated/4Runner_RGBW_RevE_Gerbers.zip) · [Reference parts list](generated/PCB-BOM.csv) · [Stock-optimized JLCPCB BOM](jlcpcb/stock-lm5164-smt/BOM.csv) · [Matched placement file](jlcpcb/stock-lm5164-smt/CPL.csv).
 - [FreeCAD assembly](generated/4Runner_RevE_Assembly.FCStd) · [CAD cutaway](generated/RevE-Toyota-wiring.png) · [Base STL](generated/case_base.stl) · [Lid STL](generated/case_lid.stl) · [Verification](generated/verification.json).
 
-The quote files specify 85 top-side placements, including the ESP32-S3.
+The stock-optimized quote specifies 85 top-side placements, including the ESP32-S3.
 Complete L1, D7/D8, U6/U7, both Keystone 3568 fuse holders and their 3 A
 and 1 A elements, and the two cable tails locally. Check the module and
 semiconductor orientation, loaded quantities, stock and total in the
-supplier preview. [Harness and case parts](HARNESS-AND-CASE.csv) ·
+supplier preview. [Stock, prices and assembly options](jlcpcb/README.md) ·
+[Harness and case parts](HARNESS-AND-CASE.csv) ·
 [JLCPCB ESP32 module](https://jlcpcb.com/partdetail/ESP32-S3-WROOM-1-N16R8/C2913202) ·
 [JLCPCB 3.3 V regulator](https://jlcpcb.com/partdetail/TLV62569DBVR/C141836).
 

@@ -19,7 +19,7 @@ classic CAN ESP32 running the MrDIY VHOS target.
 | Toyota input wire routing | [Connector-to-pad clearances and lengths](pcb-rgbw-reve/generated/ir1-wire-fit.json) · [CAD cutaway](pcb-rgbw-reve/generated/RevE-Toyota-wiring.png) |
 | PCB model | [KiCad project](pcb-rgbw-reve/generated/vhos_rgbw_reve.kicad_pro) · [PCB STEP](pcb-rgbw-reve/generated/4Runner_RGBW_RevE_PCB.step) · [Board preview](pcb-rgbw-reve/generated/shield.png) |
 | PCB fabrication | [Rev E four-layer Gerbers and drills](pcb-rgbw-reve/generated/4Runner_RGBW_RevE_Gerbers.zip) |
-| JLCPCB assembly | [Rev E LM5164 SMT-only BOM](pcb-rgbw-reve/jlcpcb/truck-lm5164-smt/BOM.csv) · [Matching placement file](pcb-rgbw-reve/jlcpcb/truck-lm5164-smt/CPL.csv) |
+| JLCPCB assembly | [Rev E stock, costs and hand-fitted parts](pcb-rgbw-reve/jlcpcb/README.md) · [Stock-optimized BOM](pcb-rgbw-reve/jlcpcb/stock-lm5164-smt/BOM.csv) · [Matching placement file](pcb-rgbw-reve/jlcpcb/stock-lm5164-smt/CPL.csv) |
 | Matched case | [Base STL](pcb-rgbw-reve/generated/case_base.stl) · [Lid STL](pcb-rgbw-reve/generated/case_lid.stl) · [FreeCAD assembly](pcb-rgbw-reve/generated/4Runner_RevE_Assembly.FCStd) |
 | Fit samples | [Cable-saddle coupon](pcb-rgbw-reve/generated/front_ports_coupon.stl) · [Lid slice](pcb-rgbw-reve/generated/front_lid_coupon.stl) · [M3 insert and screw coupon](pcb-rgbw-reve/generated/m3_tolerance_coupon.stl) |
 | Digital checks | [Rev E verification](pcb-rgbw-reve/generated/verification.json) · [Wire and strain-relief clearance](pcb-rgbw-reve/generated/ir1-wire-fit.json) |
