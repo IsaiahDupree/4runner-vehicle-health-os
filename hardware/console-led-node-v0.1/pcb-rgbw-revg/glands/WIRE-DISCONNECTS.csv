@@ -1,0 +1,11 @@
+Plug,Connector cavity,PCB pad,Net,External destination,Wire and termination
+Toyota 4-way,1,J1-1,GND,IR1-5,20 AWG compatible Micro-Fit lead
+Toyota 4-way,2,J1-2,VEH_ACC,IR1-6,20 AWG compatible Micro-Fit lead
+Toyota 4-way,3,J1-3,TAIL_12V,IR1-1,22 AWG with compliant insulation OD
+Toyota 4-way,4,J1-4,DIM_RETURN,IR1-2,22 AWG with compliant insulation OD
+RGBW 6-way,1,J2-1,LED_R_NEG,M8 red return verified by meter,Contact sized for donor lead
+RGBW 6-way,2,J2-2,LED_G_NEG,M8 green return verified by meter,Contact sized for donor lead
+RGBW 6-way,3,J2-3,LED_B_NEG,M8 blue return verified by meter,Contact sized for donor lead
+RGBW 6-way,4,J2-4,LED_POS,M8 common positive verified by meter,Contact sized for donor lead
+RGBW 6-way,5,J2-5,LED_W_NEG,M8 white return verified by meter,Contact sized for donor lead
+RGBW 6-way,6,,NC,Empty,No terminal

@@ -28,7 +28,7 @@
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Vehicle Health OS uses Bluetooth to receive vehicle telemetry and manage the local gateway.</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Vehicle Health OS uses the gateway's private Wi-Fi network for verified firmware updates and evidence transfer.</string>
+	<string>Vehicle Health OS uses private Wi-Fi for verified gateway updates, evidence transfer, and the Rev G lighting controller.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>bluetooth-central</string>

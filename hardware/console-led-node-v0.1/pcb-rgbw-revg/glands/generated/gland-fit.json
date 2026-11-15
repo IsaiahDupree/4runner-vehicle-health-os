@@ -1,0 +1,662 @@
+{
+  "contract": "vhos_rgbw_revg_gland_plate_v1",
+  "parts": [
+    {
+      "step": "case_base.step",
+      "stl": "case_base.stl",
+      "closed_mesh": true,
+      "facets": 7808,
+      "solid_volume_mm3": 95635.29,
+      "bounds_mm": [
+        194.0,
+        76.0,
+        36.0
+      ]
+    },
+    {
+      "step": "case_lid.step",
+      "stl": "case_lid.stl",
+      "closed_mesh": true,
+      "facets": 4588,
+      "solid_volume_mm3": 44308.56,
+      "bounds_mm": [
+        180.0,
+        76.0,
+        4.9
+      ]
+    },
+    {
+      "step": "gland_plate.step",
+      "stl": "gland_plate.stl",
+      "closed_mesh": true,
+      "facets": 652,
+      "solid_volume_mm3": 7148.51,
+      "bounds_mm": [
+        30.55,
+        57.9,
+        5.0
+      ]
+    }
+  ],
+  "glands": {
+    "J2": {
+      "ref": "J2",
+      "center_y_mm": 25,
+      "bore_mm": 12.5,
+      "nominal_thread_mm": 12,
+      "thread_length_mm": 15,
+      "body_width_mm": 16.6,
+      "exposed_length_mm": 22.5,
+      "nut_width_mm": 17,
+      "nut_corner_diameter_mm": 18.7,
+      "jacket_mm": 5.5,
+      "jacket_range_mm": [
+        3.5,
+        7
+      ],
+      "gland_mpn": "53010000",
+      "locknut_mpn": "53119100",
+      "plug_mpn": "430200601",
+      "receptacle_mpn": "430250600",
+      "mated_width_reserve_mm": 16,
+      "plate_radial_allowance_mm": 0.25,
+      "thread_beyond_nut_mm": 5
+    },
+    "J1": {
+      "ref": "J1",
+      "center_y_mm": 52.0,
+      "bore_mm": 16.6,
+      "nominal_thread_mm": 16,
+      "thread_length_mm": 12,
+      "body_width_mm": 21.1,
+      "exposed_length_mm": 28,
+      "nut_width_mm": 22,
+      "nut_corner_diameter_mm": 24.2,
+      "jacket_mm": 7.2,
+      "jacket_range_mm": [
+        3.5,
+        8
+      ],
+      "gland_mpn": "53017210",
+      "locknut_mpn": "53119110",
+      "plug_mpn": "430200401",
+      "receptacle_mpn": "430250400",
+      "mated_width_reserve_mm": 13,
+      "plate_radial_allowance_mm": 0.3000000000000007,
+      "thread_beyond_nut_mm": 2
+    }
+  },
+  "gland_center_spacing_mm": 27.0,
+  "front_extension_mm": 30,
+  "slide_side_clearance_mm": 0.3,
+  "slide_axial_clearance_mm": 0.25,
+  "plate_thickness_mm": 5,
+  "connector_envelopes": {
+    "mated_length_mm": 29,
+    "latch_up": true,
+    "release_above_rim": true,
+    "min_free_service_loop_mm": 45
+  },
+  "checks": [
+    {
+      "check": "Plate and shell seated",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 0.2,
+      "minimum_mm": 0.18,
+      "pass": true
+    },
+    {
+      "check": "Closed lid retains plate with assembly allowance",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 0.25,
+      "minimum_mm": 0.24,
+      "pass": true
+    },
+    {
+      "check": "Populated PCB against base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "minimum_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "Populated PCB against closed lid",
+      "overlap_mm3": 0,
+      "clearance_mm": 14.315,
+      "minimum_mm": 0.5,
+      "pass": true
+    },
+    {
+      "check": "Lid against shell",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "minimum_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "F1 puller against new front walls",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "minimum_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "F1 pulls clear of plate",
+      "overlap_mm3": 0,
+      "clearance_mm": 49.4,
+      "minimum_mm": 1,
+      "pass": true
+    },
+    {
+      "check": "F2 puller against new front walls",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "minimum_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "F2 pulls clear of plate",
+      "overlap_mm3": 0,
+      "clearance_mm": 73.9,
+      "minimum_mm": 1,
+      "pass": true
+    },
+    {
+      "check": "J2 full annular nut bearing and usable thread",
+      "pass": true
+    },
+    {
+      "check": "J2 shank in exported bore",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 0.25,
+      "minimum_mm": 0.24,
+      "pass": true
+    },
+    {
+      "check": "J2 locknut without clocking dependency",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 1.45,
+      "minimum_mm": 0.8,
+      "pass": true
+    },
+    {
+      "check": "J2 gland and locknut against populated PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": 17.456,
+      "minimum_mm": 1,
+      "pass": true
+    },
+    {
+      "check": "J2 gland and locknut against lid",
+      "overlap_mm3": 0,
+      "clearance_mm": 4.65,
+      "minimum_mm": 1,
+      "pass": true
+    },
+    {
+      "check": "J2 jacket to connector entry",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "minimum_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "J2 wire-mount socket against PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": 1.05,
+      "minimum_mm": 0.65,
+      "pass": true
+    },
+    {
+      "check": "J2 wire-mount socket and closed lid",
+      "overlap_mm3": 0,
+      "clearance_mm": 9.301,
+      "minimum_mm": 0.5,
+      "pass": true
+    },
+    {
+      "check": "J2 release access against case",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "minimum_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "J2 release access against PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "minimum_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "J2 release access against plate",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "minimum_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "J2 release access against fuse puller",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "minimum_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "J2 release access against fuse puller",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "minimum_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "J2 lift path clears gland shank",
+      "overlap_mm3": 0,
+      "clearance_mm": 0.25,
+      "minimum_mm": 0.2,
+      "pass": true
+    },
+    {
+      "check": "J1 full annular nut bearing and usable thread",
+      "pass": true
+    },
+    {
+      "check": "J1 shank in exported bore",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 0.3,
+      "minimum_mm": 0.24,
+      "pass": true
+    },
+    {
+      "check": "J1 locknut without clocking dependency",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 1.001,
+      "minimum_mm": 0.8,
+      "pass": true
+    },
+    {
+      "check": "J1 gland and locknut against populated PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": 20.4,
+      "minimum_mm": 1,
+      "pass": true
+    },
+    {
+      "check": "J1 gland and locknut against lid",
+      "overlap_mm3": 0,
+      "clearance_mm": 1.9,
+      "minimum_mm": 1,
+      "pass": true
+    },
+    {
+      "check": "J1 jacket to connector entry",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "minimum_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "J1 wire-mount socket against PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": 4.05,
+      "minimum_mm": 0.65,
+      "pass": true
+    },
+    {
+      "check": "J1 wire-mount socket and closed lid",
+      "overlap_mm3": 0,
+      "clearance_mm": 9.317,
+      "minimum_mm": 0.5,
+      "pass": true
+    },
+    {
+      "check": "J1 release access against case",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "minimum_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "J1 release access against PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "minimum_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "J1 release access against plate",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "minimum_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "J1 release access against fuse puller",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "minimum_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "J1 release access against fuse puller",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "minimum_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "J1 lift path clears gland shank",
+      "overlap_mm3": 0,
+      "clearance_mm": 3.25,
+      "minimum_mm": 0.2,
+      "pass": true
+    },
+    {
+      "check": "Gland pair at rest",
+      "overlap_mm3": 0,
+      "clearance_mm": 5.55,
+      "minimum_mm": 1.5,
+      "pass": true
+    },
+    {
+      "check": "M12 tool clears M16 nut on loose plate",
+      "overlap_mm3": 0,
+      "clearance_mm": 3.05,
+      "minimum_mm": 1.0,
+      "pass": true
+    },
+    {
+      "check": "M16 tool clears M12 nut on loose plate",
+      "overlap_mm3": 0,
+      "clearance_mm": 3.05,
+      "minimum_mm": 1.0,
+      "pass": true
+    },
+    {
+      "check": "J1 release clears mated J2 body",
+      "overlap_mm3": 0,
+      "clearance_mm": 2.65,
+      "minimum_mm": 1,
+      "pass": true
+    },
+    {
+      "check": "J2 release clears mated J1 body",
+      "overlap_mm3": 0,
+      "clearance_mm": 2.65,
+      "minimum_mm": 1,
+      "pass": true
+    },
+    {
+      "check": "Plate withdrawal at 0 mm against base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 0.2,
+      "minimum_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "Plate withdrawal at 0 mm against PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": 17.456,
+      "minimum_mm": 1,
+      "pass": true
+    },
+    {
+      "check": "Plate withdrawal at 2 mm against base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 0.25,
+      "minimum_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "Plate withdrawal at 2 mm against PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": 17.729,
+      "minimum_mm": 1,
+      "pass": true
+    },
+    {
+      "check": "Plate withdrawal at 5 mm against base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 0.25,
+      "minimum_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "Plate withdrawal at 5 mm against PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": 18.54,
+      "minimum_mm": 1,
+      "pass": true
+    },
+    {
+      "check": "Plate withdrawal at 10 mm against base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 0.25,
+      "minimum_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "Plate withdrawal at 10 mm against PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": 20.802,
+      "minimum_mm": 1,
+      "pass": true
+    },
+    {
+      "check": "Plate withdrawal at 20 mm against base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 0.25,
+      "minimum_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "Plate withdrawal at 20 mm against PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": 27.127,
+      "minimum_mm": 1,
+      "pass": true
+    },
+    {
+      "check": "Plate withdrawal at 32 mm against base",
+      "overlap_mm3": 0,
+      "clearance_mm": 1.226,
+      "minimum_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "Plate withdrawal at 32 mm against PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": 35.314,
+      "minimum_mm": 1,
+      "pass": true
+    },
+    {
+      "check": "Base retained in reopened assembly",
+      "pass": true
+    },
+    {
+      "check": "Lid retained in reopened assembly",
+      "pass": true
+    },
+    {
+      "check": "GlandPlate retained in reopened assembly",
+      "pass": true
+    },
+    {
+      "check": "Shield retained in reopened assembly",
+      "pass": true
+    },
+    {
+      "check": "J1Disconnect retained in reopened assembly",
+      "pass": true
+    },
+    {
+      "check": "J2Disconnect retained in reopened assembly",
+      "pass": true
+    }
+  ],
+  "tool_axes": [
+    {
+      "id": "lid_1",
+      "position_mm": [
+        6.5,
+        6.5,
+        36
+      ],
+      "insert_approach_interference_mm3": 0.0,
+      "pilot_interference_mm3": 0.0,
+      "driver_interference_mm3": 0,
+      "head_or_washer_approach_interference_mm3": 0.0,
+      "nominal_thread_overlap_mm": 4.8,
+      "screw_tip_to_blind_end_mm": 2.2,
+      "insert_to_blind_end_mm": 1.3,
+      "iron_handle_starts_above_rim_mm": 64.0,
+      "driver_handle_starts_above_rim_mm": 61.2,
+      "heat_set_radial_allowance_test_mm": 0.25,
+      "heat_set_radial_allowance_passed": true,
+      "pass": true
+    },
+    {
+      "id": "lid_2",
+      "position_mm": [
+        10.7,
+        69.5,
+        36
+      ],
+      "insert_approach_interference_mm3": 0.0,
+      "pilot_interference_mm3": 0.0,
+      "driver_interference_mm3": 0,
+      "head_or_washer_approach_interference_mm3": 0.0,
+      "nominal_thread_overlap_mm": 4.8,
+      "screw_tip_to_blind_end_mm": 2.2,
+      "insert_to_blind_end_mm": 1.3,
+      "iron_handle_starts_above_rim_mm": 64.0,
+      "driver_handle_starts_above_rim_mm": 61.2,
+      "heat_set_radial_allowance_test_mm": 0.25,
+      "heat_set_radial_allowance_passed": true,
+      "pass": true
+    },
+    {
+      "id": "lid_3",
+      "position_mm": [
+        173.5,
+        6.5,
+        36
+      ],
+      "insert_approach_interference_mm3": 0.0,
+      "pilot_interference_mm3": 0.0,
+      "driver_interference_mm3": 0,
+      "head_or_washer_approach_interference_mm3": 0.0,
+      "nominal_thread_overlap_mm": 4.8,
+      "screw_tip_to_blind_end_mm": 2.2,
+      "insert_to_blind_end_mm": 1.3,
+      "iron_handle_starts_above_rim_mm": 64.0,
+      "driver_handle_starts_above_rim_mm": 61.2,
+      "heat_set_radial_allowance_test_mm": 0.25,
+      "heat_set_radial_allowance_passed": true,
+      "pass": true
+    },
+    {
+      "id": "lid_4",
+      "position_mm": [
+        173.5,
+        69.5,
+        36
+      ],
+      "insert_approach_interference_mm3": 0.0,
+      "pilot_interference_mm3": 0.0,
+      "driver_interference_mm3": 0,
+      "head_or_washer_approach_interference_mm3": 0.0,
+      "nominal_thread_overlap_mm": 4.8,
+      "screw_tip_to_blind_end_mm": 2.2,
+      "insert_to_blind_end_mm": 1.3,
+      "iron_handle_starts_above_rim_mm": 64.0,
+      "driver_handle_starts_above_rim_mm": 61.2,
+      "heat_set_radial_allowance_test_mm": 0.25,
+      "heat_set_radial_allowance_passed": true,
+      "pass": true
+    },
+    {
+      "id": "shield_1",
+      "position_mm": [
+        40,
+        16.13,
+        13.0
+      ],
+      "insert_approach_interference_mm3": 0.0,
+      "pilot_interference_mm3": 0.0,
+      "driver_interference_mm3": 0.0,
+      "head_or_washer_approach_interference_mm3": 0.0,
+      "nominal_thread_overlap_mm": 3.9,
+      "screw_tip_to_blind_end_mm": 3.1,
+      "insert_to_blind_end_mm": 1.3,
+      "iron_handle_starts_above_rim_mm": 41.0,
+      "driver_handle_starts_above_rim_mm": 37.1,
+      "heat_set_radial_allowance_test_mm": 0.25,
+      "heat_set_radial_allowance_passed": true,
+      "pass": true
+    },
+    {
+      "id": "shield_2",
+      "position_mm": [
+        44,
+        61.83,
+        13.0
+      ],
+      "insert_approach_interference_mm3": 0.0,
+      "pilot_interference_mm3": 0.0,
+      "driver_interference_mm3": 0.0,
+      "head_or_washer_approach_interference_mm3": 0.0,
+      "nominal_thread_overlap_mm": 3.9,
+      "screw_tip_to_blind_end_mm": 3.1,
+      "insert_to_blind_end_mm": 1.3,
+      "iron_handle_starts_above_rim_mm": 41.0,
+      "driver_handle_starts_above_rim_mm": 37.1,
+      "heat_set_radial_allowance_test_mm": 0.25,
+      "heat_set_radial_allowance_passed": true,
+      "pass": true
+    },
+    {
+      "id": "shield_3",
+      "position_mm": [
+        131.2,
+        16.12,
+        13.0
+      ],
+      "insert_approach_interference_mm3": 0.0,
+      "pilot_interference_mm3": 0.0,
+      "driver_interference_mm3": 0.0,
+      "head_or_washer_approach_interference_mm3": 0.0,
+      "nominal_thread_overlap_mm": 3.9,
+      "screw_tip_to_blind_end_mm": 3.1,
+      "insert_to_blind_end_mm": 1.3,
+      "iron_handle_starts_above_rim_mm": 41.0,
+      "driver_handle_starts_above_rim_mm": 37.1,
+      "heat_set_radial_allowance_test_mm": 0.25,
+      "heat_set_radial_allowance_passed": true,
+      "pass": true
+    },
+    {
+      "id": "shield_4",
+      "position_mm": [
+        136.75,
+        60.57,
+        13.0
+      ],
+      "insert_approach_interference_mm3": 0.0,
+      "pilot_interference_mm3": 0.0,
+      "driver_interference_mm3": 0.0,
+      "head_or_washer_approach_interference_mm3": 0.0,
+      "nominal_thread_overlap_mm": 3.9,
+      "screw_tip_to_blind_end_mm": 3.1,
+      "insert_to_blind_end_mm": 1.3,
+      "iron_handle_starts_above_rim_mm": 41.0,
+      "driver_handle_starts_above_rim_mm": 37.1,
+      "heat_set_radial_allowance_test_mm": 0.25,
+      "heat_set_radial_allowance_passed": true,
+      "pass": true
+    }
+  ],
+  "physical_pull_seal_or_vehicle_fit_verified": false,
+  "passed": true
+}

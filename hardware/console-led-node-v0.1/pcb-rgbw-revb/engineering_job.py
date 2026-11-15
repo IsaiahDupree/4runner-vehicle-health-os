@@ -46,11 +46,17 @@ SINGLE_BOARD_PCB_STAGE = "toyota-rev-e-pcb"
 SINGLE_BOARD_STAGES = (SINGLE_BOARD_STAGE, SINGLE_BOARD_PCB_STAGE)
 STOCK_BOARD_STAGE = "toyota-rev-f"
 LEAN_BOARD_STAGE = "toyota-rev-g"
+GLAND_STAGE = "toyota-rev-g-glands"
+WLED_STAGE = "toyota-rev-g-wled"
 TOYOTA_STAGES = (TOYOTA_POWER_STAGE, TOYOTA_REV_C_STAGE)
 SERVICE_STAGES = ("service-case", "durable-case", *TOYOTA_STAGES)
 CASE_STAGES = ("jlc-case", "jlc-lite-case", *SERVICE_STAGES)
 STAGES = ("fit", "finish", *CASE_STAGES, TOYOTA_WIRE_STAGE, *ILLUMINATION_STAGES, *SINGLE_BOARD_STAGES,
-          STOCK_BOARD_STAGE, LEAN_BOARD_STAGE)
+          STOCK_BOARD_STAGE, LEAN_BOARD_STAGE, GLAND_STAGE, WLED_STAGE)
+GLAND_INPUTS = {
+    "4Runner_RevG_Assembly.FCStd": "ae2111d748af31ceaeddcb797fb850b8cc133c9b3b6ecf96fffca5e53c9dfd90",
+    "mechanical-observation.json": "125313bf1cda9799e77569abbdc84296c725b81cb0d1034ae2e4c27ae88c5953",
+}
 TOYOTA_WIRE_INPUTS = {
     "4Runner_Service_Assembly.FCStd": "84002c5af565bca797f26163f6fd9ad3397c3ce5a11e3b6dd848b5ad0df542bd",
     "mechanical-observation.json": "aa3b2e89732137c8a1d4c2c704ca51abe5f78918afa115f2fd0c60797c0e4e33",
@@ -126,6 +132,9 @@ LEAN_BOARD_INPUTS = {
 
 
 def source_files():
+    firmware = ROOT / "wled"
+    if not firmware.is_dir():
+        firmware = ROOT.parents[2] / "firmware/console-led-revg/wled"
     return {**{name: ROOT / name for name in ("design.py", "native_pcb.py", "mechanical_audit.py", "engineering_job.py",
                                              "engineering-inputs.json", "service_case.py", "service-case.json",
                                              "durable_case.py", "durable-case.json", "print_screen.py",
@@ -134,8 +143,10 @@ def source_files():
                                              "illumination.py", "illumination_pcb.py", "illumination_cad.py",
                                              "single_board.py", "single_board_pcb.py", "single_board_case.py",
                                              "stock_board.py", "stock_board_pcb.py", "stock_board_parts.csv",
-                                             "lean_board.py", "lean_board_pcb.py", "lean_board_parts.csv",
+                                             "lean_board.py", "lean_board_pcb.py", "lean_board_parts.csv", "gland_case.py",
                                              *(name + ".kicad_mod" for name in rev_f.LAND_PATTERNS))},
+            **{f"wled/{name}": firmware / name for name in (
+                "build_orion.py", "library.json", "platformio_override.ini", "revg_policy.h", "revg_usermod.cpp")},
             "run_isolated_engineering.py": (ROOT / "run_isolated_engineering.py") if (ROOT / "run_isolated_engineering.py").exists()
             else REFERENCE / "run_isolated_engineering.py",
             **{f"reference/{name}": REFERENCE / name for name in ("circuit.py", "native_pcb.py", "engineering-inputs.json")}}
@@ -174,6 +185,10 @@ def validate(params):
         inputs = STOCK_BOARD_INPUTS
     if params["stage"] == LEAN_BOARD_STAGE:
         inputs = LEAN_BOARD_INPUTS
+    if params["stage"] == GLAND_STAGE:
+        inputs = GLAND_INPUTS
+    if params["stage"] == WLED_STAGE:
+        inputs = {}
     for name, expected in inputs.items():
         asset = ROOT / "inputs" / name
         if asset.is_symlink() or not asset.is_file() or sha(asset) != expected:
@@ -237,6 +252,14 @@ def execute(params, out):
             "--side", "front", "--smd-only", "-o", fab / "SMT-placement.csv", pcb)
 
     try:
+        if params["stage"] == WLED_STAGE:
+            run("wled", sys.executable, "-I", "-B", ROOT / "wled/build_orion.py", out, limit=865)
+            return {"stage": WLED_STAGE, "hardware_verified": False}
+        if params["stage"] == GLAND_STAGE:
+            run("gland-case", *cad_tool, GLAND_STAGE, "--out", out, limit=360)
+            run("supports-off", sys.executable, "-I", "-B", ROOT / "print_screen.py", "--out", out, "--gland-case",
+                limit=240)
+            return {"stage": GLAND_STAGE, "inputs": GLAND_INPUTS, "physical_fit_verified": False}
         if rev_g_stage:
             from lean_board_pcb import stage
             from toyota_power import check_reports
@@ -428,6 +451,10 @@ def execute(params, out):
         if rev_f_stage:
             report.update({"contract": rev_f.CONTRACT, "inputs": STOCK_BOARD_INPUTS,
                            "esp_module_reference_sha256": KICAD_MODULE_SHA})
+        if params["stage"] == WLED_STAGE:
+            report.update({"contract": "vhos_rgbw_revg_wled_build_v1"})
+        if params["stage"] == GLAND_STAGE:
+            report.update({"contract": "vhos_rgbw_revg_gland_plate_v1", "inputs": GLAND_INPUTS})
         if rev_g_stage:
             report.update({"contract": rev_g.CONTRACT, "inputs": LEAN_BOARD_INPUTS,
                            "esp_module_reference_sha256": KICAD_MODULE_SHA})

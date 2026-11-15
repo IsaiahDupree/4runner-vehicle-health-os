@@ -1,0 +1,5 @@
+{
+  "name": "vhos_revg",
+  "build": {"libArchive": false},
+  "license": "EUPL-1.2"
+}

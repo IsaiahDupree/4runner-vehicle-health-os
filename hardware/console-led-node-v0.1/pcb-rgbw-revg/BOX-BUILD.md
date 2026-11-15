@@ -1,5 +1,10 @@
 # Rev G finished-unit quote scope
 
+For the gland enclosure option, include the removable plate, both glands and
+locknuts, and the two factory-crimped harness disconnects in the finished-unit
+quote. Use the [gland and disconnect schedule](glands/README.md) to specify parts
+and let the assembler handle pigtail soldering and continuity testing.
+
 Quote **two assembled 2005 Toyota 4Runner V8 RGBW controllers** with
 the circuit board installed in the closed case, both fuse elements
 installed, a terminated Toyota IR1 tee and a terminated Diode Dynamics

@@ -12,7 +12,7 @@ import time
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from engineering_job import (CASE_STAGES, ILLUMINATION_INPUTS, ILLUMINATION_PCB_INPUTS,
+from engineering_job import (CASE_STAGES, GLAND_INPUTS, GLAND_STAGE, WLED_STAGE, ILLUMINATION_INPUTS, ILLUMINATION_PCB_INPUTS,
                              ILLUMINATION_STAGE, ILLUMINATION_STAGES, INSERT_MODEL, INSERT_MODEL_SHA, JOB_TYPE, MODULE,
                              LEAN_BOARD_INPUTS, LEAN_BOARD_STAGE,
                              MODULE_SHA, ROOT, ROUTED_SHIELD, ROUTED_SHIELD_SHA, SERVICE_STAGES,
@@ -94,6 +94,11 @@ def start(identity, folder, stage):
         toyota = "Yazaki_7282-1060.stp"
         inputs[toyota] = (input_hashes[toyota],
                           ROOT.parents[3] / "artifacts/4runner-console-connector-map-2026-11-07/references" / toyota)
+    if stage == GLAND_STAGE:
+        reference = ROOT.parent / "pcb-rgbw-revg" / "generated"
+        inputs = {name: (digest, reference / name) for name, digest in GLAND_INPUTS.items()}
+    if stage == WLED_STAGE:
+        inputs = {}
     references = {}
     for name, (expected, fallback) in inputs.items():
         candidates = (ROOT / "inputs" / name, fallback)
@@ -154,7 +159,7 @@ def start(identity, folder, stage):
         raise RuntimeError("task controller source pin mismatch")
     params = {"stage": stage, "expected_source_set_sha256": source_pin(), "evaluation_only": True,
               "timeout_sec": 900 if stage in (*TOYOTA_STAGES, *ILLUMINATION_STAGES, *SINGLE_BOARD_STAGES,
-                                               STOCK_BOARD_STAGE, LEAN_BOARD_STAGE)
+                                               STOCK_BOARD_STAGE, LEAN_BOARD_STAGE, GLAND_STAGE, WLED_STAGE)
               else {"finish": 880, "durable-case": 660}.get(stage, 360)}
     result = call("modeling.submit", {"job_type": JOB_TYPE, "params": params}, f"{ACTOR}-{identity}")
     record(folder / "submission.json", result)

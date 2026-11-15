@@ -109,3 +109,31 @@ private func response(
     responsePayloadHex: payload
   )
 }
+
+@Test func lightingRelayUsesNewestSupportedReadingPerECU() throws {
+  var accumulator = J1979Accumulator()
+  try accumulator.ingest(response(pid: 0, payload: "410000180000", time: 1))
+  let firstSample = try accumulator.ingest(response(pid: 0x0C, payload: "410C156C", time: 2))
+  let latestSample = try accumulator.ingest(response(pid: 0x0C, payload: "410C1901", time: 3))
+  let first = try #require(firstSample)
+  let latest = try #require(latestSample)
+  try accumulator.ingest(response(pid: 0x0D, payload: "410D19", time: 4))
+  let rpm = LightingRelaySignal.rpm
+  #expect(rpm.centiUnits(first) == 137100)
+  #expect(rpm.centiUnits(latest) == 160025)
+  #expect(rpm.latestPerECU(accumulator.standardSamples) == [latest])
+  #expect(LightingRelaySignal.activity.centiUnits(latest) == nil)
+
+  let key = "evaluation-test-key"
+  let req = try #require(LightingRelayCommand.sample(rpm, centiUnits: 160025, sequence: 4)
+    .request(session: 24, key: key))
+  #expect(req.url?.absoluteString == "http://192.168.88.1/vhos/lighting")
+  #expect(req.httpMethod == "POST")
+  #expect(req.value(forHTTPHeaderField: "X-VHOS-Key") == key)
+  #expect(req.httpBody == Data("session=24&action=sample&signal=0&centi=160025&seq=4".utf8))
+  #expect(LightingRelayCommand.start(.rpm).request(session: 0, key: key) == nil)
+  #expect(LightingRelayCommand.start(.rpm).request(session: 1, key: "short") == nil)
+
+  let activity = try #require(LightingRelayCommand.start(.activity).request(session: 42, key: key))
+  #expect(activity.httpBody == Data("session=42&action=start&signal=4".utf8))
+}

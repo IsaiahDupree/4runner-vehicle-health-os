@@ -9,6 +9,11 @@ RGBW pod. The existing CAN ESP32 supplies vehicle telemetry wirelessly.
 [Factory wire plan](../connector-adapter/IR1-WIRE-PLAN.md) ·
 [Pinned CAN gateway firmware](https://github.com/IsaiahDupree/4runner-vhos-firmware/tree/a523483abc984a406c73659653571198e46b04a0/targets/mrdiy-esp32-v13).
 
+## Gland enclosure and WLED evaluation
+
+See the [gland plate and wire-mount harness](glands/README.md) and the
+[ESP32-S3 WLED build and CAN relay](../../../firmware/console-led-revg/README.md).
+
 ## Files
 
 | Use | Files |
@@ -16,7 +21,7 @@ RGBW pod. The existing CAN ESP32 supplies vehicle telemetry wirelessly.
 | Edit the PCB | [KiCad project](generated/vhos_rgbw_revg.kicad_pro) · [Board](generated/vhos_rgbw_revg.kicad_pcb) · [Schematic](generated/vhos_rgbw_revg.kicad_sch) · [Schematic PDF](generated/schematic.pdf) |
 | Price fabrication and finished assembly | [Four-layer Gerbers and drills](generated/4Runner_RGBW_RevG_Gerbers.zip) · [Factory SMT and fuse-holder BOM](jlcpcb/factory-holders/BOM.csv) · [Matching CPL](jlcpcb/factory-holders/CPL.csv) · [Stock and pricing](jlcpcb/README.md) · [Finished-unit quote scope](BOX-BUILD.md) |
 | Inspect the assembly | [PCB STEP](generated/4Runner_RGBW_RevG_PCB.step) · [FreeCAD assembly](generated/4Runner_RevG_Assembly.FCStd) · [Toyota lead STEP](generated/4Runner_RevG_Toyota_Wires.step) |
-| Print the enclosure | [Base STL](generated/case_base.stl) · [Lid STL](generated/case_lid.stl) · [Cable-entry coupon](generated/front_ports_coupon.stl) · [Lid coupon](generated/front_lid_coupon.stl) · [M3 insert coupon](generated/m3_tolerance_coupon.stl) |
+| Print the saddle enclosure | [Base STL](generated/case_base.stl) · [Lid STL](generated/case_lid.stl) · [Cable-entry coupon](generated/front_ports_coupon.stl) · [Lid coupon](generated/front_lid_coupon.stl) · [M3 insert coupon](generated/m3_tolerance_coupon.stl) |
 | Wire and test | [Six-cavity and RGBW register](WIRE-REGISTER.csv) · [Harness and case hardware](HARNESS-AND-CASE.csv) · [Digital test results](generated/verification.json) · [Bench procedure](BENCH.md) |
 
 ![Rev G populated PCB rendered from KiCad](generated/shield.png)

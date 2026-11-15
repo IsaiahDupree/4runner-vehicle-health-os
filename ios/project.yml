@@ -49,7 +49,7 @@ targets:
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
         NSBluetoothAlwaysUsageDescription: Vehicle Health OS uses Bluetooth to receive vehicle telemetry and manage the local gateway.
-        NSLocalNetworkUsageDescription: Vehicle Health OS uses the gateway's private Wi-Fi network for verified firmware updates and evidence transfer.
+        NSLocalNetworkUsageDescription: Vehicle Health OS uses private Wi-Fi for verified gateway updates, evidence transfer, and the Rev G lighting controller.
         UIBackgroundModes:
           - bluetooth-central
         NSAppTransportSecurity:

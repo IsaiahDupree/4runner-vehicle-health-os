@@ -53,6 +53,13 @@ private struct SystemToolsView: View {
           Label("Release Hub", systemImage: "shippingbox.and.arrow.backward")
         }
       }
+      Section("Accessories") {
+        NavigationLink {
+          LightingRelayView()
+        } label: {
+          Label("Rev G lighting", systemImage: "lightbulb.led")
+        }
+      }
       Section {
         Text(
           "Firmware and release operations retain their existing parked, signature, compatibility, and rollback gates. Diagnostic drafts never grant vehicle-control authority."
@@ -62,6 +69,162 @@ private struct SystemToolsView: View {
       }
     }
     .navigationTitle("System")
+  }
+}
+
+private struct LightingRelayView: View {
+  @Environment(AppModel.self) private var model
+  @Environment(\.scenePhase) private var scenePhase
+  @State private var signal: LightingRelaySignal = .rpm
+  @State private var credential = ""
+  @State private var ecu = ""
+  @State private var running = false
+  @State private var stopping = false
+  @State private var status = "Relay stopped"
+
+  var body: some View {
+    Form {
+      Section("Manual color") {
+        Link("Open WLED", destination: LightingRelayCommand.controller)
+        Text("Connect to the controller’s private Wi‑Fi. Leave VHOS connected to the CAN gateway over Bluetooth.")
+          .font(.footnote)
+      }
+      Section("CAN lighting") {
+        Picker("Signal configured in WLED", selection: $signal) {
+          ForEach(LightingRelaySignal.allCases) { item in
+            Text(item.label).tag(item)
+          }
+        }
+        if signal != .activity {
+          TextField("ECU address when more than one responds", text: $ecu)
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
+        }
+        SecureField("WLED relay key", text: $credential)
+          .textInputAutocapitalization(.never)
+          .autocorrectionDisabled()
+        Button(running ? "Stop CAN relay" : "Start CAN relay") {
+          running.toggle()
+        }
+        .disabled(stopping || (!running && LightingRelayCommand.start(signal).request(session: 1, key: credential) == nil))
+        Text(status).accessibilityIdentifier("LightingRelayStatus")
+      }
+    }
+    .navigationTitle("Rev G lighting")
+    .task(id: running && scenePhase == .active) {
+      if running && scenePhase == .active { await relay() }
+    }
+    .onChange(of: scenePhase) { _, phase in
+      if phase != .active { running = false }
+    }
+    .onDisappear { running = false }
+  }
+
+  private func relay() async {
+    let key = credential
+    let selected = signal
+    let targetECU = ecu.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    let sessionID = Int.random(in: 1...Int(Int32.max))
+    let connection = URLSession(configuration: .ephemeral, delegate: LightingLocalOnlyDelegate(),
+                                delegateQueue: nil)
+    var started = false
+    var sequence = 0
+    var lastIdentity: String?
+    let formatter = ISO8601DateFormatter()
+    defer {
+      running = false
+      connection.finishTasksAndInvalidate()
+    }
+    do {
+      try await send(.start(selected), via: connection, session: sessionID, key: key)
+      started = true
+      while !Task.isCancelled {
+        let now = Date()
+        let sample: (identity: String, value: Int, label: String)?
+        if selected == .activity {
+          let gateway = model.gateway
+          if let observation = gateway.latestCANObservation, gateway.hasCurrentGatewayHealth,
+             let id = gateway.handshake?.gatewayID, let capture = gateway.health?.captureSessionID,
+             observation.matchesRecorderContext(gatewayID: id, captureSessionID: capture),
+             let received = gateway.latestCANObservationReceivedAt,
+             (0...2).contains(now.timeIntervalSince(received)) {
+            sample = (observation.id, 100, "Relaying live CAN activity")
+          } else {
+            sample = nil
+            status = "Waiting for live CAN frames"
+          }
+        } else {
+          let current = model.gateway.standardOBDSamples.filter { sample in
+            let age = formatter.date(from: sample.observedAt).map { now.timeIntervalSince($0) }
+            return model.gateway.isCurrentStandardOBDSample(sample)
+              && age.map({ (0...2).contains($0) }) == true
+              && (targetECU.isEmpty || sample.ecuAddress.lowercased() == targetECU)
+          }
+          let candidates = selected.latestPerECU(current)
+          if candidates.count == 1, let reading = candidates.first, let value = selected.centiUnits(reading) {
+            sample = (reading.id, value, "Relaying \(selected.label.lowercased()) from \(reading.ecuAddress)")
+          } else {
+            sample = nil
+            status = candidates.isEmpty ? "Waiting for fresh CAN data" : "Choose an ECU address"
+          }
+        }
+        if let sample {
+          if sample.identity != lastIdentity {
+            sequence += 1
+            try await send(.sample(selected, centiUnits: sample.value, sequence: sequence), via: connection,
+                           session: sessionID, key: key)
+            lastIdentity = sample.identity
+          }
+          status = sample.label
+        }
+        try await Task.sleep(for: .milliseconds(250))
+      }
+    } catch {
+      status = Task.isCancelled ? "Relay stopped" : error.localizedDescription
+    }
+    if started {
+      stopping = true
+      // Use an independent short task to send Stop after the view task is cancelled.
+      // The controller's sample deadline also turns the lights off if this request cannot arrive.
+      await Task { try? await send(.stop, via: connection, session: sessionID, key: key) }.value
+      stopping = false
+    }
+  }
+
+  private func send(_ command: LightingRelayCommand, via connection: URLSession, session: Int, key: String)
+    async throws
+  {
+    guard let request = command.request(session: session, key: key) else {
+      throw LightingRelayError.invalidConfiguration
+    }
+    let (_, response) = try await connection.data(for: request)
+    switch (response as? HTTPURLResponse)?.statusCode {
+    case 204: return
+    case 403: throw LightingRelayError.disarmed
+    case 409: throw LightingRelayError.modeChanged
+    default: throw LightingRelayError.unexpectedResponse
+    }
+  }
+}
+
+private final class LightingLocalOnlyDelegate: NSObject, URLSessionTaskDelegate {
+  func urlSession(_ session: URLSession, task: URLSessionTask,
+                  willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest,
+                  completionHandler: @escaping @Sendable (URLRequest?) -> Void) {
+    completionHandler(nil)
+  }
+}
+
+private enum LightingRelayError: LocalizedError {
+  case invalidConfiguration, disarmed, modeChanged, unexpectedResponse
+
+  var errorDescription: String? {
+    switch self {
+    case .invalidConfiguration: "Enter the controller’s relay key."
+    case .disarmed: "Check WLED output arming, private Wi‑Fi and the relay key."
+    case .modeChanged: "WLED switched to manual or the configured signal differs."
+    case .unexpectedResponse: "The controller returned an unexpected response."
+    }
   }
 }
 

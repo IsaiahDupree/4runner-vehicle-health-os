@@ -138,3 +138,52 @@ def test_factory_assembly_adds_both_fuse_holders_at_native_top_side_positions(tm
     bare = read_json(mixed / "bare-board-calculator.json")["rev_g"]["lead_free_hasl"]
     assert sum(Decimal(bare[k]) for k in ("engineering_usd", "finish_usd", "board_usd")) == Decimal("34.30")
     assert Decimal(bare["calculated_price_usd"]) + Decimal(quote["assembly_with_holders_usd"]) == Decimal("152.83")
+
+
+def test_wire_mount_disconnects_match_native_rev_g_and_ir1_cavities():
+    native = read_json(GENERATED / "wiring-interfaces.json")
+    schedule = read_csv(REV / "glands" / "WIRE-DISCONNECTS.csv")
+    for port, plug in (("J1", "Toyota 4-way"), ("J2", "RGBW 6-way")):
+        rows = [row for row in schedule if row["Plug"] == plug]
+        fitted = [row for row in rows if row["PCB pad"]]
+        assert {row["Connector cavity"]: row["Net"] for row in fitted} == {
+            pin: info["net"] for pin, info in native[port].items()
+        }
+        assert all(row["PCB pad"] == f"{port}-{row['Connector cavity']}" for row in fitted)
+        assert len(rows) == (4 if port == "J1" else 6)
+    assert {row["External destination"] for row in schedule if row["Plug"] == "Toyota 4-way"} == {
+        f"IR1-{row['cavity']}" for row in native["J1"].values()
+    }
+    empty, = [row for row in schedule if row["Net"] == "NC"]
+    assert (empty["Plug"], empty["Connector cavity"], empty["PCB pad"]) == ("RGBW 6-way", "6", "")
+
+
+def test_wled_config_follows_pcb_pin_order_and_private_endpoint():
+    root = REV.parents[2]
+    firmware = root / "firmware/console-led-revg/wled"
+    env = (firmware / "platformio_override.ini").read_text()
+    policy = (firmware / "revg_policy.h").read_text()
+    assert "board_build.arduino.memory_type = qio_qspi" in env
+    assert "-DPIXEL_COUNTS=1" in env and "-DLED_TYPES=44" in env
+    pins, = re.findall(r"^  -DDATA_PINS=([\d,]+)$", env, re.MULTILINE)
+    assert pins == "18,17,14,2"
+    assert "{18, 17, 14, 2}" in policy
+    assert all(token in policy for token in ("enablePin = 21", "tailPin = 5", "dimPin = 4"))
+    patch = (firmware / "build_orion.py").read_text()
+    relay = (root / "ios/Core/Sources/VHOSCore/LightingRelay.swift").read_text()
+    assert "http://192.168.88.1" in patch and "http://192.168.88.1" in relay
+
+
+def test_revg_gland_cad_receipts_bind_to_the_three_support_free_stls():
+    output = REV / "glands" / "generated"
+    fit = read_json(output / "gland-fit.json")
+    sliced = read_json(output / "support-free.json")
+    assert fit["passed"] and fit["gland_center_spacing_mm"] == 27
+    assert len(fit["checks"]) == 60 and all(row["pass"] for row in fit["checks"])
+    assert len(fit["tool_axes"]) == 8 and all(axis["pass"] for axis in fit["tool_axes"])
+    assert not fit["physical_pull_seal_or_vehicle_fit_verified"]
+    assert sliced["supports_disabled_all_parts_passed"]
+    assert set(sliced["offline_slices"]) == {"case_base", "case_lid", "gland_plate"}
+    for name, row in sliced["offline_slices"].items():
+        assert row["pass"] and row["support_segments"] == 0
+        assert sha256((output / f"{name}.stl").read_bytes()).hexdigest() == sliced["mesh_checks"][name]["sha256"]

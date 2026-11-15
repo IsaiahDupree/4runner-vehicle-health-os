@@ -145,7 +145,8 @@ def slice_once(path, temp, log, profile):
             "wall_segments": types["WALL-OUTER"], "pass": layers > 2 and types["WALL-OUTER"] > 2 and support == 0}
 
 
-def main(out):
+def main(out, *, gland_case=False):
+    parts = ("case_base", "case_lid", "gland_plate") if gland_case else PARTS
     if platform.system() != "Windows" or platform.node().split(".")[0].casefold() != "orion":
         raise RuntimeError("Orion native print screen required")
     import sys
@@ -153,8 +154,8 @@ def main(out):
     for path, pin in RUNTIME_PINS.items():
         if sha(path) != pin:
             raise ValueError(f"Unexpected Cura geometry screen input {path.name}")
-    meshes = {name: mesh_report(out / (name + ".stl")) for name in PARTS}
-    observations = out / "mechanical-observation.json"
+    meshes = {name: mesh_report(out / (name + ".stl")) for name in parts}
+    observations = out / ("gland-fit.json" if gland_case else "mechanical-observation.json")
     subject = json.loads(observations.read_text(encoding="utf-8")).get("contract") if observations.exists() else None
     fit_path = out / "toyota-leads-fit.json"
     if subject is None:
@@ -172,7 +173,7 @@ def main(out):
     with tempfile.TemporaryDirectory(prefix="vhos-cura-screen-") as name:
         temp = Path(name)
         report["offline_slices"] = {part: slice_once(out / (part + ".stl"), temp, out / (part + "-cura.log"), profile)
-                                    for part in PARTS}
+                                    for part in parts}
     report["supports_disabled_all_parts_passed"] = all(row["pass"] for row in report["offline_slices"].values())
     receipt.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     if not report["supports_disabled_all_parts_passed"]:
@@ -182,4 +183,6 @@ def main(out):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--out", type=Path, required=True)
-    main(parser.parse_args().out.resolve())
+    parser.add_argument("--gland-case", action="store_true")
+    args = parser.parse_args()
+    main(args.out.resolve(), gland_case=args.gland_case)
