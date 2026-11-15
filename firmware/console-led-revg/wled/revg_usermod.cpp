@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 #include "wled.h"
-#include "revg_policy.h"
+#include "revg_relay.h"
 #include <esp_wifi.h>
-#include <cerrno>
-#include <cstdlib>
 
 namespace {
 
@@ -21,24 +19,13 @@ bool wiredOutputReady = false;
 bool manualRequested = false;
 bool applyOff = true;
 
-long number(AsyncWebServerRequest* request, const char* name, long minimum, long maximum) {
-  const auto* param = request->getParam(name, true);
-  if (!param) return minimum - 1;
-  const String& value = param->value();
-  const char* start = value.c_str();
-  if (value.isEmpty() || (*start != '-' && (*start < '0' || *start > '9'))) return minimum - 1;
-  char* end = nullptr;
-  errno = 0;
-  const auto parsed = strtol(start, &end, 10);
-  return errno || *end != '\0' || parsed < minimum || parsed > maximum ? minimum - 1 : parsed;
+std::string_view text(const String& value) {
+  return {value.c_str(), value.length()};
 }
 
-bool acceptedKey(const String& supplied, const char* expected) {
-  const size_t length = strlen(expected);
-  if (length < 16 || supplied.length() != length) return false;
-  unsigned mismatch = 0;
-  for (size_t i = 0; i < length; ++i) mismatch |= supplied[i] ^ expected[i];
-  return mismatch == 0;
+std::string_view field(AsyncWebServerRequest* request, const char* name) {
+  const auto* param = request->getParam(name, true);
+  return param ? text(param->value()) : std::string_view{};
 }
 
 bool isolatedAP() {
@@ -71,36 +58,17 @@ void writeDerivedState(uint8_t brightness, uint32_t color) {
 
 void relayRequest(AsyncWebServerRequest* request) {
   const auto* key = request->getHeader("X-VHOS-Key");
-  const auto* action = request->getParam("action", true);
-  const long session = number(request, "session", 1, 0x7fffffff);
-  const long sequence = number(request, "seq", 1, 0x7fffffff);
-  const long signal = number(request, "signal", 0, 4);
-  const long value = number(request, "centi", -4000, 1638375);
-  const String supplied = key ? key->value() : String{};
-  const String op = action ? action->value() : String{};
-  const auto now = millis();
-  int result = 409;
+  const revg::RelayRequest form{
+      key ? text(key->value()) : std::string_view{}, field(request, "action"),
+      field(request, "session"), field(request, "seq"), field(request, "signal"), field(request, "centi")};
   portENTER_CRITICAL(&lock);
-  if (!wiredOutputReady || !acceptedKey(supplied, settings.key)) {
-    result = 403;
-  } else if (session < 1 || (op != "start" && op != "sample" && op != "stop")) {
-    result = 400;
-  } else if (op == "start" && signal == static_cast<long>(settings.rule.signal) &&
-             policy.activate(settings.rule, session)) {
+  const auto reply = revg::relay(policy, settings.rule, wiredOutputReady, settings.key, form, millis());
+  if (reply.resetOutput) {
     manualRequested = false;
     applyOff = true;
-    result = 204;
-  } else if (op == "stop" && policy.owns(session)) {
-    policy.manual();
-    manualRequested = false;
-    applyOff = true;
-    result = 204;
-  } else if (op == "sample" && sequence >= 1 && signal >= 0 && value >= -4000 &&
-             policy.sample(session, sequence, static_cast<revg::Signal>(signal), value, now)) {
-    result = 204;
   }
   portEXIT_CRITICAL(&lock);
-  request->send(result);
+  request->send(static_cast<int>(reply.status));
 }
 
 } // namespace
@@ -129,12 +97,15 @@ class UsermodRevG final : public Usermod {
   }
 
   void loop() override {
-    const uint32_t now = millis();
-    if (now - lastPoll_ < 25) return;
-    lastPoll_ = now;
+    const uint32_t pollTime = millis();
+    if (pollTime - lastPoll_ < 25) return;
+    lastPoll_ = pollTime;
     const bool networkAndBus = pinsReserved && isolatedAP() && expectedPwmBus();
 
     portENTER_CRITICAL(&lock);
+    // The HTTP task stamps samples under this lock. Read the clock here so
+    // a newly received sample cannot be newer than the expiration check.
+    const uint32_t now = millis();
     const bool ready = settings.armed && networkAndBus;
     if (wiredOutputReady && !ready) applyOff = true;
     wiredOutputReady = ready;
@@ -142,6 +113,7 @@ class UsermodRevG final : public Usermod {
       policy.manual();
       manualRequested = false;
     }
+    policy.expire(now);
     const bool automatic = policy.automatic();
     const uint8_t target = policy.brightness(now);
     const uint32_t color = policy.color();
@@ -215,11 +187,10 @@ class UsermodRevG final : public Usermod {
   }
 
   void addToJsonInfo(JsonObject& root) override {
-    const auto now = millis();
     portENTER_CRITICAL(&lock);
     const bool ready = wiredOutputReady;
     const bool automatic = policy.automatic();
-    const bool fresh = policy.fresh(now);
+    const bool fresh = policy.fresh(millis());
     portEXIT_CRITICAL(&lock);
     auto info = root["u"].as<JsonObject>();
     if (info.isNull()) info = root.createNestedObject("u");

@@ -1,0 +1,407 @@
+{
+  "contract": "vhos_revg_gland_service_review_v1",
+  "source_assembly_sha256": "bbc12091ff22a05a1b7e2a06bbad025ea8a688d4184ee21c0d433f27d2f19779",
+  "horizontal_allowance_mm_per_side": 0.1,
+  "gland_plate_lift_mm": 34,
+  "disconnect_lift_mm": 28,
+  "unmate_reserve_mm": 12,
+  "manufacturer_dimensions": {
+    "mated_length_mm": 24.77,
+    "drawing_widths_mm": {
+      "J1": 10.9,
+      "J2": 13.89
+    },
+    "general_drawing_allowance_mm": 0.25,
+    "housing_envelope_margins": {
+      "J2": {
+        "width_margin_mm": 1.86,
+        "length_margin_mm": 3.98
+      },
+      "J1": {
+        "width_margin_mm": 1.85,
+        "length_margin_mm": 3.98
+      }
+    },
+    "sources": [
+      "https://www.molex.com/content/dam/molex/molex-dot-com/products/automated/en-us/salesdrawingpdf/430/43020/430200601_sd.pdf?inline=",
+      "https://www.molex.com/content/dam/molex/molex-dot-com/products/automated/en-us/salesdrawingpdf/430/43025/430250600_sd.pdf?inline="
+    ]
+  },
+  "verified_slack": "Service envelope only. Actual wire bends and slack require the harness.",
+  "checks": [
+    {
+      "check": "plate full lift vs shell at 0.00 mm XY allowance",
+      "expected": "clear",
+      "overlap_mm3": 0.0,
+      "passed": true
+    },
+    {
+      "check": "plate full lift vs populated PCB and fuses at 0.00 mm XY allowance",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "J2 body full lift vs shell at 0.00 mm XY allowance",
+      "expected": "clear",
+      "overlap_mm3": 0.0,
+      "passed": true
+    },
+    {
+      "check": "J2 body full lift vs populated PCB and fuses at 0.00 mm XY allowance",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "J2 shank full lift vs shell at 0.00 mm XY allowance",
+      "expected": "clear",
+      "overlap_mm3": 0.0,
+      "passed": true
+    },
+    {
+      "check": "J2 shank full lift vs populated PCB and fuses at 0.00 mm XY allowance",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "J2 locknut full lift vs shell at 0.00 mm XY allowance",
+      "expected": "clear",
+      "overlap_mm3": 0.0,
+      "passed": true
+    },
+    {
+      "check": "J2 locknut full lift vs populated PCB and fuses at 0.00 mm XY allowance",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "J1 body full lift vs shell at 0.00 mm XY allowance",
+      "expected": "clear",
+      "overlap_mm3": 0.0,
+      "passed": true
+    },
+    {
+      "check": "J1 body full lift vs populated PCB and fuses at 0.00 mm XY allowance",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "J1 shank full lift vs shell at 0.00 mm XY allowance",
+      "expected": "clear",
+      "overlap_mm3": 0.0,
+      "passed": true
+    },
+    {
+      "check": "J1 shank full lift vs populated PCB and fuses at 0.00 mm XY allowance",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "J1 locknut full lift vs shell at 0.00 mm XY allowance",
+      "expected": "clear",
+      "overlap_mm3": 0.0,
+      "passed": true
+    },
+    {
+      "check": "J1 locknut full lift vs populated PCB and fuses at 0.00 mm XY allowance",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "plate full lift vs shell at 0.10 mm XY allowance",
+      "expected": "clear",
+      "overlap_mm3": 0.0,
+      "passed": true
+    },
+    {
+      "check": "plate full lift vs populated PCB and fuses at 0.10 mm XY allowance",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "J2 body full lift vs shell at 0.10 mm XY allowance",
+      "expected": "clear",
+      "overlap_mm3": 0.0,
+      "passed": true
+    },
+    {
+      "check": "J2 body full lift vs populated PCB and fuses at 0.10 mm XY allowance",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "J2 shank full lift vs shell at 0.10 mm XY allowance",
+      "expected": "clear",
+      "overlap_mm3": 0.0,
+      "passed": true
+    },
+    {
+      "check": "J2 shank full lift vs populated PCB and fuses at 0.10 mm XY allowance",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "J2 locknut full lift vs shell at 0.10 mm XY allowance",
+      "expected": "clear",
+      "overlap_mm3": 0.0,
+      "passed": true
+    },
+    {
+      "check": "J2 locknut full lift vs populated PCB and fuses at 0.10 mm XY allowance",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "J1 body full lift vs shell at 0.10 mm XY allowance",
+      "expected": "clear",
+      "overlap_mm3": 0.0,
+      "passed": true
+    },
+    {
+      "check": "J1 body full lift vs populated PCB and fuses at 0.10 mm XY allowance",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "J1 shank full lift vs shell at 0.10 mm XY allowance",
+      "expected": "clear",
+      "overlap_mm3": 0.0,
+      "passed": true
+    },
+    {
+      "check": "J1 shank full lift vs populated PCB and fuses at 0.10 mm XY allowance",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "J1 locknut full lift vs shell at 0.10 mm XY allowance",
+      "expected": "clear",
+      "overlap_mm3": 0.0,
+      "passed": true
+    },
+    {
+      "check": "J1 locknut full lift vs populated PCB and fuses at 0.10 mm XY allowance",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "Oversize control catches a rail collision",
+      "expected": "blocked",
+      "overlap_mm3": 30.27,
+      "passed": true
+    },
+    {
+      "check": "Lid blocks plate removal after taking up the seated gap",
+      "expected": "blocked",
+      "overlap_mm3": 101.325,
+      "passed": true
+    },
+    {
+      "check": "Rails retain plate under -0.40 mm axial travel",
+      "expected": "blocked",
+      "overlap_mm3": 42.43425,
+      "passed": true
+    },
+    {
+      "check": "Rails retain plate under +0.40 mm axial travel",
+      "expected": "blocked",
+      "overlap_mm3": 42.43425,
+      "passed": true
+    },
+    {
+      "check": "J2 drawing comparison width_margin_mm",
+      "expected": "positive margin",
+      "margin_mm": 1.86,
+      "passed": true
+    },
+    {
+      "check": "J2 drawing comparison length_margin_mm",
+      "expected": "positive margin",
+      "margin_mm": 3.98,
+      "passed": true
+    },
+    {
+      "check": "J2 complete vertical removal vs shell",
+      "expected": "clear",
+      "overlap_mm3": 0.0,
+      "passed": true
+    },
+    {
+      "check": "J2 complete vertical removal vs plate",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "J2 complete vertical removal vs populated PCB and fuses",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "J2 complete vertical removal vs neighbor disconnect",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "J2 complete vertical removal vs J2 body",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "J2 complete vertical removal vs J2 shank",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "J2 complete vertical removal vs J2 locknut",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "J2 complete vertical removal vs J1 body",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "J2 complete vertical removal vs J1 shank",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "J2 complete vertical removal vs J1 locknut",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "J2 above-rim axial unmating reserve",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "F1 puller path vs parked J2 disconnect",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "F2 puller path vs parked J2 disconnect",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "J1 drawing comparison width_margin_mm",
+      "expected": "positive margin",
+      "margin_mm": 1.85,
+      "passed": true
+    },
+    {
+      "check": "J1 drawing comparison length_margin_mm",
+      "expected": "positive margin",
+      "margin_mm": 3.98,
+      "passed": true
+    },
+    {
+      "check": "J1 complete vertical removal vs shell",
+      "expected": "clear",
+      "overlap_mm3": 0.0,
+      "passed": true
+    },
+    {
+      "check": "J1 complete vertical removal vs plate",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "J1 complete vertical removal vs populated PCB and fuses",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "J1 complete vertical removal vs neighbor disconnect",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "J1 complete vertical removal vs J2 body",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "J1 complete vertical removal vs J2 shank",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "J1 complete vertical removal vs J2 locknut",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "J1 complete vertical removal vs J1 body",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "J1 complete vertical removal vs J1 shank",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "J1 complete vertical removal vs J1 locknut",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "J1 above-rim axial unmating reserve",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "F1 puller path vs parked J1 disconnect",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "F2 puller path vs parked J1 disconnect",
+      "expected": "clear",
+      "overlap_mm3": 0,
+      "passed": true
+    }
+  ],
+  "passed": true,
+  "physical_validation": false
+}

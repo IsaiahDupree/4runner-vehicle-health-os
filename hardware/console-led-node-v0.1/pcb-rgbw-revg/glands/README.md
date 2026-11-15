@@ -96,3 +96,23 @@ The released model passed [60 geometry and clearance checks plus eight
 insert tool paths](generated/gland-fit.json). The modeled wrench paths have
 3.05 mm between the tool and the adjacent gland hardware. All three
 [Orion Cura slices](generated/support-free.json) completed with support disabled.
+
+## Assembly and service views
+
+[Four-view sheet](generated/gallery/RevG-gallery.png) ·
+[Closed case](generated/gallery/01-closed-case.png) ·
+[Exploded assembly](generated/gallery/02-exploded-assembly.png) ·
+[Gland plate dimensions](generated/gallery/03-gland-plate-dimensions.png) ·
+[Connector removal](generated/gallery/04-disconnect-service.png)
+
+The service review reopens the released FreeCAD assembly. It checks the
+gland plate's full 34 mm lift with both glands installed and each disconnect's
+28 mm lift with 0.10 mm lateral allowance per side. The lifted disconnect
+has 12 mm of axial motion in either direction for unmating. The lid blocks
+upward plate removal when installed. The fuse puller envelopes clear the
+parked connectors. The actual harness still needs bend, latch access and
+strain relief checks on the printed unit. [Service clearance report](generated/gallery/service-clearance.json)
+
+Regenerate the pictures and clearance report with the same Orion runner.
+
+    python3 -B orion_client.py start UNIQUE-ID --stage toyota-rev-g-gallery

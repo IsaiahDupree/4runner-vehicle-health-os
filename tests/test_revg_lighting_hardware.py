@@ -187,3 +187,28 @@ def test_revg_gland_cad_receipts_bind_to_the_three_support_free_stls():
     for name, row in sliced["offline_slices"].items():
         assert row["pass"] and row["support_segments"] == 0
         assert sha256((output / f"{name}.stl").read_bytes()).hexdigest() == sliced["mesh_checks"][name]["sha256"]
+
+
+def test_revg_service_gallery_matches_the_released_assembly_and_motion_checks():
+    output = REV / "glands" / "generated"
+    gallery = output / "gallery"
+    report = read_json(gallery / "service-clearance.json")
+    assert report["source_assembly_sha256"] == sha256(
+        (output / "4Runner_RevG_Gland_Assembly.FCStd").read_bytes()
+    ).hexdigest()
+    assert report["passed"] and report["physical_validation"] is False
+    assert report["horizontal_allowance_mm_per_side"] == .10
+    assert report["gland_plate_lift_mm"] == 34
+    assert report["disconnect_lift_mm"] == 28 and report["unmate_reserve_mm"] == 12
+    checks = {row["check"]: row for row in report["checks"]}
+    assert Counter(row["expected"] for row in report["checks"]) == {
+        "clear": 54, "blocked": 4, "positive margin": 4,
+    }
+    assert len(checks) == 62 and all(row["passed"] for row in checks.values())
+    assert checks["Lid blocks plate removal after taking up the seated gap"]["overlap_mm3"] > 0
+    for port in ("J1", "J2"):
+        assert checks[f"{port} above-rim axial unmating reserve"]["passed"]
+        assert checks[f"{port} complete vertical removal vs populated PCB and fuses"]["passed"]
+        margins = report["manufacturer_dimensions"]["housing_envelope_margins"][port]
+        assert margins["length_margin_mm"] > 0 and margins["width_margin_mm"] > 0
+    assert len(list(gallery.glob("*.png"))) == 5

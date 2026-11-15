@@ -27,7 +27,7 @@ def launch(mode, out):
             f"from mechanical_audit import execute\nexecute({mode!r}, {str(out)!r})\n")
     limits = {"service-case": 260, "durable-case": 340, "toyota-power-case": 340,
               "toyota-wire-route": 270, "toyota-rev-d": 205, "toyota-rev-e": 460, "toyota-rev-f": 460,
-              "toyota-rev-g": 430, "toyota-rev-g-glands": 320}
+              "toyota-rev-g": 430, "toyota-rev-g-glands": 320, "toyota-rev-g-gallery": 250}
     run_freecad(native, code, out, limits.get(mode, 140))
 
 
@@ -47,6 +47,10 @@ def execute(mode, output):
         build(out)
     elif mode == "toyota-rev-d":
         from illumination_cad import build
+
+        build(out)
+    elif mode == "toyota-rev-g-gallery":
+        from gland_review import build
 
         build(out)
     elif mode == "toyota-rev-g-glands":
@@ -577,7 +581,7 @@ if __name__ == "__main__":
     parser.add_argument("mode", choices=["models", "assembly", "jlc-case", "jlc-lite-case", "service-case",
                                          "durable-case", "toyota-power-case", "toyota-wire-route",
                                          "toyota-rev-d", "toyota-rev-e", "toyota-rev-f", "toyota-rev-g",
-                                         "rev-f-package-models", "toyota-rev-g-glands"])
+                                         "rev-f-package-models", "toyota-rev-g-glands", "toyota-rev-g-gallery"])
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     launch(args.mode, args.out.resolve())

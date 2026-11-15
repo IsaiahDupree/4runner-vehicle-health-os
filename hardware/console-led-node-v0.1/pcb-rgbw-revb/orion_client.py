@@ -12,7 +12,7 @@ import time
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from engineering_job import (CASE_STAGES, GLAND_INPUTS, GLAND_STAGE, WLED_STAGE, ILLUMINATION_INPUTS, ILLUMINATION_PCB_INPUTS,
+from engineering_job import (CASE_STAGES, GLAND_INPUTS, GLAND_REVIEW_INPUTS, GLAND_REVIEW_STAGE, GLAND_STAGE, WLED_STAGE, ILLUMINATION_INPUTS, ILLUMINATION_PCB_INPUTS,
                              ILLUMINATION_STAGE, ILLUMINATION_STAGES, INSERT_MODEL, INSERT_MODEL_SHA, JOB_TYPE, MODULE,
                              LEAN_BOARD_INPUTS, LEAN_BOARD_STAGE,
                              MODULE_SHA, ROOT, ROUTED_SHIELD, ROUTED_SHIELD_SHA, SERVICE_STAGES,
@@ -97,6 +97,9 @@ def start(identity, folder, stage):
     if stage == GLAND_STAGE:
         reference = ROOT.parent / "pcb-rgbw-revg" / "generated"
         inputs = {name: (digest, reference / name) for name, digest in GLAND_INPUTS.items()}
+    if stage == GLAND_REVIEW_STAGE:
+        reference = ROOT.parent / "pcb-rgbw-revg" / "glands/generated"
+        inputs = {name: (digest, reference / name) for name, digest in GLAND_REVIEW_INPUTS.items()}
     if stage == WLED_STAGE:
         inputs = {}
     references = {}

@@ -47,7 +47,7 @@ def build(out):
         raise RuntimeError("WLED source pin mismatch")
     usermod = source / "usermods/vhos_revg"
     usermod.mkdir()
-    for name in ("library.json", "revg_policy.h", "revg_usermod.cpp"):
+    for name in ("library.json", "revg_policy.h", "revg_relay.h", "revg_usermod.cpp"):
         shutil.copyfile(SOURCE / name, usermod / name)
     shutil.copyfile(SOURCE / "platformio_override.ini", source / "platformio_override.ini")
     wled = source / "wled00"
@@ -70,6 +70,11 @@ def build(out):
                  """  // Rev G evaluation bound. Final current and timer alignment need bench checks.
   if (_type == TYPE_ANALOG_4CH && pwmBri > maxBri / 4) pwmBri = maxBri / 4;
   [[maybe_unused]] unsigned hPoint = 0;""")
+    compile_image(source, out, pio, python)
+
+
+def compile_image(source, out, pio, python):
+    """Compile the patched WLED tree and package its application and factory images."""
     core = TOOLS / "pio"
     env = {**os.environ, "PLATFORMIO_CORE_DIR": str(core), "PLATFORMIO_SETTING_ENABLE_TELEMETRY": "no"}
     started = time.monotonic()

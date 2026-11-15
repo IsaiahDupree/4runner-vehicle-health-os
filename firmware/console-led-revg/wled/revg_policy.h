@@ -43,6 +43,7 @@ class Policy {
     rule_ = rule;
     session_ = session;
     lastSequence_ = 0;
+    sampleActive_ = false;
     lit_ = false;
     return true;
   }
@@ -50,6 +51,7 @@ class Policy {
   void manual() {
     session_ = 0;
     lastSequence_ = 0;
+    sampleActive_ = false;
     lit_ = false;
   }
 
@@ -59,15 +61,23 @@ class Policy {
   bool sample(uint32_t session, uint32_t sequence, Signal signal, int32_t value, uint32_t now) {
     if (!owns(session) || sequence <= lastSequence_ || signal != rule_.signal ||
         !inRange(signal, value)) return false;
-    if (!fresh(now)) lit_ = false;
+    expire(now);
+    sampleActive_ = true;
     lastSequence_ = sequence;
     receiptTime_ = now;
     lit_ = lit_ ? value >= rule_.exit : value >= rule_.enter;
     return true;
   }
 
+  void expire(uint32_t now) {
+    if (sampleActive_ && now - receiptTime_ >= sampleMaximumAgeMs) {
+      sampleActive_ = false;
+      lit_ = false;
+    }
+  }
+
   bool fresh(uint32_t now) const {
-    return automatic() && lastSequence_ > 0 && now - receiptTime_ < sampleMaximumAgeMs;
+    return automatic() && sampleActive_ && now - receiptTime_ < sampleMaximumAgeMs;
   }
 
   uint8_t brightness(uint32_t now) const { return fresh(now) && lit_ ? rule_.brightness : 0; }
@@ -78,6 +88,7 @@ class Policy {
   uint32_t session_ = 0;
   uint32_t lastSequence_ = 0;
   uint32_t receiptTime_ = 0;
+  bool sampleActive_ = false;
   bool lit_ = false;
 };
 

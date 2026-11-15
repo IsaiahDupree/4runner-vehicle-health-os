@@ -47,15 +47,20 @@ SINGLE_BOARD_STAGES = (SINGLE_BOARD_STAGE, SINGLE_BOARD_PCB_STAGE)
 STOCK_BOARD_STAGE = "toyota-rev-f"
 LEAN_BOARD_STAGE = "toyota-rev-g"
 GLAND_STAGE = "toyota-rev-g-glands"
+GLAND_REVIEW_STAGE = "toyota-rev-g-gallery"
 WLED_STAGE = "toyota-rev-g-wled"
 TOYOTA_STAGES = (TOYOTA_POWER_STAGE, TOYOTA_REV_C_STAGE)
 SERVICE_STAGES = ("service-case", "durable-case", *TOYOTA_STAGES)
 CASE_STAGES = ("jlc-case", "jlc-lite-case", *SERVICE_STAGES)
 STAGES = ("fit", "finish", *CASE_STAGES, TOYOTA_WIRE_STAGE, *ILLUMINATION_STAGES, *SINGLE_BOARD_STAGES,
-          STOCK_BOARD_STAGE, LEAN_BOARD_STAGE, GLAND_STAGE, WLED_STAGE)
+          STOCK_BOARD_STAGE, LEAN_BOARD_STAGE, GLAND_STAGE, GLAND_REVIEW_STAGE, WLED_STAGE)
 GLAND_INPUTS = {
     "4Runner_RevG_Assembly.FCStd": "ae2111d748af31ceaeddcb797fb850b8cc133c9b3b6ecf96fffca5e53c9dfd90",
     "mechanical-observation.json": "125313bf1cda9799e77569abbdc84296c725b81cb0d1034ae2e4c27ae88c5953",
+}
+GLAND_REVIEW_INPUTS = {
+    "4Runner_RevG_Gland_Assembly.FCStd": "bbc12091ff22a05a1b7e2a06bbad025ea8a688d4184ee21c0d433f27d2f19779",
+    "gland-fit.json": "58b317888b022f2b470a13de3ac887071b67bcc56988b7f47139afed14ecb2df",
 }
 TOYOTA_WIRE_INPUTS = {
     "4Runner_Service_Assembly.FCStd": "84002c5af565bca797f26163f6fd9ad3397c3ce5a11e3b6dd848b5ad0df542bd",
@@ -143,10 +148,10 @@ def source_files():
                                              "illumination.py", "illumination_pcb.py", "illumination_cad.py",
                                              "single_board.py", "single_board_pcb.py", "single_board_case.py",
                                              "stock_board.py", "stock_board_pcb.py", "stock_board_parts.csv",
-                                             "lean_board.py", "lean_board_pcb.py", "lean_board_parts.csv", "gland_case.py",
+                                             "lean_board.py", "lean_board_pcb.py", "lean_board_parts.csv", "gland_case.py", "gland_review.py",
                                              *(name + ".kicad_mod" for name in rev_f.LAND_PATTERNS))},
             **{f"wled/{name}": firmware / name for name in (
-                "build_orion.py", "library.json", "platformio_override.ini", "revg_policy.h", "revg_usermod.cpp")},
+                "build_orion.py", "library.json", "platformio_override.ini", "revg_policy.h", "revg_relay.h", "revg_usermod.cpp")},
             "run_isolated_engineering.py": (ROOT / "run_isolated_engineering.py") if (ROOT / "run_isolated_engineering.py").exists()
             else REFERENCE / "run_isolated_engineering.py",
             **{f"reference/{name}": REFERENCE / name for name in ("circuit.py", "native_pcb.py", "engineering-inputs.json")}}
@@ -187,6 +192,8 @@ def validate(params):
         inputs = LEAN_BOARD_INPUTS
     if params["stage"] == GLAND_STAGE:
         inputs = GLAND_INPUTS
+    if params["stage"] == GLAND_REVIEW_STAGE:
+        inputs = GLAND_REVIEW_INPUTS
     if params["stage"] == WLED_STAGE:
         inputs = {}
     for name, expected in inputs.items():
@@ -252,6 +259,9 @@ def execute(params, out):
             "--side", "front", "--smd-only", "-o", fab / "SMT-placement.csv", pcb)
 
     try:
+        if params["stage"] == GLAND_REVIEW_STAGE:
+            run("gland-gallery", *cad_tool, GLAND_REVIEW_STAGE, "--out", out, limit=280)
+            return {"stage": GLAND_REVIEW_STAGE, "physical_fit_verified": False}
         if params["stage"] == WLED_STAGE:
             run("wled", sys.executable, "-I", "-B", ROOT / "wled/build_orion.py", out, limit=865)
             return {"stage": WLED_STAGE, "hardware_verified": False}
@@ -453,6 +463,8 @@ def execute(params, out):
                            "esp_module_reference_sha256": KICAD_MODULE_SHA})
         if params["stage"] == WLED_STAGE:
             report.update({"contract": "vhos_rgbw_revg_wled_build_v1"})
+        if params["stage"] == GLAND_REVIEW_STAGE:
+            report.update({"contract": "vhos_revg_gland_service_review_v1", "inputs": GLAND_REVIEW_INPUTS})
         if params["stage"] == GLAND_STAGE:
             report.update({"contract": "vhos_rgbw_revg_gland_plate_v1", "inputs": GLAND_INPUTS})
         if rev_g_stage:

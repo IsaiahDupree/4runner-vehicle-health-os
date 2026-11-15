@@ -76,11 +76,16 @@ rule, or a rejected sample. The relay reads gateway telemetry and writes only to
 
 ## Verification
 
-The portable C++ test exercises the same threshold, freshness, rollover,
-range and override policy that WLED uses on-device.
+The portable C++ tests call the policy and relay functions used by the
+ESP32-S3 build. They cover threshold crossings, malformed values, denied
+and replayed requests, manual takeover, valid samples across rollover and
+expired samples that must stay expired after the counter wraps.
 
-    clang++ -std=c++17 -Wall -Wextra -Werror -pedantic firmware/console-led-revg/tests/policy_test.cpp -o /tmp/revg-policy
-    /tmp/revg-policy
+    for test_name in policy relay; do
+      clang++ -std=c++17 -Wall -Wextra -Werror -pedantic -fsanitize=undefined -fno-sanitize-recover=all \
+        "firmware/console-led-revg/tests/${test_name}_test.cpp" -o "/tmp/revg-${test_name}" &&
+        "/tmp/revg-${test_name}" || exit 1
+    done
 
 The Swift tests run a real J1979 decode through the relay's newest-per-ECU
 selection and check its Wi-Fi request. The app build and Orion ESP32-S3 build
