@@ -14,6 +14,7 @@ public enum GatewayMessageType: UInt8, Codable, Sendable {
   case captureLogRequest = 11
   case captureLogIndex = 12
   case captureLogChunk = 13
+  case acBattery = 14
 }
 
 public enum OTAControlOperation: String, Codable, Sendable {

@@ -63,6 +63,7 @@ struct StatusIndicator: Identifiable {
 
 struct SystemStatusView: View {
   @Environment(AppModel.self) private var model
+  @State private var battery = ACBatteryClient()
 
   private var gateway: GatewayBLEClient { model.gateway }
   private var protocolSummary: ProtocolEvidenceSummary {
@@ -119,6 +120,8 @@ struct SystemStatusView: View {
         }
       }
 
+      batterySection
+
       StatusIndicatorSection(title: "iPhone → ESP32 transport", indicators: transportIndicators)
       StatusIndicatorSection(title: "ESP32 gateway", indicators: gatewayIndicators)
       StatusIndicatorSection(title: "OBD-II and vehicle bus", indicators: obdIndicators)
@@ -148,6 +151,45 @@ struct SystemStatusView: View {
       }
     }
     .navigationTitle("System Status")
+    .onDisappear { battery.disconnect() }
+  }
+
+  private var batterySection: some View {
+    Section("A/C logger battery") {
+      Button(battery.active ? "Disconnect A/C battery" : "Connect A/C battery") {
+        if battery.active { battery.disconnect() } else { battery.connect() }
+      }
+      Text(battery.message).font(.footnote).foregroundStyle(.secondary)
+      if let reading = battery.reading {
+        if let percent = reading.stateOfCharge {
+          LabeledContent("Charge estimate", value: String(format: "%.0f%%", percent))
+          LabeledContent("Voltage", value: batteryNumber(reading.volts, "%.3f V"))
+          LabeledContent("Current", value: batteryNumber(reading.milliamps, "%+.1f mA"))
+          LabeledContent("Power", value: batteryNumber(reading.signedWatts, "%+.2f W"))
+          LabeledContent("Current direction", value: flow(reading.averageMilliamps))
+          LabeledContent("Pack temperature estimate", value: batteryNumber(reading.packCelsius, "%.1f °C"))
+          LabeledContent("Remaining capacity", value: batteryNumber(reading.remainingMilliampHours, "%.0f mAh"))
+          LabeledContent("Full capacity estimate", value: batteryNumber(reading.fullMilliampHours, "%.0f mAh"))
+          LabeledContent("Capacity health estimate", value: batteryNumber(reading.healthPercent, "%.0f%%"))
+          LabeledContent("Equivalent cycles", value: batteryNumber(reading.equivalentCycles, "%.2f"))
+          LabeledContent("Time remaining estimate", value: batteryNumber(reading.secondsToEmpty.map { $0 / 60 }, "%.0f min"))
+          LabeledContent("Time to full estimate", value: batteryNumber(reading.secondsToFull.map { $0 / 60 }, "%.0f min"))
+        } else {
+          Text("Battery gauge unavailable").foregroundStyle(.secondary)
+        }
+      }
+    }
+  }
+
+  private func batteryNumber(_ value: Double?, _ format: String) -> String {
+    value.map { String(format: format, $0) } ?? "Unavailable"
+  }
+
+  private func flow(_ current: Double?) -> String {
+    guard let current else { return "Unavailable" }
+    if current < -5 { return "Discharging" }
+    if current > 5 { return "Current into pack" }
+    return "Idle"
   }
 
   private var esp32Summary: StatusIndicator {

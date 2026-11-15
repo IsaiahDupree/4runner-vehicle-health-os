@@ -32,6 +32,7 @@
 		BBD00956AAD1B1F75DD26F8C /* PassiveCANPlaybackLab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33368A105329E710051228F4 /* PassiveCANPlaybackLab.swift */; };
 		C32FBE14A5EF3BEEAE086A68 /* EvidenceOutboxBackgroundTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FF7D608E6C3BC6B19524A3A /* EvidenceOutboxBackgroundTests.swift */; };
 		CADDA30B1BCE3C005880874D /* CaptureAndReferencePersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9123684AD71628F377A5EB55 /* CaptureAndReferencePersistenceTests.swift */; };
+		CF03790B21DF3C0097EE4A64 /* ACBatteryClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65B2AF36B64568FA8711E5D7 /* ACBatteryClient.swift */; };
 		E1E366592FD90918002B9210 /* catalog-development-p256-public.der.base64 in Resources */ = {isa = PBXBuildFile; fileRef = BC2698DA0773B98569959E80 /* catalog-development-p256-public.der.base64 */; };
 		E7B91FDF903EF10B9198988B /* MechanicWorkspaceModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75A929BDE9D7DF6BB16DE192 /* MechanicWorkspaceModel.swift */; };
 		E925A8B64D5731C2E092673A /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDE321369856AF54C6B7946E /* RootView.swift */; };
@@ -66,6 +67,7 @@
 		46A437465A0DC4C5D9113216 /* PortableFrameStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortableFrameStore.swift; sourceTree = "<group>"; };
 		5ADD085CC4E0D7223092E39A /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		5C2D4F2DC842D65B199ADAD0 /* MechanicWorkspaceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MechanicWorkspaceTests.swift; sourceTree = "<group>"; };
+		65B2AF36B64568FA8711E5D7 /* ACBatteryClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ACBatteryClient.swift; sourceTree = "<group>"; };
 		6B2F2160F66500ABD58B9A93 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		6FF7D608E6C3BC6B19524A3A /* EvidenceOutboxBackgroundTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceOutboxBackgroundTests.swift; sourceTree = "<group>"; };
 		75A929BDE9D7DF6BB16DE192 /* MechanicWorkspaceModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MechanicWorkspaceModel.swift; sourceTree = "<group>"; };
@@ -140,6 +142,7 @@
 		95010B41D132916B88921B84 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				65B2AF36B64568FA8711E5D7 /* ACBatteryClient.swift */,
 				5ADD085CC4E0D7223092E39A /* AppModel.swift */,
 				C904E627AC50298F57802AB7 /* Assets.xcassets */,
 				E210DB4EDB637662A1FE3436 /* CANLiveUnitsSection.swift */,
@@ -294,6 +297,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CF03790B21DF3C0097EE4A64 /* ACBatteryClient.swift in Sources */,
 				50658F6BD96177F3C72D98A4 /* AppModel.swift in Sources */,
 				B95B3BB8FE9E1967A721187A /* CANLiveUnitsSection.swift in Sources */,
 				90E4621A52313C74A4ABB3D1 /* CANUnitsDashboardView.swift in Sources */,
