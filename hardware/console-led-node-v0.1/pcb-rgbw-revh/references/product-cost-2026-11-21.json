@@ -1,0 +1,189 @@
+{
+  "date": "2026-11-21",
+  "quantity_basis": "one controller; optional one external light",
+  "pcb_component_positions": 67,
+  "pcb_unique_skus": 31,
+  "pcb_component_material_usd": "23.5841",
+  "priced_partial_material_usd_excluding_light": "39.1441",
+  "priced_partial_material_usd_with_one_dd7440": "119.0941",
+  "complete_material_total_known": false,
+  "finished_product_quote_verified": false,
+  "unknown_rows": [
+    "Bare PCB",
+    "Toyota tee wiring and round jacketed branch",
+    "Six branch junctions and insulation",
+    "1 A logic fuse cartridge",
+    "case_base",
+    "case_lid",
+    "gland_plate",
+    "Heat-set inserts",
+    "Lid screws",
+    "PCB screws",
+    "PCB insulating washers",
+    "Vehicle mounting screws",
+    "Vehicle mounting washers"
+  ],
+  "exclusions": [
+    "Bare PCB and print fabrication",
+    "Factory setup/SMT/THT/programming/harness and box assembly/QC",
+    "Extra parts/minimum purchases/loss allowance",
+    "First-article engineering/qualification",
+    "Freight/tax/duties"
+  ],
+  "pricing_sources": [
+    {
+      "part": "Rev H four-layer 133 x 65 mm, 1.6 mm FR-4",
+      "quantity": 1,
+      "unit_usd": "",
+      "url": "",
+      "status": "Unquoted"
+    },
+    {
+      "part": "Corsa 090IIU-6P-1 / Yazaki 7282-1060",
+      "quantity": 1,
+      "unit_usd": "3.14",
+      "url": "https://www.corsa-technic.com/item.php?item_id=1359",
+      "status": "Observed public retail material"
+    },
+    {
+      "part": "Corsa 090IIU-6S-1 / Yazaki 7283-1060",
+      "quantity": 1,
+      "unit_usd": "3.03",
+      "url": "https://www.corsa-technic.com/item.php?item_id=1360",
+      "status": "Observed public retail material"
+    },
+    {
+      "part": "Six paths straight through plus six-core branch; 7.2 mm nominal jacket OD",
+      "quantity": 1,
+      "unit_usd": "",
+      "url": "",
+      "status": "Unquoted"
+    },
+    {
+      "part": "Supplier-approved crimp/splice junction and insulating cover",
+      "quantity": 6,
+      "unit_usd": "",
+      "url": "",
+      "status": "Unquoted"
+    },
+    {
+      "part": "LAPP 53017210",
+      "quantity": 1,
+      "unit_usd": "0.83",
+      "url": "https://www.tme.com/us/en-us/details/st-iso-m16-r9005/glands/lapp/53017210/",
+      "status": "Observed public retail material"
+    },
+    {
+      "part": "LAPP 53010000",
+      "quantity": 1,
+      "unit_usd": "1.87",
+      "url": "https://www.tme.com/us/en-us/details/st-iso-m12-r9005/glands/lapp/53010000/",
+      "status": "Observed public retail material"
+    },
+    {
+      "part": "LAPP 53119110",
+      "quantity": 1,
+      "unit_usd": "0.17",
+      "url": "https://www.tme.com/us/en-us/details/skintop-n16b/nuts-for-glands/lapp/53119110/",
+      "status": "Observed public retail material"
+    },
+    {
+      "part": "LAPP 53119100",
+      "quantity": 1,
+      "unit_usd": "0.15",
+      "url": "https://www.tme.com/us/en-us/details/skintop-n12b/nuts-for-glands/lapp/53119100/",
+      "status": "Observed public retail material"
+    },
+    {
+      "part": "Littelfuse 0297003.WXNV candidate",
+      "quantity": 1,
+      "unit_usd": "0.42",
+      "url": "https://www.digikey.com/en/products/detail/littelfuse-inc/0297003-WXNV/146575",
+      "status": "Observed public retail material"
+    },
+    {
+      "part": "Eaton ATM-1 / BK/ATM-1 candidate; supplier confirmation pending",
+      "quantity": 1,
+      "unit_usd": "",
+      "url": "https://www.eaton.com/us/en-us/skuPage.ATM-1.html",
+      "status": "Unquoted"
+    },
+    {
+      "part": "Rev H case_base.stl",
+      "quantity": 1,
+      "unit_usd": "",
+      "url": "",
+      "status": "Unquoted"
+    },
+    {
+      "part": "Rev H case_lid.stl",
+      "quantity": 1,
+      "unit_usd": "",
+      "url": "",
+      "status": "Unquoted"
+    },
+    {
+      "part": "Rev H gland_plate.stl",
+      "quantity": 1,
+      "unit_usd": "",
+      "url": "",
+      "status": "Unquoted"
+    },
+    {
+      "part": "ruthex RX-M3x5.7",
+      "quantity": 8,
+      "unit_usd": "",
+      "url": "https://www.ruthex.de/en/products/ruthex-gewindeeinsatz-m3-100-stuck-rx-m3x5-7-messing-gewindebuchsen",
+      "status": "Unquoted"
+    },
+    {
+      "part": "M3 x 8 socket head",
+      "quantity": 4,
+      "unit_usd": "",
+      "url": "",
+      "status": "Unquoted"
+    },
+    {
+      "part": "M3 x 6 socket head",
+      "quantity": 4,
+      "unit_usd": "",
+      "url": "",
+      "status": "Unquoted"
+    },
+    {
+      "part": "7 mm OD x 3.2 mm ID x 0.5 mm",
+      "quantity": 4,
+      "unit_usd": "",
+      "url": "",
+      "status": "Unquoted"
+    },
+    {
+      "part": "M4, length selected after console measurement",
+      "quantity": 2,
+      "unit_usd": "",
+      "url": "",
+      "status": "Unquoted"
+    },
+    {
+      "part": "M4 compatible with measured attachment",
+      "quantity": 2,
+      "unit_usd": "",
+      "url": "",
+      "status": "Unquoted"
+    },
+    {
+      "part": "Diode Dynamics DD4084, 3 m candidate",
+      "quantity": 1,
+      "unit_usd": "5.95",
+      "url": "https://www.diodedynamics.com/extension-wire-m8-3m.html",
+      "status": "Observed public retail material"
+    },
+    {
+      "part": "Diode Dynamics DD7440 candidate",
+      "quantity": 1,
+      "unit_usd": "79.95",
+      "url": "https://www.diodedynamics.com/stage-series-rgbw-led-rock-light-one.html",
+      "status": "Observed public retail material"
+    }
+  ]
+}

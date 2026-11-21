@@ -2,6 +2,8 @@
 
 [Download the Rev H evaluation kit and Gerber ZIP](https://github.com/IsaiahDupree/4runner-vehicle-health-os/releases/tag/revh-terminals-2026-11-21).
 
+[Complete product BOM and cost status](PRODUCT-BOM.md) · [Itemized BOM CSV](PRODUCT-BOM.csv).
+
 Rev H replaces the internal wire-pad pigtails and Micro-Fit pairs with six
 factory-soldered two-position terminal blocks. There is one integrated board,
 one Toyota six-wire power/sense inlet, and one RGBW outlet. CAN information

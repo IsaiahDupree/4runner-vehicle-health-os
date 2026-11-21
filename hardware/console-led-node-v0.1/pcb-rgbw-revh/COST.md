@@ -1,5 +1,11 @@
 # Cost and procurement snapshot
 
+For the enclosure, harness, fuses, mounting hardware and optional lamp as well,
+see the [complete-product BOM](PRODUCT-BOM.md) and [itemized CSV](PRODUCT-BOM.csv).
+The priced portion is $39.14 without the optional lamp or $119.09 with one
+DD7440. These are incomplete material subtotals, not a finished-product price;
+the complete BOM explicitly marks the remaining unquoted materials and work.
+
 All 31 JLCPCB SKUs in the 67-position factory BOM were retrieved on November 21, 2026. All matched the BOM manufacturer part numbers and had enough observed stock for one board. See [catalog-live.json](jlcpcb/catalog-live.json) for exact capture times, primary URLs, prices, stock and page hashes. Stock and prices can change.
 
 The nominal component material subtotal at one-board quantities is **$23.58 USD**. It includes the ESP32, all other PCB components, two fuse holders and six terminal blocks. It excludes actual fuse cartridges and every charge below. This is component consumption at captured price tiers, not a checkout or finished-product quote.
