@@ -1,0 +1,23 @@
+{
+  "removed_wire_pad_footprints": [
+    "J1",
+    "J2"
+  ],
+  "added_factory_terminal_blocks": 6,
+  "only_rerouted_nets": [
+    "/DIM_RETURN",
+    "/GND",
+    "/LED_B_NEG",
+    "/LED_G_NEG",
+    "/LED_POS",
+    "/LED_R_NEG",
+    "/LED_W_NEG",
+    "/TAIL_12V",
+    "/TAIL_CLAMP",
+    "/VEH_ACC"
+  ],
+  "retained_circuit_parts": 75,
+  "protected_copper_segments": 491,
+  "protected_vias": 79,
+  "removed_interface_segments_and_vias": 94
+}

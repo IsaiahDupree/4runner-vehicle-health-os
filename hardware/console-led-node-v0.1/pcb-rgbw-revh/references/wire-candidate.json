@@ -1,0 +1,13 @@
+{
+  "manufacturer": "TE Connectivity / Raychem",
+  "family": "55A0111-20-*",
+  "example_variant": "55A0111-20-7",
+  "source_url": "https://www.te.com/en/product-216125-005.html",
+  "drawing_url": "https://www.te.com/commerce/DocumentDelivery/DDEController?Action=srchrtrv&DocFormat=pdf&DocLang=English&DocNm=55A0111&DocType=Customer+Drawing&PartCntxt=216125-005",
+  "awg": 20,
+  "insulation": "modified cross-linked ETFE",
+  "nominal_od_mm": 1.27,
+  "geometry_screen_od_mm": 1.6,
+  "single_conductor_not_finished_multicore_cable": true,
+  "status": "Candidate core reference. Physical cable OD, bend specification, outer jacket, supplier availability and upstream fuse coordination require first-article verification."
+}

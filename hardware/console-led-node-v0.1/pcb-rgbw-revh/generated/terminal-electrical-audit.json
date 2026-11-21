@@ -1,0 +1,142 @@
+{
+  "pads": [
+    {
+      "ref": "JT3",
+      "pin": "1",
+      "isolated": true,
+      "track_and_via_count": 0,
+      "pass": true
+    },
+    {
+      "ref": "JT3",
+      "pin": "2",
+      "isolated": true,
+      "track_and_via_count": 0,
+      "pass": true
+    },
+    {
+      "ref": "JT6",
+      "pin": "1",
+      "isolated": false,
+      "track_and_via_count": 5,
+      "pass": true
+    },
+    {
+      "ref": "JT6",
+      "pin": "2",
+      "isolated": true,
+      "track_and_via_count": 0,
+      "pass": true
+    },
+    {
+      "ref": "JT1",
+      "pin": "1",
+      "isolated": false,
+      "track_and_via_count": 193,
+      "pass": true
+    },
+    {
+      "ref": "JT1",
+      "pin": "2",
+      "isolated": false,
+      "track_and_via_count": 4,
+      "pass": true
+    },
+    {
+      "ref": "JT5",
+      "pin": "1",
+      "isolated": false,
+      "track_and_via_count": 10,
+      "pass": true
+    },
+    {
+      "ref": "JT5",
+      "pin": "2",
+      "isolated": false,
+      "track_and_via_count": 28,
+      "pass": true
+    },
+    {
+      "ref": "JT2",
+      "pin": "1",
+      "isolated": false,
+      "track_and_via_count": 2,
+      "pass": true
+    },
+    {
+      "ref": "JT2",
+      "pin": "2",
+      "isolated": false,
+      "track_and_via_count": 4,
+      "pass": true
+    },
+    {
+      "ref": "JT4",
+      "pin": "1",
+      "isolated": false,
+      "track_and_via_count": 3,
+      "pass": true
+    },
+    {
+      "ref": "JT4",
+      "pin": "2",
+      "isolated": false,
+      "track_and_via_count": 4,
+      "pass": true
+    }
+  ],
+  "minimum_track_widths_mm": {
+    "/DIM_RETURN": 0.2,
+    "/TAIL_12V": 0.2,
+    "/VEH_ACC": 1.5,
+    "/LED_W_NEG": 0.42,
+    "/LED_B_NEG": 0.42,
+    "/LED_G_NEG": 0.42,
+    "/LED_R_NEG": 0.42,
+    "/LED_POS": 0.46,
+    "/FB_3V3": 0.2,
+    "/VIN_PROT": 0.45,
+    "/CHIP_EN": 0.2,
+    "/SW": 0.45,
+    "/GND": 0.2,
+    "/TAIL_CLAMP": 0.2,
+    "/UART_TX": 0.2,
+    "/SLEW": 0.2,
+    "/ILIM": 0.2,
+    "/OVP": 0.2,
+    "/TAIL_SERIES": 0.2,
+    "/PWM_R": 0.2,
+    "/PWM_G": 0.2,
+    "/PWM_W": 0.2,
+    "/PWM_B": 0.2,
+    "/DIM_ADC": 0.2,
+    "/TAIL_ADC": 0.2,
+    "/ENABLE_REQ": 0.2,
+    "/EFUSE_RTN": 0.2,
+    "/UVLO": 0.2,
+    "/DIM_SW": 0.2,
+    "/TAIL_SW": 0.2,
+    "/UART_RX": 0.2,
+    "/ACC_FUSED": 0.46,
+    "/DIM_SERIES": 0.2,
+    "/BOOTCAP": 0.2,
+    "/DOWNLOAD_STRAP": 0.2,
+    "/DIM_CLAMP": 0.2,
+    "/BOOT_N": 0.2,
+    "/LED_EN_N": 0.2,
+    "/ESP_3V3": 0.45
+  },
+  "required_minimums_mm": {
+    "/ACC_FUSED": 0.46,
+    "/LED_POS": 0.46,
+    "/ESP_3V3": 0.45,
+    "/VIN_PROT": 0.45,
+    "/SW": 0.45,
+    "/LED_W_NEG": 0.42,
+    "/LED_G_NEG": 0.42,
+    "/LED_B_NEG": 0.42,
+    "/LED_R_NEG": 0.42,
+    "/VEH_ACC": 1.5
+  },
+  "passed": true
+}

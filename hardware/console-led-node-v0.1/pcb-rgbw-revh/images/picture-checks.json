@@ -1,0 +1,39 @@
+{
+  "views": [
+    {
+      "image": "01-exterior",
+      "bounds_normalized": [
+        0.10038167238235474,
+        0.1273442655801773,
+        0.9478393197059631,
+        0.9015395641326904
+      ],
+      "pass": true
+    },
+    {
+      "image": "02-wired-inside",
+      "bounds_normalized": [
+        0.1896120309829712,
+        0.11556169390678406,
+        0.8535735011100769,
+        0.9630193114280701
+      ],
+      "pass": true
+    },
+    {
+      "image": "03-board",
+      "bounds_normalized": [
+        0.0762711614370346,
+        0.17974402010440826,
+        0.9237288236618042,
+        0.8165861964225769
+      ],
+      "pass": true
+    }
+  ],
+  "gpu": [
+    "NVIDIA GeForce RTX 4070 SUPER"
+  ],
+  "cad_source": "source-pinned reopened FreeCAD assembly",
+  "design_visualization": true
+}

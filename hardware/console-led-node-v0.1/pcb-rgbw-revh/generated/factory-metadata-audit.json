@@ -1,0 +1,18 @@
+{
+  "changed_fields": [
+    {
+      "ref": "F1",
+      "before": "3568",
+      "after": "3568-10"
+    },
+    {
+      "ref": "F2",
+      "before": "3568",
+      "after": "3568-10"
+    }
+  ],
+  "all_tracks_vias_pads_and_footprint_poses_unchanged": true,
+  "step_reused_exact_sha256": "ef743b51cd17938300fbee78a7f0daf43cffe9a19dd70483915febb8b26be215",
+  "part_identity": "3568-10 red MINI holder, JLCPCB C3205378",
+  "manufacturing_released": false
+}

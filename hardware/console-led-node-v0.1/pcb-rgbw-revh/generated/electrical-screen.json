@@ -1,0 +1,87 @@
+{
+  "contract": "vhos_rgbw_revg_integrated_single_board_v1",
+  "method": "Static tolerance bounds and first-order load, ripple and thermal equations",
+  "checks": {
+    "efuse_cutoff": true,
+    "efuse_restart": true,
+    "efuse_current_headroom": true,
+    "module_dc_rail": true,
+    "module_step_charge_budget": true,
+    "led_driver_disable_logic_high": true,
+    "buck_and_inductor_peaks": true,
+    "driver_thermal_and_pod_headroom": true,
+    "transient_voltage_headroom_at_tvs_rated_pulse": true,
+    "adc_limits": true
+  },
+  "corner_count": 220,
+  "efuse_uvlo_rising_v": [
+    6.513593241096901,
+    7.230462603380784
+  ],
+  "efuse_uvlo_falling_v": [
+    5.986588568199704,
+    6.6446923949415355
+  ],
+  "efuse_ovp_rising_v": [
+    14.94183498554361,
+    15.855977534054396
+  ],
+  "efuse_ovp_falling_v": [
+    13.855980850098133,
+    14.566073423519342
+  ],
+  "efuse_current_limit_a": [
+    1.367677228174151,
+    1.5623643780921794
+  ],
+  "three_volt_nominal_v": 3.353191489361702,
+  "three_volt_static_v": [
+    3.2212197545577235,
+    3.4904737447917777
+  ],
+  "capacitor_step_floor_v": 3.039401572739542,
+  "max_reset_release_v": 3.1887239999999997,
+  "driver_disable_logic_high_min_v": 2.2047197545577237,
+  "buck_inductor_peak_a": 0.9533618175875698,
+  "pod_screen": {
+    "channel_a": 0.5,
+    "combined_a": 1.0,
+    "total_with_radio_a": 1.3102643328703802,
+    "min_j1_input_v": 10.5,
+    "wire_and_copper_drop_allowance_v": 0.3,
+    "at_pod_v": 9.256920700138885,
+    "driver_switch_loss_w": 0.55
+  },
+  "illumination_sense": {
+    "TAIL": {
+      "adc_v_at_14_4_v": [
+        0.9582865130759681,
+        1.0143048400631076
+      ],
+      "adc_min_v_at_switch_minus_0_5_v": -0.2790770229121949,
+      "shunt_current_at_100v_ma": [
+        0.7905451008343003,
+        0.8047508199201688
+      ]
+    },
+    "DIM": {
+      "adc_v_at_14_4_v": [
+        0.9582865130759681,
+        1.0143048400631076
+      ],
+      "adc_min_v_at_switch_minus_0_5_v": -0.2790770229121949,
+      "shunt_current_at_100v_ma": [
+        0.7905451008343003,
+        0.8047508199201688
+      ]
+    }
+  },
+  "assumptions_to_bench_verify": [
+    "RTN drop and eFuse timing",
+    "buck loop and load step",
+    "driver thermal resistance and switch resistance at low VM",
+    "hot cable shorts and TVS pulse energy",
+    "RF with cover and harness"
+  ],
+  "vehicle_or_bench_tested": false
+}

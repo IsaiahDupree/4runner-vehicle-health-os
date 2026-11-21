@@ -1,0 +1,14 @@
+{
+  "source_url": "https://jlcpcb.com/partdetail/C474952",
+  "retrieved_utc": "2026-11-21T06:03:05.941609+00:00",
+  "part": "C474952",
+  "quantity_per_board": 6,
+  "stock_observed": 52687,
+  "unit_usd_1_49": 0.1926,
+  "per_board_terminal_material_usd": 1.1556,
+  "new_unique_extended_skus": 1,
+  "terminal_through_hole_pins": 12,
+  "factory_populated_positions": 67,
+  "finished_product_total": "unquoted; factory PCBA, wave/manual insertion, programming, harnesses, case, assembly, QC, freight and tax required",
+  "existing_components_snapshot": "Rev G retained; not refreshed for this terminal-only change"
+}

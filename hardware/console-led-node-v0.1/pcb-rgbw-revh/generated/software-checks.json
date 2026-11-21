@@ -1,0 +1,9 @@
+{
+  "pytest": "232 passed",
+  "pytest_log": "pytest-final.txt",
+  "contracts": {
+    "schemas": 52,
+    "valid": true
+  },
+  "scope": "Local real integration/regression suite plus four native-hardware artifact checks. No physical device test."
+}

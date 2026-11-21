@@ -1,0 +1,3961 @@
+{
+  "contract": "vhos_revh_screw_terminal_gland_interface_H1",
+  "parts": [
+    {
+      "step": "case_base.step",
+      "stl": "case_base.stl",
+      "closed_mesh": true,
+      "facets": 7996,
+      "solid_volume_mm3": 98118.68,
+      "bounds_mm": [
+        194.0,
+        76.0,
+        36.0
+      ]
+    },
+    {
+      "step": "case_lid.step",
+      "stl": "case_lid.stl",
+      "closed_mesh": true,
+      "facets": 4588,
+      "solid_volume_mm3": 44308.56,
+      "bounds_mm": [
+        180.0,
+        76.0,
+        4.9
+      ]
+    },
+    {
+      "step": "gland_plate.step",
+      "stl": "gland_plate.stl",
+      "closed_mesh": true,
+      "facets": 652,
+      "solid_volume_mm3": 7148.51,
+      "bounds_mm": [
+        30.55,
+        57.9,
+        5.0
+      ]
+    }
+  ],
+  "board_dimensions_mm": [
+    133,
+    65
+  ],
+  "populated_board_count": 1,
+  "factory_terminal_count": 6,
+  "wires": [
+    {
+      "cable": "J1",
+      "terminal": "JT1_2",
+      "label": "ACC",
+      "vehicle_cavity": 6,
+      "net": "VEH_ACC",
+      "jacket_end_x_mm": 13.1,
+      "entry_xyz_mm": [
+        26.1,
+        40.81999999999999,
+        20.685000000000002
+      ],
+      "pre_bend_straight_mm": 0,
+      "post_bend_straight_mm": 3.0000000000000018,
+      "modeled_wire_length_after_jacket_mm": 19.409,
+      "minimum_centerline_bend_radius_mm": 5.0235,
+      "insulation_od_mm": 1.6,
+      "strip_length_mm": "6-7",
+      "cut_length_status": "routing length only; add termination and manufacturing allowance"
+    },
+    {
+      "cable": "J1",
+      "terminal": "JT1_1",
+      "label": "GND",
+      "vehicle_cavity": 5,
+      "net": "GND",
+      "jacket_end_x_mm": 13.1,
+      "entry_xyz_mm": [
+        26.1,
+        45.89999999999999,
+        20.685000000000002
+      ],
+      "pre_bend_straight_mm": 3.0000000000000018,
+      "post_bend_straight_mm": 0,
+      "modeled_wire_length_after_jacket_mm": 16.812,
+      "minimum_centerline_bend_radius_mm": 5.6904,
+      "insulation_od_mm": 1.6,
+      "strip_length_mm": "6-7",
+      "cut_length_status": "routing length only; add termination and manufacturing allowance"
+    },
+    {
+      "cable": "J1",
+      "terminal": "JT2_2",
+      "label": "DIM",
+      "vehicle_cavity": 2,
+      "net": "DIM_RETURN",
+      "jacket_end_x_mm": 13.1,
+      "entry_xyz_mm": [
+        26.1,
+        51.579999999999984,
+        20.685000000000002
+      ],
+      "pre_bend_straight_mm": 0,
+      "post_bend_straight_mm": 3.0000000000000018,
+      "modeled_wire_length_after_jacket_mm": 14.654,
+      "minimum_centerline_bend_radius_mm": 27.9891,
+      "insulation_od_mm": 1.6,
+      "strip_length_mm": "6-7",
+      "cut_length_status": "routing length only; add termination and manufacturing allowance"
+    },
+    {
+      "cable": "J1",
+      "terminal": "JT2_1",
+      "label": "TAIL",
+      "vehicle_cavity": 1,
+      "net": "TAIL_12V",
+      "jacket_end_x_mm": 13.1,
+      "entry_xyz_mm": [
+        26.1,
+        56.65999999999998,
+        20.685000000000002
+      ],
+      "pre_bend_straight_mm": 3.0000000000000018,
+      "post_bend_straight_mm": 0,
+      "modeled_wire_length_after_jacket_mm": 15.447,
+      "minimum_centerline_bend_radius_mm": 7.83,
+      "insulation_od_mm": 1.6,
+      "strip_length_mm": "6-7",
+      "cut_length_status": "routing length only; add termination and manufacturing allowance"
+    },
+    {
+      "cable": "J1",
+      "terminal": "JT3_2",
+      "label": "RSV4",
+      "vehicle_cavity": 4,
+      "net": null,
+      "jacket_end_x_mm": 13.1,
+      "entry_xyz_mm": [
+        26.1,
+        62.33999999999999,
+        20.685000000000002
+      ],
+      "pre_bend_straight_mm": 3.0000000000000018,
+      "post_bend_straight_mm": 0,
+      "modeled_wire_length_after_jacket_mm": 20.094,
+      "minimum_centerline_bend_radius_mm": 5.0012,
+      "insulation_od_mm": 1.6,
+      "strip_length_mm": "6-7",
+      "cut_length_status": "routing length only; add termination and manufacturing allowance"
+    },
+    {
+      "cable": "J1",
+      "terminal": "JT3_1",
+      "label": "RSV3",
+      "vehicle_cavity": 3,
+      "net": null,
+      "jacket_end_x_mm": 13.1,
+      "entry_xyz_mm": [
+        26.1,
+        67.41999999999999,
+        20.685000000000002
+      ],
+      "pre_bend_straight_mm": 0,
+      "post_bend_straight_mm": 3.0000000000000018,
+      "modeled_wire_length_after_jacket_mm": 23.593,
+      "minimum_centerline_bend_radius_mm": 5.0,
+      "insulation_od_mm": 1.6,
+      "strip_length_mm": "6-7",
+      "cut_length_status": "routing length only; add termination and manufacturing allowance"
+    },
+    {
+      "cable": "J2",
+      "terminal": "JT4_2",
+      "label": "G-",
+      "vehicle_cavity": null,
+      "net": "LED_G_NEG",
+      "jacket_end_x_mm": 16.1,
+      "entry_xyz_mm": [
+        29.1,
+        8.539999999999992,
+        20.685000000000002
+      ],
+      "pre_bend_straight_mm": 0,
+      "post_bend_straight_mm": 3.0,
+      "modeled_wire_length_after_jacket_mm": 25.084,
+      "minimum_centerline_bend_radius_mm": 5.0,
+      "insulation_od_mm": 1.6,
+      "strip_length_mm": "6-7",
+      "cut_length_status": "routing length only; add termination and manufacturing allowance"
+    },
+    {
+      "cable": "J2",
+      "terminal": "JT4_1",
+      "label": "R-",
+      "vehicle_cavity": null,
+      "net": "LED_R_NEG",
+      "jacket_end_x_mm": 16.1,
+      "entry_xyz_mm": [
+        29.1,
+        13.619999999999976,
+        20.685000000000002
+      ],
+      "pre_bend_straight_mm": 3.0,
+      "post_bend_straight_mm": 0,
+      "modeled_wire_length_after_jacket_mm": 22.133,
+      "minimum_centerline_bend_radius_mm": 5.0,
+      "insulation_od_mm": 1.6,
+      "strip_length_mm": "6-7",
+      "cut_length_status": "routing length only; add termination and manufacturing allowance"
+    },
+    {
+      "cable": "J2",
+      "terminal": "JT5_2",
+      "label": "+LED",
+      "vehicle_cavity": null,
+      "net": "LED_POS",
+      "jacket_end_x_mm": 16.1,
+      "entry_xyz_mm": [
+        29.1,
+        19.299999999999983,
+        20.685000000000002
+      ],
+      "pre_bend_straight_mm": 3.0,
+      "post_bend_straight_mm": 0,
+      "modeled_wire_length_after_jacket_mm": 15.949,
+      "minimum_centerline_bend_radius_mm": 6.5954,
+      "insulation_od_mm": 1.6,
+      "strip_length_mm": "6-7",
+      "cut_length_status": "routing length only; add termination and manufacturing allowance"
+    },
+    {
+      "cable": "J2",
+      "terminal": "JT5_1",
+      "label": "B-",
+      "vehicle_cavity": null,
+      "net": "LED_B_NEG",
+      "jacket_end_x_mm": 16.1,
+      "entry_xyz_mm": [
+        29.1,
+        24.379999999999995,
+        20.685000000000002
+      ],
+      "pre_bend_straight_mm": 0,
+      "post_bend_straight_mm": 3.0,
+      "modeled_wire_length_after_jacket_mm": 15.222,
+      "minimum_centerline_bend_radius_mm": 8.8784,
+      "insulation_od_mm": 1.6,
+      "strip_length_mm": "6-7",
+      "cut_length_status": "routing length only; add termination and manufacturing allowance"
+    },
+    {
+      "cable": "J2",
+      "terminal": "JT6_1",
+      "label": "W-",
+      "vehicle_cavity": null,
+      "net": "LED_W_NEG",
+      "jacket_end_x_mm": 16.1,
+      "entry_xyz_mm": [
+        29.1,
+        35.139999999999986,
+        20.685000000000002
+      ],
+      "pre_bend_straight_mm": 0,
+      "post_bend_straight_mm": 3.0,
+      "modeled_wire_length_after_jacket_mm": 19.362,
+      "minimum_centerline_bend_radius_mm": 5.0263,
+      "insulation_od_mm": 1.6,
+      "strip_length_mm": "6-7",
+      "cut_length_status": "routing length only; add termination and manufacturing allowance"
+    }
+  ],
+  "checks": [
+    {
+      "check": "Exported populated board versus printed base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "Exported populated board versus closed lid",
+      "overlap_mm3": 0,
+      "clearance_mm": 5.515,
+      "required_clearance_mm": 0.55,
+      "pass": true
+    },
+    {
+      "check": "Plate seated in revised base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 0.2,
+      "required_clearance_mm": 0.18,
+      "pass": true
+    },
+    {
+      "check": "Lid seated on revised base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "F1 puller versus revised PCB",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "F1 puller versus revised base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "F2 puller versus revised PCB",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "F2 puller versus revised base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "J1 gland hardware versus PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": 9.4,
+      "required_clearance_mm": 1,
+      "pass": true
+    },
+    {
+      "check": "J2 gland hardware versus PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": 6.5513,
+      "required_clearance_mm": 1,
+      "pass": true
+    },
+    {
+      "check": "JT1_2 wire versus base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT1_2 wire versus lid",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT1_2 wire versus PCB",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT1_2 wire versus plate",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT1_2 wire versus F1 puller",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT1_2 wire versus F2 puller",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT1_1 wire versus base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT1_1 wire versus lid",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT1_1 wire versus PCB",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT1_1 wire versus plate",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT1_1 wire versus F1 puller",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT1_1 wire versus F2 puller",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT2_2 wire versus base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT2_2 wire versus lid",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT2_2 wire versus PCB",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT2_2 wire versus plate",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT2_2 wire versus F1 puller",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT2_2 wire versus F2 puller",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT2_1 wire versus base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT2_1 wire versus lid",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT2_1 wire versus PCB",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT2_1 wire versus plate",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT2_1 wire versus F1 puller",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT2_1 wire versus F2 puller",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT3_2 wire versus base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT3_2 wire versus lid",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT3_2 wire versus PCB",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT3_2 wire versus plate",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT3_2 wire versus F1 puller",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT3_2 wire versus F2 puller",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT3_1 wire versus base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT3_1 wire versus lid",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT3_1 wire versus PCB",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT3_1 wire versus plate",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT3_1 wire versus F1 puller",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT3_1 wire versus F2 puller",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT4_2 wire versus base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT4_2 wire versus lid",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT4_2 wire versus PCB",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT4_2 wire versus plate",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT4_2 wire versus F1 puller",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT4_2 wire versus F2 puller",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT4_1 wire versus base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT4_1 wire versus lid",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT4_1 wire versus PCB",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT4_1 wire versus plate",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT4_1 wire versus F1 puller",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT4_1 wire versus F2 puller",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT5_2 wire versus base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT5_2 wire versus lid",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT5_2 wire versus PCB",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT5_2 wire versus plate",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT5_2 wire versus F1 puller",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT5_2 wire versus F2 puller",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT5_1 wire versus base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT5_1 wire versus lid",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT5_1 wire versus PCB",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT5_1 wire versus plate",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT5_1 wire versus F1 puller",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT5_1 wire versus F2 puller",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT6_1 wire versus base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT6_1 wire versus lid",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT6_1 wire versus PCB",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT6_1 wire versus plate",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT6_1 wire versus F1 puller",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT6_1 wire versus F2 puller",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT1_2 versus JT1_1 wire",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 0.6,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT1_2 versus JT2_2 wire",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 0.6,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT1_2 versus JT2_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 2.2105,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT1_2 versus JT3_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 2.2105,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT1_2 versus JT3_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 2.8,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT1_2 versus JT4_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 16.9897,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT1_2 versus JT4_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 14.8371,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT1_2 versus JT5_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 15.6165,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT1_2 versus JT5_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 13.3029,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT1_2 versus JT6_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 4.08,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT1_1 versus JT2_2 wire",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 1.5025,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT1_1 versus JT2_1 wire",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 2.8,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT1_1 versus JT3_2 wire",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 0.6,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT1_1 versus JT3_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 2.2105,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT1_1 versus JT4_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 22.5885,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT1_1 versus JT4_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 20.2562,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT1_1 versus JT5_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 21.1049,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT1_1 versus JT5_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 18.8721,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT1_1 versus JT6_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 9.16,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT2_2 versus JT2_1 wire",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 0.4414,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT2_2 versus JT3_2 wire",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 2.4002,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT2_2 versus JT3_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 2.2105,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT2_2 versus JT4_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 26.2857,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT2_2 versus JT4_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 24.644,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT2_2 versus JT5_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 25.4899,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT2_2 versus JT5_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 22.6915,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT2_2 versus JT6_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 14.84,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT2_1 versus JT3_2 wire",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 1.0606,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT2_1 versus JT3_1 wire",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 0.6,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT2_1 versus JT4_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 28.4107,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT2_1 versus JT4_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 26.7565,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT2_1 versus JT5_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 27.6191,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT2_1 versus JT5_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 24.8109,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT2_1 versus JT6_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 17.9438,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT3_2 versus JT3_1 wire",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 0.6,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT3_2 versus JT4_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 28.336,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT3_2 versus JT4_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 26.5,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT3_2 versus JT5_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 27.8189,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT3_2 versus JT5_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 24.726,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT3_2 versus JT6_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 18.3223,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT3_1 versus JT4_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 29.5402,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT3_1 versus JT4_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 27.7977,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT3_1 versus JT5_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 28.8866,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT3_1 versus JT5_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 25.9415,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT3_1 versus JT6_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 20.2685,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT4_2 versus JT4_1 wire",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 0.6336,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT4_2 versus JT5_2 wire",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 0.6336,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT4_2 versus JT5_1 wire",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 2.014,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT4_2 versus JT6_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 2.014,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT4_1 versus JT5_2 wire",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 0.5656,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT4_1 versus JT5_1 wire",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 0.549,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT4_1 versus JT6_1 wire",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 2.014,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT5_2 versus JT5_1 wire",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 0.3317,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT5_2 versus JT6_1 wire",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 0.6336,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT5_1 versus JT6_1 wire",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 0.2767,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "JT1 vertical driver versus base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT1 vertical driver versus PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT1 vertical driver versus F1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT1 vertical driver versus F2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT1 vertical driver versus JT1_2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT1 vertical driver versus JT1_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT1 vertical driver versus JT2_2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT1 vertical driver versus JT2_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT1 vertical driver versus JT3_2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT1 vertical driver versus JT3_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT1 vertical driver versus JT4_2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT1 vertical driver versus JT4_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT1 vertical driver versus JT5_2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT1 vertical driver versus JT5_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT1 vertical driver versus JT6_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT2 vertical driver versus base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT2 vertical driver versus PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT2 vertical driver versus F1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT2 vertical driver versus F2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT2 vertical driver versus JT1_2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT2 vertical driver versus JT1_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT2 vertical driver versus JT2_2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT2 vertical driver versus JT2_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT2 vertical driver versus JT3_2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT2 vertical driver versus JT3_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT2 vertical driver versus JT4_2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT2 vertical driver versus JT4_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT2 vertical driver versus JT5_2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT2 vertical driver versus JT5_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT2 vertical driver versus JT6_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT3 vertical driver versus base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT3 vertical driver versus PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT3 vertical driver versus F1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT3 vertical driver versus F2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT3 vertical driver versus JT1_2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT3 vertical driver versus JT1_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT3 vertical driver versus JT2_2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT3 vertical driver versus JT2_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT3 vertical driver versus JT3_2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT3 vertical driver versus JT3_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT3 vertical driver versus JT4_2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT3 vertical driver versus JT4_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT3 vertical driver versus JT5_2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT3 vertical driver versus JT5_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT3 vertical driver versus JT6_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT4 vertical driver versus base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT4 vertical driver versus PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT4 vertical driver versus F1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT4 vertical driver versus F2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT4 vertical driver versus JT1_2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT4 vertical driver versus JT1_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT4 vertical driver versus JT2_2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT4 vertical driver versus JT2_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT4 vertical driver versus JT3_2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT4 vertical driver versus JT3_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT4 vertical driver versus JT4_2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT4 vertical driver versus JT4_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT4 vertical driver versus JT5_2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT4 vertical driver versus JT5_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT4 vertical driver versus JT6_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT5 vertical driver versus base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT5 vertical driver versus PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT5 vertical driver versus F1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT5 vertical driver versus F2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT5 vertical driver versus JT1_2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT5 vertical driver versus JT1_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT5 vertical driver versus JT2_2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT5 vertical driver versus JT2_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT5 vertical driver versus JT3_2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT5 vertical driver versus JT3_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT5 vertical driver versus JT4_2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT5 vertical driver versus JT4_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT5 vertical driver versus JT5_2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT5 vertical driver versus JT5_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT5 vertical driver versus JT6_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT6 vertical driver versus base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT6 vertical driver versus PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT6 vertical driver versus F1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT6 vertical driver versus F2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT6 vertical driver versus JT1_2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT6 vertical driver versus JT1_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT6 vertical driver versus JT2_2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT6 vertical driver versus JT2_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT6 vertical driver versus JT3_2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT6 vertical driver versus JT3_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT6 vertical driver versus JT4_2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT6 vertical driver versus JT4_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT6 vertical driver versus JT5_2",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT6 vertical driver versus JT5_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "JT6 vertical driver versus JT6_1",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "lid_1 insert and screw tools",
+      "pass": true
+    },
+    {
+      "check": "lid_2 insert and screw tools",
+      "pass": true
+    },
+    {
+      "check": "lid_3 insert and screw tools",
+      "pass": true
+    },
+    {
+      "check": "lid_4 insert and screw tools",
+      "pass": true
+    },
+    {
+      "check": "shield_1 insert and screw tools",
+      "pass": true
+    },
+    {
+      "check": "shield_2 insert and screw tools",
+      "pass": true
+    },
+    {
+      "check": "shield_3 insert and screw tools",
+      "pass": true
+    },
+    {
+      "check": "shield_4 insert and screw tools",
+      "pass": true
+    },
+    {
+      "check": "lid_1 insert versus PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "lid_1 screw versus PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "lid_1 screw versus base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "lid_1 screw versus lid",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "lid_2 insert versus PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "lid_2 screw versus PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "lid_2 screw versus base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "lid_2 screw versus lid",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "lid_3 insert versus PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "lid_3 screw versus PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "lid_3 screw versus base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "lid_3 screw versus lid",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "lid_4 insert versus PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "lid_4 screw versus PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "lid_4 screw versus base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "lid_4 screw versus lid",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "shield_1 insert versus PCB",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "shield_1 screw versus PCB",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "shield_1 screw versus base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "shield_1 screw versus lid",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "shield_1 washer versus populated PCB",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "shield_2 insert versus PCB",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "shield_2 screw versus PCB",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "shield_2 screw versus base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "shield_2 screw versus lid",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "shield_2 washer versus populated PCB",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "shield_3 insert versus PCB",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "shield_3 screw versus PCB",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "shield_3 screw versus base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "shield_3 screw versus lid",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "shield_3 washer versus populated PCB",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "shield_4 insert versus PCB",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "shield_4 screw versus PCB",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "shield_4 screw versus base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "shield_4 screw versus lid",
+      "overlap_mm3": 0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "shield_4 washer versus populated PCB",
+      "overlap_mm3": 0.0,
+      "clearance_mm": null,
+      "required_clearance_mm": 0,
+      "pass": true
+    },
+    {
+      "check": "lid_1 insert versus JT1_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 36.2015,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_1 insert versus JT1_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 41.6809,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_1 insert versus JT2_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 43.3607,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_1 insert versus JT2_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 45.4798,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_1 insert versus JT3_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 44.7831,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_1 insert versus JT3_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 46.1643,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_1 insert versus JT4_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 15.8745,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_1 insert versus JT4_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 19.2574,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_1 insert versus JT5_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 19.7534,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_1 insert versus JT5_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 21.2135,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_1 insert versus JT6_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 21.4961,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_1 screw versus JT1_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 36.8552,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_1 screw versus JT1_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 42.3051,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_1 screw versus JT2_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 43.9948,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_1 screw versus JT2_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 46.1064,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_1 screw versus JT3_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 45.3531,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_1 screw versus JT3_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 46.7603,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_1 screw versus JT4_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 16.7016,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_1 screw versus JT4_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 19.9551,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_1 screw versus JT5_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 20.5428,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_1 screw versus JT5_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 21.9296,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_1 screw versus JT6_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 22.2648,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_2 insert versus JT1_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 18.9695,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_2 insert versus JT1_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 17.2169,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_2 insert versus JT2_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 18.9131,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_2 insert versus JT2_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 17.0925,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_2 insert versus JT3_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 14.6552,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_2 insert versus JT3_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 11.1341,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_2 insert versus JT4_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 44.5493,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_2 insert versus JT4_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 42.5672,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_2 insert versus JT5_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 44.2943,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_2 insert versus JT5_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 41.0207,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_2 insert versus JT6_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 35.8527,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_2 screw versus JT1_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 19.7281,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_2 screw versus JT1_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 17.9387,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_2 screw versus JT2_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 19.7239,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_2 screw versus JT2_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 17.9293,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_2 screw versus JT3_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 15.4906,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_2 screw versus JT3_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 12.0622,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_2 screw versus JT4_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 45.1408,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_2 screw versus JT4_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 43.1429,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_2 screw versus JT5_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 44.9195,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_2 screw versus JT5_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 41.623,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_2 screw versus JT6_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 36.5133,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_3 insert versus JT1_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 147.8762,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_3 insert versus JT1_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 149.0876,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_3 insert versus JT2_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 150.6306,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_3 insert versus JT2_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 152.1746,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_3 insert versus JT3_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 154.0794,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_3 insert versus JT3_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 155.9385,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_3 insert versus JT4_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 141.0331,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_3 insert versus JT4_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 141.1834,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_3 insert versus JT5_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 141.5578,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_3 insert versus JT5_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 142.0797,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_3 insert versus JT6_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 143.7671,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_3 screw versus JT1_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 147.9905,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_3 screw versus JT1_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 149.2036,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_3 screw versus JT2_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 150.7472,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_3 screw versus JT2_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 152.2906,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_3 screw versus JT3_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 154.1928,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_3 screw versus JT3_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 156.0466,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_3 screw versus JT4_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 141.1798,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_3 screw versus JT4_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 141.3347,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_3 screw versus JT5_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 141.7122,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_3 screw versus JT5_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 142.2329,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_3 screw versus JT6_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 143.9035,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_4 insert versus JT1_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 146.7026,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_4 insert versus JT1_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 145.8417,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_4 insert versus JT2_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 145.0736,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_4 insert versus JT2_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 144.5581,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_4 insert versus JT3_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 144.1839,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_4 insert versus JT3_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 144.028,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_4 insert versus JT4_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 153.2037,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_4 insert versus JT4_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 151.3029,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_4 insert versus JT5_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 149.3523,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_4 insert versus JT5_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 147.7709,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_4 insert versus JT6_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 144.9517,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_4 screw versus JT1_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 146.8333,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_4 screw versus JT1_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 145.9651,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_4 screw versus JT2_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 145.1929,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_4 screw versus JT2_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 144.6813,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_4 screw versus JT3_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 144.3099,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_4 screw versus JT3_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 144.1568,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_4 screw versus JT4_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 153.3124,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_4 screw versus JT4_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 151.4244,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_4 screw versus JT5_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 149.4862,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_4 screw versus JT5_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 147.9127,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "lid_4 screw versus JT6_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 145.1003,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 insert versus JT1_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 29.9251,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 insert versus JT1_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 34.1407,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 insert versus JT2_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 39.0968,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 insert versus JT2_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 43.6782,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 insert versus JT3_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 45.8105,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 insert versus JT3_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 48.0512,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 insert versus JT4_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 14.6483,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 insert versus JT4_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 13.8552,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 insert versus JT5_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 14.6631,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 insert versus JT5_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 16.6419,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 insert versus JT6_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 23.7993,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 screw versus JT1_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 28.6095,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 screw versus JT1_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 32.9368,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 screw versus JT2_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 37.9816,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 screw versus JT2_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 42.6209,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 screw versus JT3_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 45.5933,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 screw versus JT3_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 48.0999,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 screw versus JT4_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 12.5159,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 screw versus JT4_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 11.6908,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 screw versus JT5_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 12.4668,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 screw versus JT5_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 14.6714,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 screw versus JT6_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 22.258,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 washer versus JT1_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 28.2846,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 washer versus JT1_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 32.5572,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 washer versus JT2_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 37.5534,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 washer versus JT2_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 42.1581,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 washer versus JT3_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 45.3248,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 washer versus JT3_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 47.686,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 washer versus JT4_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 12.649,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 washer versus JT4_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 11.8166,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 washer versus JT5_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 12.6013,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 washer versus JT5_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 14.7149,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_1 washer versus JT6_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 22.0515,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 insert versus JT1_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 24.8336,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 insert versus JT1_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 21.3142,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 insert versus JT2_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 18.1405,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 insert versus JT2_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 16.2759,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 insert versus JT3_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 15.613,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 insert versus JT3_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 16.4262,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 insert versus JT4_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 44.7077,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 insert versus JT4_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 41.9472,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 insert versus JT5_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 42.0354,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 insert versus JT5_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 37.4876,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 insert versus JT6_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 27.9126,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 screw versus JT1_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 23.3515,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 screw versus JT1_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 19.6508,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 screw versus JT2_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 16.2794,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 screw versus JT2_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 14.3214,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 screw versus JT3_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 13.6728,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 screw versus JT3_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 14.4359,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 screw versus JT4_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 43.4559,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 screw versus JT4_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 40.4871,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 screw versus JT5_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 40.9525,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 screw versus JT5_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 36.3286,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 screw versus JT6_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 26.4787,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 washer versus JT1_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 23.1191,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 washer versus JT1_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 19.509,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 washer versus JT2_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 16.244,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 washer versus JT2_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 14.3408,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 washer versus JT3_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 13.6718,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 washer versus JT3_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 14.4541,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 washer versus JT4_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 43.1133,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 washer versus JT4_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 40.2646,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 washer versus JT5_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 40.4884,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 washer versus JT5_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 35.9153,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_2 washer versus JT6_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 26.1885,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 insert versus JT1_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 104.2182,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 insert versus JT1_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 105.49,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 insert versus JT2_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 107.1511,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 insert versus JT2_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 108.8587,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 insert versus JT3_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 111.0075,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 insert versus JT3_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 113.1326,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 insert versus JT4_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 98.7206,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 insert versus JT4_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 98.4809,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 insert versus JT5_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 98.4912,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 insert versus JT5_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 98.7514,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 insert versus JT6_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 100.1295,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 screw versus JT1_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 103.5048,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 screw versus JT1_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 104.7617,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 screw versus JT2_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 106.43,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 screw versus JT2_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 108.1474,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 screw versus JT3_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 110.3073,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 screw versus JT3_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 112.4422,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 screw versus JT4_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 98.009,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 screw versus JT4_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 97.7895,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 screw versus JT5_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 97.8047,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 screw versus JT5_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 98.0573,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 screw versus JT6_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 99.4204,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 washer versus JT1_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 102.8703,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 washer versus JT1_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 104.1264,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 washer versus JT2_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 105.7934,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 washer versus JT2_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 107.5093,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 washer versus JT3_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 109.6673,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 washer versus JT3_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 111.8003,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 washer versus JT4_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 97.3732,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 washer versus JT4_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 97.1449,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 washer versus JT5_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 97.1617,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 washer versus JT5_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 97.4223,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_3 washer versus JT6_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 98.7895,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 insert versus JT1_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 108.6787,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 insert versus JT1_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 107.9147,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 insert versus JT2_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 107.3301,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 insert versus JT2_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 107.0477,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 insert versus JT3_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 106.9912,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 insert versus JT3_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 107.169,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 insert versus JT4_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 115.7314,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 insert versus JT4_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 113.6127,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 insert versus JT5_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 111.4702,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 insert versus JT5_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 109.7674,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 insert versus JT6_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 106.8699,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 screw versus JT1_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 107.9639,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 screw versus JT1_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 107.208,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 screw versus JT2_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 106.6357,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 screw versus JT2_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 106.3698,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 screw versus JT3_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 106.3254,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 screw versus JT3_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 106.4955,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 screw versus JT4_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 115.0543,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 screw versus JT4_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 112.9356,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 screw versus JT5_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 110.7891,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 screw versus JT5_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 109.0791,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 screw versus JT6_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 106.153,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 washer versus JT1_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 107.3237,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 washer versus JT1_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 106.567,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 washer versus JT2_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 105.992,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 washer versus JT2_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 105.7196,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 washer versus JT3_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 105.6708,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 washer versus JT3_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 105.8498,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 washer versus JT4_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 114.4099,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 washer versus JT4_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 112.293,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 washer versus JT5_2 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 110.1484,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 washer versus JT5_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 108.4398,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "shield_4 washer versus JT6_1 wire",
+      "overlap_mm3": 0,
+      "clearance_mm": 105.5157,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "Unwired plate removal at 0 mm versus PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": 6.5513,
+      "required_clearance_mm": 0.8,
+      "pass": true
+    },
+    {
+      "check": "Unwired plate removal at 0 mm versus base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 0.2,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "Unwired plate removal at 2 mm versus PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": 7.2471,
+      "required_clearance_mm": 0.8,
+      "pass": true
+    },
+    {
+      "check": "Unwired plate removal at 2 mm versus base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 0.25,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "Unwired plate removal at 5 mm versus PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": 9.051,
+      "required_clearance_mm": 0.8,
+      "pass": true
+    },
+    {
+      "check": "Unwired plate removal at 5 mm versus base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 0.25,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "Unwired plate removal at 10 mm versus PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": 12.9993,
+      "required_clearance_mm": 0.8,
+      "pass": true
+    },
+    {
+      "check": "Unwired plate removal at 10 mm versus base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 0.25,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "Unwired plate removal at 20 mm versus PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": 14.4723,
+      "required_clearance_mm": 0.8,
+      "pass": true
+    },
+    {
+      "check": "Unwired plate removal at 20 mm versus base",
+      "overlap_mm3": 0.0,
+      "clearance_mm": 0.25,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    },
+    {
+      "check": "Unwired plate removal at 32 mm versus PCB",
+      "overlap_mm3": 0,
+      "clearance_mm": 21.387,
+      "required_clearance_mm": 0.8,
+      "pass": true
+    },
+    {
+      "check": "Unwired plate removal at 32 mm versus base",
+      "overlap_mm3": 0,
+      "clearance_mm": 1.2258,
+      "required_clearance_mm": 0.15,
+      "pass": true
+    }
+  ],
+  "tool_axes": [
+    {
+      "id": "lid_1",
+      "position_mm": [
+        6.5,
+        6.5,
+        36
+      ],
+      "insert_approach_interference_mm3": 0.0,
+      "pilot_interference_mm3": 0.0,
+      "driver_interference_mm3": 0,
+      "head_or_washer_approach_interference_mm3": 0.0,
+      "nominal_thread_overlap_mm": 4.8,
+      "screw_tip_to_blind_end_mm": 2.2,
+      "insert_to_blind_end_mm": 1.3,
+      "iron_handle_starts_above_rim_mm": 64.0,
+      "driver_handle_starts_above_rim_mm": 61.2,
+      "heat_set_radial_allowance_test_mm": 0.25,
+      "heat_set_radial_allowance_passed": true,
+      "pass": true
+    },
+    {
+      "id": "lid_2",
+      "position_mm": [
+        10.7,
+        69.5,
+        36
+      ],
+      "insert_approach_interference_mm3": 0.0,
+      "pilot_interference_mm3": 0.0,
+      "driver_interference_mm3": 0,
+      "head_or_washer_approach_interference_mm3": 0.0,
+      "nominal_thread_overlap_mm": 4.8,
+      "screw_tip_to_blind_end_mm": 2.2,
+      "insert_to_blind_end_mm": 1.3,
+      "iron_handle_starts_above_rim_mm": 64.0,
+      "driver_handle_starts_above_rim_mm": 61.2,
+      "heat_set_radial_allowance_test_mm": 0.25,
+      "heat_set_radial_allowance_passed": true,
+      "pass": true
+    },
+    {
+      "id": "lid_3",
+      "position_mm": [
+        173.5,
+        6.5,
+        36
+      ],
+      "insert_approach_interference_mm3": 0.0,
+      "pilot_interference_mm3": 0.0,
+      "driver_interference_mm3": 0,
+      "head_or_washer_approach_interference_mm3": 0.0,
+      "nominal_thread_overlap_mm": 4.8,
+      "screw_tip_to_blind_end_mm": 2.2,
+      "insert_to_blind_end_mm": 1.3,
+      "iron_handle_starts_above_rim_mm": 64.0,
+      "driver_handle_starts_above_rim_mm": 61.2,
+      "heat_set_radial_allowance_test_mm": 0.25,
+      "heat_set_radial_allowance_passed": true,
+      "pass": true
+    },
+    {
+      "id": "lid_4",
+      "position_mm": [
+        173.5,
+        69.5,
+        36
+      ],
+      "insert_approach_interference_mm3": 0.0,
+      "pilot_interference_mm3": 0.0,
+      "driver_interference_mm3": 0,
+      "head_or_washer_approach_interference_mm3": 0.0,
+      "nominal_thread_overlap_mm": 4.8,
+      "screw_tip_to_blind_end_mm": 2.2,
+      "insert_to_blind_end_mm": 1.3,
+      "iron_handle_starts_above_rim_mm": 64.0,
+      "driver_handle_starts_above_rim_mm": 61.2,
+      "heat_set_radial_allowance_test_mm": 0.25,
+      "heat_set_radial_allowance_passed": true,
+      "pass": true
+    },
+    {
+      "id": "shield_1",
+      "position_mm": [
+        45,
+        14,
+        13.0
+      ],
+      "insert_approach_interference_mm3": 0.0,
+      "pilot_interference_mm3": 0.0,
+      "driver_interference_mm3": 0.0,
+      "head_or_washer_approach_interference_mm3": 0.0,
+      "nominal_thread_overlap_mm": 3.9,
+      "screw_tip_to_blind_end_mm": 3.1,
+      "insert_to_blind_end_mm": 1.3,
+      "iron_handle_starts_above_rim_mm": 41.0,
+      "driver_handle_starts_above_rim_mm": 37.1,
+      "heat_set_radial_allowance_test_mm": 0.25,
+      "heat_set_radial_allowance_passed": true,
+      "pass": true
+    },
+    {
+      "id": "shield_2",
+      "position_mm": [
+        44,
+        61.83,
+        13.0
+      ],
+      "insert_approach_interference_mm3": 0.0,
+      "pilot_interference_mm3": 0.0,
+      "driver_interference_mm3": 0.0,
+      "head_or_washer_approach_interference_mm3": 0.0,
+      "nominal_thread_overlap_mm": 3.9,
+      "screw_tip_to_blind_end_mm": 3.1,
+      "insert_to_blind_end_mm": 1.3,
+      "iron_handle_starts_above_rim_mm": 41.0,
+      "driver_handle_starts_above_rim_mm": 37.1,
+      "heat_set_radial_allowance_test_mm": 0.25,
+      "heat_set_radial_allowance_passed": true,
+      "pass": true
+    },
+    {
+      "id": "shield_3",
+      "position_mm": [
+        131.2,
+        16.12,
+        13.0
+      ],
+      "insert_approach_interference_mm3": 0.0,
+      "pilot_interference_mm3": 0.0,
+      "driver_interference_mm3": 0.0,
+      "head_or_washer_approach_interference_mm3": 0.0,
+      "nominal_thread_overlap_mm": 3.9,
+      "screw_tip_to_blind_end_mm": 3.1,
+      "insert_to_blind_end_mm": 1.3,
+      "iron_handle_starts_above_rim_mm": 41.0,
+      "driver_handle_starts_above_rim_mm": 37.1,
+      "heat_set_radial_allowance_test_mm": 0.25,
+      "heat_set_radial_allowance_passed": true,
+      "pass": true
+    },
+    {
+      "id": "shield_4",
+      "position_mm": [
+        136.75,
+        60.57,
+        13.0
+      ],
+      "insert_approach_interference_mm3": 0.0,
+      "pilot_interference_mm3": 0.0,
+      "driver_interference_mm3": 0.0,
+      "head_or_washer_approach_interference_mm3": 0.0,
+      "nominal_thread_overlap_mm": 3.9,
+      "screw_tip_to_blind_end_mm": 3.1,
+      "insert_to_blind_end_mm": 1.3,
+      "iron_handle_starts_above_rim_mm": 41.0,
+      "driver_handle_starts_above_rim_mm": 37.1,
+      "heat_set_radial_allowance_test_mm": 0.25,
+      "heat_set_radial_allowance_passed": true,
+      "pass": true
+    }
+  ],
+  "geometry_provenance": "Native KiCad PCB; retained enclosure plus custom rails/pillar; KEFA drawing-based terminal model; ruthex manufacturer inserts and dimensioned fasteners",
+  "installed_inserts": 8,
+  "installed_screws": 8,
+  "installed_insulating_washers": 4,
+  "wire_entry_height_mm": 6,
+  "wire_entry_height_status": "estimate, purchased-part measurement pending",
+  "wire_bend_model": "Exact tangent circular arcs, >=5 mm centerline radius for 1.6 mm OD screening wire",
+  "fanout_selection": {
+    "J1": {
+      "phase_deg": 0,
+      "sampled_surface_clearance_mm": 0.45260162809517634,
+      "sample_deflection_mm": 0.01,
+      "exact_swept_solid_audit_required": true
+    },
+    "J2": {
+      "phase_deg": 90,
+      "sampled_surface_clearance_mm": 0.2935396126296892,
+      "sample_deflection_mm": 0.01,
+      "exact_swept_solid_audit_required": true
+    }
+  },
+  "native_terminal_body_bounds_mm": [
+    [
+      26.1,
+      59.8,
+      14.685,
+      36.8,
+      69.96000000000001,
+      28.785
+    ],
+    [
+      29.1,
+      27.52,
+      14.685,
+      39.8,
+      37.68,
+      28.785
+    ],
+    [
+      26.1,
+      38.28,
+      14.685,
+      36.8,
+      48.44,
+      28.785
+    ],
+    [
+      29.1,
+      16.76,
+      14.685,
+      39.8,
+      26.92,
+      28.785
+    ],
+    [
+      26.1,
+      49.03999999999999,
+      14.685,
+      36.8,
+      59.199999999999996,
+      28.785
+    ],
+    [
+      29.1,
+      6.0,
+      14.685,
+      39.8,
+      16.16,
+      28.785
+    ]
+  ],
+  "physical_pull_torque_vibration_seal_electrical_or_vehicle_verified": false,
+  "passed": true
+}

@@ -1,0 +1,18 @@
+Role,Quantity,Part or envelope,Assembly/acceptance
+Toyota pin half,1,Yazaki 7282-1060 / Corsa 090IIU-6P-1,"Candidate mate; verify physical keying, latch and cavity identity."
+Toyota socket half,1 where factory mate fitted,Yazaki 7283-1060 / Corsa 090IIU-6S-1,External one-to-one six-position tee.
+Toyota terminal sets,6 per tee half,Match actual housing and factory wire gauge,Crimped by harness supplier; continuity-test all six paths.
+Toyota branch,1 six-core round jacketed assembly,"7.2 mm nominal outer OD, individual core OD at most 1.6 mm",All six cores to JT1/JT2/JT3. Verify upstream fuse coordination and cable construction.
+LED branch,1 five-core round jacketed assembly,"5.5 mm nominal outer OD, individual core OD at most 1.6 mm",Five cores to JT4/JT5/JT6; JT6-2 empty.
+Candidate individual core,as required,"TE/Raychem 55A0111-20-*; 20 AWG, nominal 1.27 mm OD","Candidate thin-wall core only; not a finished multicore cable. Verify measured OD, bend requirement, jacket and availability."
+Toyota gland,1,LAPP 53017210 M16 + 53119110 locknut,3.5-8 mm clamp range. Grips intact round jacket.
+LED gland,1,LAPP 53010000 M12 + 53119100 locknut,3.5-7 mm clamp range. Grips intact round jacket.
+PCB terminals,6,KF128-5.08-2P-AA / JLCPCB C474952,Included in factory PCBA BOM; do not buy as an unsoldered customer step.
+Fuse holders,2,Keystone 3568-10 / JLCPCB C3205378,Included in factory PCBA BOM; exact red holder SKU normalized in native PCB.
+Fuses,1 each,3 A MINI main and 1 A MINI logic,"Factory insertion; retained electrical screen, subject to bench qualification."
+Printed enclosure,1 set,"Rev H base, lid and gland plate",Three supports-off STL parts. Validate the intended print process.
+Heat-set inserts,8,ruthex RX-M3x5.7,4 lid and 4 PCB; actual manufacturer STEP included in native CAD.
+Lid screws,4,M3 x 8 socket head,Native CAD and tool access envelopes included.
+PCB screws and washers,4 each,M3 x 6; insulating washer 7 mm OD x 3.2 mm ID x 0.5 mm,Native CAD includes all installed fasteners.
+Vehicle mounting fasteners,2,M4 screws and washers,Select for the measured console attachment.
+RGBW lamp and external lead,prototype load,DD7440 candidate + verified 5-pin M8 donor/lead,"Verify actual contacts, common-positive operation and 1 A combined load screen."

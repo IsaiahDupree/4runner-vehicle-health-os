@@ -10,6 +10,9 @@ The upload was read back on the owner's channel with unlisted privacy and
 successful HD processing. This movie records Rev G before the screw-terminal
 revision. [Measured media checks](validation/media-verification.json).
 
+[Download the MP4, captions, design kit, pictures and editable 3D source](https://github.com/IsaiahDupree/4runner-vehicle-health-os/releases/tag/revg-studio-2026-11-21).
+The release assets' sizes and SHA-256 digests were verified after upload.
+
 ![Outside, inside, populated board, service assembly, wire connectors and component detail](images/RevG-Studio-Gallery.jpg)
 
 [Full-resolution pictures](images) include the closed enclosure, installed

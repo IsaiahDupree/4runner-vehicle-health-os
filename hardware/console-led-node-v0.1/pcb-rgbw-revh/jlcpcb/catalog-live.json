@@ -1,0 +1,1499 @@
+{
+  "source": "JLCPCB public catalog; no order or checkout quote",
+  "rows": [
+    {
+      "code": "C5596903",
+      "mpn": "CL32B225KCJVPJE",
+      "bom_mpn": "CL32B225KCJVPJE",
+      "references": "C2,C3,C30",
+      "quantity_per_board": 3,
+      "observed_stock": 368,
+      "assembly_mode": "smtWeld",
+      "library_type": "expand",
+      "unit_usd_at_one_board_quantity": 0.2923,
+      "one_board_material_usd": 0.8769,
+      "price_tiers": [
+        {
+          "start": 1,
+          "end": 49,
+          "unit_usd": 0.2923
+        },
+        {
+          "start": 50,
+          "end": 149,
+          "unit_usd": 0.2304
+        },
+        {
+          "start": 150,
+          "end": 999,
+          "unit_usd": 0.2039
+        },
+        {
+          "start": 1000,
+          "end": 1999,
+          "unit_usd": 0.1709
+        },
+        {
+          "start": 2000,
+          "end": 4999,
+          "unit_usd": 0.1561
+        },
+        {
+          "start": 5000,
+          "end": -1,
+          "unit_usd": 0.1473
+        }
+      ],
+      "source_url": "https://jlcpcb.com/partdetail/C5596903",
+      "captured_utc": "2026-11-21T07:23:52.110525+00:00",
+      "html_sha256": "a3948f91b619da803ee5f4debc0f92f7ba21770c56e983480d325daa366bc442",
+      "status": "captured"
+    },
+    {
+      "code": "C57112",
+      "mpn": "0603B103K500NT",
+      "bom_mpn": "0603B103K500NT",
+      "references": "C4",
+      "quantity_per_board": 1,
+      "observed_stock": 4632032,
+      "assembly_mode": "smtWeld",
+      "library_type": "base",
+      "unit_usd_at_one_board_quantity": 0.0044,
+      "one_board_material_usd": 0.0044,
+      "price_tiers": [
+        {
+          "start": 1,
+          "end": 999,
+          "unit_usd": 0.0044
+        },
+        {
+          "start": 1000,
+          "end": 3999,
+          "unit_usd": 0.0034
+        },
+        {
+          "start": 4000,
+          "end": 7999,
+          "unit_usd": 0.0029
+        },
+        {
+          "start": 8000,
+          "end": 47999,
+          "unit_usd": 0.0026
+        },
+        {
+          "start": 48000,
+          "end": 99999,
+          "unit_usd": 0.0025
+        },
+        {
+          "start": 100000,
+          "end": -1,
+          "unit_usd": 0.0024
+        }
+      ],
+      "source_url": "https://jlcpcb.com/partdetail/C57112",
+      "captured_utc": "2026-11-21T07:23:52.501870+00:00",
+      "html_sha256": "d37c503bd718f200d2720f2485a5d0210acfa2a02a05195e281627ffef1e9e46",
+      "status": "captured"
+    },
+    {
+      "code": "C28233",
+      "mpn": "CL21B104KCFNNNE",
+      "bom_mpn": "CL21B104KCFNNNE",
+      "references": "C13,C27,C29",
+      "quantity_per_board": 3,
+      "observed_stock": 2593327,
+      "assembly_mode": "smtWeld",
+      "library_type": "base",
+      "unit_usd_at_one_board_quantity": 0.016,
+      "one_board_material_usd": 0.048,
+      "price_tiers": [
+        {
+          "start": 1,
+          "end": 99,
+          "unit_usd": 0.016
+        },
+        {
+          "start": 100,
+          "end": 299,
+          "unit_usd": 0.0119
+        },
+        {
+          "start": 300,
+          "end": 1999,
+          "unit_usd": 0.0101
+        },
+        {
+          "start": 2000,
+          "end": 3999,
+          "unit_usd": 0.0088
+        },
+        {
+          "start": 4000,
+          "end": 9999,
+          "unit_usd": 0.0083
+        },
+        {
+          "start": 10000,
+          "end": -1,
+          "unit_usd": 0.0079
+        }
+      ],
+      "source_url": "https://jlcpcb.com/partdetail/C28233",
+      "captured_utc": "2026-11-21T07:23:52.266733+00:00",
+      "html_sha256": "b50e2e2df8e692e856e6ba5fb9bed95343682f1a71e343c3a557c684421111c5",
+      "status": "captured"
+    },
+    {
+      "code": "C278400",
+      "mpn": "EEEFK1H470P",
+      "bom_mpn": "EEEFK1H470P",
+      "references": "C17",
+      "quantity_per_board": 1,
+      "observed_stock": 5150,
+      "assembly_mode": "smtWeld",
+      "library_type": "expand",
+      "unit_usd_at_one_board_quantity": 0.323,
+      "one_board_material_usd": 0.323,
+      "price_tiers": [
+        {
+          "start": 1,
+          "end": 49,
+          "unit_usd": 0.323
+        },
+        {
+          "start": 50,
+          "end": 149,
+          "unit_usd": 0.2615
+        },
+        {
+          "start": 150,
+          "end": 999,
+          "unit_usd": 0.235
+        },
+        {
+          "start": 1000,
+          "end": 1999,
+          "unit_usd": 0.2021
+        },
+        {
+          "start": 2000,
+          "end": 4999,
+          "unit_usd": 0.1874
+        },
+        {
+          "start": 5000,
+          "end": -1,
+          "unit_usd": 0.1785
+        }
+      ],
+      "source_url": "https://jlcpcb.com/partdetail/C278400",
+      "captured_utc": "2026-11-21T07:23:52.775379+00:00",
+      "html_sha256": "44f7a99dd163e3b6e7fb9faff5a596c20449c7ecf5a56709f6d301192e752836",
+      "status": "captured"
+    },
+    {
+      "code": "C14663",
+      "mpn": "CC0603KRX7R9BB104",
+      "bom_mpn": "CC0603KRX7R9BB104",
+      "references": "C18,C19,C20,C25,C28",
+      "quantity_per_board": 5,
+      "observed_stock": 53349862,
+      "assembly_mode": "smtWeld",
+      "library_type": "base",
+      "unit_usd_at_one_board_quantity": 0.0056,
+      "one_board_material_usd": 0.028,
+      "price_tiers": [
+        {
+          "start": 1,
+          "end": 999,
+          "unit_usd": 0.0056
+        },
+        {
+          "start": 1000,
+          "end": 3999,
+          "unit_usd": 0.0045
+        },
+        {
+          "start": 4000,
+          "end": 7999,
+          "unit_usd": 0.0038
+        },
+        {
+          "start": 8000,
+          "end": 47999,
+          "unit_usd": 0.0034
+        },
+        {
+          "start": 48000,
+          "end": 99999,
+          "unit_usd": 0.0031
+        },
+        {
+          "start": 100000,
+          "end": -1,
+          "unit_usd": 0.0029
+        }
+      ],
+      "source_url": "https://jlcpcb.com/partdetail/C14663",
+      "captured_utc": "2026-11-21T07:23:53.013005+00:00",
+      "html_sha256": "738b4f54d2a6af7741de462ec23ef6cdfe288e1bf97a6043a922c8b3d7d0db41",
+      "status": "captured"
+    },
+    {
+      "code": "C12891",
+      "mpn": "CL31A226KAHNNNE",
+      "bom_mpn": "CL31A226KAHNNNE",
+      "references": "C22,C23,C24,C31",
+      "quantity_per_board": 4,
+      "observed_stock": 2545657,
+      "assembly_mode": "smtWeld",
+      "library_type": "base",
+      "unit_usd_at_one_board_quantity": 0.1028,
+      "one_board_material_usd": 0.4112,
+      "price_tiers": [
+        {
+          "start": 1,
+          "end": 199,
+          "unit_usd": 0.1028
+        },
+        {
+          "start": 200,
+          "end": 599,
+          "unit_usd": 0.0828
+        },
+        {
+          "start": 600,
+          "end": 1999,
+          "unit_usd": 0.0724
+        },
+        {
+          "start": 2000,
+          "end": 9999,
+          "unit_usd": 0.064
+        },
+        {
+          "start": 10000,
+          "end": 19999,
+          "unit_usd": 0.0609
+        },
+        {
+          "start": 20000,
+          "end": -1,
+          "unit_usd": 0.0589
+        }
+      ],
+      "source_url": "https://jlcpcb.com/partdetail/C12891",
+      "captured_utc": "2026-11-21T07:23:53.169232+00:00",
+      "html_sha256": "aa5322ea67e5cd83ebae3d1e397dc23335bf7a57a0e13e83e80b8c512d202284",
+      "status": "captured"
+    },
+    {
+      "code": "C15849",
+      "mpn": "CL10A105KB8NNNC",
+      "bom_mpn": "CL10A105KB8NNNC",
+      "references": "C26",
+      "quantity_per_board": 1,
+      "observed_stock": 12283722,
+      "assembly_mode": "smtWeld",
+      "library_type": "base",
+      "unit_usd_at_one_board_quantity": 0.0092,
+      "one_board_material_usd": 0.0092,
+      "price_tiers": [
+        {
+          "start": 1,
+          "end": 499,
+          "unit_usd": 0.0092
+        },
+        {
+          "start": 500,
+          "end": 1499,
+          "unit_usd": 0.0073
+        },
+        {
+          "start": 1500,
+          "end": 3999,
+          "unit_usd": 0.0065
+        },
+        {
+          "start": 4000,
+          "end": 23999,
+          "unit_usd": 0.0059
+        },
+        {
+          "start": 24000,
+          "end": 47999,
+          "unit_usd": 0.0056
+        },
+        {
+          "start": 48000,
+          "end": -1,
+          "unit_usd": 0.0054
+        }
+      ],
+      "source_url": "https://jlcpcb.com/partdetail/C15849",
+      "captured_utc": "2026-11-21T07:23:53.540164+00:00",
+      "html_sha256": "31869d0cfb9a5677502da21aba851758f66d422b3977e157c428723585748df0",
+      "status": "captured"
+    },
+    {
+      "code": "C1975352",
+      "mpn": "SMBJ28CAQ-13-F",
+      "bom_mpn": "SMBJ28CAQ-13-F",
+      "references": "D1,D2",
+      "quantity_per_board": 2,
+      "observed_stock": 3377,
+      "assembly_mode": "smtWeld",
+      "library_type": "expand",
+      "unit_usd_at_one_board_quantity": 0.4156,
+      "one_board_material_usd": 0.8312,
+      "price_tiers": [
+        {
+          "start": 1,
+          "end": 9,
+          "unit_usd": 0.4156
+        },
+        {
+          "start": 10,
+          "end": 29,
+          "unit_usd": 0.324
+        },
+        {
+          "start": 30,
+          "end": 99,
+          "unit_usd": 0.2864
+        },
+        {
+          "start": 100,
+          "end": 499,
+          "unit_usd": 0.2373
+        },
+        {
+          "start": 500,
+          "end": 999,
+          "unit_usd": 0.216
+        },
+        {
+          "start": 1000,
+          "end": -1,
+          "unit_usd": 0.2029
+        }
+      ],
+      "source_url": "https://jlcpcb.com/partdetail/C1975352",
+      "captured_utc": "2026-11-21T07:23:53.789595+00:00",
+      "html_sha256": "b217f0762385af847fcbeb65ad5071e545eafc958f121989550e737e4160860f",
+      "status": "captured"
+    },
+    {
+      "code": "C179609",
+      "mpn": "NSVBAT54HT1G",
+      "bom_mpn": "NSVBAT54HT1G",
+      "references": "D7,D8",
+      "quantity_per_board": 2,
+      "observed_stock": 113879,
+      "assembly_mode": "smtWeld",
+      "library_type": "expand",
+      "unit_usd_at_one_board_quantity": 0.0414,
+      "one_board_material_usd": 0.0828,
+      "price_tiers": [
+        {
+          "start": 1,
+          "end": 199,
+          "unit_usd": 0.0414
+        },
+        {
+          "start": 200,
+          "end": 599,
+          "unit_usd": 0.032
+        },
+        {
+          "start": 600,
+          "end": 2999,
+          "unit_usd": 0.0267
+        },
+        {
+          "start": 3000,
+          "end": 8999,
+          "unit_usd": 0.0216
+        },
+        {
+          "start": 9000,
+          "end": 20999,
+          "unit_usd": 0.019
+        },
+        {
+          "start": 21000,
+          "end": -1,
+          "unit_usd": 0.0176
+        }
+      ],
+      "source_url": "https://jlcpcb.com/partdetail/C179609",
+      "captured_utc": "2026-11-21T07:23:54.342128+00:00",
+      "html_sha256": "74c84b52c2440452b2fdfa4076b82a3dab7ba8b497a8060420340e9f87fbb7d5",
+      "status": "captured"
+    },
+    {
+      "code": "C65009",
+      "mpn": "SS56",
+      "bom_mpn": "SS56",
+      "references": "D9",
+      "quantity_per_board": 1,
+      "observed_stock": 208946,
+      "assembly_mode": "smtWeld",
+      "library_type": "expand",
+      "unit_usd_at_one_board_quantity": 0.0506,
+      "one_board_material_usd": 0.0506,
+      "price_tiers": [
+        {
+          "start": 1,
+          "end": 99,
+          "unit_usd": 0.0506
+        },
+        {
+          "start": 100,
+          "end": 299,
+          "unit_usd": 0.0414
+        },
+        {
+          "start": 300,
+          "end": 999,
+          "unit_usd": 0.0369
+        },
+        {
+          "start": 1000,
+          "end": 4999,
+          "unit_usd": 0.0329
+        },
+        {
+          "start": 5000,
+          "end": 9999,
+          "unit_usd": 0.0251
+        },
+        {
+          "start": 10000,
+          "end": -1,
+          "unit_usd": 0.0241
+        }
+      ],
+      "source_url": "https://jlcpcb.com/partdetail/C65009",
+      "captured_utc": "2026-11-21T07:23:54.271528+00:00",
+      "html_sha256": "34dcae773df46ac64540eb8e32fb08f2e91752564de1e6c7a7cabb6b405c5839",
+      "status": "captured"
+    },
+    {
+      "code": "C2047872",
+      "mpn": "SPM6545VT-220M-D",
+      "bom_mpn": "SPM6545VT-220M-D",
+      "references": "L1",
+      "quantity_per_board": 1,
+      "observed_stock": 383,
+      "assembly_mode": "smtWeld",
+      "library_type": "expand",
+      "unit_usd_at_one_board_quantity": 0.8623,
+      "one_board_material_usd": 0.8623,
+      "price_tiers": [
+        {
+          "start": 1,
+          "end": 9,
+          "unit_usd": 0.8623
+        },
+        {
+          "start": 10,
+          "end": 29,
+          "unit_usd": 0.6937
+        },
+        {
+          "start": 30,
+          "end": 99,
+          "unit_usd": 0.6087
+        },
+        {
+          "start": 100,
+          "end": 499,
+          "unit_usd": 0.5252
+        },
+        {
+          "start": 500,
+          "end": 999,
+          "unit_usd": 0.4761
+        },
+        {
+          "start": 1000,
+          "end": -1,
+          "unit_usd": 0.45
+        }
+      ],
+      "source_url": "https://jlcpcb.com/partdetail/C2047872",
+      "captured_utc": "2026-11-21T07:23:54.410093+00:00",
+      "html_sha256": "28fe9a67f7e482709cfc0dde11cfcce912d3d6c67ebdc54407ade4420d11925a",
+      "status": "captured"
+    },
+    {
+      "code": "C20917",
+      "mpn": "AO3400A",
+      "bom_mpn": "AO3400A",
+      "references": "Q1",
+      "quantity_per_board": 1,
+      "observed_stock": 1546784,
+      "assembly_mode": "smtWeld",
+      "library_type": "base",
+      "unit_usd_at_one_board_quantity": 0.0796,
+      "one_board_material_usd": 0.0796,
+      "price_tiers": [
+        {
+          "start": 1,
+          "end": 49,
+          "unit_usd": 0.0796
+        },
+        {
+          "start": 50,
+          "end": 149,
+          "unit_usd": 0.063
+        },
+        {
+          "start": 150,
+          "end": 499,
+          "unit_usd": 0.0545
+        },
+        {
+          "start": 500,
+          "end": 2999,
+          "unit_usd": 0.0475
+        },
+        {
+          "start": 3000,
+          "end": 5999,
+          "unit_usd": 0.0452
+        },
+        {
+          "start": 6000,
+          "end": -1,
+          "unit_usd": 0.0434
+        }
+      ],
+      "source_url": "https://jlcpcb.com/partdetail/C20917",
+      "captured_utc": "2026-11-21T07:23:54.982667+00:00",
+      "html_sha256": "f902e3e9322af5b78eaa6ee9d9250a41adca091a2812ae4839f63718e2091f41",
+      "status": "captured"
+    },
+    {
+      "code": "C25981",
+      "mpn": "0603WAF8201T5E",
+      "bom_mpn": "0603WAF8201T5E",
+      "references": "R1",
+      "quantity_per_board": 1,
+      "observed_stock": 592017,
+      "assembly_mode": "smtWeld",
+      "library_type": "base",
+      "unit_usd_at_one_board_quantity": 0.0035,
+      "one_board_material_usd": 0.0035,
+      "price_tiers": [
+        {
+          "start": 1,
+          "end": 999,
+          "unit_usd": 0.0035
+        },
+        {
+          "start": 1000,
+          "end": 4999,
+          "unit_usd": 0.0026
+        },
+        {
+          "start": 5000,
+          "end": 9999,
+          "unit_usd": 0.0022
+        },
+        {
+          "start": 10000,
+          "end": 49999,
+          "unit_usd": 0.002
+        },
+        {
+          "start": 50000,
+          "end": 50199,
+          "unit_usd": 0.0017
+        },
+        {
+          "start": 50200,
+          "end": -1,
+          "unit_usd": 0.0017
+        }
+      ],
+      "source_url": "https://jlcpcb.com/partdetail/C25981",
+      "captured_utc": "2026-11-21T07:23:54.985718+00:00",
+      "html_sha256": "de5b7421776455a2d86423d886022f8949b7efde0fc3d64888d156b5b148ce21",
+      "status": "captured"
+    },
+    {
+      "code": "C25819",
+      "mpn": "0603WAF4702T5E",
+      "bom_mpn": "0603WAF4702T5E",
+      "references": "R2,R5",
+      "quantity_per_board": 2,
+      "observed_stock": 2646588,
+      "assembly_mode": "smtWeld",
+      "library_type": "base",
+      "unit_usd_at_one_board_quantity": 0.0016,
+      "one_board_material_usd": 0.0032,
+      "price_tiers": [
+        {
+          "start": 1,
+          "end": 999,
+          "unit_usd": 0.0016
+        },
+        {
+          "start": 1000,
+          "end": 4999,
+          "unit_usd": 0.0012
+        },
+        {
+          "start": 5000,
+          "end": 9999,
+          "unit_usd": 0.0011
+        },
+        {
+          "start": 10000,
+          "end": 49999,
+          "unit_usd": 0.0009
+        },
+        {
+          "start": 50000,
+          "end": 50199,
+          "unit_usd": 0.0008
+        },
+        {
+          "start": 50200,
+          "end": -1,
+          "unit_usd": 0.0008
+        }
+      ],
+      "source_url": "https://jlcpcb.com/partdetail/C25819",
+      "captured_utc": "2026-11-21T07:23:55.144055+00:00",
+      "html_sha256": "b2def8d7fb9b0ffaa8d274078790f4ae3e6b7b86cae9a267156d7f057e847d1a",
+      "status": "captured"
+    },
+    {
+      "code": "C25804",
+      "mpn": "0603WAF1002T5E",
+      "bom_mpn": "0603WAF1002T5E",
+      "references": "R3,R13,R36,R37,R38",
+      "quantity_per_board": 5,
+      "observed_stock": 42759863,
+      "assembly_mode": "smtWeld",
+      "library_type": "base",
+      "unit_usd_at_one_board_quantity": 0.0017,
+      "one_board_material_usd": 0.0085,
+      "price_tiers": [
+        {
+          "start": 1,
+          "end": 999,
+          "unit_usd": 0.0017
+        },
+        {
+          "start": 1000,
+          "end": 4999,
+          "unit_usd": 0.0013
+        },
+        {
+          "start": 5000,
+          "end": 9999,
+          "unit_usd": 0.0012
+        },
+        {
+          "start": 10000,
+          "end": 49999,
+          "unit_usd": 0.0011
+        },
+        {
+          "start": 50000,
+          "end": 50199,
+          "unit_usd": 0.001
+        },
+        {
+          "start": 50200,
+          "end": -1,
+          "unit_usd": 0.001
+        }
+      ],
+      "source_url": "https://jlcpcb.com/partdetail/C25804",
+      "captured_utc": "2026-11-21T07:23:55.749328+00:00",
+      "html_sha256": "cb16f1e3fb648c6553924678974c6ee17a686139fd25f92eb245f29dd37dc3f6",
+      "status": "captured"
+    },
+    {
+      "code": "C22807",
+      "mpn": "0603WAF1503T5E",
+      "bom_mpn": "0603WAF1503T5E",
+      "references": "R4",
+      "quantity_per_board": 1,
+      "observed_stock": 792016,
+      "assembly_mode": "smtWeld",
+      "library_type": "base",
+      "unit_usd_at_one_board_quantity": 0.0017,
+      "one_board_material_usd": 0.0017,
+      "price_tiers": [
+        {
+          "start": 1,
+          "end": 999,
+          "unit_usd": 0.0017
+        },
+        {
+          "start": 1000,
+          "end": 4999,
+          "unit_usd": 0.0013
+        },
+        {
+          "start": 5000,
+          "end": 9999,
+          "unit_usd": 0.0011
+        },
+        {
+          "start": 10000,
+          "end": 49999,
+          "unit_usd": 0.001
+        },
+        {
+          "start": 50000,
+          "end": 50199,
+          "unit_usd": 0.0008
+        },
+        {
+          "start": 50200,
+          "end": -1,
+          "unit_usd": 0.0008
+        }
+      ],
+      "source_url": "https://jlcpcb.com/partdetail/C22807",
+      "captured_utc": "2026-11-21T07:23:55.655289+00:00",
+      "html_sha256": "4907513dd088032adc062776ed81cf5142c9c63756ca61b1b1cbf79332adbf42",
+      "status": "captured"
+    },
+    {
+      "code": "C25803",
+      "mpn": "0603WAF1003T5E",
+      "bom_mpn": "0603WAF1003T5E",
+      "references": "R17,R18,R19,R20,R39",
+      "quantity_per_board": 5,
+      "observed_stock": 13085849,
+      "assembly_mode": "smtWeld",
+      "library_type": "base",
+      "unit_usd_at_one_board_quantity": 0.0029,
+      "one_board_material_usd": 0.0145,
+      "price_tiers": [
+        {
+          "start": 1,
+          "end": 999,
+          "unit_usd": 0.0029
+        },
+        {
+          "start": 1000,
+          "end": 4999,
+          "unit_usd": 0.0023
+        },
+        {
+          "start": 5000,
+          "end": 9999,
+          "unit_usd": 0.002
+        },
+        {
+          "start": 10000,
+          "end": 49999,
+          "unit_usd": 0.0016
+        },
+        {
+          "start": 50000,
+          "end": 50199,
+          "unit_usd": 0.0015
+        },
+        {
+          "start": 50200,
+          "end": -1,
+          "unit_usd": 0.0015
+        }
+      ],
+      "source_url": "https://jlcpcb.com/partdetail/C25803",
+      "captured_utc": "2026-11-21T07:23:55.887051+00:00",
+      "html_sha256": "73bcbfb23bf417aad275e7845de4b1c265365c239ab1c832fea24f3bd711428c",
+      "status": "captured"
+    },
+    {
+      "code": "C861420",
+      "mpn": "RT0603BRD0746K4L",
+      "bom_mpn": "RT0603BRD0746K4L",
+      "references": "R21",
+      "quantity_per_board": 1,
+      "observed_stock": 16274,
+      "assembly_mode": "smtWeld",
+      "library_type": "expand",
+      "unit_usd_at_one_board_quantity": 0.057,
+      "one_board_material_usd": 0.057,
+      "price_tiers": [
+        {
+          "start": 1,
+          "end": 199,
+          "unit_usd": 0.057
+        },
+        {
+          "start": 200,
+          "end": 599,
+          "unit_usd": 0.0486
+        },
+        {
+          "start": 600,
+          "end": 4999,
+          "unit_usd": 0.0441
+        },
+        {
+          "start": 5000,
+          "end": 9999,
+          "unit_usd": 0.0413
+        },
+        {
+          "start": 10000,
+          "end": 19999,
+          "unit_usd": 0.0388
+        },
+        {
+          "start": 20000,
+          "end": -1,
+          "unit_usd": 0.0377
+        }
+      ],
+      "source_url": "https://jlcpcb.com/partdetail/C861420",
+      "captured_utc": "2026-11-21T07:23:56.317878+00:00",
+      "html_sha256": "ec3b90556e576260b73560804171906c984c281fb3d55efdcd345e0ce87707b7",
+      "status": "captured"
+    },
+    {
+      "code": "C728591",
+      "mpn": "RT0603BRD073K92L",
+      "bom_mpn": "RT0603BRD073K92L",
+      "references": "R22",
+      "quantity_per_board": 1,
+      "observed_stock": 13197,
+      "assembly_mode": "smtWeld",
+      "library_type": "expand",
+      "unit_usd_at_one_board_quantity": 0.0473,
+      "one_board_material_usd": 0.0473,
+      "price_tiers": [
+        {
+          "start": 1,
+          "end": 199,
+          "unit_usd": 0.0473
+        },
+        {
+          "start": 200,
+          "end": 599,
+          "unit_usd": 0.0405
+        },
+        {
+          "start": 600,
+          "end": 4999,
+          "unit_usd": 0.0365
+        },
+        {
+          "start": 5000,
+          "end": 9999,
+          "unit_usd": 0.0342
+        },
+        {
+          "start": 10000,
+          "end": 19999,
+          "unit_usd": 0.0323
+        },
+        {
+          "start": 20000,
+          "end": -1,
+          "unit_usd": 0.0311
+        }
+      ],
+      "source_url": "https://jlcpcb.com/partdetail/C728591",
+      "captured_utc": "2026-11-21T07:23:56.309457+00:00",
+      "html_sha256": "e10a7425ada948f886b9059e656245d60fda986fff53c67172ad093956d20277",
+      "status": "captured"
+    },
+    {
+      "code": "C706414",
+      "mpn": "RT1206BRD0749K9L",
+      "bom_mpn": "RT1206BRD0749K9L",
+      "references": "R24,R25,R26,R27",
+      "quantity_per_board": 4,
+      "observed_stock": 719,
+      "assembly_mode": "smtWeld",
+      "library_type": "expand",
+      "unit_usd_at_one_board_quantity": 0.081,
+      "one_board_material_usd": 0.324,
+      "price_tiers": [
+        {
+          "start": 1,
+          "end": 99,
+          "unit_usd": 0.081
+        },
+        {
+          "start": 100,
+          "end": 299,
+          "unit_usd": 0.0678
+        },
+        {
+          "start": 300,
+          "end": 999,
+          "unit_usd": 0.0612
+        },
+        {
+          "start": 1000,
+          "end": 4999,
+          "unit_usd": 0.0562
+        },
+        {
+          "start": 5000,
+          "end": 9999,
+          "unit_usd": 0.0522
+        },
+        {
+          "start": 10000,
+          "end": -1,
+          "unit_usd": 0.0503
+        }
+      ],
+      "source_url": "https://jlcpcb.com/partdetail/C706414",
+      "captured_utc": "2026-11-21T07:23:56.696032+00:00",
+      "html_sha256": "489b58ea98e513a299c0729e31514fabca173d692f9988ac39b5f3c9ae38d206",
+      "status": "captured"
+    },
+    {
+      "code": "C31850",
+      "mpn": "0603WAF2202T5E",
+      "bom_mpn": "0603WAF2202T5E",
+      "references": "R28,R29,R32,R33",
+      "quantity_per_board": 4,
+      "observed_stock": 2205281,
+      "assembly_mode": "smtWeld",
+      "library_type": "base",
+      "unit_usd_at_one_board_quantity": 0.0042,
+      "one_board_material_usd": 0.0168,
+      "price_tiers": [
+        {
+          "start": 1,
+          "end": 999,
+          "unit_usd": 0.0042
+        },
+        {
+          "start": 1000,
+          "end": 4999,
+          "unit_usd": 0.0032
+        },
+        {
+          "start": 5000,
+          "end": 9999,
+          "unit_usd": 0.0026
+        },
+        {
+          "start": 10000,
+          "end": 49999,
+          "unit_usd": 0.0023
+        },
+        {
+          "start": 50000,
+          "end": 50199,
+          "unit_usd": 0.002
+        },
+        {
+          "start": 50200,
+          "end": -1,
+          "unit_usd": 0.002
+        }
+      ],
+      "source_url": "https://jlcpcb.com/partdetail/C31850",
+      "captured_utc": "2026-11-21T07:23:56.994745+00:00",
+      "html_sha256": "01ec342e13d3b925acddf96006cc03d01026836c0d63f13e0a2bec58dd9916a8",
+      "status": "captured"
+    },
+    {
+      "code": "C25810",
+      "mpn": "0603WAF1802T5E",
+      "bom_mpn": "0603WAF1802T5E",
+      "references": "R30,R31",
+      "quantity_per_board": 2,
+      "observed_stock": 733000,
+      "assembly_mode": "smtWeld",
+      "library_type": "base",
+      "unit_usd_at_one_board_quantity": 0.0028,
+      "one_board_material_usd": 0.0056,
+      "price_tiers": [
+        {
+          "start": 1,
+          "end": 999,
+          "unit_usd": 0.0028
+        },
+        {
+          "start": 1000,
+          "end": 4999,
+          "unit_usd": 0.0021
+        },
+        {
+          "start": 5000,
+          "end": 9999,
+          "unit_usd": 0.0018
+        },
+        {
+          "start": 10000,
+          "end": 49999,
+          "unit_usd": 0.0016
+        },
+        {
+          "start": 50000,
+          "end": 50199,
+          "unit_usd": 0.0013
+        },
+        {
+          "start": 50200,
+          "end": -1,
+          "unit_usd": 0.0013
+        }
+      ],
+      "source_url": "https://jlcpcb.com/partdetail/C25810",
+      "captured_utc": "2026-11-21T07:23:56.976491+00:00",
+      "html_sha256": "e2c2da6ca004e1b87d8bdff2e6534d740beae9e88c6d4597a037fc3dcecc9b4e",
+      "status": "captured"
+    },
+    {
+      "code": "C20539658",
+      "mpn": "LMR51610XDBVR",
+      "bom_mpn": "LMR51610XDBVR",
+      "references": "U1",
+      "quantity_per_board": 1,
+      "observed_stock": 5188,
+      "assembly_mode": "smtWeld",
+      "library_type": "expand",
+      "unit_usd_at_one_board_quantity": 0.625,
+      "one_board_material_usd": 0.625,
+      "price_tiers": [
+        {
+          "start": 1,
+          "end": 9,
+          "unit_usd": 0.625
+        },
+        {
+          "start": 10,
+          "end": 29,
+          "unit_usd": 0.535
+        },
+        {
+          "start": 30,
+          "end": 99,
+          "unit_usd": 0.4712
+        },
+        {
+          "start": 100,
+          "end": 499,
+          "unit_usd": 0.4172
+        },
+        {
+          "start": 500,
+          "end": 999,
+          "unit_usd": 0.4009
+        },
+        {
+          "start": 1000,
+          "end": -1,
+          "unit_usd": 0.3911
+        }
+      ],
+      "source_url": "https://jlcpcb.com/partdetail/C20539658",
+      "captured_utc": "2026-11-21T07:23:57.499449+00:00",
+      "html_sha256": "509d2d0f8da5ab9773e80ffae6086d965d3553c9acf18c22d0b3690304dfff1c",
+      "status": "captured"
+    },
+    {
+      "code": "C114177",
+      "mpn": "DRV8803PWPR",
+      "bom_mpn": "DRV8803PWPR",
+      "references": "U2",
+      "quantity_per_board": 1,
+      "observed_stock": 2806,
+      "assembly_mode": "smtWeld",
+      "library_type": "expand",
+      "unit_usd_at_one_board_quantity": 1.4431,
+      "one_board_material_usd": 1.4431,
+      "price_tiers": [
+        {
+          "start": 1,
+          "end": 9,
+          "unit_usd": 1.4431
+        },
+        {
+          "start": 10,
+          "end": 29,
+          "unit_usd": 1.2091
+        },
+        {
+          "start": 30,
+          "end": 99,
+          "unit_usd": 1.0799
+        },
+        {
+          "start": 100,
+          "end": 499,
+          "unit_usd": 0.9342
+        },
+        {
+          "start": 500,
+          "end": 999,
+          "unit_usd": 0.7952
+        },
+        {
+          "start": 1000,
+          "end": -1,
+          "unit_usd": 0.7657
+        }
+      ],
+      "source_url": "https://jlcpcb.com/partdetail/C114177",
+      "captured_utc": "2026-11-21T07:23:57.755977+00:00",
+      "html_sha256": "68c6f440a2e253e15fcfa860a89be002c4f5bb79d42fdc498e13f7601f341113",
+      "status": "captured"
+    },
+    {
+      "code": "C544399",
+      "mpn": "TPS26600PWPR",
+      "bom_mpn": "TPS26600PWPR",
+      "references": "U4",
+      "quantity_per_board": 1,
+      "observed_stock": 7225,
+      "assembly_mode": "smtWeld",
+      "library_type": "expand",
+      "unit_usd_at_one_board_quantity": 1.5494,
+      "one_board_material_usd": 1.5494,
+      "price_tiers": [
+        {
+          "start": 1,
+          "end": 9,
+          "unit_usd": 1.5494
+        },
+        {
+          "start": 10,
+          "end": 29,
+          "unit_usd": 1.2827
+        },
+        {
+          "start": 30,
+          "end": 99,
+          "unit_usd": 1.1355
+        },
+        {
+          "start": 100,
+          "end": 499,
+          "unit_usd": 0.9686
+        },
+        {
+          "start": 500,
+          "end": 999,
+          "unit_usd": 0.895
+        },
+        {
+          "start": 1000,
+          "end": -1,
+          "unit_usd": 0.8606
+        }
+      ],
+      "source_url": "https://jlcpcb.com/partdetail/C544399",
+      "captured_utc": "2026-11-21T07:23:57.599940+00:00",
+      "html_sha256": "4319892343a340749d4f464bfccdf96640cb8f60a35d7b8b3d635c28d26b1fd1",
+      "status": "captured"
+    },
+    {
+      "code": "C1858301",
+      "mpn": "SN3257QPWRQ1",
+      "bom_mpn": "SN3257QPWRQ1",
+      "references": "U5",
+      "quantity_per_board": 1,
+      "observed_stock": 1377,
+      "assembly_mode": "smtWeld",
+      "library_type": "expand",
+      "unit_usd_at_one_board_quantity": 1.1257,
+      "one_board_material_usd": 1.1257,
+      "price_tiers": [
+        {
+          "start": 1,
+          "end": 9,
+          "unit_usd": 1.1257
+        },
+        {
+          "start": 10,
+          "end": 29,
+          "unit_usd": 0.9964
+        },
+        {
+          "start": 30,
+          "end": 99,
+          "unit_usd": 0.9032
+        },
+        {
+          "start": 100,
+          "end": 499,
+          "unit_usd": 0.8279
+        },
+        {
+          "start": 500,
+          "end": 999,
+          "unit_usd": 0.805
+        },
+        {
+          "start": 1000,
+          "end": -1,
+          "unit_usd": 0.7903
+        }
+      ],
+      "source_url": "https://jlcpcb.com/partdetail/C1858301",
+      "captured_utc": "2026-11-21T07:23:58.317486+00:00",
+      "html_sha256": "03a33361ea3caaf2cf922fe61fc00de7eb41fb319c04903d158ebb8f7d26fb40",
+      "status": "captured"
+    },
+    {
+      "code": "C531175",
+      "mpn": "LM4040C25QFTA",
+      "bom_mpn": "LM4040C25QFTA",
+      "references": "U6,U7",
+      "quantity_per_board": 2,
+      "observed_stock": 35,
+      "assembly_mode": "smtWeld",
+      "library_type": "expand",
+      "unit_usd_at_one_board_quantity": 0.6283,
+      "one_board_material_usd": 1.2566,
+      "price_tiers": [
+        {
+          "start": 1,
+          "end": 9,
+          "unit_usd": 0.6283
+        },
+        {
+          "start": 10,
+          "end": 29,
+          "unit_usd": 0.5072
+        },
+        {
+          "start": 30,
+          "end": 99,
+          "unit_usd": 0.4483
+        },
+        {
+          "start": 100,
+          "end": 499,
+          "unit_usd": 0.3878
+        },
+        {
+          "start": 500,
+          "end": 999,
+          "unit_usd": 0.3518
+        },
+        {
+          "start": 1000,
+          "end": -1,
+          "unit_usd": 0.3338
+        }
+      ],
+      "source_url": "https://jlcpcb.com/partdetail/C531175",
+      "captured_utc": "2026-11-21T07:23:58.797194+00:00",
+      "html_sha256": "31e141e93e922c83273ca1cb49befa6877be1702b4c4f0d96665bf277908ee70",
+      "status": "captured"
+    },
+    {
+      "code": "C2877924",
+      "mpn": "TLV803EC30DBZR",
+      "bom_mpn": "TLV803EC30DBZR",
+      "references": "U10",
+      "quantity_per_board": 1,
+      "observed_stock": 76,
+      "assembly_mode": "smtWeld",
+      "library_type": "expand",
+      "unit_usd_at_one_board_quantity": 0.607,
+      "one_board_material_usd": 0.607,
+      "price_tiers": [
+        {
+          "start": 1,
+          "end": 9,
+          "unit_usd": 0.607
+        },
+        {
+          "start": 10,
+          "end": 29,
+          "unit_usd": 0.4843
+        },
+        {
+          "start": 30,
+          "end": 99,
+          "unit_usd": 0.4222
+        },
+        {
+          "start": 100,
+          "end": 499,
+          "unit_usd": 0.36
+        },
+        {
+          "start": 500,
+          "end": 999,
+          "unit_usd": 0.324
+        },
+        {
+          "start": 1000,
+          "end": -1,
+          "unit_usd": 0.3044
+        }
+      ],
+      "source_url": "https://jlcpcb.com/partdetail/C2877924",
+      "captured_utc": "2026-11-21T07:23:58.697098+00:00",
+      "html_sha256": "7e25d23376ab5ef4510e5ea54f472dbb953fbf726e4696059d0338cd5dba0fee",
+      "status": "captured"
+    },
+    {
+      "code": "C2913205",
+      "mpn": "ESP32-S3-WROOM-1-N16R2",
+      "bom_mpn": "ESP32-S3-WROOM-1-N16R2",
+      "references": "U11",
+      "quantity_per_board": 1,
+      "observed_stock": 7062,
+      "assembly_mode": "smtWeld",
+      "library_type": "expand",
+      "unit_usd_at_one_board_quantity": 5.2306,
+      "one_board_material_usd": 5.2306,
+      "price_tiers": [
+        {
+          "start": 1,
+          "end": 9,
+          "unit_usd": 5.2306
+        },
+        {
+          "start": 10,
+          "end": 29,
+          "unit_usd": 4.6809
+        },
+        {
+          "start": 30,
+          "end": 99,
+          "unit_usd": 4.3749
+        },
+        {
+          "start": 100,
+          "end": 649,
+          "unit_usd": 4.105
+        },
+        {
+          "start": 650,
+          "end": 1299,
+          "unit_usd": 3.9217
+        },
+        {
+          "start": 1300,
+          "end": -1,
+          "unit_usd": 3.8383
+        }
+      ],
+      "source_url": "https://jlcpcb.com/partdetail/C2913205",
+      "captured_utc": "2026-11-21T07:23:58.972185+00:00",
+      "html_sha256": "af822abd700a08d44365039157677356b1383566d8d96ef3376d0a1364171d72",
+      "status": "captured"
+    },
+    {
+      "code": "C3205378",
+      "mpn": "3568-10",
+      "bom_mpn": "3568-10",
+      "references": "F1,F2",
+      "quantity_per_board": 2,
+      "observed_stock": 2,
+      "assembly_mode": "manualWeld",
+      "library_type": "expand",
+      "unit_usd_at_one_board_quantity": 3.2509,
+      "one_board_material_usd": 6.5018,
+      "price_tiers": [
+        {
+          "start": 1,
+          "end": 9,
+          "unit_usd": 3.2509
+        },
+        {
+          "start": 10,
+          "end": 29,
+          "unit_usd": 2.765
+        },
+        {
+          "start": 30,
+          "end": 99,
+          "unit_usd": 2.4591
+        },
+        {
+          "start": 100,
+          "end": 499,
+          "unit_usd": 2.1482
+        },
+        {
+          "start": 500,
+          "end": 999,
+          "unit_usd": 2.1482
+        },
+        {
+          "start": 1000,
+          "end": -1,
+          "unit_usd": 2.1482
+        }
+      ],
+      "source_url": "https://jlcpcb.com/partdetail/C3205378",
+      "captured_utc": "2026-11-21T07:23:59.393150+00:00",
+      "html_sha256": "6b1011b15242169cfa6f1bba0ea1c0d6bbb8c0a16a4f78ec28a6fae91a3d793a",
+      "status": "captured"
+    },
+    {
+      "code": "C474952",
+      "mpn": "KF128-5.08-2P-AA",
+      "bom_mpn": "KF128-5.08-2P-AA",
+      "references": "JT1,JT2,JT3,JT4,JT5,JT6",
+      "quantity_per_board": 6,
+      "observed_stock": 52472,
+      "assembly_mode": "manualWeld",
+      "library_type": "expand",
+      "unit_usd_at_one_board_quantity": 0.1926,
+      "one_board_material_usd": 1.1556,
+      "price_tiers": [
+        {
+          "start": 1,
+          "end": 49,
+          "unit_usd": 0.1926
+        },
+        {
+          "start": 50,
+          "end": 149,
+          "unit_usd": 0.1507
+        },
+        {
+          "start": 150,
+          "end": 599,
+          "unit_usd": 0.1304
+        },
+        {
+          "start": 600,
+          "end": 2399,
+          "unit_usd": 0.1088
+        },
+        {
+          "start": 2400,
+          "end": 4799,
+          "unit_usd": 0.1038
+        },
+        {
+          "start": 4800,
+          "end": -1,
+          "unit_usd": 0.1008
+        }
+      ],
+      "source_url": "https://jlcpcb.com/partdetail/C474952",
+      "captured_utc": "2026-11-21T07:23:59.435868+00:00",
+      "html_sha256": "62046ab5228f1bf2dc071b1a13b420d2287c032c7487b9c0bc4ac6f8ad19461d",
+      "status": "captured"
+    }
+  ],
+  "all_rows_captured": true,
+  "factory_bom_positions": 67,
+  "finished_product_quote_verified": false,
+  "material_subtotal_usd_at_one_board_quantity": 23.5841,
+  "out_of_stock_codes": [],
+  "mpn_mismatches": []
+}

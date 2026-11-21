@@ -8,7 +8,15 @@ The project has two immutable source baselines: [Vehicle Health OS PRD v0.1](doc
 
 No derived value is authoritative unless that lineage can be reconstructed.
 
-## Rev G lighting controller
+## Rev H lighting controller
+
+The [screw-terminal revision](hardware/console-led-node-v0.1/pcb-rgbw-revh/README.md)
+uses one integrated PCB, six factory-soldered terminal blocks, a six-wire
+Toyota inlet and a five-wire RGBW outlet. The gland-to-terminal wire paths,
+support rails, fasteners and factory assembly files are included. It remains
+an evaluation design requiring physical and vehicle qualification.
+
+## Rev G media snapshot
 
 The [single-board RGBW controller](hardware/console-led-node-v0.1/pcb-rgbw-revg/README.md)
 includes the PCB, gland enclosure, inline Toyota power harness and WLED relay
@@ -16,6 +24,7 @@ integration. [Studio pictures and the narrated 3D demonstration](hardware/consol
 show its exterior, installed electronics, component layout and service assembly.
 This is an evaluation prototype; physical electrical, sealing and vehicle-fit
 acceptance remain pending.
+[Download the video, CAD kits and 3D source](https://github.com/IsaiahDupree/4runner-vehicle-health-os/releases/tag/revg-studio-2026-11-21).
 
 ## Current baseline
 

@@ -1,0 +1,199 @@
+{
+  "terminals": [
+    {
+      "ref": "JT1",
+      "pin": 1,
+      "label": "GND",
+      "vehicle_cavity": 5,
+      "net": "GND",
+      "pcb_xy_mm": [
+        45.5,
+        118.77
+      ],
+      "case_xy_mm": [
+        31.5,
+        45.89999999999999
+      ],
+      "drill_mm": 1.4
+    },
+    {
+      "ref": "JT1",
+      "pin": 2,
+      "label": "ACC",
+      "vehicle_cavity": 6,
+      "net": "VEH_ACC",
+      "pcb_xy_mm": [
+        45.5,
+        123.85
+      ],
+      "case_xy_mm": [
+        31.5,
+        40.81999999999999
+      ],
+      "drill_mm": 1.4
+    },
+    {
+      "ref": "JT2",
+      "pin": 1,
+      "label": "TAIL",
+      "vehicle_cavity": 1,
+      "net": "TAIL_12V",
+      "pcb_xy_mm": [
+        45.5,
+        108.01
+      ],
+      "case_xy_mm": [
+        31.5,
+        56.65999999999998
+      ],
+      "drill_mm": 1.4
+    },
+    {
+      "ref": "JT2",
+      "pin": 2,
+      "label": "DIM",
+      "vehicle_cavity": 2,
+      "net": "DIM_RETURN",
+      "pcb_xy_mm": [
+        45.5,
+        113.09
+      ],
+      "case_xy_mm": [
+        31.5,
+        51.579999999999984
+      ],
+      "drill_mm": 1.4
+    },
+    {
+      "ref": "JT3",
+      "pin": 1,
+      "label": "RSV3",
+      "vehicle_cavity": 3,
+      "net": null,
+      "pcb_xy_mm": [
+        45.5,
+        97.25
+      ],
+      "case_xy_mm": [
+        31.5,
+        67.41999999999999
+      ],
+      "drill_mm": 1.4
+    },
+    {
+      "ref": "JT3",
+      "pin": 2,
+      "label": "RSV4",
+      "vehicle_cavity": 4,
+      "net": null,
+      "pcb_xy_mm": [
+        45.5,
+        102.33
+      ],
+      "case_xy_mm": [
+        31.5,
+        62.33999999999999
+      ],
+      "drill_mm": 1.4
+    },
+    {
+      "ref": "JT4",
+      "pin": 1,
+      "label": "R-",
+      "vehicle_cavity": null,
+      "net": "LED_R_NEG",
+      "pcb_xy_mm": [
+        48.5,
+        151.05
+      ],
+      "case_xy_mm": [
+        34.5,
+        13.619999999999976
+      ],
+      "drill_mm": 1.4
+    },
+    {
+      "ref": "JT4",
+      "pin": 2,
+      "label": "G-",
+      "vehicle_cavity": null,
+      "net": "LED_G_NEG",
+      "pcb_xy_mm": [
+        48.5,
+        156.13
+      ],
+      "case_xy_mm": [
+        34.5,
+        8.539999999999992
+      ],
+      "drill_mm": 1.4
+    },
+    {
+      "ref": "JT5",
+      "pin": 1,
+      "label": "B-",
+      "vehicle_cavity": null,
+      "net": "LED_B_NEG",
+      "pcb_xy_mm": [
+        48.5,
+        140.29
+      ],
+      "case_xy_mm": [
+        34.5,
+        24.379999999999995
+      ],
+      "drill_mm": 1.4
+    },
+    {
+      "ref": "JT5",
+      "pin": 2,
+      "label": "+LED",
+      "vehicle_cavity": null,
+      "net": "LED_POS",
+      "pcb_xy_mm": [
+        48.5,
+        145.37
+      ],
+      "case_xy_mm": [
+        34.5,
+        19.299999999999983
+      ],
+      "drill_mm": 1.4
+    },
+    {
+      "ref": "JT6",
+      "pin": 1,
+      "label": "W-",
+      "vehicle_cavity": null,
+      "net": "LED_W_NEG",
+      "pcb_xy_mm": [
+        48.5,
+        129.53
+      ],
+      "case_xy_mm": [
+        34.5,
+        35.139999999999986
+      ],
+      "drill_mm": 1.4
+    },
+    {
+      "ref": "JT6",
+      "pin": 2,
+      "label": "NC",
+      "vehicle_cavity": null,
+      "net": null,
+      "pcb_xy_mm": [
+        48.5,
+        134.61
+      ],
+      "case_xy_mm": [
+        34.5,
+        30.059999999999974
+      ],
+      "drill_mm": 1.4
+    }
+  ],
+  "jlcpcb": "C474952",
+  "mpn": "KF128-5.08-2P-AA",
+  "board_count": 1
+}
