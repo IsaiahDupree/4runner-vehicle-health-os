@@ -1,0 +1,58 @@
+{
+  "contract": "revg_media_verification_v1",
+  "asset": {
+    "name": "4Runner_RevG_3D_Demonstrator.mp4",
+    "bytes": 55906697,
+    "sha256": "7703c46f8cba63632b745e3486217cc2ba8b035d1ef9c67e1d3848e690697be4"
+  },
+  "duration_seconds": 117.875,
+  "video_frames": 2829,
+  "video_resolution": [
+    1920,
+    1080
+  ],
+  "fps": 24,
+  "audio": {
+    "codec": "aac",
+    "sample_rate": 48000,
+    "channels": 2,
+    "integrated_lufs": -17.12,
+    "true_peak_dbtp": -4.26
+  },
+  "source_sha256": "16b43c7595cfb29e09d76bc54b4b29cb57dbfe33fd73a99953a554d10d7696b7",
+  "native_receipt_sha256": "3f3b29233e61d368cfd4bd075f01fb29f2b96a7ab92ee71d6d6dbd71addac27b",
+  "checks": {
+    "native_job_succeeded": true,
+    "output_matches_native_hash": true,
+    "1080p_24fps": true,
+    "exact_frame_count": true,
+    "matching_video_audio_duration": true,
+    "aac_stereo_48khz": true,
+    "full_decode_clean": true,
+    "camera_framing": true,
+    "speech_timing_verified": true,
+    "voice_loudness_range": true,
+    "true_peak_headroom": true,
+    "decoded_chapter_samples_reviewed": true,
+    "timeout_and_service_transition_samples_reviewed": true
+  },
+  "projected_assembly_checks_passed": 1630,
+  "youtube": {
+    "verified_at": "2026-11-21T05:58:49.204677+00:00",
+    "video_id": "pL0iKmJQQIs",
+    "watch_url": "https://www.youtube.com/watch?v=pL0iKmJQQIs",
+    "title": "4Runner Rev G RGBW Controller | 3D Prototype Walkthrough",
+    "channel_id": "UCnDBsELI2OIaEI5yxA77HNA",
+    "privacy_status": "unlisted",
+    "upload_status": "processed",
+    "processing_status": "succeeded",
+    "duration": "PT1M58S",
+    "definition": "hd",
+    "made_for_kids": false,
+    "contains_synthetic_media": null,
+    "thumbnail_applied": true,
+    "asset_sha256": "7703c46f8cba63632b745e3486217cc2ba8b035d1ef9c67e1d3848e690697be4"
+  },
+  "physical_validation": false,
+  "wire_loops_and_installed_connector_poses": "illustrative; mating alignment and actual bends pending"
+}

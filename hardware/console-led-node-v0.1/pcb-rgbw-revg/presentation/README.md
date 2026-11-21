@@ -5,6 +5,11 @@ the single populated board, its protection and sensing components, and the
 planned service sequence. The video uses Isaiah Dupree’s registered
 isaiah-qwen3-live-mic-v1 voice on owned Orion hardware.
 
+[Watch the unlisted 1:58 demonstration](https://www.youtube.com/watch?v=pL0iKmJQQIs).
+The upload was read back on the owner's channel with unlisted privacy and
+successful HD processing. This movie records Rev G before the screw-terminal
+revision. [Measured media checks](validation/media-verification.json).
+
 ![Outside, inside, populated board, service assembly, wire connectors and component detail](images/RevG-Studio-Gallery.jpg)
 
 [Full-resolution pictures](images) include the closed enclosure, installed
