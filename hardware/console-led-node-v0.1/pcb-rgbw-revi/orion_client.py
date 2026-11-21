@@ -150,7 +150,7 @@ def fetch(identity):
     if result['status'] not in {'succeeded','failed','cancelled'}:raise RuntimeError('Wait for terminal state')
     output=ARTIFACTS/identity/'output';output.mkdir(exist_ok=True)
     path=result['job_dir'].replace('\\','/')+'/out/.'
-    subprocess.run(['scp','-O','-q','-r','orion:'+path,str(output)],check=True,timeout=60)
+    subprocess.run(['scp','-q','-r','orion:'+path,str(output)],check=True,timeout=60)
     for row in result['artifacts']:
         f=output/row['name']
         if f.stat().st_size!=row['bytes'] or sha(f)!=row['sha256']:raise RuntimeError('Artifact hash mismatch: '+row['name'])
