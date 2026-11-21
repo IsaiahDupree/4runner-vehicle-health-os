@@ -1,0 +1,24 @@
+{
+  "source_commit": "7495908d578f5e43028b2bb4905903bd330e670f",
+  "native_job_id": "mdl_4f93a7c0f5ef4021",
+  "status": "succeeded",
+  "native_archive_crc_passed": true,
+  "downloaded_sha256_verified": true,
+  "archive_internal_manifests_match_plan": true,
+  "archives": {
+    "4Runner_RGBW_RevH_Gerbers.zip": {
+      "bytes": 128105,
+      "sha256": "0994e71ca142f11856e93df684e86044239e1fa6003a481bb1ae4dbe137724f0",
+      "files": 14,
+      "crc_passed": true
+    },
+    "4Runner_RevH_Design_Kit.zip": {
+      "bytes": 36456120,
+      "sha256": "7ada273c6ccca212e4143908a07d56a3be1911247dbb0992dce993fc871a5422",
+      "files": 156,
+      "crc_passed": true
+    }
+  },
+  "physical_qualification": false,
+  "manufacturing_released": false
+}
