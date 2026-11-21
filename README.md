@@ -25,6 +25,10 @@ effect, segment and controller-preset controls. Config contains the existing CAN
 relay, Rev I voltage monitor and Toyota input settings. It uses the current
 single analog RGBW output zone.
 
+The [4Runner WLED Integration skill](skills/4runner-wled-integration/SKILL.md)
+preserves the approved interface, six-wire architecture, PCB/CAD and JLCPCB cost
+lessons, with links to the actual test and delivery evidence.
+
 ## Rev H lighting controller
 
 The [screw-terminal revision](hardware/console-led-node-v0.1/pcb-rgbw-revh/README.md)

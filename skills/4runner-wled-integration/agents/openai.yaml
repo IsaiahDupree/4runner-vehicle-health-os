@@ -1,0 +1,3 @@
+interface:
+  display_name: "4Runner WLED Integration"
+  short_description: "Maintain the 4Runner WLED controller and iOS app"

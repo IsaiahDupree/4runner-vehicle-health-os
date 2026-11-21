@@ -2,6 +2,8 @@
 
 Owner-approved reference: **WLED's UI/UX and lighting functionality**.
 
+Reusable project knowledge is saved in the [4Runner WLED Integration skill](../../skills/4runner-wled-integration/SKILL.md), with focused references for the native interface, PCB/CAD/JLCPCB decisions and verification/delivery lessons. Its stock, cost and test figures are dated evidence; reconcile them with the current accepted revision before reuse.
+
 ## Interface
 
 - Keep Colors, Effects, Segments and Presets as the primary tabs.

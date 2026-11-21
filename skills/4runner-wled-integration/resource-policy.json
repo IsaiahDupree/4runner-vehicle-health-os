@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "heavy_compute_host": "orion",
+  "mac_execution": "forbidden",
+  "failure_mode": "fail_closed",
+  "heavy_operations": [
+    "Native PCB/CAD generation, routing and geometry checks",
+    "Firmware cross-compilation",
+    "Rendering, slicing and electrical/thermal simulation"
+  ],
+  "mac_allowed": [
+    "Source editing, Git and authenticated API/job orchestration",
+    "Lightweight single-process tests and metadata/hash checks",
+    "Bounded Apple-only builds, signing and native UI tests"
+  ],
+  "execution_surface": "Documentation and metadata only; no bundled executables or services"
+}
