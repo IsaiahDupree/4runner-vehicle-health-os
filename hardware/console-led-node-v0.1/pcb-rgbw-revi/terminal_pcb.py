@@ -91,7 +91,8 @@ def finish(out):
     actual={}
     for fp in board.GetFootprints():
         actual[fp.GetReference()]={'mpn':fp.GetField('MPN').GetText() if fp.GetField('MPN') else None,
-          'footprint':fp.GetFPID().Format(),'value':fp.GetValue(),'x_mm':pcbnew.ToMM(fp.GetPosition().x),
+          'footprint':str(fp.GetFPID().GetLibNickname())+':'+str(fp.GetFPID().GetLibItemName()),
+          'value':fp.GetValue(),'x_mm':pcbnew.ToMM(fp.GetPosition().x),
           'y_mm':pcbnew.ToMM(fp.GetPosition().y),'rotation_deg':fp.GetOrientationDegrees(),
           'pad_nets':{p.GetNumber():str(p.GetNetname()) for p in fp.Pads()}}
     for ref,(xy,angle) in previous['existing_footprint_poses'].items():
