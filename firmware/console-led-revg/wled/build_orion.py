@@ -13,7 +13,7 @@ import time
 
 TAG = "v16.0.1"
 COMMIT = "29b389df1c1aaec6ff53aea742d17063b985906c"
-TARGET = "vhos_revg_n16r2"
+TARGET = "vhos_revi_n16r2"
 TOOLS = Path("C:/orion/projects/revg-wled-16-0-1")
 SOURCE = Path(__file__).resolve().parent
 
@@ -47,7 +47,8 @@ def build(out):
         raise RuntimeError("WLED source pin mismatch")
     usermod = source / "usermods/vhos_revg"
     usermod.mkdir()
-    for name in ("library.json", "revg_policy.h", "revg_relay.h", "revg_usermod.cpp"):
+    for name in ("library.json", "revg_policy.h", "revg_relay.h", "revg_inputs.h", "revg_control.h",
+                 "revg_voltage.h", "revg_ui.h", "revg_usermod.cpp"):
         shutil.copyfile(SOURCE / name, usermod / name)
     shutil.copyfile(SOURCE / "platformio_override.ini", source / "platformio_override.ini")
     wled = source / "wled00"
@@ -93,8 +94,8 @@ def compile_image(source, out, pio, python):
     for path in (esptool, *pieces.values()):
         if not path.is_file():
             raise FileNotFoundError(path)
-    app = out / "vhos-revg-wled-n16r2-app.bin"
-    merged = out / "vhos-revg-wled-n16r2-factory.bin"
+    app = out / "vhos-revi-wled-n16r2-app.bin"
+    merged = out / "vhos-revi-wled-n16r2-factory.bin"
     shutil.copyfile(pieces["0x10000"], app)
     with (out / "image-info.log").open("wb") as log:
         subprocess.run([python, esptool, "--chip", "esp32s3", "image_info", app], check=True,
@@ -108,6 +109,8 @@ def compile_image(source, out, pio, python):
         "upstream": "https://github.com/wled/WLED",
         "tag": TAG, "commit": COMMIT, "platformio": "6.1.19", "environment": TARGET,
         "module": "ESP32-S3-WROOM-1-N16R2", "flash_mb": 16, "psram_mb": 2,
+        "pcb_target": "Rev I with GPIO1 protected ACC sense; do not fit to Rev H without that circuit",
+        "usermod_sha256": {p.name: sha256(p) for p in SOURCE.glob("revg_*") if p.is_file()},
         "flash_offset": "0x0", "duration_s": round(time.monotonic() - started, 2),
         "hardware_flashing_or_vehicle_validation": False,
         "images": {path.name: {"bytes": path.stat().st_size, "sha256": sha256(path)} for path in (app, merged)},

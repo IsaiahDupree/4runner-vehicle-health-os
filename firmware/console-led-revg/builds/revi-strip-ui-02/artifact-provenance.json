@@ -1,0 +1,25 @@
+{
+  "job_id": "mdl_6544b225b1cc4f8c",
+  "files": {
+    "firmware-build.json": {
+      "native_sha256": "765b38f25f912c39c634bc61664b60044371dac19c7b7db5ee49e6ba513aed1f",
+      "published_sha256": "c5e4fec7baa6775dbdae36594c3d4da0041de87579da2febc18ecdf5a932d4b7",
+      "transformation": "UTF-8 text with LF and trailing whitespace normalized; native original retained privately"
+    },
+    "WLED-EUPL-1.2.txt": {
+      "native_sha256": "456af13fc6cd9aa302de85e353521168ecc4aa82fe6bf9f52177908925f49487",
+      "published_sha256": "5d502840a45abb28b2d7f14239bb8f62934ed1a3923ce2e810c5c6c0958ac086",
+      "transformation": "UTF-8 text with LF and trailing whitespace normalized; native original retained privately"
+    },
+    "vhos-revi-wled-n16r2-app.bin": {
+      "native_sha256": "d0a6f814e227532a6bbc37e7b658a621b310cfe5c972def4739f94426ee6474f",
+      "published_sha256": "d0a6f814e227532a6bbc37e7b658a621b310cfe5c972def4739f94426ee6474f",
+      "transformation": "byte identical"
+    },
+    "vhos-revi-wled-n16r2-factory.bin": {
+      "native_sha256": "0b9679f7095fa763c69f4046bd24188ba6de8f1056a1466666d955401e9cc536",
+      "published_sha256": "0b9679f7095fa763c69f4046bd24188ba6de8f1056a1466666d955401e9cc536",
+      "transformation": "byte identical"
+    }
+  }
+}

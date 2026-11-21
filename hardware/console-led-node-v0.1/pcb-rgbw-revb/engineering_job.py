@@ -151,7 +151,8 @@ def source_files():
                                              "lean_board.py", "lean_board_pcb.py", "lean_board_parts.csv", "gland_case.py", "gland_review.py",
                                              *(name + ".kicad_mod" for name in rev_f.LAND_PATTERNS))},
             **{f"wled/{name}": firmware / name for name in (
-                "build_orion.py", "library.json", "platformio_override.ini", "revg_policy.h", "revg_relay.h", "revg_usermod.cpp")},
+                "build_orion.py", "library.json", "platformio_override.ini", "revg_policy.h", "revg_relay.h",
+                "revg_inputs.h", "revg_control.h", "revg_voltage.h", "revg_ui.h", "revg_usermod.cpp")},
             "run_isolated_engineering.py": (ROOT / "run_isolated_engineering.py") if (ROOT / "run_isolated_engineering.py").exists()
             else REFERENCE / "run_isolated_engineering.py",
             **{f"reference/{name}": REFERENCE / name for name in ("circuit.py", "native_pcb.py", "engineering-inputs.json")}}

@@ -57,7 +57,7 @@ private struct SystemToolsView: View {
         NavigationLink {
           LightingRelayView()
         } label: {
-          Label("Rev G lighting", systemImage: "lightbulb.led")
+          Label("4Runner lighting", systemImage: "lightbulb.led")
         }
       }
       Section {
@@ -81,15 +81,50 @@ private struct LightingRelayView: View {
   @State private var running = false
   @State private var stopping = false
   @State private var status = "Relay stopped"
+  @State private var panel = "control"
+  @State private var webKey = ""
 
   var body: some View {
-    Form {
-      Section("Manual color") {
-        Link("Open WLED", destination: LightingRelayCommand.controller)
-        Text("Connect to the controller’s private Wi‑Fi. Leave VHOS connected to the CAN gateway over Bluetooth.")
-          .font(.footnote)
-      }
-      Section("CAN lighting") {
+    VStack(spacing: 0) {
+      VStack(alignment: .leading, spacing: 14) {
+        HStack {
+          Image(systemName: "lightbulb.led.wide.fill").foregroundStyle(.orange)
+          VStack(alignment: .leading, spacing: 3) {
+            Text("4RUNNER / LIGHTING").font(.caption.weight(.semibold)).tracking(2)
+            Text("Local RGBW control").font(.caption).foregroundStyle(.secondary)
+          }
+          Spacer()
+          Text(running ? "CAN RELAY ON" : "RELAY OFF")
+            .font(.caption2.weight(.semibold)).padding(8)
+            .background(running ? Color.green.opacity(0.15) : Color.secondary.opacity(0.1), in: Capsule())
+        }
+        Picker("Lighting workspace", selection: $panel) {
+          Text("Lights & setup").tag("control")
+          Text("CAN relay").tag("relay")
+        }.pickerStyle(.segmented)
+      }.padding()
+      if panel == "control" {
+        if webKey.isEmpty {
+          Form {
+            Section("Connect once, control locally") {
+              Text("Join 4Runner-Lighting Wi-Fi. VHOS keeps its Bluetooth connection to the CAN gateway while this screen controls WLED.")
+              SecureField("Controller relay key", text: $credential)
+                .textInputAutocapitalization(.never).autocorrectionDisabled()
+              Button("Open lighting controls") { webKey = credential }
+                .disabled(LightingRelayCommand.start(signal).request(session: 1, key: credential) == nil)
+              Text("Set a unique relay key and private Wi-Fi password in WLED first. The key stays in this view’s memory.")
+                .font(.footnote).foregroundStyle(.secondary)
+              Link("Initial WLED setup", destination: LightingRelayCommand.controller)
+            }
+          }
+        } else {
+          LightingLocalWebView(key: webKey) { updated in
+            if signal != updated { running = false; signal = updated }
+          }.id(webKey)
+        }
+      } else {
+      Form {
+      Section("Gateway → VHOS → WLED") {
         Picker("Signal configured in WLED", selection: $signal) {
           ForEach(LightingRelaySignal.allCases) { item in
             Text(item.label).tag(item)
@@ -108,9 +143,14 @@ private struct LightingRelayView: View {
         }
         .disabled(stopping || (!running && LightingRelayCommand.start(signal).request(session: 1, key: credential) == nil))
         Text(status).accessibilityIdentifier("LightingRelayStatus")
+        Text("Keep this lighting screen in the foreground. You can use Lights & setup while the relay runs. Applying a manual color takes over immediately; lost samples expire on the controller after 2.5 seconds.")
+          .font(.footnote).foregroundStyle(.secondary)
+      }
+      }
       }
     }
-    .navigationTitle("Rev G lighting")
+    .navigationTitle("Lighting")
+    .navigationBarTitleDisplayMode(.inline)
     .task(id: running && scenePhase == .active) {
       if running && scenePhase == .active { await relay() }
     }

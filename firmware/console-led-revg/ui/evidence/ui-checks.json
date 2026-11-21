@@ -1,0 +1,30 @@
+{
+  "browser": "Playwright WebKit",
+  "source": "Actual editable UI served by local static HTTP server",
+  "controllerConnected": false,
+  "simulatedControllerResponses": false,
+  "checks": [
+    {
+      "viewport": "head-unit",
+      "width": 1280,
+      "height": 800,
+      "localColorPreview": true,
+      "activityUnits": true,
+      "noHorizontalOverflow": true,
+      "missingControllerRejected": true,
+      "noInventedVoltage": true,
+      "browserErrors": []
+    },
+    {
+      "viewport": "phone",
+      "width": 390,
+      "height": 844,
+      "localColorPreview": true,
+      "activityUnits": true,
+      "noHorizontalOverflow": true,
+      "missingControllerRejected": true,
+      "noInventedVoltage": true,
+      "browserErrors": []
+    }
+  ]
+}

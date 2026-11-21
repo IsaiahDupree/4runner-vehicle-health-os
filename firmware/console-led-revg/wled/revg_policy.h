@@ -65,6 +65,7 @@ class Policy {
     sampleActive_ = true;
     lastSequence_ = sequence;
     receiptTime_ = now;
+    lastValue_ = value;
     lit_ = lit_ ? value >= rule_.exit : value >= rule_.enter;
     return true;
   }
@@ -82,12 +83,15 @@ class Policy {
 
   uint8_t brightness(uint32_t now) const { return fresh(now) && lit_ ? rule_.brightness : 0; }
   uint32_t color() const { return rule_.rgbw; }
+  int32_t sampleValue() const { return lastValue_; }
+  uint32_t sampleAgeMs(uint32_t now) const { return now - receiptTime_; }
 
  private:
   Rule rule_{};
   uint32_t session_ = 0;
   uint32_t lastSequence_ = 0;
   uint32_t receiptTime_ = 0;
+  int32_t lastValue_ = 0;
   bool sampleActive_ = false;
   bool lit_ = false;
 };

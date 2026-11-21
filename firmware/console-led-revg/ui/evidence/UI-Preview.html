@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="color-scheme" content="dark"><title>4Runner · Lighting</title><style>:root{--bg:#0b0d10;--card:#15181d;--line:#292e35;--muted:#9aa2ae;--ink:#edf0f3;--accent:#f59e64;--preview:#ff8000;font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:var(--bg);font-synthesis:none}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 65% 0, #251b1538,transparent 42%)}button,input,select{font:inherit}button,a,input,select,summary{-webkit-tap-highlight-color:transparent}a{color:var(--accent);text-decoration:none}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.4}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid #e7b496;outline-offset:4px}.app{max-width:1440px;padding:0 48px;margin:auto}.topbar{height:92px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}.brand{display:flex;align-items:center;gap:12px;font-size:13px;letter-spacing:.15em;font-weight:800;color:var(--ink)}.brand small{display:block;font-size:9px;letter-spacing:.2em;color:var(--muted);margin-top:5px}.brand-mark{border:1px solid #ae7754;border-radius:10px;color:var(--accent);padding:11px 9px;letter-spacing:-2px;font-size:20px}.connection{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--muted)}.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#737981}.dot.live{background:#8fc7aa;box-shadow:0 0 9px #8fc7aa40}.quiet{margin-left:22px;color:var(--ink)}.heading{display:flex;justify-content:space-between;align-items:center;padding:42px 0 25px}.eyebrow{font-size:10px;font-weight:700;letter-spacing:.16em;color:var(--accent);line-height:1.7;margin:0 0 8px}h1{font-size:clamp(36px,4vw,53px);line-height:1.05;font-weight:580;letter-spacing:-.045em;margin:0 0 14px}h2{font-weight:570;font-size:23px;letter-spacing:-.025em;margin:0 0 14px}.subtitle{font-size:14px;color:var(--muted);margin:0}.revision{font-size:11px;letter-spacing:.14em;text-align:right;color:var(--muted)}.revision span{display:block;font-size:11px;letter-spacing:0;margin-top:8px}.connect-card{border:1px solid var(--line);border-radius:14px;background:#15181b;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:24px}.connect-card strong{font-size:13px}.connect-card p{font-size:12px;max-width:620px;color:var(--muted);line-height:1.65;margin:7px 0 0}.connect-card form{display:flex;gap:8px;min-width:315px}.connect-card input{width:210px}.tabs{display:flex;gap:32px;margin:27px 0 25px;border-bottom:1px solid var(--line)}.tabs button{font-size:10px;letter-spacing:.04em;color:#747c87;border:0;border-bottom:2px solid transparent;background:none;padding:0 0 17px}.tabs button span{font-size:13px;letter-spacing:0;margin-left:7px}.tabs button[aria-selected=true]{color:var(--accent);border-color:var(--accent)}.lights-grid{display:grid;grid-template-columns:1.45fr 1fr;gap:22px}.card,.vehicle-card{border:1px solid var(--line);border-radius:19px;background:var(--card);padding:26px}.card-top{display:flex;align-items:center;justify-content:space-between;gap:15px}.card-top h2{margin:0}.card-top .eyebrow{margin:0;color:var(--muted)}.badge,.pill{font-size:9px;letter-spacing:.1em;white-space:nowrap;border:1px solid #373d47;border-radius:6px;padding:6px 8px;color:#c2c8cf}.pill{border:0;background:#252a32;color:#aeb7c3}.vehicle-card{padding:26px 26px 0;overflow:hidden;background:radial-gradient(ellipse at 50% 65%,#24272d,#15181d 70%)}.vehicle-scene{height:266px;position:relative;display:grid;place-items:center}.vehicle-scene svg{width:100%;max-height:270px;position:relative;z-index:1}.ground-glow{fill:var(--preview);opacity:.3;filter:blur(14px)}.strip-line{stroke:var(--preview);filter:drop-shadow(0 4px 7px var(--preview))}.halo{position:absolute;background:radial-gradient(ellipse,var(--preview),transparent 70%);width:75%;height:40px;bottom:37px;opacity:.2;filter:blur(10px)}.scene-label{position:absolute;bottom:3px;text-align:center;color:var(--muted);font-size:10px;letter-spacing:.02em;display:flex;align-items:center;gap:6px}.preview-dot{background:var(--preview)}.vehicle-footer{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--line);margin-top:22px;padding:20px 0}.vehicle-footer>div{padding:0 18px;border-left:1px solid var(--line)}.vehicle-footer>div:first-child{border:0;padding-left:0}.vehicle-footer .muted{font-size:10px;display:block;margin-bottom:10px}.vehicle-footer strong{font-size:14px;font-weight:550}.muted{color:var(--muted);font-size:13px;line-height:1.65}.small{font-size:11px;line-height:1.7}.color-card .muted{margin-top:12px}.swatches{display:flex;align-items:center;gap:13px;margin:27px 0 30px}.swatches>button{width:32px;height:32px;border-radius:50%;border:3px solid var(--card);outline:1px solid transparent;background:var(--swatch)}.swatches>button[aria-pressed=true]{outline-color:var(--swatch)}.custom-color{width:32px;height:32px;border-radius:50%;border:1px solid #68717c;position:relative;display:grid;place-items:center;cursor:pointer}.custom-color input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}.range-label{display:flex;justify-content:space-between;font-size:12px;margin:23px 0 12px}.range-label output{color:#c9cfd7}input[type=range]{padding:0;border:0;width:100%;accent-color:var(--accent);height:6px;cursor:pointer;margin:0 0 8px}input,select{color:var(--ink);background:#101318;border:1px solid #363c45;border-radius:8px;padding:11px 12px;min-width:0;font-size:12px}input[type=checkbox]{accent-color:var(--accent);width:17px;height:17px;margin:0 10px 0 0}.button{display:inline-flex;justify-content:center;align-items:center;gap:8px;padding:12px 18px;border:1px solid transparent;border-radius:8px;font-size:12px;font-weight:650;min-height:44px}.primary{background:var(--accent);color:#21160f}.secondary{background:#222730;border-color:#3c434e;color:#d9dfe7}.actions{display:flex;gap:10px;margin:26px 0 12px}.actions .primary{flex:1}.metrics{display:grid;grid-template-columns:1fr 1fr 1fr;gap:22px;margin-top:22px}.metric{display:flex;align-items:flex-start;gap:18px;border:1px solid var(--line);border-radius:14px;padding:23px;background:#111419}.metric-icon{font-size:24px;line-height:1.5;color:var(--accent)}.metric .eyebrow{color:var(--muted);font-size:9px;margin:0 0 8px}.metric strong{display:block;font-size:20px;font-weight:550;letter-spacing:-.02em}.metric strong small{font-size:14px;font-weight:400;color:var(--muted)}.metric p{color:var(--muted);font-size:10px;line-height:1.5;margin:9px 0 0}.notice{display:flex;gap:13px;padding:18px 0;margin:15px 0 6px;color:#939da9;align-items:flex-start}.notice>span{color:var(--accent);font-size:20px}.notice p{font-size:11px;line-height:1.8;margin:0;max-width:1000px}.notice b{font-weight:550;color:#bcc3cd}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:22px}.two-col .card{padding:30px}.two-col .card>p.muted{margin-bottom:26px}form>label{display:block;font-size:12px;margin:20px 0 11px}select{width:100%}.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:20px 0}.field-grid label{font-size:11px;color:var(--muted);line-height:1.5}.field-grid input{display:block;width:100%;margin-top:8px}.unit{color:#d5dce4}.rule-color{display:flex;gap:13px;align-items:center;font-size:12px;color:var(--muted);margin-bottom:20px}.color-chip{width:24px;height:24px;border-radius:6px;background:var(--preview)}.flow{list-style:none;padding:0;margin:30px 0}.flow li{display:flex;gap:19px;padding:15px 0;align-items:flex-start}.flow li>span{background:#2c2521;color:var(--accent);border:1px solid #514032;border-radius:9px;font-size:11px;padding:10px}.flow strong{font-size:13px;font-weight:550}.flow p{font-size:12px;color:var(--muted);line-height:1.65;margin:6px 0}.safe-state{border-top:1px solid var(--line);padding-top:22px;font-size:13px}.safe-state b{font-weight:550;color:var(--accent)}.safe-state p{font-size:12px;color:var(--muted);line-height:1.7}.wire-list{margin:24px 0}.wire-list>div{display:flex;align-items:center;gap:12px;padding:16px 0;border-bottom:1px solid var(--line);font-size:11px}.wire-list b{font-weight:500}.wire-list code{margin-left:auto;font-size:10px;color:var(--muted)}.wire{width:7px;height:25px;background:#848b93;border-radius:5px}.wire.ground{background:#d2d8df}.wire.acc{background:#d97d58}.wire.tail{background:#90b69b}.wire.dim{background:#9a91b8}.wire.reserve{background:#47515f}details{border-top:1px solid var(--line);font-size:12px;padding-top:18px;margin-top:18px}summary{cursor:pointer;color:#d9dfe6}details p{font-size:12px;color:var(--muted);line-height:1.8}.toggle{display:flex;align-items:center;line-height:1.5}.voltage-card{display:grid;grid-template-columns:1fr 1fr;gap:35px;margin-top:22px}.voltage-card .field-grid{margin-top:0}footer{border-top:1px solid var(--line);margin-top:20px;padding:24px 0 32px;display:flex;align-items:center;justify-content:space-between;gap:15px;color:#777f8b;font-size:9px;letter-spacing:.09em}#feedback{position:fixed;bottom:25px;left:50%;transform:translateX(-50%);z-index:10;background:#e4bf9c;color:#23170f;padding:15px 22px;border-radius:12px;box-shadow:0 8px 40px #0008;font-size:12px;max-width:90%;width:max-content;line-height:1.6}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}[hidden]{display:none!important}@media(min-width:1450px){.heading{padding-top:55px}}@media(max-width:1050px){.app{padding:0 28px}.connect-card{align-items:flex-start;gap:15px}.connect-card form{min-width:260px}.connect-card input{width:165px}.lights-grid{grid-template-columns:1.2fr 1fr}.swatches{gap:9px}.metrics{gap:14px}.metric{padding:20px 16px;gap:10px}.metric strong{font-size:18px}.vehicle-scene{height:260px}.card,.vehicle-card{padding:22px}.vehicle-card{padding-bottom:0}}@media(max-width:760px){.app{padding:0 20px}.topbar{height:77px}.connection{font-size:10px}.connection .quiet{margin-left:8px}.brand{font-size:11px}.brand small{font-size:8px}.brand-mark{font-size:18px;padding:9px}.heading{padding-top:32px}.revision{display:none}.subtitle{font-size:12px;line-height:1.7}.connect-card{display:block;padding:17px}.connect-card form{margin-top:15px;min-width:0}.connect-card input{flex:1;width:0}.connect-card p{font-size:11px}.tabs{gap:25px;margin-top:24px}.tabs button span{font-size:12px}.tabs button{font-size:9px}.lights-grid,.two-col,.voltage-card{grid-template-columns:1fr}.vehicle-scene{height:225px}.vehicle-card{padding:22px 18px 0}.vehicle-footer{margin-top:12px}.color-card{padding:25px}.swatches{gap:18px}.metrics{grid-template-columns:1fr}.metric{align-items:center;padding:20px}.metric>div{display:grid;grid-template-columns:1fr 1fr;width:100%;align-items:center}.metric .eyebrow{margin:0;grid-column:1}.metric strong{grid-row:1/3;grid-column:2;text-align:right;font-size:18px}.metric p{margin-top:6px;font-size:9px}.metric-icon{font-size:22px}.notice p{font-size:10px}.two-col .card{padding:24px}.voltage-card{gap:12px;padding:24px}.wire-list>div{gap:9px;font-size:10px}.wire-list code{font-size:9px}footer{flex-wrap:wrap;font-size:8px;line-height:1.7}footer span:last-child{display:none}}@media(prefers-reduced-motion:no-preference){button{transition:background .15s,opacity .15s,outline .15s}.ground-glow,.strip-line{transition:fill .2s,stroke .2s}}@media(max-width:380px){.app{padding:0 14px}.swatches{gap:13px}.brand small{font-size:7px}.connection .quiet{display:none}.card-top .badge{font-size:7px}.vehicle-footer strong{font-size:12px}}
+
+.native .connect-card{display:none}
+</style></head>
+<body><div class="app">
+<header class="topbar"><a class="brand" href="#"><span class="brand-mark">IV</span><span>4RUNNER <small>LIGHTING STUDIO</small></span></a><div class="connection"><span class="dot" id="connectionDot"></span><span id="connectionLabel">Controller disconnected</span><a href="/" class="quiet">WLED ↗</a></div></header>
+<div class="heading"><div><p class="eyebrow">YOUR TRUCK. YOUR ATMOSPHERE.</p><h1>Set the tone.</h1><p class="subtitle">Whole-strip RGBW. Local control. Connected to your drive.</p></div><div class="revision">ONE BOARD<span id="boardLabel">Rev H / I · ESP32-S3</span></div></div>
+<section class="connect-card" aria-label="Controller connection"><div><strong>Connect to your controller</strong><p>Join <b>4Runner-Lighting</b> Wi-Fi, then enter its relay key. Set the key and private Wi-Fi password in WLED first.</p></div><form id="connectForm"><label class="sr-only" for="relayKey">Controller relay key</label><input id="relayKey" type="password" minlength="16" maxlength="64" autocomplete="off" placeholder="Controller relay key"><button class="button primary" type="submit">Connect</button></form></section>
+<nav class="tabs" aria-label="Lighting views"><button type="button" data-tab="lights" aria-selected="true">01 <span>Lights</span></button><button type="button" data-tab="automations" aria-selected="false">02 <span>Automations</span></button><button type="button" data-tab="setup" aria-selected="false">03 <span>Wiring & setup</span></button></nav>
+<main>
+<section id="lights" class="panel"><div class="lights-grid">
+<article class="vehicle-card"><div class="card-top"><span class="eyebrow">2005 TOYOTA 4RUNNER · V8</span><span class="badge">COLOR PREVIEW</span></div>
+<div class="vehicle-scene" id="scene"><div class="halo"></div><svg viewBox="0 0 700 290" role="img" aria-label="SUV silhouette with an illustrative underbody color preview"><defs><linearGradient id="body" x2="0" y2="1"><stop stop-color="#565e68"/><stop offset=".45" stop-color="#242a31"/><stop offset="1" stop-color="#343c44"/></linearGradient></defs><ellipse class="ground-glow" cx="350" cy="228" rx="238" ry="18"/><path d="M86 200 100 154 139 137 180 75 452 75 513 132 591 151 616 181 609 211 553 216 539 183 488 181 467 218 239 218 222 181 171 181 150 215 99 212Z" fill="url(#body)" stroke="#69727e" stroke-width="2"/><path d="m153 132 43-45h108v45Zm165-45h120l48 45H318Z" fill="#0c141d" stroke="#737d87"/><path d="M313 83v117m140-55v57M246 140v59M112 170h31m425-7h32" fill="none" stroke="#69727e" stroke-width="2"/><path d="M190 66h253m-238-7v9m216-9v9" stroke="#68737c" stroke-width="4"/><rect x="280" y="147" width="20" height="4" rx="2" fill="#969c9f"/><rect x="424" y="147" width="20" height="4" rx="2" fill="#969c9f"/><rect x="97" y="179" width="28" height="8" rx="2" fill="#dcc6a5"/><rect x="582" y="178" width="23" height="9" rx="2" fill="#af634a"/><g fill="#0b0d10" stroke="#474e58" stroke-width="5"><circle cx="196" cy="210" r="40"/><circle cx="515" cy="210" r="40"/></g><g fill="#8c9298" stroke="#222932" stroke-width="9"><circle cx="196" cy="210" r="21"/><circle cx="515" cy="210" r="21"/></g><path class="strip-line" d="M248 217h218" stroke-width="5" stroke-linecap="round"/></svg><div class="scene-label"><span class="dot preview-dot"></span><span id="previewLabel">Amber · local preview</span></div></div>
+<div class="vehicle-footer"><div><span class="muted">Controller output</span><strong id="outputState">—</strong></div><div><span class="muted">Applied level</span><strong id="effectiveLevel">—</strong></div><div><span class="muted">Control mode</span><strong id="mode">—</strong></div></div></article>
+<article class="card color-card"><div class="card-top"><h2>Make it yours</h2><span class="pill">RGB + WHITE</span></div><p class="muted">One color across every connected section.</p><div class="swatches" role="group" aria-label="Choose a color"><button type="button" data-color="#ff8000" style="--swatch:#ff8000" aria-label="Amber" aria-pressed="true"></button><button type="button" data-color="#ff352d" style="--swatch:#ff352d" aria-label="Red" aria-pressed="false"></button><button type="button" data-color="#35bca4" style="--swatch:#35bca4" aria-label="Teal" aria-pressed="false"></button><button type="button" data-color="#4d88ff" style="--swatch:#4d88ff" aria-label="Blue" aria-pressed="false"></button><button type="button" data-color="#b489ff" style="--swatch:#b489ff" aria-label="Violet" aria-pressed="false"></button><label class="custom-color" aria-label="Custom RGB color"><input id="rgb" type="color" value="#ff8000"><span>+</span></label></div><div class="range-label"><label for="white">Dedicated white</label><output id="whiteValue">0%</output></div><input id="white" type="range" min="0" max="255" value="0"><div class="range-label"><label for="brightness">Requested brightness</label><output id="brightnessValue">38%</output></div><input id="brightness" type="range" min="0" max="255" value="96"><div class="actions"><button id="applyColor" class="button primary" data-output disabled>Apply color</button><button id="off" class="button secondary" data-connected disabled>Turn off</button></div><p class="small muted">Apply color takes manual control and stops CAN automation. Brightness is an intent setting; the evaluation firmware limits PWM duty separately.</p></article>
+</div><div class="metrics"><article class="metric"><span class="metric-icon">↯</span><div><span class="eyebrow">ACC SUPPLY</span><strong id="voltageValue">— <small>V</small></strong><p id="voltageState">Awaiting voltage-sense board</p></div></article><article class="metric"><span class="metric-icon">⌁</span><div><span class="eyebrow">WIRELESS CAN</span><strong id="canState">No live sample</strong><p>VHOS Bluetooth → controller Wi-Fi</p></div></article><article class="metric"><span class="metric-icon">◐</span><div><span class="eyebrow">TOYOTA INPUTS</span><strong id="senseState">Not connected</strong><p id="senseReadings">TAIL — · DIM — ADC mV</p></div></article></div><div class="notice"><span>↗</span><p><b>BTF analog RGBW · 12 V · IP67 assumption.</b> Strip and installed length await electrical qualification. Existing output screen: 500 mA/channel, 1 A combined. The LED rail follows protected vehicle voltage.</p></div></section>
+<section id="automations" class="panel" hidden><div class="two-col"><article class="card"><div class="card-top"><div><p class="eyebrow">REACT TO THE DRIVE</p><h2>CAN → color</h2></div><span id="automationBadge" class="pill">NOT RUNNING</span></div><p class="muted">Set a threshold with hysteresis. Use the VHOS app to relay fresh, supported readings from the gateway.</p><form id="ruleForm"><label for="signal">Vehicle parameter</label><select id="signal"><option value="0">Engine speed · rpm</option><option value="1">Vehicle speed · km/h</option><option value="2">Coolant temperature · °C</option><option value="3">Calculated engine load · %</option><option value="4">Live CAN activity · 0 / 1</option></select><div class="field-grid"><label>Turn on at <span class="unit">rpm</span><input id="enter" type="number" step=".01" value="1500" required></label><label>Turn off below <span class="unit">rpm</span><input id="exit" type="number" step=".01" value="1400" required></label></div><div class="rule-color"><span class="color-chip" id="ruleColor"></span><p>Uses the color and intensity selected in Lights.</p></div><button class="button primary" data-connected disabled>Apply rule</button></form><p class="small muted">These are user effect thresholds, not Toyota diagnostic limits. Applying a rule turns the output off; start the CAN relay again in VHOS.</p></article><article class="card flow-card"><p class="eyebrow">LOCAL BY DESIGN</p><h2>Three links. One mood.</h2><ol class="flow"><li><span>01</span><div><strong>Existing CAN gateway</strong><p>Verified frames and supported PID decodes. No new CAN adapter.</p></div></li><li><span>02</span><div><strong>VHOS on iPhone</strong><p>Receives over Bluetooth and forwards selected live samples. Keep this lighting screen active.</p></div></li><li><span>03</span><div><strong>WLED on ESP32-S3</strong><p>Applies the rule, TAIL gate and DIM cap to the analog RGBW driver.</p></div></li></ol><div class="safe-state"><b>Fresh data or lights off.</b><p>CAN output expires after 2.5 seconds without an accepted sample. Manual input takes control; each boot starts off.</p></div></article></div></section>
+<section id="setup" class="panel" hidden><div class="two-col"><article class="card"><p class="eyebrow">ONE INLET · SIX WIRES</p><h2>Every wire has a home.</h2><div class="wire-list"><div><span class="wire ground"></span><b>Cavity 5 · GND</b><code>JT1-1</code></div><div><span class="wire acc"></span><b>Cavity 6 · ACC power</b><code>JT1-2</code></div><div><span class="wire tail"></span><b>Cavity 1 · TAIL sense</b><code>JT2-1 / GPIO5</code></div><div><span class="wire dim"></span><b>Cavity 2 · DIM sense</b><code>JT2-2 / GPIO4</code></div><div><span class="wire reserve"></span><b>Cavities 3 & 4 · isolated reserves</b><code>JT3</code></div></div><p class="small muted">Verify cavity orientation and circuits on the truck. All six retain the inline pass-through. ACC is the sole supply; loss of ACC removes controller power.</p><details><summary>RGBW output terminals</summary><p>JT4-1 R− · JT4-2 G− · JT5-1 B− · JT5-2 common + · JT6-1 W−. JT6-2 stays empty. Match pad labels, not wire colors.</p></details><details><summary>First power and arming</summary><p>Set a private Wi-Fi password and relay key in WLED. Verify the board and exact strip with a current-limited bench supply before enabling arm-output in WLED → Usermods → RevG. Calibration does not approve the strip or increase the current limit.</p><a href="/settings">Open WLED settings ↗</a></details></article><article class="card"><p class="eyebrow">MEASURE, THEN ENABLE</p><h2>Cabin signal controls</h2><p class="muted">Values below are ESP32 ADC millivolts. They are not voltages at the Toyota wire.</p><form id="cabinForm"><label class="toggle"><input id="tail-enabled" type="checkbox">Require TAIL before lighting</label><div class="field-grid"><label>TAIL on boundary, ADC mV<input id="tail-on-mv" type="number" min="0" max="3300" value="0"></label><label>TAIL off boundary, ADC mV<input id="tail-off-mv" type="number" min="0" max="3300" value="0"></label></div><p class="small muted">Measure both states. At least 50 mV separation; either polarity supported. Changes must remain steady for 200 ms.</p><label class="toggle"><input id="dim-enabled" type="checkbox">Scale brightness from DIM</label><div class="field-grid"><label>DIM low ADC mV<input id="dim-min-mv" type="number" min="0" max="3300" value="0"></label><label>DIM high ADC mV<input id="dim-max-mv" type="number" min="0" max="3300" value="0"></label><label>Output cap at low, %<input id="dim-at-min-percent" type="number" min="0" max="100" value="100"></label><label>Output cap at high, %<input id="dim-at-max-percent" type="number" min="0" max="100" value="100"></label></div><p class="small muted">Measure a span of at least 100 mV and characterize the truck's DIM waveform before enabling. Default: both controls disabled.</p><button class="button primary" data-connected disabled>Apply cabin settings</button></form></article></div><article class="card voltage-card"><div><p class="eyebrow">REV I · ON-BOARD VOLTAGE SENSE</p><h2>Calibrate the supply monitor.</h2><p class="muted">Read the same ACC feed with a meter at two bench voltages. This measures the switched supply after F1, not a resting battery with ACC off.</p></div><form id="voltageForm"><div class="field-grid"><label>Low reading, ADC mV<input name="low-adc-mv" type="number" min="0" max="3300" required></label><label>Low meter reading, mV<input name="low-input-mv" type="number" min="6000" max="20000" required></label><label>High reading, ADC mV<input name="high-adc-mv" type="number" min="0" max="3300" required></label><label>High meter reading, mV<input name="high-input-mv" type="number" min="6000" max="20000" required></label></div><button class="button primary" id="calibrateVoltage" disabled>Apply voltage calibration</button></form></article></section>
+</main><footer><span>4RUNNER / LOCAL LIGHTING</span><span id="footerState">Connect for live controller status</span><span>RGBW · 1 ZONE</span></footer>
+<div id="feedback" role="status" aria-live="polite" hidden></div></div><script type="module">// SPDX-License-Identifier: EUPL-1.2
+export const signals = [
+  {unit:'rpm', min:0, max:16383.75}, {unit:'km/h', min:0, max:255},
+  {unit:'°C', min:-40, max:215}, {unit:'%', min:0, max:100}, {unit:'0 / 1', min:0, max:1}
+];
+export function centi(value, signal) {
+  if (!Number.isInteger(signal) || !signals[signal] || !/^-?\d+(\.\d{1,2})?$/.test(String(value)))
+    throw new Error('Enter a number with at most two decimal places.');
+  const v=Number(value), spec=signals[signal];
+  if (!Number.isFinite(v) || v<spec.min || v>spec.max)
+    throw new Error('Value is outside the selected parameter range.');
+  return Math.round(v*100);
+}
+export function rgb(hex) {
+  if (!/^#[0-9a-f]{6}$/i.test(hex)) throw new Error('Choose a valid RGB color.');
+  return [1,3,5].map(i=>parseInt(hex.slice(i,i+2),16));
+}
+export function percent(n) { return Math.round(n*100/255); }
+export function validateConfig(c) {
+  const integer=(name,lo,hi)=>{ const v=c[name];
+    if (!Number.isInteger(v) || v<lo || v>hi) throw new Error('Invalid '+name+'.'); return v; };
+  const s=integer('signal',0,4), on=integer('on-centi',-4000,1638375), off=integer('off-centi',-4000,1638375);
+  centi(String(on/100),s); centi(String(off/100),s);
+  if (off>on) throw new Error('The off threshold must be at or below the on threshold.');
+  for (const k of ['red','green','blue','white']) integer(k,0,255);
+  integer('brightness',1,255);
+  for (const k of ['tail-enabled','dim-enabled']) integer(k,0,1);
+  for (const k of ['tail-on-mv','tail-off-mv','dim-min-mv','dim-max-mv']) integer(k,0,3300);
+  for (const k of ['dim-at-min-percent','dim-at-max-percent']) integer(k,0,100);
+  if (c['tail-enabled'] && Math.abs(c['tail-on-mv']-c['tail-off-mv'])<50)
+    throw new Error('Measure TAIL boundaries at least 50 ADC mV apart.');
+  if (c['dim-enabled'] && c['dim-max-mv']-c['dim-min-mv']<100)
+    throw new Error('Measure a DIM span of at least 100 ADC mV.');
+  return c;
+}
+export class ControllerClient {
+  constructor(key, origin='') {
+    if (!/^[!-~]{16,64}$/.test(key)) throw new Error('Use the controller’s 16–64 character relay key.');
+    this.key=key; this.origin=origin;
+  }
+  async request(path, values) {
+    if (!['status','config','manual','voltage'].includes(path)) throw new Error('Unsupported controller operation.');
+    const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),3000);
+    try {
+      const response=await fetch(this.origin+'/vhos/'+path, {
+        method:values?'POST':'GET', redirect:'error', credentials:'omit', cache:'no-store',
+        headers:{'X-VHOS-Key':this.key,...(values?{'Content-Type':'application/x-www-form-urlencoded'}:{})},
+        body:values?new URLSearchParams(values).toString():undefined, signal:controller.signal
+      });
+      if (!response.ok) throw new Error(response.status===403?'Check the relay key.':
+        response.status===409?'Controller is not ready. Check arming and configuration.':
+        response.status===400?'The controller rejected these settings.':'Controller unavailable ('+response.status+').');
+      if (path!=='status') return null;
+      const s=await response.json();
+      if (s.contract!=='vhos.lighting.status@1.0.0' || typeof s.ready!=='boolean' ||
+          typeof s.canFresh!=='boolean' || !Number.isInteger(s.effectiveBrightness) ||
+          s.effectiveBrightness<0 || s.effectiveBrightness>255 || !s.inputs || !s.voltage)
+        throw new Error('Unsupported controller status. Update the lighting firmware.');
+      validateConfig(s.config);
+      return s;
+    } finally { clearTimeout(timer); }
+  }
+}
+
+if (typeof document!=='undefined') {
+  const $=id=>document.getElementById(id);
+  let client=null, state=null, loaded=false, pending=false, polling=null;
+  const cabinKeys=['tail-enabled','tail-on-mv','tail-off-mv','dim-enabled','dim-min-mv','dim-max-mv','dim-at-min-percent','dim-at-max-percent'];
+  function feedback(message) { $('feedback').textContent=message; $('feedback').hidden=false;
+    clearTimeout(feedback.timer); feedback.timer=setTimeout(()=>$('feedback').hidden=true,6500); }
+  function availability(connected) {
+    for (const el of document.querySelectorAll('[data-connected]')) el.disabled=!connected || pending;
+    for (const el of document.querySelectorAll('[data-output]')) el.disabled=!connected || !state?.ready || pending;
+    $('calibrateVoltage').disabled=!connected || !state?.voltage.fitted || pending;
+  }
+  function disconnected(message='Controller disconnected') {
+    state=null; loaded=false; availability(false); $('connectionLabel').textContent=message;
+    $('connectionDot').classList.remove('live'); $('outputState').textContent='Unavailable';
+    $('effectiveLevel').textContent='—'; $('mode').textContent='—'; $('canState').textContent='No live sample';
+    $('voltageValue').textContent='— V'; $('voltageState').textContent='No live voltage reading';
+    $('senseState').textContent='Not connected'; $('senseReadings').textContent='TAIL — · DIM — ADC mV';
+    $('footerState').textContent='Live controller status unavailable'; $('automationBadge').textContent='NOT CONNECTED';
+  }
+  function preview(label='Custom') {
+    document.documentElement.style.setProperty('--preview',$('rgb').value);
+    $('previewLabel').textContent=label+' · local preview';
+    $('whiteValue').textContent=percent(Number($('white').value))+'%';
+    $('brightnessValue').textContent=percent(Number($('brightness').value))+'%';
+  }
+  function units() { const s=Number($('signal').value);
+    for (const el of document.querySelectorAll('.unit')) el.textContent=signals[s].unit;
+    for (const id of ['enter','exit']) { $(id).min=signals[s].min; $(id).max=signals[s].max; }
+    if (s===4) { $('enter').value='1'; $('exit').value='1'; }
+  }
+  function loadSettings(s) {
+    const c=s.config;
+    $('signal').value=c.signal; units(); $('enter').value=c['on-centi']/100; $('exit').value=c['off-centi']/100;
+    $('rgb').value='#'+['red','green','blue'].map(k=>c[k].toString(16).padStart(2,'0')).join('');
+    $('white').value=c.white; $('brightness').value=c.brightness;
+    for (const k of cabinKeys) {
+      if ($(k).type==='checkbox') $(k).checked=c[k]===1; else $(k).value=c[k];
+    }
+    for (const [k,v] of Object.entries(s.voltageCalibration ?? {}))
+      if (v!==0 && $('voltageForm').elements.namedItem(k)) $('voltageForm').elements.namedItem(k).value=v;
+    preview('Configured color');
+  }
+  function render(s) {
+    state=s; availability(true); $('connectionDot').classList.add('live');
+    $('connectionLabel').textContent=s.ready?'Controller ready':'Controller connected · disarmed';
+    $('boardLabel').textContent=s.board+' · ESP32-S3';
+    $('outputState').textContent=s.effectiveBrightness?'Active':'Off';
+    $('effectiveLevel').textContent=percent(s.effectiveBrightness)+'%';
+    $('mode').textContent=s.mode==='can'?'CAN rule':s.mode==='manual'?'Manual':'Off';
+    $('canState').textContent=s.canFresh?'Fresh relay sample':s.mode==='can'?'Waiting for data':'Relay not active';
+    if (s.canFresh && Number.isInteger(s.sample?.centiUnits) && signals[s.sample.signal])
+      $('canState').textContent=(s.sample.centiUnits/100).toLocaleString(undefined,{maximumFractionDigits:2})+' '+signals[s.sample.signal].unit;
+    $('automationBadge').textContent=s.mode==='can'?(s.canFresh?'RELAY LIVE':'WAITING FOR DATA'):'NOT RUNNING';
+    $('senseState').textContent=s.config['tail-enabled']?(s.tailAllowed?'TAIL gate open':'TAIL gate closed'):'Monitor only';
+    const t=s.inputs.tailAdcMv, d=s.inputs.dimAdcMv;
+    $('senseReadings').textContent='TAIL '+(t>=0?t:'—')+' · DIM '+(d>=0?d:'—')+' ADC mV';
+    const v=s.voltage;
+    $('voltageValue').textContent=v.fitted && Number.isInteger(v.inputMv)?
+      (v.calibrated?'':'≈ ')+(v.inputMv/1000).toFixed(2)+' V':'— V';
+    $('voltageState').textContent=!v.fitted?'Requires Rev I sense circuit':v.quality==='over-range'?
+      'Outside monitor range':v.calibrated?'Calibrated ACC feed':'Uncalibrated supply estimate';
+    $('footerState').textContent=s.reason+(s.configurationPendingSave?' · Save scheduled':'');
+    if (!loaded) { loadSettings(s); loaded=true; }
+  }
+  async function poll() {
+    clearTimeout(polling);
+    if (!client) return;
+    try { render(await client.request('status')); }
+    catch (e) { disconnected(e.name==='AbortError'?'Controller timed out':e.message); }
+    polling=setTimeout(poll,1500);
+  }
+  async function action(path, data, message) {
+    if (!client || pending) return;
+    pending=true; availability(!!state);
+    try {
+      await client.request(path,data);
+      feedback(message);
+      if (path==='config') {
+        loaded=false;
+        window.webkit?.messageHandlers?.vhosLighting?.postMessage({signal:Number(data.signal)});
+      }
+      await poll();
+    } catch(e) { feedback(e.name==='AbortError'?'Request timed out; check controller status.':e.message); }
+    finally { pending=false; availability(!!state); }
+  }
+  function config() {
+    if (!state) throw new Error('Connect to the controller first.');
+    const [red,green,blue]=rgb($('rgb').value);
+    const signal=Number($('signal').value);
+    const c={signal,'on-centi':centi($('enter').value,signal),'off-centi':centi($('exit').value,signal),
+      red,green,blue,white:Number($('white').value),brightness:Math.max(1,Number($('brightness').value))};
+    for (const k of cabinKeys) c[k]=$(k).type==='checkbox'?Number($(k).checked):Number($(k).value);
+    return validateConfig(c);
+  }
+  $('connectForm').addEventListener('submit',e=>{ e.preventDefault();
+    try { client=new ControllerClient($('relayKey').value); loaded=false; poll(); }
+    catch(err) { feedback(err.message); }
+  });
+  for (const b of document.querySelectorAll('[data-tab]')) b.addEventListener('click',()=>{
+    for (const el of document.querySelectorAll('[data-tab]')) el.setAttribute('aria-selected',String(el===b));
+    for (const el of document.querySelectorAll('.panel')) el.hidden=el.id!==b.dataset.tab;
+  });
+  for (const b of document.querySelectorAll('[data-color]')) b.addEventListener('click',()=>{
+    $('rgb').value=b.dataset.color;
+    for (const el of document.querySelectorAll('[data-color]')) el.setAttribute('aria-pressed',String(el===b));
+    preview(b.getAttribute('aria-label'));
+  });
+  for (const id of ['rgb','white','brightness']) $(id).addEventListener('input',()=>preview());
+  $('signal').addEventListener('change',units);
+  $('applyColor').addEventListener('click',()=>{const [red,green,blue]=rgb($('rgb').value);
+    action('manual',{action:'set',red,green,blue,white:$('white').value,brightness:$('brightness').value},
+      'Manual color requested. CAN automation stopped.'); });
+  $('off').addEventListener('click',()=>action('manual',{action:'off'},'Off requested.'));
+  for (const id of ['ruleForm','cabinForm']) $(id).addEventListener('submit',e=>{
+    e.preventDefault(); try { action('config',config(),'Settings applied; save scheduled. Restart the CAN relay in VHOS.'); }
+    catch(err) { feedback(err.message); }
+  });
+  $('voltageForm').addEventListener('submit',e=>{
+    e.preventDefault(); const v=Object.fromEntries(new FormData(e.target));
+    if (Number(v['high-adc-mv'])-Number(v['low-adc-mv'])<100 || Number(v['high-input-mv'])-Number(v['low-input-mv'])<1000)
+      return feedback('Use two bench points at least 100 ADC mV and 1000 supply mV apart.');
+    action('voltage',v,'Supply calibration applied; save scheduled.');
+  });
+  preview('Amber');
+  if (typeof window.vhosNativeKey==='string') {
+    document.body.classList.add('native');
+    $('relayKey').value=window.vhosNativeKey;
+    $('connectForm').requestSubmit();
+  }
+  window.addEventListener('pagehide',()=>{clearTimeout(polling); client=null;});
+}
+</script></body></html>
