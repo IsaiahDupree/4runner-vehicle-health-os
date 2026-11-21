@@ -63,3 +63,31 @@ def test_latest_orion_firmware_images_and_every_usermod_source_match_the_receipt
         assert len(data)==item['bytes'] and sha256(data).hexdigest()==item['sha256']
     for name,digest in report['usermod_sha256'].items():
         assert sha256((FW/'wled'/name).read_bytes()).hexdigest()==digest, name
+
+
+def test_integrated_schematic_never_omits_sense_or_controller_sections(tmp_path):
+    # Text/netlist generation is lightweight; actual KiCad/ERC remains on Orion.
+    script = '''
+import sys,re
+from pathlib import Path
+sys.path.insert(0,sys.argv[1])
+import terminal_design as design
+import native_pcb as native
+parts=design.parts()
+for rev in ('G','H','I'):
+ out=Path(sys.argv[2])/rev;out.mkdir()
+ native.schematic(parts,out,name='integration',title='All populated sections',rev=rev)
+ text=(out/'integration.kicad_sch').read_text()
+ refs=set(re.findall(r'\\(property "Reference" "([A-Z]+[0-9]+)"',text))
+ assert {p['ref'] for p in parts} <= refs
+ assert 'V5_LOGIC' not in text and '(label "ESP_3V3"' in text
+try:native.schematic(parts,Path(sys.argv[2]),rev='J')
+except ValueError:pass
+else:raise AssertionError('Unknown revision silently accepted')
+bad=[dict(p) for p in parts];bad[0]['section']='unregistered-section'
+try:native.schematic(bad,Path(sys.argv[2]),rev='I')
+except ValueError:pass
+else:raise AssertionError('A component section silently omitted')
+'''
+    subprocess.run(['python3','-B','-c',script,str(ROOT/'hardware/console-led-node-v0.1/pcb-rgbw-revi'),str(tmp_path)],
+                   check=True,timeout=20)

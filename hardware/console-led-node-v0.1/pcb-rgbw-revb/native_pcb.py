@@ -27,19 +27,25 @@ save_json = base.save_json
 
 
 def schematic(parts, out, *, name=NAME, title="4Runner two-connector RGBW shield", rev="B"):
+    parts = list(parts)
+    if rev not in {"A", "B", "C", "D", "E", "F", "G", "H", "I"}:
+        raise ValueError("Unknown schematic revision layout: " + rev)
     sheet_id = uid("sheet")
     symbols, items = [], []
     sections = {"power": (45, 54, "FUSED INPUT, PROTECTION AND 5 V SUPPLY"),
                 "headers": (45, 302, "VEHICLE INPUT AND CONTROLLER STACK"),
                 "outputs": (45, 421, "ONE COMMON-POSITIVE RGBW ZONE")}
-    columns, pitch = (6, 89) if rev in {"D", "E", "F", "G"} else (8, 96)
-    if rev in {"D", "E", "F", "G"}:
+    columns, pitch = (6, 89) if rev in {"D", "E", "F", "G", "H", "I"} else (8, 96)
+    if rev in {"D", "E", "F", "G", "H", "I"}:
         sections["sense"] = (45, 612, "TOYOTA IR1 ILLUMINATION SENSE")
-    if rev in {"E", "F", "G"}:
+    if rev in {"E", "F", "G", "H", "I"}:
         sections["controller"] = (45, 825, "ONBOARD ESP32-S3, 3.3 V REGULATOR AND SERVICE PADS")
-    if rev == "G":
+    if rev in {"G", "H", "I"}:
         sections["power"] = (45, 54, "FUSED INPUT, REVERSE / SURGE PROTECTION AND 3.3 V SUPPLY")
         sections["headers"] = (45, 302, "TOYOTA IR1 INPUT, RGBW OUTPUT AND TEST PADS")
+    missing_sections = {p["section"] for p in parts} - sections.keys()
+    if missing_sections:
+        raise ValueError("Unrendered schematic sections: " + str(sorted(missing_sections)))
     for section, (left, top, section_title) in sections.items():
         caption_y = top - (42 if section == "controller" else 24)
         items.append(f'(text {quote(section_title)} (at 26 {caption_y} 0) (effects (font (size 2 2)) '
@@ -85,13 +91,13 @@ def schematic(parts, out, *, name=NAME, title="4Runner two-connector RGBW shield
       (symbol "PWR_FLAG_1_1" (pin power_out line (at 0 0 90) (length 0) (name "pwr" (effects (font (size 1 1)))) (number "1" (effects (font (size 1 1)))))))'''
     symbols.append(flag)
     supply_nets = ["GND", "VEH_ACC", "ACC_FUSED", "LED_POS", "VIN_PROT", "V5_LOGIC"]
-    if rev in {"E", "F", "G"}:
+    if rev in {"E", "F", "G", "H", "I"}:
         supply_nets.append("ESP_3V3")
-    if rev == "G":
+    if rev in {"G", "H", "I"}:
         supply_nets.remove("V5_LOGIC")
     for i, net in enumerate(supply_nets, 1):
         ref = f"#FLG0{i}"
-        x, y = (round((22 + i * 56) * 1.27, 4), 261.62) if rev in {"D", "E", "F", "G"} else (round((29 + i * 57) * 1.27, 4), 251.46)
+        x, y = (round((22 + i * 56) * 1.27, 4), 261.62) if rev in {"D", "E", "F", "G", "H", "I"} else (round((29 + i * 57) * 1.27, 4), 251.46)
         items.append(f'''(symbol (lib_id "VHOS:PWR_FLAG") (at {x} {y} 0) (unit 1) (in_bom no) (on_board no) (dnp no)
           (uuid "{uid(ref)}") (property "Reference" "{ref}" (at {x} {y + 2.54} 0) (effects (font (size 1 1)) hide))
           (property "Value" "PWR_FLAG" (at {x} {y - 3.81} 0) (effects (font (size 1 1))))
@@ -100,7 +106,7 @@ def schematic(parts, out, *, name=NAME, title="4Runner two-connector RGBW shield
           (label "{net}" (at {x} {y} 0) (effects (font (size 1 1)) (justify left bottom)) (uuid "{uid(ref + 'net')}"))''')
     items.append(f'(text "EVALUATION HARDWARE / VERIFY VEHICLE FEED, LED PINOUT AND USB ISOLATION" '
                  f'(at 26 578 0) (effects (font (size 1.5 1.5)) (justify left bottom)) (uuid "{uid("notice")}"))')
-    paper = '"A0" portrait' if rev in {"E", "F", "G"} else ('"A1" portrait' if rev == "D" else '"A1"')
+    paper = '"A0" portrait' if rev in {"E", "F", "G", "H", "I"} else ('"A1" portrait' if rev == "D" else '"A1"')
     sch = f'''(kicad_sch (version 20250114) (generator "eeschema") (generator_version "10.0")
       (uuid "{sheet_id}") (paper {paper})
       (title_block (title {quote(title)}) (rev "{rev}"))

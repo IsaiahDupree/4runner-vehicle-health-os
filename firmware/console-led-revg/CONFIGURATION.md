@@ -4,6 +4,8 @@ Working load assumption: BTF-LIGHTING nominal-12-V analog five-wire RGBW in an I
 
 ## Configuration and wiring
 
+The cavity assignments below are the current design map. Actual truck circuits, polarity and connector orientation still require vehicle verification.
+
 | Function | Connection / behavior |
 |---|---|
 | Sole power source | Toyota cavity 6 → JT1-2 ACC; cavity 5 → JT1-1 GND. All six cavities retain one-to-one harness pass-through. |
