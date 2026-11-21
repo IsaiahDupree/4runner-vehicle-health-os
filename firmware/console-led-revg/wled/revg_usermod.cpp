@@ -206,6 +206,7 @@ class UsermodRevG final : public Usermod {
     server.on("/vhos/config", HTTP_POST, configRequest);
     server.on("/vhos/voltage", HTTP_POST, voltageRequest);
     server.on("/vhos/status", HTTP_GET, statusRequest);
+    server.on("/api/health", HTTP_GET, statusRequest);
     server.on("/vhos/ui", HTTP_GET, uiRequest);
     server.on("/vhos/ui/", HTTP_GET, uiRequest);
   }

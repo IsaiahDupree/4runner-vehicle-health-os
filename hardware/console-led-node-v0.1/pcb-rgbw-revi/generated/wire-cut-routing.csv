@@ -1,0 +1,12 @@
+cable,terminal,label,vehicle_cavity,net,jacket_end_x_mm,entry_xyz_mm,pre_bend_straight_mm,post_bend_straight_mm,modeled_wire_length_after_jacket_mm,minimum_centerline_bend_radius_mm,insulation_od_mm,strip_length_mm,cut_length_status
+J1,JT1_2,ACC,6,VEH_ACC,13.1,"[26.1, 40.81999999999999, 20.685000000000002]",0,3.0000000000000018,19.409,5.0235,1.6,6-7,routing length only; add termination and manufacturing allowance
+J1,JT1_1,GND,5,GND,13.1,"[26.1, 45.89999999999999, 20.685000000000002]",3.0000000000000018,0,16.812,5.6904,1.6,6-7,routing length only; add termination and manufacturing allowance
+J1,JT2_2,DIM,2,DIM_RETURN,13.1,"[26.1, 51.579999999999984, 20.685000000000002]",0,3.0000000000000018,14.654,27.9891,1.6,6-7,routing length only; add termination and manufacturing allowance
+J1,JT2_1,TAIL,1,TAIL_12V,13.1,"[26.1, 56.65999999999998, 20.685000000000002]",3.0000000000000018,0,15.447,7.83,1.6,6-7,routing length only; add termination and manufacturing allowance
+J1,JT3_2,RSV4,4,,13.1,"[26.1, 62.33999999999999, 20.685000000000002]",3.0000000000000018,0,20.094,5.0012,1.6,6-7,routing length only; add termination and manufacturing allowance
+J1,JT3_1,RSV3,3,,13.1,"[26.1, 67.41999999999999, 20.685000000000002]",0,3.0000000000000018,23.593,5.0,1.6,6-7,routing length only; add termination and manufacturing allowance
+J2,JT4_2,G-,,LED_G_NEG,16.1,"[29.1, 8.539999999999992, 20.685000000000002]",0,3.0,25.084,5.0,1.6,6-7,routing length only; add termination and manufacturing allowance
+J2,JT4_1,R-,,LED_R_NEG,16.1,"[29.1, 13.619999999999976, 20.685000000000002]",3.0,0,22.133,5.0,1.6,6-7,routing length only; add termination and manufacturing allowance
+J2,JT5_2,+LED,,LED_POS,16.1,"[29.1, 19.299999999999983, 20.685000000000002]",3.0,0,15.949,6.5954,1.6,6-7,routing length only; add termination and manufacturing allowance
+J2,JT5_1,B-,,LED_B_NEG,16.1,"[29.1, 24.379999999999995, 20.685000000000002]",0,3.0,15.222,8.8784,1.6,6-7,routing length only; add termination and manufacturing allowance
+J2,JT6_1,W-,,LED_W_NEG,16.1,"[29.1, 35.139999999999986, 20.685000000000002]",0,3.0,19.362,5.0263,1.6,6-7,routing length only; add termination and manufacturing allowance

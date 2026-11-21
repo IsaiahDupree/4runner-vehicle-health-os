@@ -19,7 +19,18 @@ The nominal ADC gain is 0.0684815; a 14.4 V input produces approximately 0.986 V
 
 [voltage_screen.py](voltage_screen.py) checks the actual selected manufacturer identities and resistor tolerances. Its clamp bounds are explicitly conditional assumptions inherited from the existing sensing design, not physical pulse evidence. Factory calibration, reset/isolation, negative-pulse behavior, resistor/clamp energy and voltage accuracy still need bench verification.
 
-The source starts with the accepted native Rev H board, keeps its 133 x 65 mm outline, terminal locations and mounting positions, and adds the sensing parts in the existing free component area. Native routing, ERC/DRC and populated-board enclosure checks must pass before a revised fabrication package is accepted. The prior Rev H kit remains a separate frozen artifact.
+The accepted native Rev I board keeps the Rev H 133 x 65 mm outline, terminal locations and mounting positions, and adds the sensing parts in the existing free component area. Orion completed native routing with zero reported ERC, DRC, unconnected-net or schematic-parity findings under the retained project rules. The populated board passed 497 enclosure/wire checks, eight insert/driver access axes and three offline slices with supports disabled and zero support segments. The prior Rev H kit remains a separate frozen artifact.
+
+| Revised artifact | File |
+|---|---|
+| Native PCB and schematic | [KiCad PCB](generated/vhos_rgbw_revi.kicad_pcb), [schematic PDF](generated/schematic.pdf) |
+| Populated board geometry | [STEP](generated/routed_shield.step), [native board view](generated/board.png) |
+| Complete enclosure assembly | [FreeCAD](generated/4Runner_RevI_Terminal_Assembly.FCStd), [STEP](generated/4Runner_RevI_Terminal_Assembly.step) |
+| Support-free print exports | [Base STL](generated/case_base.stl), [lid STL](generated/case_lid.stl), [gland plate STL](generated/gland_plate.stl) |
+| Factory assembly | [75-position BOM](jlcpcb/BOM.csv), [placement CPL](jlcpcb/CPL.csv), [Gerbers](generated/4Runner_RGBW_RevI_Gerbers.zip) |
+| Wiring and provenance | [Wire register](WIRE-REGISTER.csv), [routing lengths](generated/wire-cut-routing.csv), [native verification](generated/verification.json), [test evidence](VERIFICATION.md) |
+
+The complete product still needs the unchanged [harness and case hardware](../pcb-rgbw-revh/HARNESS-AND-CASE.csv), external inline harness and supplier box assembly/programming/testing. A BOM/CPL is factory input; it is not confirmation of JLCPCB stock, through-hole assembly acceptance or a delivered plug-and-play quote.
 
 Software and UI behavior: [WLED/CAN/vehicle-input configuration](../../../firmware/console-led-revg/CONFIGURATION.md). Rev I firmware enables GPIO1 sense; the unmodified Rev H board must use the original target without that input.
 

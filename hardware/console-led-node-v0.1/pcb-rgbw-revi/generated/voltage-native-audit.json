@@ -1,0 +1,10 @@
+{
+  "existing_poses_unchanged": true,
+  "reserve_isolation": true,
+  "source_node": "ACC_FUSED",
+  "gpio": 1,
+  "added_populated_positions": 8,
+  "board_count": 1,
+  "passed": true,
+  "physical_validation": false
+}

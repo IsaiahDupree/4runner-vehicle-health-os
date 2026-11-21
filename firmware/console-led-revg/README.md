@@ -96,4 +96,4 @@ path while collecting evidence of which additional vehicle samples arrive.
 
 ## Strip workspace and Rev I supply monitor
 
-The newer [configuration and UI guide](CONFIGURATION.md) records the assumed BTF analog RGBW strip, controller-hosted phone/head-unit UI, native iOS embedding, calibrated TAIL/DIM behavior and the added Rev I ACC voltage-sense target. The older pod instructions above are historical commissioning context. The new target is vhos_revi_n16r2; source and exact evaluation-image hashes are retained in builds/revi-strip-ui-02. Digital/software verification does not approve a strip length or the vehicle installation.
+The newer [configuration and UI guide](CONFIGURATION.md) records the assumed BTF analog RGBW strip, controller-hosted phone/head-unit UI, native iOS embedding, calibrated TAIL/DIM behavior and the added Rev I ACC voltage-sense target. The older pod instructions above are historical commissioning context. The new target is vhos_revi_n16r2; source and exact evaluation-image hashes are retained in builds/revi-strip-ui-03. Digital/software verification does not approve a strip length or the vehicle installation.

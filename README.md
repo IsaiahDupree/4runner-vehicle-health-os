@@ -8,6 +8,16 @@ The project has two immutable source baselines: [Vehicle Health OS PRD v0.1](doc
 
 No derived value is authoritative unless that lineage can be reconstructed.
 
+## Rev I lighting controller and voltage monitor
+
+The [single-board Rev I hardware](hardware/console-led-node-v0.1/pcb-rgbw-revi/README.md)
+adds protected ACC supply-voltage sensing to the existing six-wire Toyota inlet,
+with revised native PCB, enclosure assembly, factory BOM and verification evidence.
+The [WLED workspace](firmware/console-led-revg/CONFIGURATION.md) includes the actual
+phone/head-unit UI, calibrated vehicle inputs and the existing CAN gateway's
+foreground iPhone relay. It measures the switched feed at the box; ACC-off resting
+battery monitoring is unavailable. Physical and vehicle qualification remain pending.
+
 ## Rev H lighting controller
 
 The [screw-terminal revision](hardware/console-led-node-v0.1/pcb-rgbw-revh/README.md)

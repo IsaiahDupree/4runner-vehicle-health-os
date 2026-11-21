@@ -1,0 +1,1149 @@
+{
+  "R40": {
+    "mpn": "RT1206BRD0749K9L",
+    "footprint": "Resistor_SMD:R_1206_3216Metric",
+    "value": "49.9k 0.1%",
+    "x_mm": 95.0,
+    "y_mm": 124.0,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/ACC_FUSED",
+      "2": "/VOLT_SERIES"
+    }
+  },
+  "U6": {
+    "mpn": "LM4040C25QFTA",
+    "footprint": "Package_TO_SOT_SMD:SOT-23",
+    "value": "LM4040 2.5V",
+    "x_mm": 58.2,
+    "y_mm": 124.8,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/TAIL_CLAMP",
+      "2": "/GND",
+      "3": "/GND"
+    }
+  },
+  "R13": {
+    "mpn": "0603WAF1002T5E",
+    "footprint": "Resistor_SMD:R_0603_1608Metric",
+    "value": "10k 1%",
+    "x_mm": 72.0,
+    "y_mm": 139.8,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/ESP_3V3",
+      "2": "/LED_EN_N"
+    }
+  },
+  "R37": {
+    "mpn": "0603WAF1002T5E",
+    "footprint": "Resistor_SMD:R_0603_1608Metric",
+    "value": "10k",
+    "x_mm": 166.0,
+    "y_mm": 138.8,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/ESP_3V3",
+      "2": "/BOOT_N"
+    }
+  },
+  "D8": {
+    "mpn": "NSVBAT54HT1G",
+    "footprint": "VHOS_RevB:onsemi_SOD-323_477",
+    "value": "NSVBAT54HT1G",
+    "x_mm": 64.5,
+    "y_mm": 128.6,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/DIM_CLAMP",
+      "2": "/GND"
+    }
+  },
+  "R38": {
+    "mpn": "0603WAF1002T5E",
+    "footprint": "Resistor_SMD:R_0603_1608Metric",
+    "value": "10k",
+    "x_mm": 166.0,
+    "y_mm": 142.2,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/DOWNLOAD_STRAP",
+      "2": "/GND"
+    }
+  },
+  "C28": {
+    "mpn": "CC0603KRX7R9BB104",
+    "footprint": "Capacitor_SMD:C_0603_1608Metric",
+    "value": "100n 50V X7R",
+    "x_mm": 125.0,
+    "y_mm": 108.8,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/BOOTCAP",
+      "2": "/SW"
+    }
+  },
+  "U10": {
+    "mpn": "TLV803EC30DBZR",
+    "footprint": "Package_TO_SOT_SMD:SOT-23",
+    "value": "TLV803EC30DBZR",
+    "x_mm": 163.8,
+    "y_mm": 111.7,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/CHIP_EN",
+      "2": "/GND",
+      "3": "/ESP_3V3"
+    }
+  },
+  "R27": {
+    "mpn": "RT1206BRD0749K9L",
+    "footprint": "Resistor_SMD:R_1206_3216Metric",
+    "value": "49.9k 0.1%",
+    "x_mm": 65.0,
+    "y_mm": 121.1,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/DIM_SERIES",
+      "2": "/DIM_CLAMP"
+    }
+  },
+  "C30": {
+    "mpn": "CL32B225KCJVPJE",
+    "footprint": "Capacitor_SMD:C_1210_3225Metric",
+    "value": "2.2u 100V X7R",
+    "x_mm": 73.7,
+    "y_mm": 113.9,
+    "rotation_deg": 180.0,
+    "pad_nets": {
+      "1": "/ACC_FUSED",
+      "2": "/GND"
+    }
+  },
+  "TP7": {
+    "mpn": "PCB FEATURE",
+    "footprint": "TestPoint:TestPoint_Pad_D1.0mm",
+    "value": "VIN_PROT",
+    "x_mm": 139.5,
+    "y_mm": 105.34,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/VIN_PROT"
+    }
+  },
+  "D1": {
+    "mpn": "SMBJ28CAQ-13-F",
+    "footprint": "Diode_SMD:D_SMB",
+    "value": "SMBJ28CAQ",
+    "x_mm": 85.7,
+    "y_mm": 114.34,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/ACC_FUSED",
+      "2": "/GND"
+    }
+  },
+  "TP11": {
+    "mpn": "PCB FEATURE",
+    "footprint": "TestPoint:TestPoint_Pad_D1.5mm",
+    "value": "UART_RX",
+    "x_mm": 160.9,
+    "y_mm": 151.55,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/UART_RX"
+    }
+  },
+  "C22": {
+    "mpn": "CL31A226KAHNNNE",
+    "footprint": "Capacitor_SMD:C_1206_3216Metric",
+    "value": "22u 25V X5R",
+    "x_mm": 141.85,
+    "y_mm": 110.4,
+    "rotation_deg": 180.0,
+    "pad_nets": {
+      "1": "/ESP_3V3",
+      "2": "/GND"
+    }
+  },
+  "JT3": {
+    "mpn": "KF128-5.08-2P-AA",
+    "footprint": "VHOS_RevB:KEFA_KF128_5.08_2P",
+    "value": "RSV3/RSV4",
+    "x_mm": 45.5,
+    "y_mm": 97.25,
+    "rotation_deg": -90.0,
+    "pad_nets": {
+      "1": "unconnected-(JT3-RSV3-Pad1)",
+      "2": "unconnected-(JT3-RSV4-Pad2)"
+    }
+  },
+  "C31": {
+    "mpn": "CL31A226KAHNNNE",
+    "footprint": "Capacitor_SMD:C_1206_3216Metric",
+    "value": "22u 25V X5R",
+    "x_mm": 141.85,
+    "y_mm": 119.2,
+    "rotation_deg": 180.0,
+    "pad_nets": {
+      "1": "/ESP_3V3",
+      "2": "/GND"
+    }
+  },
+  "U12": {
+    "mpn": "LM4040C25QFTA",
+    "footprint": "Package_TO_SOT_SMD:SOT-23",
+    "value": "LM4040 2.5V",
+    "x_mm": 106.0,
+    "y_mm": 129.5,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/VOLT_CLAMP",
+      "2": "/GND",
+      "3": "/GND"
+    }
+  },
+  "U5": {
+    "mpn": "SN3257QPWRQ1",
+    "footprint": "Package_SO:TSSOP-16_4.4x5mm_P0.65mm",
+    "value": "SN3257-Q1",
+    "x_mm": 61.8,
+    "y_mm": 133.1,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/CHIP_EN",
+      "2": "/GND",
+      "3": "/TAIL_CLAMP",
+      "4": "/TAIL_SW",
+      "5": "/GND",
+      "6": "/DIM_CLAMP",
+      "7": "/DIM_SW",
+      "8": "/GND",
+      "9": "/VOLT_SW",
+      "10": "/VOLT_CLAMP",
+      "11": "/GND",
+      "12": "/GND",
+      "13": "/GND",
+      "14": "/GND",
+      "15": "/GND",
+      "16": "/ESP_3V3"
+    }
+  },
+  "R3": {
+    "mpn": "0603WAF1002T5E",
+    "footprint": "Resistor_SMD:R_0603_1608Metric",
+    "value": "10k 1%",
+    "x_mm": 74.4,
+    "y_mm": 120.2,
+    "rotation_deg": 180.0,
+    "pad_nets": {
+      "1": "/UVLO",
+      "2": "/EFUSE_RTN"
+    }
+  },
+  "C32": {
+    "mpn": "CC0603KRX7R9BB104",
+    "footprint": "Capacitor_SMD:C_0603_1608Metric",
+    "value": "100n 50V",
+    "x_mm": 145.0,
+    "y_mm": 129.5,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/VOLT_ADC",
+      "2": "/GND"
+    }
+  },
+  "U1": {
+    "mpn": "LMR51610XDBVR",
+    "footprint": "Package_TO_SOT_SMD:SOT-23-6",
+    "value": "LMR51610XDBVR",
+    "x_mm": 125.0,
+    "y_mm": 111.5,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/BOOTCAP",
+      "2": "/GND",
+      "3": "/FB_3V3",
+      "4": "/VIN_PROT",
+      "5": "/VIN_PROT",
+      "6": "/SW"
+    }
+  },
+  "R4": {
+    "mpn": "0603WAF1503T5E",
+    "footprint": "Resistor_SMD:R_0603_1608Metric",
+    "value": "150k 1%",
+    "x_mm": 120.1,
+    "y_mm": 110.1,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/ESP_3V3",
+      "2": "/FB_3V3"
+    }
+  },
+  "Q1": {
+    "mpn": "AO3400A",
+    "footprint": "Package_TO_SOT_SMD:SOT-23",
+    "value": "AO3400A",
+    "x_mm": 72.0,
+    "y_mm": 143.0,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/ENABLE_REQ",
+      "2": "/GND",
+      "3": "/LED_EN_N"
+    }
+  },
+  "MH1": {
+    "mpn": "PCB FEATURE",
+    "footprint": "MountingHole:MountingHole_3.2mm_M3",
+    "value": "M3 CASE SUPPORT",
+    "x_mm": 59.0,
+    "y_mm": 150.67,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "": ""
+    }
+  },
+  "C19": {
+    "mpn": "CC0603KRX7R9BB104",
+    "footprint": "Capacitor_SMD:C_0603_1608Metric",
+    "value": "100n 50V",
+    "x_mm": 157.0,
+    "y_mm": 147.5,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/TAIL_ADC",
+      "2": "/GND"
+    }
+  },
+  "R33": {
+    "mpn": "0603WAF2202T5E",
+    "footprint": "Resistor_SMD:R_0603_1608Metric",
+    "value": "22k 1%",
+    "x_mm": 164.0,
+    "y_mm": 144.9,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/DIM_ADC",
+      "2": "/GND"
+    }
+  },
+  "C23": {
+    "mpn": "CL31A226KAHNNNE",
+    "footprint": "Capacitor_SMD:C_1206_3216Metric",
+    "value": "22u 25V X5R",
+    "x_mm": 141.85,
+    "y_mm": 115.3,
+    "rotation_deg": 180.0,
+    "pad_nets": {
+      "1": "/ESP_3V3",
+      "2": "/GND"
+    }
+  },
+  "TP8": {
+    "mpn": "PCB FEATURE",
+    "footprint": "TestPoint:TestPoint_Pad_D1.0mm",
+    "value": "ENABLE_REQ",
+    "x_mm": 127.0,
+    "y_mm": 136.84,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/ENABLE_REQ"
+    }
+  },
+  "JT6": {
+    "mpn": "KF128-5.08-2P-AA",
+    "footprint": "VHOS_RevB:KEFA_KF128_5.08_2P",
+    "value": "W-/NC",
+    "x_mm": 48.5,
+    "y_mm": 129.53,
+    "rotation_deg": -90.0,
+    "pad_nets": {
+      "1": "/LED_W_NEG",
+      "2": "unconnected-(JT6-NC-Pad2)"
+    }
+  },
+  "R19": {
+    "mpn": "0603WAF1003T5E",
+    "footprint": "Resistor_SMD:R_0603_1608Metric",
+    "value": "100k",
+    "x_mm": 70.0,
+    "y_mm": 151.0,
+    "rotation_deg": 180.0,
+    "pad_nets": {
+      "1": "/PWM_B",
+      "2": "/GND"
+    }
+  },
+  "C29": {
+    "mpn": "CL21B104KCFNNNE",
+    "footprint": "Capacitor_SMD:C_0805_2012Metric",
+    "value": "100n 100V X7R",
+    "x_mm": 125.0,
+    "y_mm": 114.5,
+    "rotation_deg": 180.0,
+    "pad_nets": {
+      "1": "/VIN_PROT",
+      "2": "/GND"
+    }
+  },
+  "U2": {
+    "mpn": "DRV8803PWPR",
+    "footprint": "VHOS_RevB:TI_PWP0016J",
+    "value": "DRV8803PWPR",
+    "x_mm": 64.0,
+    "y_mm": 142.5,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/LED_POS",
+      "2": "/LED_POS",
+      "3": "/LED_R_NEG",
+      "4": "/LED_G_NEG",
+      "5": "/GND",
+      "6": "/LED_B_NEG",
+      "7": "/LED_W_NEG",
+      "8": "/LED_EN_N",
+      "9": "/GND",
+      "10": "/PWM_W",
+      "11": "/PWM_B",
+      "12": "/GND",
+      "13": "/PWM_G",
+      "14": "/PWM_R",
+      "15": "unconnected-(U2-NC-Pad15)",
+      "16": "unconnected-(U2-NFAULT-Pad16)",
+      "17": "/GND"
+    }
+  },
+  "C24": {
+    "mpn": "CL31A226KAHNNNE",
+    "footprint": "Capacitor_SMD:C_1206_3216Metric",
+    "value": "22u 25V X5R",
+    "x_mm": 153.5,
+    "y_mm": 139.1,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/ESP_3V3",
+      "2": "/GND"
+    }
+  },
+  "R29": {
+    "mpn": "0603WAF2202T5E",
+    "footprint": "Resistor_SMD:R_0603_1608Metric",
+    "value": "22k 1%",
+    "x_mm": 61.2,
+    "y_mm": 121.9,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/DIM_CLAMP",
+      "2": "/GND"
+    }
+  },
+  "R30": {
+    "mpn": "0603WAF1802T5E",
+    "footprint": "Resistor_SMD:R_0603_1608Metric",
+    "value": "18k 1%",
+    "x_mm": 153.8,
+    "y_mm": 146.8,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/TAIL_SW",
+      "2": "/TAIL_ADC"
+    }
+  },
+  "R25": {
+    "mpn": "RT1206BRD0749K9L",
+    "footprint": "Resistor_SMD:R_1206_3216Metric",
+    "value": "49.9k 0.1%",
+    "x_mm": 55.4,
+    "y_mm": 118.5,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/TAIL_SERIES",
+      "2": "/TAIL_CLAMP"
+    }
+  },
+  "R32": {
+    "mpn": "0603WAF2202T5E",
+    "footprint": "Resistor_SMD:R_0603_1608Metric",
+    "value": "22k 1%",
+    "x_mm": 156.5,
+    "y_mm": 144.9,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/TAIL_ADC",
+      "2": "/GND"
+    }
+  },
+  "C25": {
+    "mpn": "CC0603KRX7R9BB104",
+    "footprint": "Capacitor_SMD:C_0603_1608Metric",
+    "value": "100n 50V X7R",
+    "x_mm": 166.05,
+    "y_mm": 115.1,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/ESP_3V3",
+      "2": "/GND"
+    }
+  },
+  "U4": {
+    "mpn": "TPS26600PWPR",
+    "footprint": "VHOS_RevB:TI_PWP0016A",
+    "value": "TPS26600PWPR",
+    "x_mm": 80.5,
+    "y_mm": 120.0,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/ACC_FUSED",
+      "2": "/ACC_FUSED",
+      "3": "/UVLO",
+      "4": "unconnected-(U4-NC-Pad4)",
+      "5": "/OVP",
+      "6": "/EFUSE_RTN",
+      "7": "unconnected-(U4-SHDN-Pad7)",
+      "8": "/EFUSE_RTN",
+      "9": "/GND",
+      "10": "unconnected-(U4-IMON-Pad10)",
+      "11": "/ILIM",
+      "12": "/SLEW",
+      "13": "unconnected-(U4-NC-Pad13)",
+      "14": "unconnected-(U4-FLT-Pad14)",
+      "15": "/LED_POS",
+      "16": "/LED_POS",
+      "17": "/EFUSE_RTN"
+    }
+  },
+  "R18": {
+    "mpn": "0603WAF1003T5E",
+    "footprint": "Resistor_SMD:R_0603_1608Metric",
+    "value": "100k",
+    "x_mm": 70.0,
+    "y_mm": 149.0,
+    "rotation_deg": 180.0,
+    "pad_nets": {
+      "1": "/PWM_G",
+      "2": "/GND"
+    }
+  },
+  "U11": {
+    "mpn": "ESP32-S3-WROOM-1-N16R2",
+    "footprint": "VHOS_RevB:ESP32-S3-WROOM-1",
+    "value": "ESP32-S3-WROOM-1-N16R2",
+    "x_mm": 162.25,
+    "y_mm": 126.7,
+    "rotation_deg": -90.0,
+    "pad_nets": {
+      "": "",
+      "1": "/GND",
+      "2": "/ESP_3V3",
+      "3": "/CHIP_EN",
+      "4": "/DIM_ADC",
+      "5": "/TAIL_ADC",
+      "6": "unconnected-(U11-IO6-Pad6)",
+      "7": "unconnected-(U11-IO7-Pad7)",
+      "8": "unconnected-(U11-IO15-Pad8)",
+      "9": "unconnected-(U11-IO16-Pad9)",
+      "10": "/PWM_G",
+      "11": "/PWM_R",
+      "12": "unconnected-(U11-IO8-Pad12)",
+      "13": "unconnected-(U11-IO19-Pad13)",
+      "14": "unconnected-(U11-IO20-Pad14)",
+      "15": "unconnected-(U11-IO3-Pad15)",
+      "16": "/DOWNLOAD_STRAP",
+      "17": "unconnected-(U11-IO9-Pad17)",
+      "18": "unconnected-(U11-IO10-Pad18)",
+      "19": "unconnected-(U11-IO11-Pad19)",
+      "20": "unconnected-(U11-IO12-Pad20)",
+      "21": "unconnected-(U11-IO13-Pad21)",
+      "22": "/PWM_B",
+      "23": "/ENABLE_REQ",
+      "24": "unconnected-(U11-IO47-Pad24)",
+      "25": "unconnected-(U11-IO48-Pad25)",
+      "26": "unconnected-(U11-IO45-Pad26)",
+      "27": "/BOOT_N",
+      "28": "unconnected-(U11-IO35-Pad28)",
+      "29": "unconnected-(U11-IO36-Pad29)",
+      "30": "unconnected-(U11-IO37-Pad30)",
+      "31": "unconnected-(U11-IO38-Pad31)",
+      "32": "unconnected-(U11-IO39-Pad32)",
+      "33": "unconnected-(U11-IO40-Pad33)",
+      "34": "unconnected-(U11-IO41-Pad34)",
+      "35": "unconnected-(U11-IO42-Pad35)",
+      "36": "/UART_RX",
+      "37": "/UART_TX",
+      "38": "/PWM_W",
+      "39": "/VOLT_ADC",
+      "40": "/GND",
+      "41": "/GND"
+    }
+  },
+  "L1": {
+    "mpn": "SPM6545VT-220M-D",
+    "footprint": "VHOS_RevB:TDK_SPM6545VT-D",
+    "value": "22u 20% TDK",
+    "x_mm": 135.0,
+    "y_mm": 110.8,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/SW",
+      "2": "/ESP_3V3"
+    }
+  },
+  "R28": {
+    "mpn": "0603WAF2202T5E",
+    "footprint": "Resistor_SMD:R_0603_1608Metric",
+    "value": "22k 1%",
+    "x_mm": 53.0,
+    "y_mm": 123.6,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/TAIL_CLAMP",
+      "2": "/GND"
+    }
+  },
+  "R21": {
+    "mpn": "RT0603BRD0746K4L",
+    "footprint": "Resistor_SMD:R_0603_1608Metric",
+    "value": "46.4k 0.1%",
+    "x_mm": 74.9,
+    "y_mm": 122.7,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/ACC_FUSED",
+      "2": "/OVP"
+    }
+  },
+  "TP10": {
+    "mpn": "PCB FEATURE",
+    "footprint": "TestPoint:TestPoint_Pad_D1.5mm",
+    "value": "UART_TX",
+    "x_mm": 157.95,
+    "y_mm": 151.55,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/UART_TX"
+    }
+  },
+  "TP13": {
+    "mpn": "PCB FEATURE",
+    "footprint": "TestPoint:TestPoint_Pad_D1.5mm",
+    "value": "CHIP_EN",
+    "x_mm": 166.8,
+    "y_mm": 151.55,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/CHIP_EN"
+    }
+  },
+  "TP14": {
+    "mpn": "PCB FEATURE",
+    "footprint": "TestPoint:TestPoint_Pad_D1.5mm",
+    "value": "ESP_3V3",
+    "x_mm": 163.8,
+    "y_mm": 103.4,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/ESP_3V3"
+    }
+  },
+  "R39": {
+    "mpn": "0603WAF1003T5E",
+    "footprint": "Resistor_SMD:R_0603_1608Metric",
+    "value": "100k 1%",
+    "x_mm": 84.0,
+    "y_mm": 145.2,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/ENABLE_REQ",
+      "2": "/GND"
+    }
+  },
+  "R17": {
+    "mpn": "0603WAF1003T5E",
+    "footprint": "Resistor_SMD:R_0603_1608Metric",
+    "value": "100k",
+    "x_mm": 70.0,
+    "y_mm": 147.0,
+    "rotation_deg": 180.0,
+    "pad_nets": {
+      "1": "/PWM_R",
+      "2": "/GND"
+    }
+  },
+  "JT1": {
+    "mpn": "KF128-5.08-2P-AA",
+    "footprint": "VHOS_RevB:KEFA_KF128_5.08_2P",
+    "value": "GND/ACC",
+    "x_mm": 45.5,
+    "y_mm": 118.77,
+    "rotation_deg": -90.0,
+    "pad_nets": {
+      "1": "/GND",
+      "2": "/VEH_ACC"
+    }
+  },
+  "MH4": {
+    "mpn": "PCB FEATURE",
+    "footprint": "MountingHole:MountingHole_3.2mm_M3",
+    "value": "M3 CASE SUPPORT",
+    "x_mm": 150.75,
+    "y_mm": 104.1,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "": ""
+    }
+  },
+  "R22": {
+    "mpn": "RT0603BRD073K92L",
+    "footprint": "Resistor_SMD:R_0603_1608Metric",
+    "value": "3.92k 0.1%",
+    "x_mm": 75.5,
+    "y_mm": 125.2,
+    "rotation_deg": 180.0,
+    "pad_nets": {
+      "1": "/OVP",
+      "2": "/EFUSE_RTN"
+    }
+  },
+  "D9": {
+    "mpn": "SS56",
+    "footprint": "Diode_SMD:D_SMA",
+    "value": "SS56 60V 5A",
+    "x_mm": 91.0,
+    "y_mm": 138.0,
+    "rotation_deg": 180.0,
+    "pad_nets": {
+      "1": "/LED_POS",
+      "2": "/GND"
+    }
+  },
+  "F1": {
+    "mpn": "3568-10",
+    "footprint": "VHOS_RevB:Keystone_3568_MINI_Vertical",
+    "value": "3A MINI MAIN / LED",
+    "x_mm": 79.0,
+    "y_mm": 106.94,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/VEH_ACC",
+      "2": "/ACC_FUSED"
+    }
+  },
+  "R26": {
+    "mpn": "RT1206BRD0749K9L",
+    "footprint": "Resistor_SMD:R_1206_3216Metric",
+    "value": "49.9k 0.1%",
+    "x_mm": 67.9,
+    "y_mm": 118.5,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/DIM_RETURN",
+      "2": "/DIM_SERIES"
+    }
+  },
+  "C17": {
+    "mpn": "EEEFK1H470P",
+    "footprint": "Capacitor_SMD:CP_Elec_8x6.2",
+    "value": "47u 50V",
+    "x_mm": 79.0,
+    "y_mm": 137.4,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/LED_POS",
+      "2": "/GND"
+    }
+  },
+  "R43": {
+    "mpn": "0603WAF1802T5E",
+    "footprint": "Resistor_SMD:R_0603_1608Metric",
+    "value": "18k 1%",
+    "x_mm": 142.0,
+    "y_mm": 128.0,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/VOLT_SW",
+      "2": "/VOLT_ADC"
+    }
+  },
+  "MH2": {
+    "mpn": "PCB FEATURE",
+    "footprint": "MountingHole:MountingHole_3.2mm_M3",
+    "value": "M3 CASE SUPPORT",
+    "x_mm": 58.0,
+    "y_mm": 102.84,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "": ""
+    }
+  },
+  "C3": {
+    "mpn": "CL32B225KCJVPJE",
+    "footprint": "Capacitor_SMD:C_1210_3225Metric",
+    "value": "2.2u 100V X7R",
+    "x_mm": 120.5,
+    "y_mm": 117.5,
+    "rotation_deg": 180.0,
+    "pad_nets": {
+      "1": "/VIN_PROT",
+      "2": "/GND"
+    }
+  },
+  "R31": {
+    "mpn": "0603WAF1802T5E",
+    "footprint": "Resistor_SMD:R_0603_1608Metric",
+    "value": "18k 1%",
+    "x_mm": 161.0,
+    "y_mm": 146.8,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/DIM_SW",
+      "2": "/DIM_ADC"
+    }
+  },
+  "D7": {
+    "mpn": "NSVBAT54HT1G",
+    "footprint": "VHOS_RevB:onsemi_SOD-323_477",
+    "value": "NSVBAT54HT1G",
+    "x_mm": 56.7,
+    "y_mm": 128.7,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/TAIL_CLAMP",
+      "2": "/GND"
+    }
+  },
+  "R42": {
+    "mpn": "0603WAF2202T5E",
+    "footprint": "Resistor_SMD:R_0603_1608Metric",
+    "value": "22k 1%",
+    "x_mm": 106.0,
+    "y_mm": 125.0,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/VOLT_CLAMP",
+      "2": "/GND"
+    }
+  },
+  "C13": {
+    "mpn": "CL21B104KCFNNNE",
+    "footprint": "Capacitor_SMD:C_0805_2012Metric",
+    "value": "100n 100V X7R",
+    "x_mm": 79.6,
+    "y_mm": 115.5,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/ACC_FUSED",
+      "2": "/GND"
+    }
+  },
+  "C18": {
+    "mpn": "CC0603KRX7R9BB104",
+    "footprint": "Capacitor_SMD:C_0603_1608Metric",
+    "value": "100n 50V",
+    "x_mm": 66.6,
+    "y_mm": 136.8,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/ESP_3V3",
+      "2": "/GND"
+    }
+  },
+  "U7": {
+    "mpn": "LM4040C25QFTA",
+    "footprint": "Package_TO_SOT_SMD:SOT-23",
+    "value": "LM4040 2.5V",
+    "x_mm": 66.4,
+    "y_mm": 125.5,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/DIM_CLAMP",
+      "2": "/GND",
+      "3": "/GND"
+    }
+  },
+  "C2": {
+    "mpn": "CL32B225KCJVPJE",
+    "footprint": "Capacitor_SMD:C_1210_3225Metric",
+    "value": "2.2u 100V X7R",
+    "x_mm": 126.2,
+    "y_mm": 117.5,
+    "rotation_deg": 180.0,
+    "pad_nets": {
+      "1": "/VIN_PROT",
+      "2": "/GND"
+    }
+  },
+  "R44": {
+    "mpn": "0603WAF2202T5E",
+    "footprint": "Resistor_SMD:R_0603_1608Metric",
+    "value": "22k 1%",
+    "x_mm": 142.0,
+    "y_mm": 132.0,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/VOLT_ADC",
+      "2": "/GND"
+    }
+  },
+  "TP5": {
+    "mpn": "PCB FEATURE",
+    "footprint": "TestPoint:TestPoint_Pad_D1.0mm",
+    "value": "LED_POS",
+    "x_mm": 146.0,
+    "y_mm": 105.34,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/LED_POS"
+    }
+  },
+  "R36": {
+    "mpn": "0603WAF1002T5E",
+    "footprint": "Resistor_SMD:R_0603_1608Metric",
+    "value": "10k",
+    "x_mm": 161.4,
+    "y_mm": 106.0,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/ESP_3V3",
+      "2": "/CHIP_EN"
+    }
+  },
+  "D10": {
+    "mpn": "NSVBAT54HT1G",
+    "footprint": "VHOS_RevB:onsemi_SOD-323_477",
+    "value": "NSVBAT54HT1G",
+    "x_mm": 110.5,
+    "y_mm": 125.0,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/VOLT_CLAMP",
+      "2": "/GND"
+    }
+  },
+  "JT5": {
+    "mpn": "KF128-5.08-2P-AA",
+    "footprint": "VHOS_RevB:KEFA_KF128_5.08_2P",
+    "value": "B-/+LED",
+    "x_mm": 48.5,
+    "y_mm": 140.29,
+    "rotation_deg": -90.0,
+    "pad_nets": {
+      "1": "/LED_B_NEG",
+      "2": "/LED_POS"
+    }
+  },
+  "C26": {
+    "mpn": "CL10A105KB8NNNC",
+    "footprint": "Capacitor_SMD:C_0603_1608Metric",
+    "value": "1u 50V X5R",
+    "x_mm": 165.1,
+    "y_mm": 106.6,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/CHIP_EN",
+      "2": "/GND"
+    }
+  },
+  "R5": {
+    "mpn": "0603WAF4702T5E",
+    "footprint": "Resistor_SMD:R_0603_1608Metric",
+    "value": "47k 1%",
+    "x_mm": 120.1,
+    "y_mm": 112.5,
+    "rotation_deg": 180.0,
+    "pad_nets": {
+      "1": "/FB_3V3",
+      "2": "/GND"
+    }
+  },
+  "R20": {
+    "mpn": "0603WAF1003T5E",
+    "footprint": "Resistor_SMD:R_0603_1608Metric",
+    "value": "100k",
+    "x_mm": 65.0,
+    "y_mm": 151.0,
+    "rotation_deg": 180.0,
+    "pad_nets": {
+      "1": "/PWM_W",
+      "2": "/GND"
+    }
+  },
+  "R24": {
+    "mpn": "RT1206BRD0749K9L",
+    "footprint": "Resistor_SMD:R_1206_3216Metric",
+    "value": "49.9k 0.1%",
+    "x_mm": 60.1,
+    "y_mm": 118.5,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/TAIL_12V",
+      "2": "/TAIL_SERIES"
+    }
+  },
+  "TP12": {
+    "mpn": "PCB FEATURE",
+    "footprint": "TestPoint:TestPoint_Pad_D1.5mm",
+    "value": "BOOT_N",
+    "x_mm": 163.85,
+    "y_mm": 151.55,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/BOOT_N"
+    }
+  },
+  "C4": {
+    "mpn": "0603B103K500NT",
+    "footprint": "Capacitor_SMD:C_0603_1608Metric",
+    "value": "10n 50V X7R",
+    "x_mm": 86.2,
+    "y_mm": 121.4,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/SLEW",
+      "2": "/EFUSE_RTN"
+    }
+  },
+  "D2": {
+    "mpn": "SMBJ28CAQ-13-F",
+    "footprint": "Diode_SMD:D_SMB",
+    "value": "SMBJ28CAQ",
+    "x_mm": 78.0,
+    "y_mm": 149.0,
+    "rotation_deg": 180.0,
+    "pad_nets": {
+      "1": "/LED_POS",
+      "2": "/GND"
+    }
+  },
+  "R2": {
+    "mpn": "0603WAF4702T5E",
+    "footprint": "Resistor_SMD:R_0603_1608Metric",
+    "value": "47k 1%",
+    "x_mm": 74.4,
+    "y_mm": 117.7,
+    "rotation_deg": 180.0,
+    "pad_nets": {
+      "1": "/ACC_FUSED",
+      "2": "/UVLO"
+    }
+  },
+  "R1": {
+    "mpn": "0603WAF8201T5E",
+    "footprint": "Resistor_SMD:R_0603_1608Metric",
+    "value": "8.2k 1%",
+    "x_mm": 85.9,
+    "y_mm": 123.8,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/ILIM",
+      "2": "/EFUSE_RTN"
+    }
+  },
+  "TP6": {
+    "mpn": "PCB FEATURE",
+    "footprint": "TestPoint:TestPoint_Pad_D1.0mm",
+    "value": "GND",
+    "x_mm": 142.0,
+    "y_mm": 105.34,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/GND"
+    }
+  },
+  "R41": {
+    "mpn": "RT1206BRD0749K9L",
+    "footprint": "Resistor_SMD:R_1206_3216Metric",
+    "value": "49.9k 0.1%",
+    "x_mm": 101.0,
+    "y_mm": 124.0,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/VOLT_SERIES",
+      "2": "/VOLT_CLAMP"
+    }
+  },
+  "JT2": {
+    "mpn": "KF128-5.08-2P-AA",
+    "footprint": "VHOS_RevB:KEFA_KF128_5.08_2P",
+    "value": "TAIL/DIM",
+    "x_mm": 45.5,
+    "y_mm": 108.01,
+    "rotation_deg": -90.0,
+    "pad_nets": {
+      "1": "/TAIL_12V",
+      "2": "/DIM_RETURN"
+    }
+  },
+  "TP9": {
+    "mpn": "PCB FEATURE",
+    "footprint": "TestPoint:TestPoint_Pad_D1.5mm",
+    "value": "GND",
+    "x_mm": 155.0,
+    "y_mm": 151.55,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/GND"
+    }
+  },
+  "C20": {
+    "mpn": "CC0603KRX7R9BB104",
+    "footprint": "Capacitor_SMD:C_0603_1608Metric",
+    "value": "100n 50V",
+    "x_mm": 164.0,
+    "y_mm": 147.5,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/DIM_ADC",
+      "2": "/GND"
+    }
+  },
+  "F2": {
+    "mpn": "3568-10",
+    "footprint": "VHOS_RevB:Keystone_3568_MINI_Vertical",
+    "value": "1A MINI LOGIC",
+    "x_mm": 103.5,
+    "y_mm": 107.34,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "1": "/LED_POS",
+      "2": "/VIN_PROT"
+    }
+  },
+  "JT4": {
+    "mpn": "KF128-5.08-2P-AA",
+    "footprint": "VHOS_RevB:KEFA_KF128_5.08_2P",
+    "value": "R-/G-",
+    "x_mm": 48.5,
+    "y_mm": 151.05,
+    "rotation_deg": -90.0,
+    "pad_nets": {
+      "1": "/LED_R_NEG",
+      "2": "/LED_G_NEG"
+    }
+  },
+  "MH3": {
+    "mpn": "PCB FEATURE",
+    "footprint": "MountingHole:MountingHole_3.2mm_M3",
+    "value": "M3 CASE SUPPORT",
+    "x_mm": 145.2,
+    "y_mm": 148.55,
+    "rotation_deg": 0.0,
+    "pad_nets": {
+      "": ""
+    }
+  },
+  "C27": {
+    "mpn": "CL21B104KCFNNNE",
+    "footprint": "Capacitor_SMD:C_0805_2012Metric",
+    "value": "100n 100V X7R",
+    "x_mm": 58.8,
+    "y_mm": 138.0,
+    "rotation_deg": 90.0,
+    "pad_nets": {
+      "1": "/LED_POS",
+      "2": "/GND"
+    }
+  }
+}

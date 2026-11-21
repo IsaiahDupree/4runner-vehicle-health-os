@@ -1,0 +1,33 @@
+{
+  "upstream": "https://github.com/wled/WLED",
+  "tag": "v16.0.1",
+  "commit": "29b389df1c1aaec6ff53aea742d17063b985906c",
+  "platformio": "6.1.19",
+  "environment": "vhos_revi_n16r2",
+  "module": "ESP32-S3-WROOM-1-N16R2",
+  "flash_mb": 16,
+  "psram_mb": 2,
+  "pcb_target": "Rev I with GPIO1 protected ACC sense; do not fit to Rev H without that circuit",
+  "usermod_sha256": {
+    "revg_control.h": "9a1235a51a767ab12a7244e25568612a6e705a74a5f4d7b84c44b58801d0fd42",
+    "revg_inputs.h": "add484ba572cff320241fb5564c1c1d6a6bc0b8e98743658f35096163d282787",
+    "revg_policy.h": "65e6a2c640ea61ede9cbd9356f28ff643056cd812b6c04114b4d085b44c462ab",
+    "revg_relay.h": "8c11d1a992492126bcb1f7eda3aa189a2e3fbeb5b4ae609569a4744e043d5526",
+    "revg_ui.h": "2a4040308e49918db0a93e6576bc06f2c9925bfd98ca510e0260304664220f70",
+    "revg_usermod.cpp": "b42011639ff71306da0c592a28dbce0dff68bfda1cfc47621108276ab7bf9ed1",
+    "revg_voltage.h": "64362a47c7f1bb38b6e6cf557957128096f8a2b3c1eb09c9c5a3f7907bdf22a6"
+  },
+  "flash_offset": "0x0",
+  "duration_s": 113.48,
+  "hardware_flashing_or_vehicle_validation": false,
+  "images": {
+    "vhos-revi-wled-n16r2-app.bin": {
+      "bytes": 1085728,
+      "sha256": "60a3eb13ac6d61b217ad70b4a1bbfd66a9d839807455642b823a2deffb4f9635"
+    },
+    "vhos-revi-wled-n16r2-factory.bin": {
+      "bytes": 1151264,
+      "sha256": "fce2b17f71056bcb6f1021ede2fff22136674a26c3ea63ac367a8c6abd39cfe8"
+    }
+  }
+}

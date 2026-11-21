@@ -54,7 +54,7 @@ def test_voltage_frontend_uses_actual_existing_skus_and_bounded_tolerance_screen
 def test_latest_orion_firmware_images_and_every_usermod_source_match_the_receipt():
     import json
     from hashlib import sha256
-    build=FW/'builds/revi-strip-ui-02'
+    build=FW/'builds/revi-strip-ui-03'
     report=json.loads((build/'firmware-build.json').read_text())
     assert report['environment']=='vhos_revi_n16r2' and report['flash_offset']=='0x0'
     assert not report['hardware_flashing_or_vehicle_validation']

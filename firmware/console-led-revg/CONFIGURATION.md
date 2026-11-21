@@ -66,6 +66,7 @@ All accessory requests use X-VHOS-Key. No accessory endpoint transmits on CAN.
 | Route | Meaning |
 |---|---|
 | GET /vhos/status | vhos.lighting.status@1.0.0: configuration, readiness, relay freshness, ADC samples, requested/effective level and source-labeled supply measurement. No relay key is returned. |
+| GET /api/health | Authenticated alias of the actual controller status; readiness and measurement availability remain explicit. |
 | POST /vhos/manual | action=set plus red/green/blue/white/brightness, integers 0–255; action=off clears intent, including while disarmed. |
 | POST /vhos/config | Complete atomic rule and cabin configuration. Bad fields or invalid calibration reject without partial changes. Does not set a relay key or arm the hardware. |
 | POST /vhos/voltage | low-adc-mv, low-input-mv, high-adc-mv, high-input-mv. Requires the Rev I build and two separated bench measurements. |
@@ -77,7 +78,7 @@ The UI uses no CDN, cloud service, external font or hosted account. Its editable
 
 WLED remains pinned to v16.0.1 / 29b389df1c1aaec6ff53aea742d17063b985906c. The Rev I image uses vhos_revi_n16r2 with VHOS_SUPPLY_SENSE. The original vhos_revg_n16r2 target retains no voltage input and can build the UI for Rev G/H. Do not flash the Rev I sense image to an unmodified Rev H board and treat a floating GPIO as a measurement.
 
-The native [Orion firmware receipt](builds/revi-strip-ui-02/firmware-build.json) records exact images and usermod hashes. This is a cross-compile, not a flashed-device or vehicle pass. Actual driver/ADC/PWM, incoming power transients, strip current/temperature, end sealing and phone/head-unit pairing require the documented physical acceptance. See [Rev I hardware](../../hardware/console-led-node-v0.1/pcb-rgbw-revi/README.md).
+The native [Orion firmware receipt](builds/revi-strip-ui-03/firmware-build.json) records exact images and usermod hashes. This is a cross-compile, not a flashed-device or vehicle pass. Actual driver/ADC/PWM, incoming power transients, strip current/temperature, end sealing and phone/head-unit pairing require the documented physical acceptance. See [Rev I hardware](../../hardware/console-led-node-v0.1/pcb-rgbw-revi/README.md).
 
 References: [WLED analog-strip compatibility](https://kno.wled.ge/basics/compatible-led-strips/), [WLED local JSON API](https://kno.wled.ge/interfaces/json-api/). The custom routes above are project-owned additions, not claims about unmodified upstream WLED.
 

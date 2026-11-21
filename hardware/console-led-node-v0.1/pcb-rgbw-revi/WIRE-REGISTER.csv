@@ -1,0 +1,13 @@
+Terminal,Label,Toyota cavity,PCB net,Status
+JT1-1,GND,5,GND,Verify polarity and cavity/pod mapping before power
+JT1-2,ACC,6,VEH_ACC,Verify polarity and cavity/pod mapping before power
+JT2-1,TAIL,1,TAIL_12V,Verify polarity and cavity/pod mapping before power
+JT2-2,DIM,2,DIM_RETURN,Verify polarity and cavity/pod mapping before power
+JT3-1,RSV3,3,,Isolated reserve; verify vehicle circuit before future use
+JT3-2,RSV4,4,,Isolated reserve; verify vehicle circuit before future use
+JT4-1,R-,,LED_R_NEG,Verify polarity and cavity/pod mapping before power
+JT4-2,G-,,LED_G_NEG,Verify polarity and cavity/pod mapping before power
+JT5-1,B-,,LED_B_NEG,Verify polarity and cavity/pod mapping before power
+JT5-2,+LED,,LED_POS,Verify polarity and cavity/pod mapping before power
+JT6-1,W-,,LED_W_NEG,Verify polarity and cavity/pod mapping before power
+JT6-2,NC,,,"Empty spare, no electrical connection"
