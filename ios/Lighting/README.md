@@ -2,6 +2,8 @@
 
 Native SwiftUI app for the integrated Rev I RGBW controller. The dedicated Xcode scheme is **4RunnerLighting**, bundle **com.isaiahdupree.4RunnerLighting**, iOS 17 or newer. It installs separately from Vehicle Health OS. The existing VHOS app also opens these native controls from System → 4Runner lighting.
 
+The [saved design decisions and handoff](DESIGN-DECISIONS.md) preserve the approved WLED-only interface direction, current hardware scope and exact implementation/package references.
+
 The UI follows WLED’s control structure: **Colors, Effects, Segments and Presets**. Colors has a hue/saturation wheel, three effect color slots, HEX, global brightness, white-channel level, target dropdown and controller palette selection. Gestures send changes on release when connected; disconnected editing is a labeled preview. Power is a direct control in the header. No vehicle illustration, photo, promotional hero or phone-only scene system is included.
 
 Effects and palettes load from the actual WLED catalog. Presets load, save and delete on the controller using WLED’s preset file/API. Saving captures the controller’s current state with brightness and preserves the installed segment bounds. An acknowledgement is a request result; the returned preset file is the evidence for stored contents.
