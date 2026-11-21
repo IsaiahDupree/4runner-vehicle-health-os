@@ -4,6 +4,13 @@
 
 [Complete product BOM and cost status](PRODUCT-BOM.md) · [Itemized BOM CSV](PRODUCT-BOM.csv).
 
+The owner's latest lighting choice is **whole-strip analog RGB/RGBW**.
+See the [automotive strip research and support screen](strips/README.md) for
+manufacturer evidence, exact terminal mapping, load limits and the strip-build
+BOM delta. No strip has yet passed complete component/physical qualification;
+the existing PCB and renders must not be interpreted as approval for an
+arbitrary length of automotive tape.
+
 Rev H replaces the internal wire-pad pigtails and Micro-Fit pairs with six
 factory-soldered two-position terminal blocks. There is one integrated board,
 one Toyota six-wire power/sense inlet, and one RGBW outlet. CAN information

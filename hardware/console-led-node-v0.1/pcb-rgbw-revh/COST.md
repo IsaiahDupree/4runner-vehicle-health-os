@@ -1,5 +1,12 @@
 # Cost and procurement snapshot
 
+The latest requested load is a whole-strip RGB/RGBW strip, replacing the optional
+pod procurement assumption. See [strip-build materials](strips/README.md#strip-build-material-delta).
+Removing the DD7440 and its DD4084 donor lead leaves **$33.19** in previously
+priced materials. The selected strip, its lead/seals/mounts, unquoted materials
+and factory work are additional; no complete strip-build total is established.
+The figures below and in the earlier product-BOM scenario remain dated records.
+
 For the enclosure, harness, fuses, mounting hardware and optional lamp as well,
 see the [complete-product BOM](PRODUCT-BOM.md) and [itemized CSV](PRODUCT-BOM.csv).
 The priced portion is $39.14 without the optional lamp or $119.09 with one

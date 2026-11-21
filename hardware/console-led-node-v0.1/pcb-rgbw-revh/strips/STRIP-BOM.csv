@@ -1,0 +1,9 @@
+Action,Item,Quantity,Specification,Cost status
+Remove from strip build,DD7440 optional pod,1,Earlier optional lighting scenario only,Remove 79.95 USD scenario line
+Remove from strip build,DD4084 M8 donor,1,Earlier pod-specific donor lead,Remove 5.95 USD scenario line
+Add,Automotive common-positive RGB/RGBW flexible strip,Selected aggregate length,Exact SKU/voltage/current and complete protection evidence pending,Unquoted
+Add,Round jacketed four/five-core LED lead,1 assembly,Length/OD/gauge/fuse coordination and pigtail approval pending,Unquoted
+Add,Sealed strip terminations and strain relief,Per strip end,Manufacturer-approved factory solder/seal method and material,Unquoted
+Add,Mounting retainers and road-abrasion protection,Per strip installation,Manufacturer-approved retention and mounting away from heat/moving parts,Unquoted
+Retain,Integrated Rev H PCB and factory terminal population,1,Existing circuit and current screen; not yet strip-qualified,23.5841 USD component material only
+Retain,Toyota power-only-source architecture and gland entries,1 set,All six Toyota conductors registered; no second power or CAN adapter,See current BOM

@@ -1,0 +1,284 @@
+{
+  "reviewed_date": "2026-11-21",
+  "owner_choice": "Whole-strip RGB/RGBW, analog output; no addressable data output requested",
+  "selected_for_purchase": null,
+  "physical_qualification": false,
+  "candidates": [
+    {
+      "id": "aspoeck_rgbw_oem",
+      "name": "Aspoeck FlexLED RGB/W automotive family",
+      "source_ids": [
+        "aspoeck_2025",
+        "aspoeck_family"
+      ],
+      "colors": [
+        "R",
+        "G",
+        "B",
+        "W"
+      ],
+      "control": null,
+      "voltage_min_v": null,
+      "voltage_max_v": null,
+      "max_channel_current_a": null,
+      "nominal_power_w": null,
+      "nominal_voltage_v": null,
+      "evidence": {
+        "water": "Family IP6K9K claim",
+        "vibration": "Family literature lists 10-2000 Hz vibration and 51 g shock",
+        "reverse_polarity": null,
+        "short_circuit": null,
+        "load_dump": null,
+        "brownout_restart": null,
+        "pwm": null,
+        "sealed_termination": null
+      },
+      "notes": [
+        "Primary 2025 manufacturer leaflet confirms RGB/RGBW/digital are separate options. Require exact 12 V common-positive analog SKU and specification; no inherited voltage, current, protection or protocol from monochrome products.",
+        "First OEM sourcing lead for the requested rugged color strip, not a qualified or priced replacement."
+      ]
+    },
+    {
+      "id": "ofolux_line_rgb",
+      "name": "OFOLux Flex Line RGB family",
+      "source_ids": [
+        "ofolux_line"
+      ],
+      "colors": [
+        "R",
+        "G",
+        "B"
+      ],
+      "control": null,
+      "voltage_min_v": null,
+      "voltage_max_v": null,
+      "max_channel_current_a": null,
+      "nominal_power_w": null,
+      "nominal_voltage_v": null,
+      "evidence": {
+        "water": "Manufacturer lists IP67",
+        "vibration": null,
+        "reverse_polarity": null,
+        "short_circuit": null,
+        "load_dump": null,
+        "brownout_restart": null,
+        "pwm": null,
+        "sealed_termination": null
+      },
+      "notes": [
+        "Family lists 12 V or 24 V and RGB, customized lengths up to 10 m; exact RGB voltage variant, current, pinout, PWM and integrated electrical protections are unpublished.",
+        "Do not transfer fuse/reverse-protection claims from Flex FT to Flex Line."
+      ]
+    },
+    {
+      "id": "ofolux_gs_rgb",
+      "name": "OFOLux Flex GS-RGB",
+      "source_ids": [
+        "ofolux_gs_rgb"
+      ],
+      "colors": [
+        "R",
+        "G",
+        "B"
+      ],
+      "control": null,
+      "voltage_min_v": "18",
+      "voltage_max_v": "32",
+      "max_channel_current_a": null,
+      "nominal_power_w": null,
+      "nominal_voltage_v": null,
+      "evidence": {
+        "water": "IP65 only; immersion/pressure-wash qualification not established",
+        "vibration": null,
+        "reverse_polarity": "Manufacturer describes polarity inversion protection",
+        "short_circuit": null,
+        "load_dump": null,
+        "brownout_restart": null,
+        "pwm": null,
+        "sealed_termination": null
+      },
+      "notes": [
+        "Specific technical description is 18-32 V, despite generic 12/24 V icons. Cuttable 10 m reel with soldered lead. This is not a verified 12 V variant."
+      ]
+    },
+    {
+      "id": "teknoware_rgbw_1m",
+      "name": "Teknoware Wave YLN1231RGBWMW, 1 m common-positive RGBW",
+      "source_ids": [
+        "teknoware"
+      ],
+      "colors": [
+        "R",
+        "G",
+        "B",
+        "W"
+      ],
+      "control": "analog_common_positive",
+      "voltage_min_v": "9",
+      "voltage_max_v": "16",
+      "max_channel_current_a": {
+        "R": "0.380",
+        "G": "0.360",
+        "B": "0.345",
+        "W": "0.725"
+      },
+      "nominal_power_w": null,
+      "nominal_voltage_v": null,
+      "evidence": {
+        "water": null,
+        "vibration": null,
+        "reverse_polarity": "Manufacturer states reverse-input protection",
+        "short_circuit": null,
+        "load_dump": null,
+        "brownout_restart": null,
+        "pwm": null,
+        "sealed_termination": null
+      },
+      "notes": [
+        "Manufacturer PDF page 4 (zero-based page 3); 100 mm cut interval and 200 mm minimum. Interior strip with solder pads; no underbody ingress/vibration qualification in the reviewed sheet.",
+        "Use the upper current values across the stated voltage range, not just nominal 12 V values. The 12 V table labels its nominal-current column 24 V: supplier clarification required. No physical sample measured."
+      ]
+    },
+    {
+      "id": "teknoware_rgbw_400mm",
+      "name": "Teknoware Wave YLN1231RGBWMW, 400 mm screening length",
+      "source_ids": [
+        "teknoware"
+      ],
+      "colors": [
+        "R",
+        "G",
+        "B",
+        "W"
+      ],
+      "control": "analog_common_positive",
+      "voltage_min_v": "9",
+      "voltage_max_v": "16",
+      "max_channel_current_a": {
+        "R": "0.1520",
+        "G": "0.1440",
+        "B": "0.1380",
+        "W": "0.2900"
+      },
+      "nominal_power_w": null,
+      "nominal_voltage_v": null,
+      "evidence": {
+        "water": null,
+        "vibration": null,
+        "reverse_polarity": "Manufacturer states reverse-input protection",
+        "short_circuit": null,
+        "load_dump": null,
+        "brownout_restart": null,
+        "pwm": null,
+        "sealed_termination": null
+      },
+      "notes": [
+        "Calculated 0.4 times the 1 m upper current table, a first-order length estimate, not a manufacturer-tested 400 mm rating. Four 100 mm modules exceed the 200 mm minimum; cutting/retermination and sealing need supplier approval.",
+        "This numerical example illustrates current sizing only; it has no documented underbody water or complete protection qualification."
+      ],
+      "current_is_estimate": true
+    },
+    {
+      "id": "tecniq_e46",
+      "name": "TecNiq E46-402V-1 analog RGBW short-strip candidate",
+      "source_ids": [
+        "tecniq_e46"
+      ],
+      "colors": [
+        "R",
+        "G",
+        "B",
+        "W"
+      ],
+      "control": "analog_common_positive",
+      "voltage_min_v": "9",
+      "voltage_max_v": "14",
+      "max_channel_current_a": {
+        "R": "0.49",
+        "G": "0.55",
+        "B": "0.52",
+        "W": "0.49"
+      },
+      "nominal_power_w": null,
+      "nominal_voltage_v": null,
+      "evidence": {
+        "water": "Water resistant only; no IP rating on reviewed E46 page",
+        "vibration": null,
+        "reverse_polarity": null,
+        "short_circuit": null,
+        "load_dump": null,
+        "brownout_restart": null,
+        "pwm": null,
+        "sealed_termination": null
+      },
+      "notes": [
+        "Manufacturer identifies black positive and R/G/B/W switched returns. Analog 5C version, not 3C addressable E46 variants.",
+        "Current upper bounds are the published per-section figures, provisionally applied to the short-strip candidate. Product text disagrees on section LED count; exact length/current must be confirmed.",
+        "No manufacturer evidence found here for strip-local load dump, brownout, fuse or vibration test. 14 V ceiling and listed channel current already fail Rev H static screen."
+      ],
+      "current_is_estimate": true
+    },
+    {
+      "id": "labcraft_orizon_white",
+      "name": "Labcraft Orizon Flex FLEDCW_2.5-5 white, 2.5 m",
+      "source_ids": [
+        "labcraft"
+      ],
+      "colors": [
+        "W"
+      ],
+      "control": null,
+      "voltage_min_v": null,
+      "voltage_max_v": null,
+      "max_channel_current_a": null,
+      "nominal_power_w": "12.5",
+      "nominal_voltage_v": "12",
+      "evidence": {
+        "water": "IP69K manufacturer claim",
+        "vibration": "Manufacturer reports in-house vibration testing; method/severity unspecified",
+        "reverse_polarity": "Built into strip",
+        "short_circuit": null,
+        "load_dump": "Manufacturer explicitly states built-in spike/load-dump protection",
+        "brownout_restart": null,
+        "pwm": null,
+        "sealed_termination": null
+      },
+      "notes": [
+        "Protection benchmark, not an RGB/RGBW substitution. Full control circuitry every 250 mm, factory bare-end or Superseal leads.",
+        "12.5 W at 12 V implies 1.0417 A nominal on a single white channel, already beyond Rev H 0.5 A/channel. PWM method, short-circuit action, brownout behavior and field cutting/sealing are not established by reviewed PDF."
+      ]
+    },
+    {
+      "id": "grote_xtl_white",
+      "name": "Grote XTL F21003-017-03-022 white strip",
+      "source_ids": [
+        "grote"
+      ],
+      "colors": [
+        "W"
+      ],
+      "control": null,
+      "voltage_min_v": "10",
+      "voltage_max_v": "14",
+      "max_channel_current_a": {
+        "W": "0.17"
+      },
+      "nominal_power_w": null,
+      "nominal_voltage_v": null,
+      "evidence": {
+        "water": "Manufacturer lists IP67 and IP69K",
+        "vibration": "SAE J575 section 4.2; impact, thermal-shock, UV, corrosion and abrasion references also listed",
+        "reverse_polarity": null,
+        "short_circuit": null,
+        "load_dump": null,
+        "brownout_restart": null,
+        "pwm": null,
+        "sealed_termination": null
+      },
+      "notes": [
+        "Rugged single-color benchmark, not color-changing RGBW. Reviewed sheet specifies 10-14 V, so it is not a direct match to this unregulated output.",
+        "Sheet does not establish local short-circuit, reverse-polarity, load-dump or brownout safeguards."
+      ]
+    }
+  ]
+}

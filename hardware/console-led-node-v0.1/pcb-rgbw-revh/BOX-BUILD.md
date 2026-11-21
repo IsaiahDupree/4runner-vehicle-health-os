@@ -1,5 +1,11 @@
 # Rev H finished-product supplier scope
 
+The latest requested load is a whole-strip RGB/RGBW strip. Apply the
+[strip interface and supplier acceptance requirements](strips/README.md)
+before selecting the external load or its harness. The previous pod and M8
+donor are an earlier option. No strip is currently qualified, and longer strips
+may require a new power/driver revision; retain the sole Toyota power inlet.
+
 Quote one assembled, programmed, wired and tested product. Customer soldering
 is excluded. JLCPCB PCBA alone is not a complete wired enclosure product.
 

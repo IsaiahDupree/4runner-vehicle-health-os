@@ -1,0 +1,16 @@
+{
+  "checked_utc": "2026-11-21T08:08:54.913516+00:00",
+  "pytest": {
+    "passed": 237,
+    "new_strip_tests": 5,
+    "duration_sec": 7.5
+  },
+  "contract_schemas": {
+    "count": 52,
+    "valid": true
+  },
+  "screen_results_sha256": "6fcb2d7a4f81186f55562ce5ae2534db325261657ddf952ed8475f46444a17fd",
+  "scope": "Static sourcing/current/voltage checks from primary manufacturer observations and the accepted native PCB. No new CAD, firmware binary, power test, transient simulation or physical strip qualification.",
+  "physical_qualification": false,
+  "purchase_selection": null
+}

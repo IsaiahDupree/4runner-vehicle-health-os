@@ -1,0 +1,109 @@
+[
+  {
+    "id": "aspoeck_2025",
+    "url": "https://www.aspoeck.com/aspoeck/products/product-catalogs/image-Product-and-segment-leaflet/ASP_Construction_folder_032025_Einzelseiten.pdf",
+    "status": "direct_fetch_failed",
+    "web_tool_evidence_available": true,
+    "note": "Observed through the web research tool; no local byte-hash claim."
+  },
+  {
+    "id": "aspoeck_family",
+    "url": "https://www.aspoeck.com/aspoeck/press/asp_imagefolder_flexled_en_052021.pdf",
+    "observed_utc": "2026-11-21T08:01:36.540310+00:00",
+    "bytes": 3775480,
+    "sha256": "bef862845ec4898a0feed8bd217be9a197bdc5e471e769ad3429acabe0f41582",
+    "status": "captured",
+    "content_type": "application/pdf"
+  },
+  {
+    "id": "labcraft",
+    "url": "https://www.labcraft.co.uk/media/wysiwyg/pdfs/Labcraft-Orizon-Flex-Strip-Light.pdf",
+    "status": "direct_fetch_failed",
+    "web_tool_evidence_available": true,
+    "note": "Observed through the web research tool; no local byte-hash claim."
+  },
+  {
+    "id": "teknoware",
+    "url": "https://www.teknoware.com/app/uploads/Teknoware_Wave_RGB_RGBW_EN.pdf",
+    "observed_utc": "2026-11-21T08:01:36.489606+00:00",
+    "bytes": 1030460,
+    "sha256": "e34032c9144dceef518867d073923a10757957f33d93116addc3084e5c8595c2",
+    "status": "captured",
+    "content_type": "application/pdf"
+  },
+  {
+    "id": "tecniq_e46",
+    "url": "https://www.tecniqinc.com/product/E46",
+    "observed_utc": "2026-11-21T08:01:35.827251+00:00",
+    "bytes": 295150,
+    "sha256": "dbc1bf3123e701674fc62c297e70eff72745667f63383df9224af8456c0edeb7",
+    "status": "captured",
+    "content_type": "text/html; charset=utf-8"
+  },
+  {
+    "id": "ofolux_gs_rgb",
+    "url": "https://www.ofolux.it/en/2025-catalogue/114-flex-gs-rgb.html",
+    "status": "direct_fetch_failed",
+    "web_tool_evidence_available": true,
+    "note": "Observed through the web research tool; no local byte-hash claim."
+  },
+  {
+    "id": "ofolux_line",
+    "url": "https://www.ofolux.it/en/2025-catalogue/116-flex-line.html",
+    "status": "direct_fetch_failed",
+    "web_tool_evidence_available": true,
+    "note": "Observed through the web research tool; no local byte-hash claim."
+  },
+  {
+    "id": "ofolux_ft",
+    "url": "https://www.ofolux.it/en/2025-catalogue/115-flex-ft.html",
+    "status": "direct_fetch_failed",
+    "web_tool_evidence_available": true,
+    "note": "Observed through the web research tool; no local byte-hash claim."
+  },
+  {
+    "id": "grote",
+    "url": "https://www.grote.com/file-attachments/XTL_LED_Strips_Data_Sheet_-_GLB2019-098.pdf",
+    "observed_utc": "2026-11-21T08:01:37.139598+00:00",
+    "bytes": 385473,
+    "sha256": "f8c97181fca4b05ac2e10f14f4f7dd75796c8bebe59530b227724d4549a7e153",
+    "status": "captured",
+    "content_type": "application/pdf"
+  },
+  {
+    "id": "wled",
+    "url": "https://kno.wled.ge/basics/compatible-led-strips/",
+    "observed_utc": "2026-11-21T08:01:37.555201+00:00",
+    "bytes": 63438,
+    "sha256": "fd75ef44f7d76ac5bcf7a1c53928e108b402eda7d10f945066651b6734978020",
+    "status": "captured",
+    "content_type": "text/html; charset=utf-8"
+  },
+  {
+    "id": "ti_drv8803",
+    "url": "https://www.ti.com/product/DRV8803",
+    "observed_utc": "2026-11-21T08:01:37.466177+00:00",
+    "bytes": 302896,
+    "sha256": "0af8d5c8421077ed4185af34fa2faccb3ed9c11a9be05241436f3aca459730e8",
+    "status": "captured",
+    "content_type": "text/html;charset=UTF-8"
+  },
+  {
+    "id": "ti_tps2660",
+    "url": "https://www.ti.com/product/TPS2660",
+    "observed_utc": "2026-11-21T08:01:37.990327+00:00",
+    "bytes": 409976,
+    "sha256": "563e2ce28881bb6f6076a1f3a8a41f8b34365f72ae229875f78127eb5643820d",
+    "status": "captured",
+    "content_type": "text/html;charset=UTF-8"
+  },
+  {
+    "id": "ti_transients",
+    "url": "https://www.ti.com/lit/an/snva681a/snva681a.pdf",
+    "observed_utc": "2026-11-21T08:01:37.749610+00:00",
+    "bytes": 199947,
+    "sha256": "9ebf87043618ec2cb5fb26db454876353f08c965676427721c7d9373f7b0a55e",
+    "status": "captured",
+    "content_type": "application/pdf"
+  }
+]

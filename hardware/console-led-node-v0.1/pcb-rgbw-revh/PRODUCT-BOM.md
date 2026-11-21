@@ -1,5 +1,10 @@
 # Rev H complete-product BOM and partial material pricing
 
+**Configuration note:** this is the earlier optional-pod price scenario. The
+owner subsequently selected whole-strip RGB/RGBW lighting. Use the
+[strip research and BOM delta](strips/README.md) for that build; the DD7440 and
+DD4084 lines are not the selected strip purchases. No strip price is quoted.
+
 Quantity basis: **one controller**, with **one optional DD7440 lamp**. Public catalog/retail observations dated November 21, 2026. No order was placed. These are material consumption figures; minimum purchase packs, assembly, factory loss parts, taxes and freight can raise cash cost.
 
 **Priced partial materials: $39.14 without the lamp; $119.09 with one lamp. The full product total is unknown.** Blank prices are unquoted, never zero-cost parts. The PCB component portion is $23.58. See [PRODUCT-BOM.csv](PRODUCT-BOM.csv) for every row and [price/source record](references/product-cost-2026-11-21.json).
