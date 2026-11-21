@@ -1,0 +1,1 @@
+Power comes from the truck's six pin console connector. The inline harness carries the factory connections through and takes switched power, ground, and two illumination signals into our controller. The remaining conductors stay labeled and accessible for future use.

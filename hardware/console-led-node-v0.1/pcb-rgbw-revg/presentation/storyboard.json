@@ -1,0 +1,49 @@
+{
+  "title": "4Runner Rev G",
+  "speaker": "isaiah_dupree",
+  "voice_profile": "isaiah-qwen3-live-mic-v1",
+  "fps": 24,
+  "resolution": [
+    1920,
+    1080
+  ],
+  "chapters": [
+    {
+      "id": "01-introduction",
+      "text": "This is the lighting controller I'm building for my two thousand five Toyota Four Runner V eight. One custom board brings together the power supply, the wireless processor, and four channels of color control. Here is how everything fits inside the enclosure.",
+      "title": "Rev G",
+      "detail": "One integrated lighting controller"
+    },
+    {
+      "id": "02-power",
+      "text": "Power comes from the truck's six pin console connector. The inline harness carries the factory connections through and takes switched power, ground, and two illumination signals into our controller. The remaining conductors stay labeled and accessible for future use.",
+      "title": "One vehicle power input",
+      "detail": "Toyota six-cavity inline harness"
+    },
+    {
+      "id": "03-electronics",
+      "text": "Inside, the main fuse and electronic protection feed the circuit. A separate fuse protects the regulator that supplies three point three volts to the processor. The E S P thirty two S three handles wireless control, and the four channel driver switches the red, green, blue, and white outputs.",
+      "title": "Protection, processing, output",
+      "detail": "Fuses \u2022 eFuse \u2022 3.3 V buck \u2022 ESP32-S3 \u2022 RGBW"
+    },
+    {
+      "id": "04-control",
+      "text": "The iPhone or Android head unit connects over Wi Fi to change the color with WLED. Our existing CAN gateway supplies vehicle data through the app relay. Supported engine and vehicle signals can trigger a color rule. If fresh data stops arriving, automatic lighting turns off after two point five seconds.",
+      "title": "Wireless control",
+      "detail": "Manual color and telemetry rules"
+    },
+    {
+      "id": "05-mechanics",
+      "text": "The printed enclosure has two cable glands on a removable plate. Inside, latching wire connectors let the harness disconnect for service. Threaded inserts support repeated opening, and both fuses lift out with the lid removed. These animations show the actual design geometry and its planned service sequence.",
+      "title": "Built for service",
+      "detail": "Two glands \u2022 removable plate \u2022 wire disconnects"
+    },
+    {
+      "id": "06-validation",
+      "text": "The project includes the board, enclosure, wiring register, firmware, and assembly files. The digital checks cover electrical rules, clearances, support free printing, and the control software. The first physical unit still needs current, heat, sealing, connector, and vehicle fit tests. Everything is organized on GitHub for the next build.",
+      "title": "Ready for the next prototype",
+      "detail": "CAD and software checked \u2022 physical validation pending"
+    }
+  ],
+  "picture_count": 6
+}

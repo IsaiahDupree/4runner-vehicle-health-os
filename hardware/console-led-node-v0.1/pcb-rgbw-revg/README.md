@@ -14,6 +14,10 @@ RGBW pod. The existing CAN ESP32 supplies vehicle telemetry wirelessly.
 See the [gland plate and wire-mount harness](glands/README.md) and the
 [ESP32-S3 WLED build and CAN relay](../../../firmware/console-led-revg/README.md).
 
+The [studio pictures and narrated 3D film](presentation/README.md) show the
+outside, inside, populated board, service assembly and manufacturer connector
+models. The presentation source and exact narration script accompany the media.
+
 ## Files
 
 | Use | Files |

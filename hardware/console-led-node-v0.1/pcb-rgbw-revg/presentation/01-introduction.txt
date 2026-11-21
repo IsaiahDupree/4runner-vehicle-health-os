@@ -1,0 +1,1 @@
+This is the lighting controller I'm building for my two thousand five Toyota Four Runner V eight. One custom board brings together the power supply, the wireless processor, and four channels of color control. Here is how everything fits inside the enclosure.

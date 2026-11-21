@@ -1,0 +1,1 @@
+The project includes the board, enclosure, wiring register, firmware, and assembly files. The digital checks cover electrical rules, clearances, support free printing, and the control software. The first physical unit still needs current, heat, sealing, connector, and vehicle fit tests. Everything is organized on GitHub for the next build.

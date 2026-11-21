@@ -1,0 +1,78 @@
+{
+  "source_sha256": "16b43c7595cfb29e09d76bc54b4b29cb57dbfe33fd73a99953a554d10d7696b7",
+  "input_sha256": {
+    "assembly.FCStd": "bbc12091ff22a05a1b7e2a06bbad025ea8a688d4184ee21c0d433f27d2f19779",
+    "gland-fit.json": "58b317888b022f2b470a13de3ac887071b67bcc56988b7f47139afed14ecb2df",
+    "board.kicad_pcb": "28fc2b5a92e4aac94ad53e533453d78edf8de4ea0c73af3e6b3cc994dc1d4ff1",
+    "InterTight-wght.ttf": "b81b73dcb64df3c230cabade7df6c5773bf863233f24c9ee51087519f1f88b6f",
+    "Molex_430250400.step": "376bc605fea3f3376abb4d5131f891ecd1b26733096cc18bba53828ee8c5b001",
+    "Yazaki_7282-1060.stp": "3a395c88b0391df2321a68c37f330d390038b7a9a3875ca3417d1235ee711eb5",
+    "Molex_430250600.step": "52b2b96e2e5779735ed21a529ffaa08c680405a349e3a73b6f8de82ccab02b0f",
+    "Yazaki_7183-6322.step": "f4b76d3b2aa5a7ddea41fea413deac87a3d23f404c616f85b05c064597f062ec",
+    "ruthex_RX-M3x5_7.stp": "3686e4730b18fa3f0a83585da28dc7eca70e5da21cedd3f75f3205c5ad11b917",
+    "Molex_430200601.step": "355a15c9539e5b7ee9c6a92aca193e67e230e0d9b1cc008b0f8ef7e3eec08fdc",
+    "Molex_430200401.step": "7b4cc1579cab3387a0b323a609de849ba584300fb9f434e4417d3d9ff1d17096",
+    "Barlow-Regular.ttf": "95aa02c7c43096e0dd44d787ba6216864a67157e402adab59b35572e0c1577ea"
+  },
+  "prepared_sha256": {
+    "01-introduction.wav": "0d1f724f77396bf5c7e461d2946babbb7efb1216a8266567789f64a2cc83f7b5",
+    "02-power.wav": "fa8a1ed46181f241b8043013ca4d11eb295d5102e709261f08720ef1fc706722",
+    "03-electronics.wav": "4cdc7ab38b7ccb242c4b0d2b4e70680f4b3bb3c7b5895b3f6590e35428613238",
+    "04-control.wav": "3b0528a26493e6ff279530408819939ed7c133ab115edc6e9c3d25b5c537f674",
+    "05-mechanics.wav": "fddd168cdc8b2bf251d021c370045a25a1d70c252b4e6ccfb33843d015e40477",
+    "06-validation.wav": "3330ac8b013824ab7403288ec383ffefed9285f6c1bbcab5ee2d2688b8fa7541",
+    "board-details.json": "44ec71a0c1e010e211064453d3d26f9e4dc4f846a493e68a923abb9567a729f7",
+    "captions.json": "f8cf17483226580634693078c310b68b2e03f2b5739ccb59955059da30f1b966",
+    "captions.srt": "ba1f5a10eec76212109a640a325097f9fb813c508569f57ef5d12eb462e5f4a2",
+    "meshes.json.gz": "fbf0ed4735f5c784c419cabfeb7b92051207fb5a85ced1c861b4deecbf972fc8",
+    "narration.wav": "d0fb4f56005d4d18c8b4441281bee5a5ae875db297c287e62150f8f3e7b98a30",
+    "script.txt": "0e53a30d6b3ca902bc4c79b5c5f586e143e640b760d57334d3a367893b1000c0",
+    "timeline.json": "961dadec6c8aa617574260520198debe2e767884d2af0e11bdebd59256c90033",
+    "voice-index.json": "823b5be21270a7a96568a34de21e774e5c101a70be28295d2752ad66c013c0bf"
+  },
+  "stage": "pictures",
+  "host": "Orion",
+  "artifacts": {
+    "01-exterior.png": {
+      "bytes": 3774269,
+      "sha256": "ad3b5d3a3ac85e2a2473f86378c7cbc10a707c78c897c6b89de695ab679d6742"
+    },
+    "02-inside.png": {
+      "bytes": 4227802,
+      "sha256": "149d5c449c7e5302f04fec7d5649145f61497f259f6daf59e24dc6dd7154ca1b"
+    },
+    "03-board.png": {
+      "bytes": 4283674,
+      "sha256": "97946b3a41dc858ec8e153cca1579ab938847d5b0f5050a28483f7e004689f78"
+    },
+    "04-exploded.png": {
+      "bytes": 3726058,
+      "sha256": "9780f705d585c459763f6a075a331108625cf7ad07097f60fa150651f22ec072"
+    },
+    "05-connectors.png": {
+      "bytes": 3748598,
+      "sha256": "53854c011bea229bb2b54c3926575b2eefe969044b2e7eceee25adf063989a1f"
+    },
+    "06-components.png": {
+      "bytes": 4205059,
+      "sha256": "f25031aaf79b51085c82710e8714be7f5d45cdbaca228bb0f087d1e35da87ca9"
+    },
+    "blender.log": {
+      "bytes": 1811446,
+      "sha256": "fc4f7d726fdf4cf4614171255a37b494a4d1b036f6a7cd8a00161f9d800afc40"
+    },
+    "framing-checks.json": {
+      "bytes": 265,
+      "sha256": "03a58ac0ec15a0850624a3bed52eadda294e8b843e64c59b93555733a6e4de28"
+    },
+    "RevG-Studio-Gallery.jpg": {
+      "bytes": 201220,
+      "sha256": "ac6bfeec1a09993e171f227b4f9432c6185c09a5d9054a7694aa8e840228d1e1"
+    },
+    "RevG-Studio.blend": {
+      "bytes": 17775778,
+      "sha256": "fc06f131bd78c8338849f4b0b563e701b7da65e416da9706530ae26c7c3f264f"
+    }
+  },
+  "physical_validation": false
+}

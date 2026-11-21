@@ -1,0 +1,63 @@
+{
+  "contract": "vhos_console_cad_references_v1",
+  "models": [
+    {
+      "name": "Molex_430200401.step",
+      "label": "43020-0401 Molex plug",
+      "mpn": "43020-0401",
+      "source_class": "manufacturer_download",
+      "bytes": 133595,
+      "sha256": "7b4cc1579cab3387a0b323a609de849ba584300fb9f434e4417d3d9ff1d17096",
+      "download_url": "https://www.molex.com/content/dam/molex/molex-dot-com/products/automated/en-us/3dcadmodels/430/43020/430200401_stp.zip"
+    },
+    {
+      "name": "Molex_430250400.step",
+      "label": "43025-0400 Molex receptacle",
+      "mpn": "43025-0400",
+      "source_class": "manufacturer_download",
+      "bytes": 138066,
+      "sha256": "376bc605fea3f3376abb4d5131f891ecd1b26733096cc18bba53828ee8c5b001",
+      "download_url": "https://www.molex.com/content/dam/molex/molex-dot-com/products/automated/en-us/3dcadmodels/430/43025/430250400_stp.zip"
+    },
+    {
+      "name": "Molex_430200601.step",
+      "label": "43020-0601 Molex plug",
+      "mpn": "43020-0601",
+      "source_class": "manufacturer_download",
+      "bytes": 171327,
+      "sha256": "355a15c9539e5b7ee9c6a92aca193e67e230e0d9b1cc008b0f8ef7e3eec08fdc",
+      "download_url": "https://www.molex.com/content/dam/molex/molex-dot-com/products/automated/en-us/3dcadmodels/430/43020/430200601_stp.zip"
+    },
+    {
+      "name": "Molex_430250600.step",
+      "label": "43025-0600 Molex receptacle",
+      "mpn": "43025-0600",
+      "source_class": "manufacturer_download",
+      "bytes": 189787,
+      "sha256": "52b2b96e2e5779735ed21a529ffaa08c680405a349e3a73b6f8de82ccab02b0f",
+      "download_url": "https://www.molex.com/content/dam/molex/molex-dot-com/products/automated/en-us/3dcadmodels/430/43025/430250600_stp.zip"
+    },
+    {
+      "name": "Yazaki_7183-6322.step",
+      "label": "7183-6322 Yazaki replacement",
+      "mpn": "7183-6322",
+      "source_class": "manufacturer_download",
+      "bytes": 286564,
+      "sha256": "f4b76d3b2aa5a7ddea41fea413deac87a3d23f404c616f85b05c064597f062ec",
+      "download_url": "https://connector.yazaki-group.com/common/ProductImage/cad/7183-6322_3D_CAD.stp"
+    },
+    {
+      "name": "Yazaki_7282-1060.stp",
+      "label": "7282-1060 Yazaki pin housing",
+      "source_class": "manufacturer_download",
+      "download_url": "https://connector.yazaki-group.com/common/ProductImage/cad/7282-1060_3D_CAD.stp",
+      "reference_url": "https://connector.yazaki-group.com/cgi-bin/english/detail.cgi?part_id=7282-1060",
+      "authority_limit": "Correct manufacturer part file; exact vehicle/photo identification and mating to IR1 remain unverified",
+      "physical_match_verified": false,
+      "bytes": 688190,
+      "sha256": "3a395c88b0391df2321a68c37f330d390038b7a9a3875ca3417d1235ee711eb5",
+      "mpn": "7282-1060"
+    }
+  ],
+  "physical_vehicle_mate_verified": false
+}

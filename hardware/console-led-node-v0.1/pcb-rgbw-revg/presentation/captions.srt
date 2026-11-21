@@ -1,0 +1,179 @@
+1
+00:00:00,000 --> 00:00:02,900
+This is the lighting controller I'm building for
+
+2
+00:00:02,900 --> 00:00:05,400
+my 2005 Toyota 4Runner V8.
+
+3
+00:00:05,680 --> 00:00:08,020
+One custom board brings together the power supply,
+
+4
+00:00:08,160 --> 00:00:10,580
+the wireless processor, and four channels of color
+
+5
+00:00:10,580 --> 00:00:10,940
+control.
+
+6
+00:00:11,260 --> 00:00:13,400
+Here's how everything fits inside the enclosure.
+
+7
+00:00:14,540 --> 00:00:17,120
+Power comes from the truck's six -pin console
+
+8
+00:00:17,120 --> 00:00:17,640
+connector.
+
+9
+00:00:18,040 --> 00:00:20,800
+The inline harness carries the factory connections through
+
+10
+00:00:20,800 --> 00:00:24,000
+and takes switched power, ground, and two illumination
+
+11
+00:00:24,000 --> 00:00:25,460
+signals into our controller.
+
+12
+00:00:25,460 --> 00:00:30,020
+The remaining conductors stay labeled and accessible for
+
+13
+00:00:30,020 --> 00:00:30,720
+future use.
+
+14
+00:00:32,220 --> 00:00:32,860
+Inside,
+
+15
+00:00:34,040 --> 00:00:36,520
+the main fuse and electronic protection feed the
+
+16
+00:00:36,520 --> 00:00:36,880
+circuit.
+
+17
+00:00:37,240 --> 00:00:39,600
+A separate fuse protects the regulator that supplies
+
+18
+00:00:39,600 --> 00:00:41,460
+3 .3 volts to the processor.
+
+19
+00:00:42,480 --> 00:00:45,280
+The ESP32-S3 handles wireless control.
+
+20
+00:00:45,900 --> 00:00:47,860
+And the four channel driver switches the red,
+
+21
+00:00:47,860 --> 00:00:49,240
+green, blue, and white outputs.
+
+22
+00:00:50,060 --> 00:00:53,660
+The iPhone or Android head unit connects over
+
+23
+00:00:53,660 --> 00:00:56,680
+Wi -Fi to change the color with WLED.
+
+24
+00:00:57,440 --> 00:01:00,020
+Our existing CAN Gateway supplies vehicle data through
+
+25
+00:01:00,020 --> 00:01:00,840
+the app relay,
+
+26
+00:01:01,280 --> 00:01:04,160
+supported engine and vehicle signals can trigger a
+
+27
+00:01:04,160 --> 00:01:04,800
+color rule.
+
+28
+00:01:05,800 --> 00:01:09,080
+If fresh data stops arriving, automatic lighting turns
+
+29
+00:01:09,080 --> 00:01:11,000
+off after 2 .5 seconds.
+
+30
+00:01:12,560 --> 00:01:15,260
+The printed enclosure has two cable glands on
+
+31
+00:01:15,260 --> 00:01:16,620
+a removable plate.
+
+32
+00:01:16,620 --> 00:01:20,420
+Inside, latching wire connectors let the harness disconnect
+
+33
+00:01:20,420 --> 00:01:21,700
+for service.
+
+34
+00:01:22,320 --> 00:01:25,360
+Threaded inserts support repeated opening and both fuses
+
+35
+00:01:25,360 --> 00:01:27,260
+lift out with the lid removed.
+
+36
+00:01:28,000 --> 00:01:31,500
+These animations show the actual design geometry and
+
+37
+00:01:31,500 --> 00:01:32,960
+its planned service sequence.
+
+38
+00:01:34,920 --> 00:01:38,320
+The project includes the board, enclosure, wiring register,
+
+39
+00:01:38,800 --> 00:01:40,320
+firmware and assembly files.
+
+40
+00:01:40,320 --> 00:01:44,100
+The digital checks cover electrical rules, clearances,
+
+41
+00:01:44,560 --> 00:01:46,740
+support free printing, and the control software.
+
+42
+00:01:47,580 --> 00:01:50,560
+The first physical unit still needs current, heat,
+
+43
+00:01:50,960 --> 00:01:53,360
+sealing, connector, and vehicle fit tests.
+
+44
+00:01:53,880 --> 00:01:56,500
+Everything is organized on GitHub for the next
+
+45
+00:01:56,500 --> 00:01:56,840
+build.

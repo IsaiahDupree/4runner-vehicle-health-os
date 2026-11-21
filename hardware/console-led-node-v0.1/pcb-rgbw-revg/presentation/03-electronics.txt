@@ -1,0 +1,1 @@
+Inside, the main fuse and electronic protection feed the circuit. A separate fuse protects the regulator that supplies three point three volts to the processor. The E S P thirty two S three handles wireless control, and the four channel driver switches the red, green, blue, and white outputs.

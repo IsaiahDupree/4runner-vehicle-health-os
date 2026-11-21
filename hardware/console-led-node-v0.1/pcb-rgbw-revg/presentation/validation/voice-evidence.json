@@ -1,0 +1,118 @@
+{
+  "contract": "revg_media_voice_evidence_v1",
+  "profile_id": "isaiah-qwen3-live-mic-v1",
+  "speaker": "isaiah_dupree",
+  "synthesis_device": "Orion NVIDIA RTX 4070 SUPER",
+  "external_voice_provider_used": false,
+  "owner_requested_voice_and_GitHub_publication": true,
+  "profile_review_only_retained": true,
+  "chapters": [
+    {
+      "chapter": "01-introduction",
+      "job_id": "wrk_8ea337ae96f54985a2dc8232a1a61228",
+      "text_sha256": "b51c7fbed1ff77adb7ec09e3f3d59a066b4a87c4c5a9ff26e5365e249356e180",
+      "text_hash_normalization": "UTF-8 text stripped of leading/trailing whitespace",
+      "source_file_sha256": "fac9305d70b64dd5f123c1ed16fc144557b2fb4c47fc186f940196657c5225ca",
+      "wav_sha256": "0d1f724f77396bf5c7e461d2946babbb7efb1216a8266567789f64a2cc83f7b5",
+      "duration_seconds": 13.04,
+      "profile_id": "isaiah-qwen3-live-mic-v1",
+      "engine": "qwen3_tts_06b_isaiah_adapter",
+      "speaker": "isaiah_dupree",
+      "review_only": true,
+      "production_promoted": false
+    },
+    {
+      "chapter": "02-power",
+      "job_id": "wrk_f7ce6596ba984239bf51294c12062bea",
+      "text_sha256": "342dd8498afe28a7a9c08370702127a4a99fa280805df44753dab5284e486660",
+      "text_hash_normalization": "UTF-8 text stripped of leading/trailing whitespace",
+      "source_file_sha256": "4e4cd19378f4ec8fec8a21d76f5a13b1acf7f18e86e88402963b4d2377692ffe",
+      "wav_sha256": "fa8a1ed46181f241b8043013ca4d11eb295d5102e709261f08720ef1fc706722",
+      "duration_seconds": 16.4,
+      "profile_id": "isaiah-qwen3-live-mic-v1",
+      "engine": "qwen3_tts_06b_isaiah_adapter",
+      "speaker": "isaiah_dupree",
+      "review_only": true,
+      "production_promoted": false
+    },
+    {
+      "chapter": "03-electronics",
+      "job_id": "wrk_af0a3516fd8f469782103bbc7d55d2d9",
+      "text_sha256": "be7eb030ec425ded922798b538721af50c4627486828fe4f80c71b984ec693d6",
+      "text_hash_normalization": "UTF-8 text stripped of leading/trailing whitespace",
+      "source_file_sha256": "f834fd7b0085f4a8dd5f08d252df8aaa8eaabfbfa0b5dffd7bfcfcea16569c25",
+      "wav_sha256": "4cdc7ab38b7ccb242c4b0d2b4e70680f4b3bb3c7b5895b3f6590e35428613238",
+      "duration_seconds": 17.36,
+      "profile_id": "isaiah-qwen3-live-mic-v1",
+      "engine": "qwen3_tts_06b_isaiah_adapter",
+      "speaker": "isaiah_dupree",
+      "review_only": true,
+      "production_promoted": false
+    },
+    {
+      "chapter": "04-control",
+      "job_id": "wrk_c6f5815346f4427f91ec658414e47191",
+      "text_sha256": "9e01cfae61451d9fc588000bf32358b6a1fcc850b814d4266f699a292c553a5f",
+      "text_hash_normalization": "UTF-8 text stripped of leading/trailing whitespace",
+      "source_file_sha256": "12c7bb6150363578004d9e6cc44c9a62af109a0ca051cd048f5ae73f846937d8",
+      "wav_sha256": "3b0528a26493e6ff279530408819939ed7c133ab115edc6e9c3d25b5c537f674",
+      "duration_seconds": 20.64,
+      "profile_id": "isaiah-qwen3-live-mic-v1",
+      "engine": "qwen3_tts_06b_isaiah_adapter",
+      "speaker": "isaiah_dupree",
+      "review_only": true,
+      "production_promoted": false
+    },
+    {
+      "chapter": "05-mechanics",
+      "job_id": "wrk_b991c98d773c470fb8a34002110881b7",
+      "text_sha256": "d24f7a9e3f5275c3a11d0f37b15a29e906e0333fc74ffa3fee08325af9658e9b",
+      "text_hash_normalization": "UTF-8 text stripped of leading/trailing whitespace",
+      "source_file_sha256": "33dff165dc13bf4fa52f76819e52b17731506696f8587da54a9ffa7d7a107b73",
+      "wav_sha256": "fddd168cdc8b2bf251d021c370045a25a1d70c252b4e6ccfb33843d015e40477",
+      "duration_seconds": 20.96,
+      "profile_id": "isaiah-qwen3-live-mic-v1",
+      "engine": "qwen3_tts_06b_isaiah_adapter",
+      "speaker": "isaiah_dupree",
+      "review_only": true,
+      "production_promoted": false
+    },
+    {
+      "chapter": "06-validation",
+      "job_id": "wrk_4840aed2492d4800801cd36c842805fd",
+      "text_sha256": "f4f9d2c5f8dc6c065d6158c082040b6a247ddcdaf3af3a54b3f490fcfbfd526b",
+      "text_hash_normalization": "UTF-8 text stripped of leading/trailing whitespace",
+      "source_file_sha256": "be13cea20aeb8dce0b8cf685d2bcdfe0010f612aec19b2ea52f898d5a1244b59",
+      "wav_sha256": "3330ac8b013824ab7403288ec383ffefed9285f6c1bbcab5ee2d2688b8fa7541",
+      "duration_seconds": 23.12,
+      "profile_id": "isaiah-qwen3-live-mic-v1",
+      "engine": "qwen3_tts_06b_isaiah_adapter",
+      "speaker": "isaiah_dupree",
+      "review_only": true,
+      "production_promoted": false
+    }
+  ],
+  "combined_wav_sha256": "d0fb4f56005d4d18c8b4441281bee5a5ae875db297c287e62150f8f3e7b98a30",
+  "asr": {
+    "job_id": "wrk_2046e639748a414f8e9b67665eb6c62d",
+    "model": "medium.pt",
+    "check": {
+      "transcript_words": 265,
+      "script_words": 277,
+      "similarity": 0.941,
+      "untimed_words": []
+    },
+    "timing_validation": {
+      "passed": true,
+      "failures": [],
+      "editorial_approval": false
+    },
+    "passed": true,
+    "transcript": " This is the lighting controller I'm building for my 2005 Toyota 4Runner V8. One custom board brings together the power supply, the wireless processor, and four channels of color control. Here's how everything fits inside the enclosure. Power comes from the truck's six-pin console connector. The inline harness carries the factory connections through and takes switched power, ground, and two illumination signals into our controller. The remaining conductors stay labeled and accessible for future use. Inside, the main fuse and electronic protection feed the circuit. A separate fuse protects the regulator that supplies 3.3 volts to the processor. The ESP32's three handles wireless control. And the four channel driver switches the red, green, blue, and white outputs. The iPhone or Android head unit connects over Wi-Fi to change the color with WLED. Our existing CAN Gateway supplies vehicle data through the app relay, supported engine and vehicle signals can trigger a color rule. If fresh data stops arriving, automatic lighting turns off after 2.5 seconds. The printed enclosure has two cable glands on a removable plate. Inside, latching wire connectors let the harness disconnect for service. Threaded inserts support repeated opening and both fuses lift out with the lid removed. These animations show the actual design geometry and its planned service sequence. The project includes the board, enclosure, wiring register, firmware and assembly files. The digital checks cover electrical rules, clearances, support free printing, and the control software. The first physical unit still needs current, heat, ceiling, connector, and vehicle fit tests. Everything is organized on GitHub for the next build."
+  },
+  "captions": {
+    "count": 45,
+    "sha256": "ba1f5a10eec76212109a640a325097f9fb813c508569f57ef5d12eb462e5f4a2"
+  },
+  "listening_review_claimed": false
+}

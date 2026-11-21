@@ -1,0 +1,24 @@
+{
+  "checked_at": "2026-11-21T04:41:50.939302+00:00",
+  "build_reused_from": "2026-11-14",
+  "source_files_match_build": true,
+  "files": {
+    "build_orion.py": "176501e26d0239feca9367724bff020937a9d3e734777c365dac71ccec94ae7f",
+    "library.json": "44ad76b0de41c7775d296e9f013f4f5d1c1de8782eacd85286a478016a577941",
+    "platformio_override.ini": "dda390e1c9f1e845df8fce14bc550d2785e9ede600b85db16879b3a69c3dd949",
+    "revg_policy.h": "f4a66857da7c123cbcb8ef6b7df391c6e28e33b51b5f545f6fd5a123f95071fd",
+    "revg_relay.h": "8c11d1a992492126bcb1f7eda3aa189a2e3fbeb5b4ae609569a4744e043d5526",
+    "revg_usermod.cpp": "b50bff6549f19fef3a96173cc349053b5da635ac41d93abe593de03d538f51cc"
+  },
+  "images": {
+    "vhos-revg-wled-n16r2-app.bin": {
+      "bytes": 1066096,
+      "sha256": "6fa69c75a9b95999066547c7618dac983562c719268baceac0a430d707def611"
+    },
+    "vhos-revg-wled-n16r2-factory.bin": {
+      "bytes": 1131632,
+      "sha256": "124848465d5f19033a16429c4adfb60c606cf403d878ded0310444bb87192289"
+    }
+  },
+  "hardware_flashing_or_vehicle_validation": false
+}

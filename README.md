@@ -8,6 +8,15 @@ The project has two immutable source baselines: [Vehicle Health OS PRD v0.1](doc
 
 No derived value is authoritative unless that lineage can be reconstructed.
 
+## Rev G lighting controller
+
+The [single-board RGBW controller](hardware/console-led-node-v0.1/pcb-rgbw-revg/README.md)
+includes the PCB, gland enclosure, inline Toyota power harness and WLED relay
+integration. [Studio pictures and the narrated 3D demonstration](hardware/console-led-node-v0.1/pcb-rgbw-revg/presentation/README.md)
+show its exterior, installed electronics, component layout and service assembly.
+This is an evaluation prototype; physical electrical, sealing and vehicle-fit
+acceptance remain pending.
+
 ## Current baseline
 
 E0 plus the first native iOS control slice are implemented here:
@@ -38,7 +47,7 @@ E0 plus the first native iOS control slice are implemented here:
 - deterministic passive-CAN archive offload/reload plus an iOS multi-session research chart that
   plots retained evidence, pins pack/hash/validation lineage, and fails closed across app restarts;
 - a durable iPhone private-evidence outbox and authenticated append-only receiver/agent claim queue;
-- CI checks for schema validity and deterministic replay;
+- local checks for schema validity and deterministic replay;
 - a Swift 6 core with CRC32C framing, guarded discovery plans, signed firmware verification, OTA preflight, and AI evidence handoff;
 - a buildable native SwiftUI app with handshake-verified CoreBluetooth restoration,
   encrypted-bond reconnection, WiCAN factory detection, gateway health, signed semantic experiments,

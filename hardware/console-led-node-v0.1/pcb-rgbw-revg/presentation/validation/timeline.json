@@ -1,0 +1,62 @@
+[
+  {
+    "id": "01-introduction",
+    "file": "01-introduction.wav",
+    "sha256": "0d1f724f77396bf5c7e461d2946babbb7efb1216a8266567789f64a2cc83f7b5",
+    "duration": 13.04,
+    "job_id": "wrk_8ea337ae96f54985a2dc8232a1a61228",
+    "start_frame": 1,
+    "speech_start_frame": 11,
+    "end_frame": 338
+  },
+  {
+    "id": "02-power",
+    "file": "02-power.wav",
+    "sha256": "fa8a1ed46181f241b8043013ca4d11eb295d5102e709261f08720ef1fc706722",
+    "duration": 16.4,
+    "job_id": "wrk_f7ce6596ba984239bf51294c12062bea",
+    "start_frame": 339,
+    "speech_start_frame": 349,
+    "end_frame": 757
+  },
+  {
+    "id": "03-electronics",
+    "file": "03-electronics.wav",
+    "sha256": "4cdc7ab38b7ccb242c4b0d2b4e70680f4b3bb3c7b5895b3f6590e35428613238",
+    "duration": 17.36,
+    "job_id": "wrk_af0a3516fd8f469782103bbc7d55d2d9",
+    "start_frame": 758,
+    "speech_start_frame": 768,
+    "end_frame": 1199
+  },
+  {
+    "id": "04-control",
+    "file": "04-control.wav",
+    "sha256": "3b0528a26493e6ff279530408819939ed7c133ab115edc6e9c3d25b5c537f674",
+    "duration": 20.64,
+    "job_id": "wrk_c6f5815346f4427f91ec658414e47191",
+    "start_frame": 1200,
+    "speech_start_frame": 1210,
+    "end_frame": 1720
+  },
+  {
+    "id": "05-mechanics",
+    "file": "05-mechanics.wav",
+    "sha256": "fddd168cdc8b2bf251d021c370045a25a1d70c252b4e6ccfb33843d015e40477",
+    "duration": 20.96,
+    "job_id": "wrk_b991c98d773c470fb8a34002110881b7",
+    "start_frame": 1721,
+    "speech_start_frame": 1731,
+    "end_frame": 2249
+  },
+  {
+    "id": "06-validation",
+    "file": "06-validation.wav",
+    "sha256": "3330ac8b013824ab7403288ec383ffefed9285f6c1bbcab5ee2d2688b8fa7541",
+    "duration": 23.12,
+    "job_id": "wrk_4840aed2492d4800801cd36c842805fd",
+    "start_frame": 2250,
+    "speech_start_frame": 2260,
+    "end_frame": 2829
+  }
+]

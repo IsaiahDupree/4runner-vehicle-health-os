@@ -1,0 +1,1 @@
+The iPhone or Android head unit connects over Wi Fi to change the color with WLED. Our existing CAN gateway supplies vehicle data through the app relay. Supported engine and vehicle signals can trigger a color rule. If fresh data stops arriving, automatic lighting turns off after two point five seconds.

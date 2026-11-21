@@ -1,0 +1,37 @@
+{
+  "checked_at": "2026-11-21T04:40:13.222088+00:00",
+  "head_before_media": "61a0fd4842b67d131c7ea78eb9dd9be7691fec0b",
+  "pytest": {
+    "command": ".venv/bin/python -m pytest",
+    "collected": 228,
+    "passed": 228,
+    "failed": 0,
+    "elapsed_seconds": 8.15,
+    "python": "3.14.10",
+    "pytest": "9.2.0",
+    "exit_code": 0
+  },
+  "contracts": {
+    "command": ".venv/bin/vhos contracts check",
+    "schema_count": 52,
+    "valid": true,
+    "exit_code": 0
+  },
+  "cpp": [
+    {
+      "test": "policy",
+      "source_sha256": "355e763d0be4a5637f4ddcf3027eb8e8226742421e8394bd32838550b8920a96",
+      "undefined_behavior_sanitizer": true,
+      "exit_code": 0,
+      "output": "Rev G policy tests passed\n"
+    },
+    {
+      "test": "relay",
+      "source_sha256": "770331e9f20d28d752731038f8ac6dd50268af1a746055af9b0de2b48f262344",
+      "undefined_behavior_sanitizer": true,
+      "exit_code": 0,
+      "output": "Rev G passed 45 relay request cases and the output, timing and threshold assertions.\n"
+    }
+  ],
+  "hardware_tests": false
+}
