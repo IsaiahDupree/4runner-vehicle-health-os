@@ -15,7 +15,9 @@ The final design follows the requested WLED control structure. The earlier illus
 | Source-audit helper | Five real/boundary checks passed; [AppFleet revision 91d9297](https://github.com/IsaiahDupree/AppFleet/commit/91d9297) adds an explicit source scheme and task cache without altering global Xcode settings |
 | Physical testing / installation | Not performed: preferred iPhone 11 and delivery iPhone 15 reported unavailable developer connections |
 
-The signed package result is recorded separately in `evidence/development-package.json` when packaging succeeds. Development IPAs and provisioning identifiers remain in private owner artifact storage, outside Git. A signed package is not proof of installation or hardware operation, and does not provide a TestFlight distribution link.
+The [signed package receipt](evidence/development-package.json) confirms the arm64 app signature, exact certificate, device/profile match, 79 source-file hashes and byte-verified IPA contents. The development IPA is 2,408,498 bytes; its expiry ceiling is October 24, 2027, subject to Apple’s ongoing signing validity. No Apple resources were created and no store upload occurred. The owner-only installer passed its signature, app-byte and expiry check without performing an installation.
+
+Development IPAs and provisioning identifiers remain in private owner artifact storage, outside Git. A signed package is not proof of installation or hardware operation, and does not provide a TestFlight distribution link. Both paired iPhones still reported unavailable connections at the final device check; physical testing and installation remain pending. No app was installed on a physical phone during this revision.
 
 The default Xcode DerivedData symlink targets an offline volume. Build and source-audit commands use an explicit task cache. Unrelated AppFleet changes, other simulators and the global cache configuration were preserved. GitHub Actions and automatic deployments remain disabled.
 

@@ -1,0 +1,29 @@
+{
+  "recordedAtUTC": "2026-11-21T15:20:32.112831+00:00",
+  "bundleIdentifier": "com.isaiahdupree.4RunnerLighting",
+  "signatureVerified": true,
+  "signingCertificateMatches": true,
+  "profileDeviceAndTeamMatch": true,
+  "architecture": "arm64",
+  "deviceFamily": [
+    1,
+    2
+  ],
+  "minimumOS": "17.0",
+  "version": "1.0.0",
+  "build": "1",
+  "sourceManifestSha256": "709c659adea5450627ad1af35bd9cc53981f9c55f14918792734e3e68070d503",
+  "sourceFilesVerified": 79,
+  "inputUnchanged": true,
+  "ipaSha256": "827193a3345bfe9c69db61da4c0830acbbd0caf6e1c4d1ee684c7305c667be57",
+  "ipaBytes": 2408498,
+  "usableUntilUTC": "2027-10-24T23:34:06+00:00",
+  "physicalInstallation": "not performed",
+  "storeUpload": "not performed",
+  "selectedSourceTarget": "4RunnerLighting",
+  "selectedTargetHasNoCustomEntitlements": true,
+  "appleChanges": [],
+  "sourceCommit": "ff540e4",
+  "packagerCommit": "91d9297",
+  "privateProvisioningIdentifiersPublished": false
+}
