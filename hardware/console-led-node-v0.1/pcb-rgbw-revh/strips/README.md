@@ -2,6 +2,8 @@
 
 Reviewed November 21, 2026. Owner selected **whole-strip RGB/RGBW color control**. The requested load is a flexible, wireable strip with protection in the strip itself. No addressable data output, extra CAN adapter, second power inlet or second controller board is selected.
 
+For practical Amazon and AliExpress shopping links, see [marketplace sourcing](MARKETPLACE.md), including exact 12 V IP67 Amazon variants and clearly labeled AliExpress verification limits.
+
 **Result: no reviewed exact RGB/RGBW strip is yet verified to meet the complete protection requirement and the existing board limits.** There are credible OEM automotive candidates. None is approved for purchase or vehicle installation from a family brochure alone. The static sourcing screen identifies real voltage/current mismatches and preserves unknowns; it is not physical testing.
 
 ## Shortlist and evidence
