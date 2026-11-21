@@ -1,0 +1,50 @@
+{
+  "source": "Actual native SwiftUI app, iPhone 11 simulator, iOS 26.0",
+  "test": "LightingStudioUITests/testWLEDControlsWheelSegmentsPresetsAndVehicleConfig",
+  "passed": true,
+  "controllerConnected": false,
+  "simulatedControllerResponses": false,
+  "checks": [
+    "WLED Colors/Effects/Segments/Presets navigation",
+    "color wheel center gesture changes actual draft RGB",
+    "three color slots retain independent draft values",
+    "segment dropdown present",
+    "power unavailable offline",
+    "device presets cannot be created offline",
+    "empty key prevents connection",
+    "CAN relay cannot start without real connections",
+    "no promotional vehicle artwork"
+  ],
+  "screenshots": [
+    {
+      "file": "06-CAN.png",
+      "sha256": "564703c47b01010befafbe8c0e2d245958b952254279e07dd42643c2439231fb",
+      "nativeXCTestAttachment": "06-CAN_0_3EB20C8A-312C-4529-B229-D258AC5F7F79.png"
+    },
+    {
+      "file": "05-Config.png",
+      "sha256": "64c484089e9605e6292c05391b21018959f6e66d2dae3abbafbd1ab703053ce0",
+      "nativeXCTestAttachment": "05-Config_0_EC664741-313B-4DE3-B334-3F27AE8FF364.png"
+    },
+    {
+      "file": "04-Presets.png",
+      "sha256": "eae85892598f2a8c1b28ae743154d4211e473f74fe78e66e91511e601533168d",
+      "nativeXCTestAttachment": "04-Presets_0_BD290D62-158F-42AF-8923-07D01BAADBDD.png"
+    },
+    {
+      "file": "03-Segments.png",
+      "sha256": "8408143edac9aa8eee6f8dda013089327d35b911221667d95d76b0c4dbda0c22",
+      "nativeXCTestAttachment": "03-Segments_0_AA67CCD2-1E63-4183-86A2-EAF1F781267D.png"
+    },
+    {
+      "file": "02-Effects.png",
+      "sha256": "f6fea4a20ed8fe0f639979883bd640e7b83ff6210dfc33a07d90865a06ee48f1",
+      "nativeXCTestAttachment": "02-Effects_0_00BB8EBE-5B6D-4823-B6A2-EFE7704B7A88.png"
+    },
+    {
+      "file": "01-Colors.png",
+      "sha256": "ffe874591ca29e82fe150a43bbaff42d9cd08f8754d46ea7601fe1a657fa97b7",
+      "nativeXCTestAttachment": "01-Colors_0_CA9D9594-FDEE-4F9D-A007-9D202D02A54E.png"
+    }
+  ]
+}

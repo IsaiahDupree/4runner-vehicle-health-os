@@ -6,9 +6,14 @@ struct VehicleHealthOSApp: App {
 
   var body: some Scene {
     WindowGroup {
+      #if LIGHTING_STUDIO
+      LightingStudioView()
+        .environment(model)
+      #else
       RootView()
         .environment(model)
         .task { model.startEvidenceAutomation() }
+      #endif
     }
   }
 }

@@ -18,6 +18,13 @@ phone/head-unit UI, calibrated vehicle inputs and the existing CAN gateway's
 foreground iPhone relay. It measures the switched feed at the box; ACC-off resting
 battery monitoring is unavailable. Physical and vehicle qualification remain pending.
 
+## Native iPhone lighting app
+
+The [4Runner Lighting app](ios/Lighting/README.md) provides WLED-style color-wheel,
+effect, segment and controller-preset controls. Config contains the existing CAN
+relay, Rev I voltage monitor and Toyota input settings. It uses the current
+single analog RGBW output zone.
+
 ## Rev H lighting controller
 
 The [screw-terminal revision](hardware/console-led-node-v0.1/pcb-rgbw-revh/README.md)

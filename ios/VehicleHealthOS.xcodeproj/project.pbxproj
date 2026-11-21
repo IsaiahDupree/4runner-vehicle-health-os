@@ -9,34 +9,65 @@
 /* Begin PBXBuildFile section */
 		0166122FFBBE3AFF77ACD6EF /* MechanicWorkspaceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C2D4F2DC842D65B199ADAD0 /* MechanicWorkspaceTests.swift */; };
 		0AE4EB77B2D62DEAB770FB86 /* LightingLocalWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA94361D77C783D465CD32F1 /* LightingLocalWebView.swift */; };
+		188F1F7C7D84CD47DE6CAAB3 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDE321369856AF54C6B7946E /* RootView.swift */; };
 		1F8C34C7318A19AC1B605F18 /* MechanicWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADEF920548CFAED6EC8E4B97 /* MechanicWorkspaceView.swift */; };
+		20DCFCA3BAEA7DD75C5FE9B1 /* PortableFrameStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A437465A0DC4C5D9113216 /* PortableFrameStore.swift */; };
+		251863F28EC85CD5052D5BB2 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ADD085CC4E0D7223092E39A /* AppModel.swift */; };
+		29C72B2FBBF6B077F837DABD /* LightingStudioModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6907B21FDACB28E8EBEFF910 /* LightingStudioModel.swift */; };
 		2C20803C92A290014B149A91 /* PortableFrameStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A437465A0DC4C5D9113216 /* PortableFrameStore.swift */; };
 		302EA13BD9B9318607E9D94C /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 26B6A5883C0C9AD969908A25 /* PrivacyInfo.xcprivacy */; };
 		34F29EA8693AF238BC815DDD /* SystemStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76F08CC4DD741600B7E20C23 /* SystemStatusView.swift */; };
 		3C6B7A855B68467F9973731A /* mrdiy-v13-development-release-ed25519.base64 in Resources */ = {isa = PBXBuildFile; fileRef = 40D58B872E56EED4853D20F3 /* mrdiy-v13-development-release-ed25519.base64 */; };
+		3D57331DF10F576EB748EB0D /* CANLiveUnitsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = E210DB4EDB637662A1FE3436 /* CANLiveUnitsSection.swift */; };
 		3E8D5AD3A3606C96D408A984 /* MechanicCaseArtifactTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D046C561211F2E90B078AE7 /* MechanicCaseArtifactTests.swift */; };
 		3F0163358C8856B35F097E02 /* VehicleHealthOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54BDEF8D2B05D75290A9451 /* VehicleHealthOSApp.swift */; };
+		3F39F7386B8FD123C85934D9 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 26B6A5883C0C9AD969908A25 /* PrivacyInfo.xcprivacy */; };
 		433AA4BFB3B8C40F2468E476 /* GatewayBLEClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E12062579AEB4902B49940D /* GatewayBLEClient.swift */; };
+		4A86EC3DAC3671F2F554834A /* MechanicWorkspaceModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75A929BDE9D7DF6BB16DE192 /* MechanicWorkspaceModel.swift */; };
 		4BB0541FC93F4D149039411A /* WiFiOTAUploader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 435E1D682EF6B8A4DE0B86F7 /* WiFiOTAUploader.swift */; };
 		4DC09285503568BD059B6630 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C904E627AC50298F57802AB7 /* Assets.xcassets */; };
 		50658F6BD96177F3C72D98A4 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ADD085CC4E0D7223092E39A /* AppModel.swift */; };
+		5967736F95768C01519A8993 /* MechanicCaseArtifacts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A8A8B885363EFC027E3D44A /* MechanicCaseArtifacts.swift */; };
 		59F8B3E961C8C753425ACF9F /* VHOSCore in Frameworks */ = {isa = PBXBuildFile; productRef = 6616D2E0F2CEB55BF90E491B /* VHOSCore */; };
+		5B73B30C123F7D129D1B7D89 /* LightingStudioUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D54EAB25476F1B6912AE17EC /* LightingStudioUITests.swift */; };
+		5DBDD8C4E647792D3C3EDF1E /* MechanicWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADEF920548CFAED6EC8E4B97 /* MechanicWorkspaceView.swift */; };
 		6038918354887A1A87E7D5D7 /* DiscoveryWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DFE18956FBB741182DC169A /* DiscoveryWorkspaceView.swift */; };
 		6138196E6016992AB5F476A7 /* EvidenceOutboxStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27355F648A0C53B4EC6CF848 /* EvidenceOutboxStore.swift */; };
+		7675856E8448293BDC810238 /* VHOSCore in Frameworks */ = {isa = PBXBuildFile; productRef = 2AC8B61E147B954CEB7C86A9 /* VHOSCore */; };
+		79A48966ACB1C218BB1ADB55 /* LightingStudioModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6907B21FDACB28E8EBEFF910 /* LightingStudioModel.swift */; };
+		807AE77F687DD09FC8A703AB /* LightingStudioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D6FCE90142EEA3B67CE4315 /* LightingStudioView.swift */; };
+		8254B345AA13AA4AC76B66EF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C904E627AC50298F57802AB7 /* Assets.xcassets */; };
+		830BA2E9DE94CA71B55609EB /* LightingLocalWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA94361D77C783D465CD32F1 /* LightingLocalWebView.swift */; };
+		87F776323E3474FC5404CB11 /* catalog-development-p256-public.der.base64 in Resources */ = {isa = PBXBuildFile; fileRef = BC2698DA0773B98569959E80 /* catalog-development-p256-public.der.base64 */; };
+		8C279EC037CEFF7ECAFD84F0 /* GatewayBLEClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E12062579AEB4902B49940D /* GatewayBLEClient.swift */; };
 		90E4621A52313C74A4ABB3D1 /* CANUnitsDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAADB0E18F0262D5D28275BF /* CANUnitsDashboardView.swift */; };
 		91E2D34C4A70119D5BE7A474 /* MechanicCaseArtifacts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A8A8B885363EFC027E3D44A /* MechanicCaseArtifacts.swift */; };
+		9512671CE4C9D7B65D491B95 /* DiscoveryEvidenceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C4CB58385EA15D8DE39AA03 /* DiscoveryEvidenceStore.swift */; };
+		9A65F56ECFFEA52F0EA5A13C /* WiFiOTAUploader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 435E1D682EF6B8A4DE0B86F7 /* WiFiOTAUploader.swift */; };
 		9AF33FDA552C5A8253A86B99 /* KeyStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6A9AAE2238B7F973C0CEA46 /* KeyStore.swift */; };
+		A443909606600D1A54180255 /* EvidenceWorkCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C62FF37FA894A57174E968FB /* EvidenceWorkCoordinator.swift */; };
 		A556A68B0A447322A223EA70 /* EvidenceWorkCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C62FF37FA894A57174E968FB /* EvidenceWorkCoordinator.swift */; };
 		AAC7CA136BA2228F0D634559 /* SynchronizedReferenceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5F07524DBD012E9F39B09DB /* SynchronizedReferenceStore.swift */; };
+		AF15A70FE96A8B81955A6C28 /* LightingStudioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D6FCE90142EEA3B67CE4315 /* LightingStudioView.swift */; };
 		B12336DDFA67B1A55A43F447 /* DiscoveryEvidenceStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37F575257101C56C4814A332 /* DiscoveryEvidenceStoreTests.swift */; };
+		B8F56AE0F7E576D41543B749 /* SystemStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76F08CC4DD741600B7E20C23 /* SystemStatusView.swift */; };
 		B95B3BB8FE9E1967A721187A /* CANLiveUnitsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = E210DB4EDB637662A1FE3436 /* CANLiveUnitsSection.swift */; };
 		BBD00956AAD1B1F75DD26F8C /* PassiveCANPlaybackLab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33368A105329E710051228F4 /* PassiveCANPlaybackLab.swift */; };
+		C0776F87EAC4A8A8485AA6E7 /* EvidenceOutboxStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27355F648A0C53B4EC6CF848 /* EvidenceOutboxStore.swift */; };
+		C1D39522627E086D8C44E414 /* mrdiy-v13-development-release-ed25519.base64 in Resources */ = {isa = PBXBuildFile; fileRef = 40D58B872E56EED4853D20F3 /* mrdiy-v13-development-release-ed25519.base64 */; };
 		C32FBE14A5EF3BEEAE086A68 /* EvidenceOutboxBackgroundTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FF7D608E6C3BC6B19524A3A /* EvidenceOutboxBackgroundTests.swift */; };
+		C7539756169650867E4D7697 /* PassiveCANPlaybackLab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33368A105329E710051228F4 /* PassiveCANPlaybackLab.swift */; };
 		CADDA30B1BCE3C005880874D /* CaptureAndReferencePersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9123684AD71628F377A5EB55 /* CaptureAndReferencePersistenceTests.swift */; };
+		D24F4735684C2E22B1BB4FD9 /* SynchronizedReferenceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5F07524DBD012E9F39B09DB /* SynchronizedReferenceStore.swift */; };
+		D73417782AC4CCE7F972EDFD /* ReleaseHubClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21CE522109AE74B24C43B096 /* ReleaseHubClient.swift */; };
+		DC43E89BBB7A929390338D38 /* VehicleHealthOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54BDEF8D2B05D75290A9451 /* VehicleHealthOSApp.swift */; };
 		E1E366592FD90918002B9210 /* catalog-development-p256-public.der.base64 in Resources */ = {isa = PBXBuildFile; fileRef = BC2698DA0773B98569959E80 /* catalog-development-p256-public.der.base64 */; };
 		E7B91FDF903EF10B9198988B /* MechanicWorkspaceModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75A929BDE9D7DF6BB16DE192 /* MechanicWorkspaceModel.swift */; };
 		E925A8B64D5731C2E092673A /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDE321369856AF54C6B7946E /* RootView.swift */; };
+		EF79E9C359DBE52E1472CEDE /* KeyStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6A9AAE2238B7F973C0CEA46 /* KeyStore.swift */; };
 		F1AF0F959A5BC7A5C2BEC8DB /* DiscoveryEvidenceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C4CB58385EA15D8DE39AA03 /* DiscoveryEvidenceStore.swift */; };
+		F23C8BFAACA3E558A8764D44 /* CANUnitsDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAADB0E18F0262D5D28275BF /* CANUnitsDashboardView.swift */; };
+		FC8B4B6D9BA1FE8DC12228FB /* DiscoveryWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DFE18956FBB741182DC169A /* DiscoveryWorkspaceView.swift */; };
 		FD76082677C3D6DEA95ACE91 /* StoredDiscoveryMarkerLegacySessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9A2C19F0F90DE0C7BDD88D5 /* StoredDiscoveryMarkerLegacySessionTests.swift */; };
 		FEC9A6E487FA351CECDA2552 /* ReleaseHubClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21CE522109AE74B24C43B096 /* ReleaseHubClient.swift */; };
 /* End PBXBuildFile section */
@@ -49,28 +80,39 @@
 			remoteGlobalIDString = 5C5ECB40116D553F668D211E;
 			remoteInfo = VehicleHealthOS;
 		};
+		327FAE079CD7C6244EAE9840 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D7FBF38CC1A066A7A1E14C48 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 137DEC4EB63D64A4977E2C33;
+			remoteInfo = 4RunnerLighting;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		1C4CB58385EA15D8DE39AA03 /* DiscoveryEvidenceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoveryEvidenceStore.swift; sourceTree = "<group>"; };
 		1D046C561211F2E90B078AE7 /* MechanicCaseArtifactTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MechanicCaseArtifactTests.swift; sourceTree = "<group>"; };
 		21CE522109AE74B24C43B096 /* ReleaseHubClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReleaseHubClient.swift; sourceTree = "<group>"; };
+		237CF0098E6F5993E4ACC7B5 /* 4RunnerLightingUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = 4RunnerLightingUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		26B6A5883C0C9AD969908A25 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		27355F648A0C53B4EC6CF848 /* EvidenceOutboxStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceOutboxStore.swift; sourceTree = "<group>"; };
 		2E12062579AEB4902B49940D /* GatewayBLEClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayBLEClient.swift; sourceTree = "<group>"; };
 		33368A105329E710051228F4 /* PassiveCANPlaybackLab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PassiveCANPlaybackLab.swift; sourceTree = "<group>"; };
 		34806DF7108E5758613B6692 /* VehicleHealthOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = VehicleHealthOS.entitlements; sourceTree = "<group>"; };
 		37F575257101C56C4814A332 /* DiscoveryEvidenceStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoveryEvidenceStoreTests.swift; sourceTree = "<group>"; };
+		3D6FCE90142EEA3B67CE4315 /* LightingStudioView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LightingStudioView.swift; sourceTree = "<group>"; };
 		3DFE18956FBB741182DC169A /* DiscoveryWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoveryWorkspaceView.swift; sourceTree = "<group>"; };
 		40D58B872E56EED4853D20F3 /* mrdiy-v13-development-release-ed25519.base64 */ = {isa = PBXFileReference; path = "mrdiy-v13-development-release-ed25519.base64"; sourceTree = "<group>"; };
 		435E1D682EF6B8A4DE0B86F7 /* WiFiOTAUploader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WiFiOTAUploader.swift; sourceTree = "<group>"; };
 		46A437465A0DC4C5D9113216 /* PortableFrameStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortableFrameStore.swift; sourceTree = "<group>"; };
 		5ADD085CC4E0D7223092E39A /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		5C2D4F2DC842D65B199ADAD0 /* MechanicWorkspaceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MechanicWorkspaceTests.swift; sourceTree = "<group>"; };
+		6907B21FDACB28E8EBEFF910 /* LightingStudioModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LightingStudioModel.swift; sourceTree = "<group>"; };
 		6B2F2160F66500ABD58B9A93 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		6FF7D608E6C3BC6B19524A3A /* EvidenceOutboxBackgroundTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceOutboxBackgroundTests.swift; sourceTree = "<group>"; };
 		75A929BDE9D7DF6BB16DE192 /* MechanicWorkspaceModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MechanicWorkspaceModel.swift; sourceTree = "<group>"; };
 		76F08CC4DD741600B7E20C23 /* SystemStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemStatusView.swift; sourceTree = "<group>"; };
+		79AE82025DDD2D9D0A18C575 /* 4RunnerLighting.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = 4RunnerLighting.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7A2574A71F2C1668EC16FF99 /* VehicleHealthOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = VehicleHealthOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8A8A8B885363EFC027E3D44A /* MechanicCaseArtifacts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MechanicCaseArtifacts.swift; sourceTree = "<group>"; };
 		8B675922141EC2E868CE86B9 /* VehicleHealthOSCommissioning.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = VehicleHealthOSCommissioning.entitlements; sourceTree = "<group>"; };
@@ -80,6 +122,7 @@
 		C54BDEF8D2B05D75290A9451 /* VehicleHealthOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleHealthOSApp.swift; sourceTree = "<group>"; };
 		C62FF37FA894A57174E968FB /* EvidenceWorkCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceWorkCoordinator.swift; sourceTree = "<group>"; };
 		C904E627AC50298F57802AB7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		D54EAB25476F1B6912AE17EC /* LightingStudioUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LightingStudioUITests.swift; sourceTree = "<group>"; };
 		D6A9AAE2238B7F973C0CEA46 /* KeyStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyStore.swift; sourceTree = "<group>"; };
 		E210DB4EDB637662A1FE3436 /* CANLiveUnitsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CANLiveUnitsSection.swift; sourceTree = "<group>"; };
 		E5A8090F593B5656A6B680E3 /* VehicleHealthOSTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = VehicleHealthOSTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -92,6 +135,14 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		0A4BAC1A47A6C40730225343 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7675856E8448293BDC810238 /* VHOSCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		0E76943D73DEADCE831ACAF6 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -117,6 +168,7 @@
 			children = (
 				95010B41D132916B88921B84 /* App */,
 				B5274B5C828AA5C0D7576B7F /* AppTests */,
+				E13C52E1E2D10F7D9F8DFF5B /* LightingUITests */,
 				84107A1742ED7056C65222D4 /* Packages */,
 				73955CB501E1CDAFFAFAC668 /* Products */,
 			);
@@ -125,6 +177,8 @@
 		73955CB501E1CDAFFAFAC668 /* Products */ = {
 			isa = PBXGroup;
 			children = (
+				79AE82025DDD2D9D0A18C575 /* 4RunnerLighting.app */,
+				237CF0098E6F5993E4ACC7B5 /* 4RunnerLightingUITests.xctest */,
 				7A2574A71F2C1668EC16FF99 /* VehicleHealthOS.app */,
 				E5A8090F593B5656A6B680E3 /* VehicleHealthOSTests.xctest */,
 			);
@@ -154,6 +208,8 @@
 				6B2F2160F66500ABD58B9A93 /* Info.plist */,
 				D6A9AAE2238B7F973C0CEA46 /* KeyStore.swift */,
 				EA94361D77C783D465CD32F1 /* LightingLocalWebView.swift */,
+				6907B21FDACB28E8EBEFF910 /* LightingStudioModel.swift */,
+				3D6FCE90142EEA3B67CE4315 /* LightingStudioView.swift */,
 				8A8A8B885363EFC027E3D44A /* MechanicCaseArtifacts.swift */,
 				75A929BDE9D7DF6BB16DE192 /* MechanicWorkspaceModel.swift */,
 				ADEF920548CFAED6EC8E4B97 /* MechanicWorkspaceView.swift */,
@@ -186,6 +242,14 @@
 			path = AppTests;
 			sourceTree = "<group>";
 		};
+		E13C52E1E2D10F7D9F8DFF5B /* LightingUITests */ = {
+			isa = PBXGroup;
+			children = (
+				D54EAB25476F1B6912AE17EC /* LightingStudioUITests.swift */,
+			);
+			path = LightingUITests;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -207,6 +271,26 @@
 			productReference = E5A8090F593B5656A6B680E3 /* VehicleHealthOSTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		137DEC4EB63D64A4977E2C33 /* 4RunnerLighting */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1F4A83667429F497CEA3FDEB /* Build configuration list for PBXNativeTarget "4RunnerLighting" */;
+			buildPhases = (
+				58C33335743A38ED6DC62222 /* Sources */,
+				30C95EF7DA07681FFAE4FCE5 /* Resources */,
+				0A4BAC1A47A6C40730225343 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = 4RunnerLighting;
+			packageProductDependencies = (
+				2AC8B61E147B954CEB7C86A9 /* VHOSCore */,
+			);
+			productName = 4RunnerLighting;
+			productReference = 79AE82025DDD2D9D0A18C575 /* 4RunnerLighting.app */;
+			productType = "com.apple.product-type.application";
+		};
 		5C5ECB40116D553F668D211E /* VehicleHealthOS */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 478546126133D3E966073A85 /* Build configuration list for PBXNativeTarget "VehicleHealthOS" */;
@@ -227,6 +311,24 @@
 			productReference = 7A2574A71F2C1668EC16FF99 /* VehicleHealthOS.app */;
 			productType = "com.apple.product-type.application";
 		};
+		DFDF7A148DC75F241A7567E1 /* 4RunnerLightingUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F59B8B35C91C1FA6B51AB595 /* Build configuration list for PBXNativeTarget "4RunnerLightingUITests" */;
+			buildPhases = (
+				458B544E967E6E5531EA3A33 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				CE214D38E51D6D8F4C92ADBA /* PBXTargetDependency */,
+			);
+			name = 4RunnerLightingUITests;
+			packageProductDependencies = (
+			);
+			productName = 4RunnerLightingUITests;
+			productReference = 237CF0098E6F5993E4ACC7B5 /* 4RunnerLightingUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -236,9 +338,16 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					137DEC4EB63D64A4977E2C33 = {
+						DevelopmentTeam = Y4HDXFWXUV;
+						ProvisioningStyle = Automatic;
+					};
 					5C5ECB40116D553F668D211E = {
 						DevelopmentTeam = Y4HDXFWXUV;
 						ProvisioningStyle = Automatic;
+					};
+					DFDF7A148DC75F241A7567E1 = {
+						TestTargetID = 137DEC4EB63D64A4977E2C33;
 					};
 				};
 			};
@@ -259,6 +368,8 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
+				137DEC4EB63D64A4977E2C33 /* 4RunnerLighting */,
+				DFDF7A148DC75F241A7567E1 /* 4RunnerLightingUITests */,
 				5C5ECB40116D553F668D211E /* VehicleHealthOS */,
 				0086E7193E06222B5A21D6FC /* VehicleHealthOSTests */,
 			);
@@ -266,6 +377,17 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		30C95EF7DA07681FFAE4FCE5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8254B345AA13AA4AC76B66EF /* Assets.xcassets in Resources */,
+				3F39F7386B8FD123C85934D9 /* PrivacyInfo.xcprivacy in Resources */,
+				87F776323E3474FC5404CB11 /* catalog-development-p256-public.der.base64 in Resources */,
+				C1D39522627E086D8C44E414 /* mrdiy-v13-development-release-ed25519.base64 in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		9BD21BCE786E6D9365E00AB2 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -293,6 +415,44 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		458B544E967E6E5531EA3A33 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5B73B30C123F7D129D1B7D89 /* LightingStudioUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		58C33335743A38ED6DC62222 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				251863F28EC85CD5052D5BB2 /* AppModel.swift in Sources */,
+				3D57331DF10F576EB748EB0D /* CANLiveUnitsSection.swift in Sources */,
+				F23C8BFAACA3E558A8764D44 /* CANUnitsDashboardView.swift in Sources */,
+				9512671CE4C9D7B65D491B95 /* DiscoveryEvidenceStore.swift in Sources */,
+				FC8B4B6D9BA1FE8DC12228FB /* DiscoveryWorkspaceView.swift in Sources */,
+				C0776F87EAC4A8A8485AA6E7 /* EvidenceOutboxStore.swift in Sources */,
+				A443909606600D1A54180255 /* EvidenceWorkCoordinator.swift in Sources */,
+				8C279EC037CEFF7ECAFD84F0 /* GatewayBLEClient.swift in Sources */,
+				EF79E9C359DBE52E1472CEDE /* KeyStore.swift in Sources */,
+				830BA2E9DE94CA71B55609EB /* LightingLocalWebView.swift in Sources */,
+				29C72B2FBBF6B077F837DABD /* LightingStudioModel.swift in Sources */,
+				807AE77F687DD09FC8A703AB /* LightingStudioView.swift in Sources */,
+				5967736F95768C01519A8993 /* MechanicCaseArtifacts.swift in Sources */,
+				4A86EC3DAC3671F2F554834A /* MechanicWorkspaceModel.swift in Sources */,
+				5DBDD8C4E647792D3C3EDF1E /* MechanicWorkspaceView.swift in Sources */,
+				C7539756169650867E4D7697 /* PassiveCANPlaybackLab.swift in Sources */,
+				20DCFCA3BAEA7DD75C5FE9B1 /* PortableFrameStore.swift in Sources */,
+				D73417782AC4CCE7F972EDFD /* ReleaseHubClient.swift in Sources */,
+				188F1F7C7D84CD47DE6CAAB3 /* RootView.swift in Sources */,
+				D24F4735684C2E22B1BB4FD9 /* SynchronizedReferenceStore.swift in Sources */,
+				B8F56AE0F7E576D41543B749 /* SystemStatusView.swift in Sources */,
+				DC43E89BBB7A929390338D38 /* VehicleHealthOSApp.swift in Sources */,
+				9A65F56ECFFEA52F0EA5A13C /* WiFiOTAUploader.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8D827AD2F162128EEECE29EA /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -307,6 +467,8 @@
 				433AA4BFB3B8C40F2468E476 /* GatewayBLEClient.swift in Sources */,
 				9AF33FDA552C5A8253A86B99 /* KeyStore.swift in Sources */,
 				0AE4EB77B2D62DEAB770FB86 /* LightingLocalWebView.swift in Sources */,
+				79A48966ACB1C218BB1ADB55 /* LightingStudioModel.swift in Sources */,
+				AF15A70FE96A8B81955A6C28 /* LightingStudioView.swift in Sources */,
 				91E2D34C4A70119D5BE7A474 /* MechanicCaseArtifacts.swift in Sources */,
 				E7B91FDF903EF10B9198988B /* MechanicWorkspaceModel.swift in Sources */,
 				1F8C34C7318A19AC1B605F18 /* MechanicWorkspaceView.swift in Sources */,
@@ -329,9 +491,39 @@
 			target = 5C5ECB40116D553F668D211E /* VehicleHealthOS */;
 			targetProxy = 04527031FED7F72E92BE1462 /* PBXContainerItemProxy */;
 		};
+		CE214D38E51D6D8F4C92ADBA /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 137DEC4EB63D64A4977E2C33 /* 4RunnerLighting */;
+			targetProxy = 327FAE079CD7C6244EAE9840 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		12FC90EC3F408515D00D45BD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = LightingAppIcon;
+				CODE_SIGN_ENTITLEMENTS = "";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Y4HDXFWXUV;
+				INFOPLIST_FILE = Lighting/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.isaiahdupree.4RunnerLighting;
+				PRODUCT_NAME = "4Runner Lighting";
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) LIGHTING_STUDIO";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
 		408951D1BB6E4C6C12CBC9E7 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -517,6 +709,31 @@
 			};
 			name = Debug;
 		};
+		937B928A8FE2237BBCB581F0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = LightingAppIcon;
+				CODE_SIGN_ENTITLEMENTS = "";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Y4HDXFWXUV;
+				INFOPLIST_FILE = Lighting/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.isaiahdupree.4RunnerLighting;
+				PRODUCT_NAME = "4Runner Lighting";
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) LIGHTING_STUDIO";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		9C61CA4D2373A6C74B09FA6A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -535,9 +752,54 @@
 			};
 			name = Debug;
 		};
+		C00F4886BC60A2A632E12B2D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.isaiahdupree.4RunnerLightingUITests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = 4RunnerLighting;
+			};
+			name = Release;
+		};
+		F381653B5DAE8449C24F4718 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.isaiahdupree.4RunnerLightingUITests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = 4RunnerLighting;
+			};
+			name = Debug;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		1F4A83667429F497CEA3FDEB /* Build configuration list for PBXNativeTarget "4RunnerLighting" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				12FC90EC3F408515D00D45BD /* Debug */,
+				937B928A8FE2237BBCB581F0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		478546126133D3E966073A85 /* Build configuration list for PBXNativeTarget "VehicleHealthOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -565,6 +827,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
+		F59B8B35C91C1FA6B51AB595 /* Build configuration list for PBXNativeTarget "4RunnerLightingUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F381653B5DAE8449C24F4718 /* Debug */,
+				C00F4886BC60A2A632E12B2D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
@@ -575,6 +846,10 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		2AC8B61E147B954CEB7C86A9 /* VHOSCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = VHOSCore;
+		};
 		6616D2E0F2CEB55BF90E491B /* VHOSCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = VHOSCore;

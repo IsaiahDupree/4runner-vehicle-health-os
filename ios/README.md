@@ -2,6 +2,8 @@
 
 Native SwiftUI control surface for the VHOS gateway contract. Minimum deployment target is iOS 17.
 
+The separate [4Runner Lighting app](Lighting/README.md) uses WLED’s Colors / Effects / Segments / Presets structure with a native color wheel. CAN, voltage and Toyota input settings are under Config. Select the 4RunnerLighting scheme to build that phone app.
+
 ## Implemented
 
 - CoreBluetooth discovery, handshake-verified state restoration, encrypted-bond reuse, and

@@ -7,6 +7,7 @@ enum KeyStoreKey: String {
   case firmwareReleasePublicKey
   case experimentSigningPrivateKey
   case evidenceOutboxBearerToken
+  case lightingControllerKey
 }
 
 struct KeyStore {
@@ -48,6 +49,15 @@ struct KeyStore {
     } else if update != errSecSuccess {
       throw KeyStoreError.status(update)
     }
+  }
+
+  func remove(_ key: KeyStoreKey) throws {
+    let status = SecItemDelete([
+      kSecClass as String: kSecClassGenericPassword,
+      kSecAttrService as String: service,
+      kSecAttrAccount as String: key.rawValue,
+    ] as CFDictionary)
+    guard status == errSecSuccess || status == errSecItemNotFound else { throw KeyStoreError.status(status) }
   }
 }
 

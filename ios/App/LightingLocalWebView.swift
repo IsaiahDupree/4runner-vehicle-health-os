@@ -42,9 +42,8 @@ struct LightingLocalWebView: UIViewRepresentable {
       url?.scheme == "http" && url?.host == "192.168.88.1" && (url?.port == nil || url?.port == 80)
     }
 
-    func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction,
-                 decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-      decisionHandler(allowed(action.request.url) || action.request.url?.absoluteString == "about:blank" ? .allow : .cancel)
+    func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction) async -> WKNavigationActionPolicy {
+      allowed(action.request.url) || action.request.url?.absoluteString == "about:blank" ? .allow : .cancel
     }
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
